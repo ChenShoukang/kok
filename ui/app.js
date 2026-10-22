@@ -23,7 +23,6 @@ const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;
 function hydrate(root=document){root.querySelectorAll('[data-icon]').forEach(el=>{el.innerHTML=svg(el.dataset.icon);});}
 const kinds=[['video','视频','光影与故事'],['photo','照片','定格的小美好'],['music','音乐','生活的背景音'],['document','文档','灵感与思考'],['book','读书','字里行间的世界']];
 const labels=Object.fromEntries(kinds.map(k=>[k[0],k[1]]));
-const descriptions={video:'给每一段光影，留一个位置。',photo:'那些不想忘记的瞬间，都在这里。',music:'让生活，慢慢有了自己的旋律。',document:'收好每一份灵感与思考。',book:'翻开一本书，遇见另一种生活。',favorites:'把喜欢的事物，再靠近一点。',recent:'从上次停下的地方，继续。'};
 const pending=new Map();let requestSequence=0;
 function native(action,args={}){
   return new Promise((resolve,reject)=>{
@@ -51,20 +50,18 @@ async function patch(item,values){Object.assign(item,values);await native('updat
 async function setting(values){Object.assign(state.settings,values);await native('settings',values);}
 function applyTheme(){let theme=state.settings.theme||'light';if(theme==='system')theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.body.dataset.theme=theme;}
 function renderNav(){
-  $('#main-nav').innerHTML=[['overview','总览','grid'],...kinds.map(k=>[k[0],k[1],k[0]])].map(([r,l,i])=>`<button class="nav-item ${state.route===r?'active':''}" data-route="${r}">${svg(i)}<span>${l}</span>${r==='overview'?'':`<span class="count">${state.items.filter(x=>x.kind===r).length||''}</span>`}</button>`).join('');
-  $('#extra-nav').innerHTML=[['favorites','我的收藏','heart'],['recent','最近打开','clock']].map(([r,l,i])=>`<button class="nav-item ${state.route===r?'active':''}" data-route="${r}">${svg(i)}<span>${l}</span></button>`).join('');
-  $('#breadcrumb').textContent=state.query?'搜索':labels[state.route]||({overview:'总览',favorites:'我的收藏',recent:'最近打开',all:'全部收藏',collection:state.collection})[state.route];
-  $('#total-label').textContent=state.items.length+' 个文件';
+  $('#main-nav').innerHTML=[['overview','全部文件','grid'],...kinds.map(k=>[k[0],k[1],k[0]])].map(([r,l,i])=>`<button class="nav-item ${state.route===r?'active':''}" data-route="${r}">${svg(i)}<span>${l}</span>${r==='overview'?'':`<span class="count">${state.items.filter(x=>x.kind===r).length||''}</span>`}</button>`).join('');
+  $('#extra-nav').innerHTML=[['favorites','收藏','heart'],['recent','最近打开','clock']].map(([r,l,i])=>`<button class="nav-item ${state.route===r?'active':''}" data-route="${r}">${svg(i)}<span>${l}</span></button>`).join('');
   $('#collections-nav').innerHTML=(state.collections||[]).map(name=>`<button class="nav-item ${state.route==='collection'&&state.collection===name?'active':''}" data-collection="${esc(name)}">${svg('folder')}<span>${esc(name)}</span><span class="count">${state.items.filter(i=>i.collection===name).length}</span></button>`).join('');
 }
-function heading(title,subtitle,overview=false){const date=new Intl.DateTimeFormat('zh-CN',{month:'long',day:'numeric',weekday:'long'}).format(new Date());return `<div class="page-heading"><div><div class="eyebrow">${overview?'A LITTLE SPACE FOR WHAT YOU LOVE':'YOUR PERSONAL COLLECTION'}</div><h1>${esc(title)}</h1><p>${esc(subtitle)}</p></div>${overview?`<div class="date-badge">${svg('calendar')}${date}</div>`:`<button class="button secondary" data-action="importFolder">${svg('folder')}导入文件夹</button>`}</div>`;}
+function heading(title,subtitle=''){return `<div class="page-heading"><h1>${esc(title)}</h1>${subtitle?`<span>${esc(subtitle)}</span>`:''}</div>`;}
+function viewOptions(sort=state.settings.sort||'added'){
+ return `<div class="view-options"><select class="sort-select" id="sort" aria-label="排序方式">${[['added','最近加入'],['opened','最近打开'],['name','名称'],['size','文件大小']].map(([key,label])=>`<option value="${key}" ${sort===key?'selected':''}>${label}</option>`).join('')}</select><div class="view-toggle"><button class="${state.settings.view!=='list'?'active':''}" data-view="grid" title="网格视图" aria-label="网格视图">${svg('grid')}</button><button class="${state.settings.view==='list'?'active':''}" data-view="list" title="列表视图" aria-label="列表视图">${svg('list')}</button></div></div>`;
+}
+function fileCollection(items){return items.length?`<div class="${state.settings.view==='list'?'file-list':'file-grid'}">${items.slice(0,state.limit).map(card).join('')}</div>${items.length>state.limit?`<button class="button secondary load-more" data-action="loadMore">显示更多</button>`:''}`:'';}
 function overview(){
- const recent=state.items.filter(i=>i.opened).sort((a,b)=>b.opened.localeCompare(a.opened)).slice(0,4);
- const entries=recent.length?recent:[...state.items].sort((a,b)=>b.added.localeCompare(a.added)).slice(0,4);
- return heading('万物有序，自在收藏','视频、照片、音乐与文字，在一个安静的地方相遇。',true)+`
- <div class="hero-row"><section class="hero"><div class="hero-copy"><div class="hero-tag"><i></i> MAKE ROOM FOR THE GOOD THINGS</div><h2>让喜欢的一切，<br>都有一个好去处。</h2><p>把散落的收藏，整理成自己的小小宇宙。</p><button class="button secondary" data-action="importFolder">${svg('folder')}添加我的收藏 ${svg('arrow')}</button></div><div class="hero-art" aria-hidden="true"><div class="art-sun"></div><div class="art-orbit"></div><div class="art-shelf"></div><div class="art-record"></div><div class="book-object"></div></div></section><aside class="quote-card"><div><div class="quote-label">KOK · 片刻留白</div><div class="quote-symbol">“</div><blockquote>在快的世界里，<br>留一个慢下来的角落。</blockquote></div><div class="quote-footer"><span>给日常一点温柔</span>${svg('leaf')}</div></aside></div>
- <div class="section-heading"><h2>我的资料库</h2><span class="subtle">每一份喜欢，都有归属</span></div><div class="category-grid">${kinds.map(([key,label,sub])=>`<button class="category-card ${key}" data-route="${key}"><span class="category-icon">${svg(key)}</span><b>${label}</b><small>${state.items.filter(i=>i.kind===key).length} 个文件 · ${sub}</small><span class="arrow">${svg('arrow')}</span></button>`).join('')}</div>
- <div class="section-heading"><h2>${recent.length?'接着上次的喜欢':'最近加入'}</h2><span class="subtle">${recent.length?'继续你的片刻时光':'慢慢装满自己的世界'}</span><button class="text-button" data-route="${recent.length?'recent':'all'}">查看全部 ${svg('arrow')}</button></div>${entries.length?`<div class="file-grid">${entries.map(card).join('')}</div>`:empty('你的收藏，从这里开始','导入本地文件或文件夹，建立专属于你的资料库。',true)}`;
+ const items=filtered();
+ return `<div class="collection-heading">${heading('资料库',`${items.length} 个文件`)}${viewOptions()}</div>`+(items.length?fileCollection(items):empty('还没有文件','导入文件或文件夹，开始整理。',true));
 }
 function cover(i){
  if(i.kind==='photo')return `<img src="${media(i,'thumb')}" alt="" loading="lazy" data-fallback="photo">${svg('photo')}`;
@@ -91,15 +88,19 @@ function filtered(){
  return items;
 }
 function collection(){
- const route=state.route;const items=filtered();const title=state.query?`搜索「${state.query}」`:labels[route]||({favorites:'我的收藏',recent:'最近打开',all:'全部收藏',collection:state.collection})[route]||'资料库';
- const showTabs=!labels[route];
- const note={video:'支持 MP4、WebM 等内置播放。MKV、AVI、HEVC 等取决于系统解码器，可使用系统应用打开。',photo:'内置预览常见照片；HEIC、RAW 等特殊格式建议使用系统照片应用。',music:'支持 MP3、WAV、FLAC、M4A、OGG 等，实际播放能力取决于系统内核和音频编码。',document:'PDF 内置预览；DOCX 提取正文；Markdown、CSV 等以纯文本阅读。Office 复杂排版请使用系统应用。',book:'EPUB 支持章节正文阅读，TXT 支持 UTF-8、UTF-16 和 GB18030。MOBI、AZW 等可使用已安装的阅读器。'}[route];
- return heading(title,state.query?`在当前分类中找到 ${items.length} 个结果`:(descriptions[route]||'属于你的每一份喜欢，都收在这里。'))+`
- <div class="library-toolbar"><div class="filter-tabs">${showTabs?[['all','全部'],...kinds.map(k=>[k[0],k[1]])].map(([k,l])=>`<button class="filter-tab ${state.filter===k?'active':''}" data-filter="${k}">${l}</button>`).join(''):`<span class="subtle-label">${items.length} 个${labels[route]}文件 · ${size(items.reduce((n,i)=>n+i.size,0))}</span>`}</div><div class="view-options"><select class="sort-select" id="sort" aria-label="排序方式">${[['added','最近加入'],['opened','最近打开'],['name','名称排序'],['size','文件大小']].map(([k,l])=>`<option value="${k}" ${(state.settings.sort||(route==='recent'?'opened':'added'))===k?'selected':''}>${l}</option>`).join('')}</select><div class="view-toggle"><button class="${state.settings.view!=='list'?'active':''}" data-view="grid" title="网格视图" aria-label="网格视图">${svg('grid')}</button><button class="${state.settings.view==='list'?'active':''}" data-view="list" title="列表视图" aria-label="列表视图">${svg('list')}</button></div></div></div>
- ${note?`<div class="format-notice">${svg('info')}<span>${note}</span></div>`:''}
- ${items.length?`<div class="${state.settings.view==='list'?'file-list':'file-grid'}">${items.slice(0,state.limit).map(card).join('')}</div>${items.length>state.limit?`<button class="button secondary load-more" data-action="loadMore">再显示 60 个（还有 ${items.length-state.limit} 个）</button>`:''}`:empty(state.query?'还没有找到相关收藏':route==='favorites'?'喜欢的事物，值得被收藏':route==='recent'?'最近打开的资料，会出现在这里':'这里，等着你的第一份收藏',state.query?'试试文件名、格式，或笔记里的关键词。':route==='favorites'?'点击文件卡片上的爱心，把它留在这里。':'导入文件，让美好的收藏慢慢发生。')}`;
+ const route=state.route,items=filtered();
+ const title=state.query?`搜索结果`:labels[route]||({favorites:'收藏',recent:'最近打开',all:'全部文件',collection:state.collection})[route]||'资料库';
+ const showTabs=!labels[route]&&route!=='recent';
+ return `<div class="collection-heading">${heading(title,`${items.length} 个文件`)}${viewOptions(state.settings.sort||(route==='recent'?'opened':'added'))}</div>${showTabs?`<div class="library-toolbar"><div class="filter-tabs">${[['all','全部'],...kinds.map(k=>[k[0],k[1]])].map(([key,label])=>`<button class="filter-tab ${state.filter===key?'active':''}" data-filter="${key}">${label}</button>`).join('')}</div></div>`:''}`+(items.length?fileCollection(items):empty(state.query?'没有找到相关文件':route==='favorites'?'还没有收藏':route==='recent'?'还没有打开记录':'这个分类还没有文件',state.query?'试试文件名、格式或笔记里的关键词。':route==='favorites'?'点击文件上的爱心即可收藏。':'导入文件，或在文件菜单中更改分类。'));
 }
-function render(){renderNav();$('#main').innerHTML=state.route==='overview'&&!state.query?overview():state.route==='music'&&!state.query&&typeof renderMusic==='function'?renderMusic():collection();}
+let pageAnimation=null;
+function animateIn(element){if(!element||matchMedia('(prefers-reduced-motion: reduce)').matches)return;element.getAnimations().forEach(a=>a.cancel());return element.animate([{opacity:.25,transform:'translateY(5px)'},{opacity:1,transform:'translateY(0)'}],{duration:180,easing:'cubic-bezier(.2,.8,.2,1)'});}
+function render(){
+ renderNav();if(pageAnimation)pageAnimation.cancel();
+ $('#main').innerHTML=state.route==='overview'&&!state.query?overview():state.route==='music'&&!state.query&&typeof renderMusic==='function'?renderMusic():collection();
+ const key=state.route+'|'+(state.musicAlbum||'')+'|'+(state.musicMode||'');
+ if(render.previousKey!==key&&!state.query){pageAnimation=animateIn($('#main'));render.previousKey=key;}
+}
 function navigate(route){state.route=route;state.filter='all';state.limit=60;state.query='';state.musicAlbum=null;$('#search').value='';render();window.scrollTo(0,0);}
 async function importItems(action){
  const result=await native(action);if(!result||result.cancelled)return;
@@ -107,21 +108,22 @@ async function importItems(action){
  if(result.errors?.length)toast('部分文件未能导入：\n'+result.errors.slice(0,4).join('\n'),true);
 }
 async function favorite(id){const item=byId(id);if(!item)return;await patch(item,{favorite:!item.favorite});render();if(state.viewer?.id===id)$('#viewer-favorite').classList.toggle('selected',item.favorite);if(state.track?.id===id)$('#track-favorite').classList.toggle('selected',item.favorite);}
-function showSmall(content){const d=$('#small-dialog');if(d.open)d.close();d.innerHTML=`<div class="dialog-top"><div></div><button class="icon-button dialog-close" data-close-dialog aria-label="关闭">${svg('close')}</button></div>${content}`;d.showModal();}
+function showSmall(content){const d=$('#small-dialog');if(d.open)d.close();d.innerHTML=`<div class="dialog-top"><div></div><button class="icon-button dialog-close" data-close-dialog aria-label="关闭">${svg('close')}</button></div>${content}`;d.showModal();animateIn(d);}
 function fileMenu(id){const i=byId(id);if(!i)return;showSmall(`<h2>${esc(i.name)}</h2><p class="dialog-description">${labels[i.kind]} · ${esc(i.ext)} · ${size(i.size)}</p><div class="menu-actions"><button data-open="${id}">${svg('external')}在 kok 中打开</button><button data-favorite="${id}">${svg('heart')}${i.favorite?'取消收藏':'加入收藏'}</button><button data-classify="${id}">${svg('layers')}分类归纳${i.collection?' · '+esc(i.collection):''}</button>${i.kind==='music'?`<button data-album-edit="${id}">${svg('edit')}编辑专辑和歌手</button>`:''}<button data-native="reveal" data-id="${id}">${svg('folder')}在文件夹中显示</button><button data-native="openExternal" data-id="${id}">${svg('external')}使用系统应用打开</button><button class="danger" data-remove="${id}">${svg('trash')}从资料库移除</button></div><div class="dialog-footnote">移除仅删除资料库记录，原文件会保留。<br>${esc(i.path)}</div>`);}
 async function settings(){
  const diag=await native('diagnostics');
- showSmall(`<h2>让这里，更像你</h2><p class="dialog-description">简单一点，舒服一点。</p><div class="setting-row"><div>界面外观<small>选择适合当下的颜色</small></div><select id="theme-select" aria-label="界面外观"><option value="light">清新浅色</option><option value="dark">安静深色</option><option value="system">跟随系统</option></select></div><div class="setting-row"><div>资料库备份<small>导出索引、进度与笔记，不包含原文件</small></div><button class="button secondary" data-action="export">${svg('download')}导出</button></div><div class="setting-row"><div>体验示例<small>加入五类本地示例文件</small></div><button class="button secondary" data-action="importSamples">添加示例</button></div><div class="dialog-footnote"><b>kok · 万物有序</b><br>v${esc(diag.version)} · Windows x64 · WebView2 ${esc(diag.engine)}<br>本地保存 · 无需账号 · 无需联网<br><br>资料库位置：<br><code>${esc(diag.dataDir)}</code><br><br>快捷键：Ctrl K 搜索 · Esc 关闭预览<br>照片：← → 切换 · 阅读：← → 切换章节<br>音乐或视频：空格播放 / 暂停<br><br>兼容性：加密电子书、OCR、Office 原始排版和部分媒体编码需使用相应系统应用。</div>`);
+ showSmall(`<h2>设置</h2><div class="setting-row"><div>界面外观<small>选择适合当下的颜色</small></div><select id="theme-select" aria-label="界面外观"><option value="light">清新浅色</option><option value="dark">安静深色</option><option value="system">跟随系统</option></select></div><div class="setting-row"><div>资料库备份<small>导出索引、进度与笔记，不包含原文件</small></div><button class="button secondary" data-action="export">${svg('download')}导出</button></div><div class="setting-row"><div>体验示例<small>加入五类本地示例文件</small></div><button class="button secondary" data-action="importSamples">添加示例</button></div><details class="about-details"><summary>关于 kok</summary><div class="dialog-footnote"><b>kok</b><br>v${esc(diag.version)} · Windows x64 · WebView2 ${esc(diag.engine)}<br>本地保存 · 无需账号 · 无需联网<br><br>资料库位置：<br><code>${esc(diag.dataDir)}</code><br><br>快捷键：Ctrl K 搜索 · Esc 关闭预览<br>照片：← → 切换 · 阅读：← → 切换章节<br>音乐或视频：空格播放 / 暂停<br><br>兼容性：加密电子书、OCR、Office 原始排版和部分媒体编码需使用相应系统应用。</div></details>`);
  $('#theme-select').value=state.settings.theme||'light';
  if(typeof setupSettings==='function')setupSettings();
 }
-const viewer=$('#viewer');let readerTimer=null,video=null,mediaSaveTime=0;
+const viewer=$('#viewer');let readerTimer=null,video=null,mediaSaveTime=0,closingViewer=null;
 async function openItem(id){
+ if(closingViewer)await closingViewer;
  const item=byId(id);if(!item)return;
  if($('#small-dialog').open)$('#small-dialog').close();
  await patch(item,{opened:new Date().toISOString()});
  if(item.kind==='music'){state.queue=state.items.filter(i=>i.kind==='music'&&(!state.musicAlbum||albumName(i)===state.musicAlbum));await playTrack(item);render();return;}
- if(viewer.open){await saveViewer();clearViewer();}else viewer.showModal();
+ if(viewer.open){await saveViewer();clearViewer();}else {viewer.showModal();animateIn(viewer);}
  state.viewer=item;viewer.classList.remove('notes-open');$('#notes-panel').classList.add('hidden');$('#notes').value=item.notes||'';
  $('#viewer-title').textContent=item.name;$('#viewer-subtitle').textContent=`${labels[item.kind]} · ${item.ext} · ${size(item.size)}`;$('#viewer-icon').innerHTML=svg(item.kind);$('#viewer-favorite').classList.toggle('selected',item.favorite);
  $('#viewer-content').innerHTML='<div class="loading-view"><span class="spinner"></span>正在打开…</div>';
@@ -170,7 +172,7 @@ async function changeChapter(n){if(!state.book||n<0||n>=state.book.chapters.leng
 async function saveNotes(){if(state.viewer&&$('#notes').value!==(state.viewer.notes||''))await patch(state.viewer,{notes:$('#notes').value});}
 async function saveViewer(){clearTimeout(readerTimer);await saveVideo();await saveReader();await saveNotes();if(typeof savePdf==='function')await savePdf();}
 function clearViewer(){if(typeof cleanupFeatures==='function')cleanupFeatures();if(video){video.pause();video.removeAttribute('src');video.load();video=null;}if(state.slide)clearInterval(state.slide);state.slide=null;state.book=null;state.viewer=null;$('#viewer-content').innerHTML='';}
-async function closeViewer(){await saveViewer();clearViewer();viewer.close();render();}
+async function closeViewer(){if(closingViewer)return closingViewer;closingViewer=(async()=>{await saveViewer();viewer.getAnimations().forEach(a=>a.cancel());if(!matchMedia('(prefers-reduced-motion: reduce)').matches)await viewer.animate([{opacity:1,transform:'translateY(0)'},{opacity:0,transform:'translateY(4px)'}],{duration:120,easing:'ease-out'}).finished;clearViewer();viewer.close();render();})();try{await closingViewer;}finally{closingViewer=null;}}
 // The audio element survives navigation, so a collection can be browsed while music plays.
 const audio=$('#audio');let audioSaveAt=0;
 async function playTrack(item){
@@ -241,5 +243,13 @@ document.addEventListener('keydown',e=>{
  if(e.code==='Space'&&(video||state.track)){e.preventDefault();const player=video||audio;if(player.paused)player.play().catch(fail);else player.pause();}
 });
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(state.settings.theme==='system')applyTheme();});
-async function init(){hydrate();try{await refresh();audio.volume=Math.max(0,Math.min(1,Number(state.settings.volume??.7)));$('#volume').value=audio.volume;state.shuffle=!!state.settings.shuffle;state.loop=!!state.settings.loop;updateTransport();}catch(e){$('#main').innerHTML=heading('欢迎来到 kok','给喜欢的一切，留一点空间。')+empty('请使用 kok.exe 打开应用',e.message);}}
+async function init(){hydrate();try{await refresh();audio.volume=Math.max(0,Math.min(1,Number(state.settings.volume??.7)));$('#volume').value=audio.volume;state.shuffle=!!state.settings.shuffle;state.loop=!!state.settings.loop;updateTransport();}catch(e){$('#main').innerHTML=heading('欢迎来到 kok','给喜欢的一切，留一点空间。')+empty('无法打开资料库',e.message);}finally{finishStartup();}}
+function finishStartup(){
+ const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+ const delay=reduced?0:Math.max(0,420-performance.now());
+ setTimeout(()=>{document.body.classList.remove('booting');document.body.setAttribute('aria-busy','false');const screen=$('#startup');if(!screen)return;if(reduced){screen.remove();return;}screen.classList.add('leaving');setTimeout(()=>screen.remove(),230);},delay);
+}
+$('#import-more').addEventListener('click',()=>{const menu=$('#import-menu');const open=menu.classList.toggle('hidden')===false;$('#import-more').setAttribute('aria-expanded',String(open));if(open)animateIn(menu);});
+document.addEventListener('click',e=>{if(!e.target.closest('.import-control')){$('#import-menu').classList.add('hidden');$('#import-more').setAttribute('aria-expanded','false');}else if(e.target.closest('[data-action]')){$('#import-menu').classList.add('hidden');$('#import-more').setAttribute('aria-expanded','false');}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){$('#import-menu').classList.add('hidden');$('#import-more').setAttribute('aria-expanded','false');}});
 init();

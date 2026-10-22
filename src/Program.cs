@@ -29,8 +29,8 @@ namespace kok {
         readonly FileStream databaseLock;
         bool closeReady,closingPending;
         public MainWindow(string[] args) {
-            Text="kok · 万物有序"; Width=1440; Height=940; MinimumSize=new Size(960,640);
-            StartPosition=FormStartPosition.CenterScreen; BackColor=Color.FromArgb(247,248,245);
+            Text="kok"; Width=1440; Height=940; MinimumSize=new Size(960,640);
+            StartPosition=FormStartPosition.CenterScreen; BackColor=Color.FromArgb(248,249,251);
             Icon=Icon.ExtractAssociatedIcon(Application.ExecutablePath);
             debug=args.Contains("--debug");
             string dataDir=Path.Combine(appDir,"data");
@@ -42,7 +42,7 @@ namespace kok {
             library=new Library(dataDir);
             FormClosed+=delegate { databaseLock.Dispose(); };
             FormClosing+=HandleWindowClosing;
-            web.Dock=DockStyle.Fill; Controls.Add(web);
+            web.DefaultBackgroundColor=BackColor; web.Dock=DockStyle.Fill; Controls.Add(web);
             Shown+=async delegate { await Init(); };
         }
         async void HandleWindowClosing(object sender,FormClosingEventArgs e) {
@@ -167,7 +167,7 @@ namespace kok {
                             if(dialog.ShowDialog(this)==DialogResult.OK) { File.WriteAllText(dialog.FileName,library.Snapshot(),new UTF8Encoding(false)); result=true; }
                         } break;
                     }
-                    case "diagnostics": result=new { engine=web.CoreWebView2.Environment.BrowserVersionString, count=library.Db.items.Count, dataDir=library.DataDir, version="1.0.0" }; break;
+                    case "diagnostics": result=new { engine=web.CoreWebView2.Environment.BrowserVersionString, count=library.Db.items.Count, dataDir=library.DataDir, version="0.1.2" }; break;
                     default: throw new InvalidOperationException("未知操作。");
                 }
                 Send(new { requestId=requestId, result=result });

@@ -27,9 +27,9 @@ jobs:
         with:
           name: kok-win-x64
           path: |
-            dist/kok-1.0.0-win-x64.zip
-            dist/kok-1.0.0-win-x64.zip.sha256
-      - name: Publish first version
+            dist/kok-*-win-x64.zip
+            dist/kok-*-win-x64.zip.sha256
+      - name: Publish version
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         shell: pwsh
         env:

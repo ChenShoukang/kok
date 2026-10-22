@@ -9,6 +9,7 @@ const output=path.join(root,'test-output');fs.mkdirSync(output,{recursive:true})
  const page=browser.contexts()[0].pages().find(p=>p.url().startsWith('https://app.kok.local'));
  assert(page,'kok debug window must be running');
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.reload();await page.waitForFunction(()=>!document.querySelector('#startup'));
  await page.waitForSelector('h1');
  await page.evaluate(async()=>{if(document.querySelector('#viewer').open)await closeViewer();if(document.querySelector('#small-dialog').open)document.querySelector('#small-dialog').close();for(const item of state.items)await patch(item,{favorite:false,chapter:0,position:0,progress:0,notes:'',annotations:[],chapterTexts:{}});await setting({readerSize:18,theme:'light',shuffle:false,loop:false});state.shuffle=false;state.loop=false;applyTheme();navigate('overview');});
  await page.setViewportSize({width:1440,height:1000});
@@ -24,7 +25,7 @@ const output=path.join(root,'test-output');fs.mkdirSync(output,{recursive:true})
    recorder.stop();await completed;stream.getTracks().forEach(t=>t.stop());
    const bytes=new Uint8Array(await new Blob(chunks,{type:'video/webm'}).arrayBuffer());let s='';for(const b of bytes)s+=String.fromCharCode(b);return btoa(s);
  });
- for(const folder of ['samples','dist/kok/samples'])fs.writeFileSync(path.join(root,folder,'一段安静的时光.webm'),Buffer.from(recording,'base64'));
+ for(const folder of ['dist/kok/samples'])fs.writeFileSync(path.join(root,folder,'一段安静的时光.webm'),Buffer.from(recording,'base64'));
  await page.evaluate(()=>native('importSamples'));
  await page.evaluate(()=>refresh());
  const count=await page.evaluate(()=>state.items.length);assert.equal(count,10);console.log('PASS: import all five categories (10 real assets)');

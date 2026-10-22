@@ -4,31 +4,29 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https://media.kok.local data: blob:; font-src 'self' https://media.kok.local data:; media-src https://media.kok.local blob:; frame-src https://media.kok.local; connect-src 'self' https://media.kok.local blob:; worker-src 'self' blob:; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'none'">
-  <title>kok · 万物有序</title>
+  <title>kok</title>
   <link rel="stylesheet" href="styles.css">
   <script defer src="app.js"></script>
   <script defer src="features.js"></script>
   <link rel="stylesheet" href="features.css">
 </head>
-<body>
+<body class="booting" aria-busy="true">
+  <div id="startup" class="startup" role="status" aria-label="正在启动 kok"><img src="logo.svg" alt="" width="64" height="64"></div>
   <aside class="sidebar">
-    <a class="brand" href="#overview" aria-label="kok 首页"><span class="brand-mark">k</span><span>kok<span class="brand-dot">.</span></span></a>
-    <div class="workspace"><span class="workspace-icon" data-icon="layers"></span><div>我的私人空间<small>LOCAL WORKSPACE</small></div><span class="status-dot"></span></div>
-    <p class="nav-label">我的空间</p>
+    <a class="brand" href="#overview" data-route="overview" aria-label="kok 首页"><img src="logo.svg" alt="" width="30" height="30"><span>kok</span></a>
     <nav id="main-nav" aria-label="资料库分类"></nav>
-    <div class="sidebar-rule"></div><p class="nav-label">我的整理</p>
+    <div class="sidebar-rule"></div>
     <nav id="extra-nav" aria-label="快捷访问"></nav>
-    <div class="collections-heading"><span>自定义分类</span><button id="add-collection" class="icon-button" title="新建分类" aria-label="新建分类" data-icon="plus"></button></div><nav id="collections-nav" aria-label="自定义分类"></nav>
-    <div class="sidebar-bottom"><div class="local-note"><span data-icon="shield"></span><div>安心留在本地<small>你的收藏，只属于你</small></div></div><button class="nav-item settings-button" id="settings-button"><span data-icon="settings"></span><span>偏好设置</span><kbd>⌘</kbd></button><div class="version">KOK FOR WINDOWS <span>v1.0</span></div></div>
+    <div class="collections-heading"><span>分类</span><button id="add-collection" class="icon-button" title="新建分类" aria-label="新建分类" data-icon="plus"></button></div><nav id="collections-nav" aria-label="自定义分类"></nav>
+    <div class="sidebar-bottom"><button class="nav-item settings-button" id="settings-button"><span data-icon="settings"></span><span>设置</span></button></div>
   </aside>
   <div class="shell">
-    <header class="topbar"><div class="breadcrumb">我的空间 <span>/</span> <b id="breadcrumb">总览</b></div><div class="top-actions"><label class="search"><span data-icon="search"></span><input id="search" type="search" placeholder="搜索你的收藏…" autocomplete="off" aria-label="搜索资料库"><kbd>Ctrl K</kbd></label><button class="button primary" id="import-top"><span data-icon="plus"></span>导入文件</button><span class="avatar" aria-label="本地用户">K</span></div></header>
+    <header class="topbar"><label class="search"><span data-icon="search"></span><input id="search" type="search" placeholder="搜索资料库" autocomplete="off" aria-label="搜索资料库"><kbd>Ctrl K</kbd></label><div class="import-control"><button class="button primary" id="import-top"><span data-icon="plus"></span>导入文件</button><button class="import-more" id="import-more" aria-label="更多导入选项" aria-expanded="false" aria-controls="import-menu"><span data-icon="chevron"></span></button><div id="import-menu" class="import-menu hidden"><button data-action="importFiles"><span data-icon="document"></span>导入文件</button><button data-action="importFolder"><span data-icon="folder"></span>导入文件夹</button></div></div></header>
     <main id="main" tabindex="-1"></main>
-    <footer class="bottom-line"><span><i class="status-dot"></i> 本地资料库 <span id="total-label">0 个文件</span></span><span>留一点空间，给喜欢的事物。 <span class="little-leaf">❧</span></span></footer>
   </div>
   <section class="music-bar hidden" id="music-bar" aria-label="音乐播放器"><div class="now-playing"><div class="mini-cover" data-icon="music"></div><div><b id="track-name">未播放</b><small id="track-subtitle"></small></div><button class="icon-button" id="track-favorite" title="收藏音乐" aria-label="收藏音乐" data-icon="heart"></button></div><div class="music-center"><div class="transport"><button class="icon-button" id="shuffle" title="随机播放" aria-label="随机播放" data-icon="shuffle"></button><button class="icon-button" id="prev-track" title="上一首" aria-label="上一首" data-icon="skipBack"></button><button class="play-main" id="play-pause" title="播放或暂停" aria-label="播放或暂停" data-icon="play"></button><button class="icon-button" id="next-track" title="下一首" aria-label="下一首" data-icon="skipForward"></button><button class="icon-button" id="repeat" title="循环播放" aria-label="循环播放" data-icon="repeat"></button></div><div class="timeline"><span id="current-time">0:00</span><input id="audio-seek" type="range" min="0" max="1000" value="0" aria-label="音乐播放进度"><span id="duration">0:00</span></div></div><div class="volume-controls"><span data-icon="volume"></span><input type="range" id="volume" min="0" max="1" step="0.01" value="0.7" aria-label="音量"><button class="icon-button" id="queue-button" title="播放队列" aria-label="播放队列" data-icon="listMusic"></button><button class="icon-button" id="close-player" title="停止音乐" aria-label="停止音乐" data-icon="close"></button></div></section>
   <audio id="audio" preload="metadata"></audio>
-  <dialog id="viewer" class="viewer"><div class="viewer-header"><div class="viewer-title"><span id="viewer-icon"></span><div><b id="viewer-title"></b><small id="viewer-subtitle"></small></div></div><div class="viewer-actions"><button class="icon-button" id="viewer-favorite" title="收藏" aria-label="收藏" data-icon="heart"></button><button class="icon-button" id="notes-button" title="笔记" aria-label="笔记" data-icon="edit"></button><button class="icon-button" id="external-button" title="使用系统应用打开" aria-label="使用系统应用打开" data-icon="external"></button><button class="icon-button" id="close-viewer" title="关闭 (Esc)" aria-label="关闭" data-icon="close"></button></div></div><div id="viewer-content"></div><aside id="notes-panel" class="notes-panel hidden"><h3>随手记</h3><p>把当下的想法，留在这里。</p><textarea id="notes" placeholder="写下你的想法…" aria-label="文件笔记"></textarea><button class="button primary" id="save-notes">保存笔记</button><small>笔记保存在本机资料库</small></aside></dialog>
+  <dialog id="viewer" class="viewer"><div class="viewer-header"><div class="viewer-title"><span id="viewer-icon"></span><div><b id="viewer-title"></b><small id="viewer-subtitle"></small></div></div><div class="viewer-actions"><button class="icon-button" id="viewer-favorite" title="收藏" aria-label="收藏" data-icon="heart"></button><button class="icon-button" id="notes-button" title="笔记" aria-label="笔记" data-icon="edit"></button><button class="icon-button" id="external-button" title="使用系统应用打开" aria-label="使用系统应用打开" data-icon="external"></button><button class="icon-button" id="close-viewer" title="关闭 (Esc)" aria-label="关闭" data-icon="close"></button></div></div><div id="viewer-content"></div><aside id="notes-panel" class="notes-panel hidden"><h3>笔记</h3><textarea id="notes" placeholder="写下想法…" aria-label="文件笔记"></textarea><button class="button primary" id="save-notes">保存笔记</button></aside></dialog>
   <dialog id="small-dialog" class="small-dialog"></dialog>
   <div class="toast-stack" id="toasts" role="status" aria-live="polite"></div>
   <div class="import-status hidden" id="import-status"><span class="spinner"></span><span>正在整理你的资料…</span></div>

@@ -34,17 +34,6 @@ for variant, filename in enumerate(['山野来信.png', '落日与远山.png']):
         return color
     (OUT / filename).write_bytes(png(960, 600, landscape))
 
-def logo(x, y):
-    if (x-31.5)**2 + (y-31.5)**2 > 31**2:
-        return (244, 247, 239)
-    # A simple botanical mark, drawn as two leaves and a stem.
-    leaf_a = ((x-25)/8)**2 + ((y-25)/13)**2 < 1
-    leaf_b = ((x-40)/7)**2 + ((y-34)/11)**2 < 1
-    stem = abs(x-(32+(40-y)*.16)) < 1.2 and 19 < y < 50
-    return (226, 236, 214) if leaf_a or leaf_b or stem else (62, 107, 80)
-icon_png = png(64, 64, logo)
-(ROOT/'ui'/'kok.ico').write_bytes(struct.pack('<HHH', 0, 1, 1) + struct.pack('<BBBBHHII', 64, 64, 0, 0, 1, 32, len(icon_png), 22) + icon_png)
-
 for idx, name in enumerate(['林间小调.wav', '午后留白.wav']):
     rate, seconds = 22050, 12
     samples = bytearray()
@@ -58,7 +47,7 @@ for idx, name in enumerate(['林间小调.wav', '午后留白.wav']):
         audio.setparams((1, 2, rate, 0, 'NONE', 'not compressed'))
         audio.writeframes(samples)
 
-(OUT/'欢迎来到 kok.txt').write_text('欢迎来到 kok\n\n让喜欢的一切，都有一个好去处。\n\nkok 是一个轻量的 Windows 本地资料库。你可以把视频、照片、音乐、文档和电子书放在同一个空间，慢慢整理，随时继续。\n\n开始使用\n\n点击右上角「导入文件」，或者在总览里选择「添加我的收藏」来导入整个文件夹。原文件保持在原来的位置，不会被复制或上传。\n\n属于你的使用方式\n\n点击爱心收藏文件，在搜索框里查找文件名或笔记。阅读时调整字号与纸色，点击右上角的笔记按钮记录想法。播放进度与阅读位置会保存在本机。\n\n保持轻盈\n\n特殊格式可使用系统应用打开。移除收藏只删除索引，原文件会继续保留。资料库及笔记可以在偏好设置里导出备份。\n\n这是 kok 自带的原创示例文本。', encoding='utf-8')
+(OUT/'欢迎来到 kok.txt').write_text('欢迎来到 kok\n\n让喜欢的一切，都有一个好去处。\n\nkok 是一个轻量的 Windows 本地资料库。你可以把视频、照片、音乐、文档和电子书放在同一个空间，慢慢整理，随时继续。\n\n开始使用\n\n点击右上角「导入文件」，或打开旁边的菜单选择「导入文件夹」。原文件保持在原来的位置，不会被复制或上传。\n\n属于你的使用方式\n\n点击爱心收藏文件，在搜索框里查找文件名或笔记。阅读时调整字号与纸色，点击右上角的笔记按钮记录想法。播放进度与阅读位置会保存在本机。\n\n保持轻盈\n\n特殊格式可使用系统应用打开。移除收藏只删除索引，原文件会继续保留。资料库及笔记可以在设置里导出备份。\n\n这是 kok 自带的原创示例文本。', encoding='utf-8')
 (OUT/'给日常一点留白.md').write_text('# 给日常一点留白\n\n一段音乐，一本书，一张留下来的照片。\n\n## 本周的小计划\n\n- 整理一个旅行文件夹\n- 读完一本喜欢的书\n- 给照片写一点当时的心情\n\n这是一份 Markdown 示例。kok 以纯文本方式阅读 Markdown，完整保留源内容。', encoding='utf-8')
 
 with zipfile.ZipFile(OUT/'整理生活的小清单.docx', 'w', zipfile.ZIP_DEFLATED) as z:

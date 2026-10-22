@@ -11,9 +11,11 @@ try { $existing = Invoke-RestMethod -Uri ($base + '/releases/tags/' + $tag) -Hea
 catch { if ([int]$_.Exception.Response.StatusCode -ne 404) { throw } }
 if ($existing) { Write-Output ('Release already exists: ' + $existing.html_url); exit 0 }
 $notes = @'
-kok Windows x64 首个便携版本。
+kok Windows x64 便携版：更简洁的界面与独立启动 Logo。
 
-- iOS 风格磨砂玻璃界面，支持浅色和深色。
+- 精简首页与侧栏，删除装饰性横幅、标语和重复入口。
+- 克制的磨砂玻璃、短时平滑过渡与简洁启动 Logo，支持减少动态效果。
+- 支持浅色和深色。
 - 视频、照片、音乐、文档、读书统一资料库，自动与自定义分类。
 - 视频倍速、静音自动加速、同名文字字幕自动加载。
 - 专辑页面与专辑播放队列。
@@ -31,6 +33,6 @@ foreach ($name in @("kok-$version-win-x64.zip", "kok-$version-win-x64.zip.sha256
     if (-not (Test-Path -LiteralPath $file)) { throw "Missing release asset: $name" }
     Invoke-RestMethod -Method Post -Uri ($upload + '?name=' + [Uri]::EscapeDataString($name)) -Headers $headers -ContentType 'application/octet-stream' -InFile $file | Out-Null
 }
-$publish = @{ draft = $false } | ConvertTo-Json
+$publish = @{ draft = $false; make_latest = 'true' } | ConvertTo-Json
 $release = Invoke-RestMethod -Method Patch -Uri ($base + '/releases/' + $release.id) -Headers $headers -ContentType 'application/json' -Body $publish
 Write-Output ('Published: ' + $release.html_url)

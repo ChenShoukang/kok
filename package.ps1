@@ -10,7 +10,8 @@ foreach ($file in @('kok.exe','kok.exe.config','Microsoft.Web.WebView2.Core.dll'
     Copy-Item -LiteralPath (Join-Path $source $file) -Destination $stage -Force
 }
 foreach ($folder in @('ui','samples','docs')) { if(Test-Path -LiteralPath (Join-Path $source $folder)){Copy-Item -LiteralPath (Join-Path $source $folder) -Destination $stage -Recurse -Force} }
-$archive = Join-Path $root 'dist\kok-1.0.0-win-x64.zip'
+$version = (Get-Content (Join-Path $root 'package.json') -Raw | ConvertFrom-Json).version
+$archive = Join-Path $root ("dist\kok-$version-win-x64.zip")
 Compress-Archive -LiteralPath $stage -DestinationPath $archive -Force
 $hash = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
 Set-Content -LiteralPath ($archive+'.sha256') -Value ($hash+'  '+[IO.Path]::GetFileName($archive)) -Encoding Ascii
