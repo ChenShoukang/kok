@@ -4,7 +4,9 @@
 
 不需要账号。原文件按路径收录，不会被移动、复制或上传。界面与示例随软件提供，日常使用无需联网。
 
-![kok 总览](docs/overview.png)
+![kok 总览](docs/overview.jpg)
+
+**[下载 Windows 便携版](https://github.com/878kouyier/kok/releases/latest)** · 私有仓库下载时需要登录有权限的 GitHub 账号。
 
 ## 使用
 
@@ -36,9 +38,9 @@ TXT 支持 UTF-8、UTF-16 与 GB18030。文件内容不会作为脚本执行。�
 
 文档插入与批注属于 **kok 阅读副本**：不会写回原 DOCX / PDF。DOCX / 文本可导出含插入正文与标记的 HTML；PDF 可导出批注摘要 HTML。扫描版 PDF 需要先进行 OCR 才能选择文字。照片编辑另存为 PNG 或 JPEG，并自动收录新文件。
 
-![专辑页面](docs/albums.png)
-![读书划线与想法](docs/reading.png)
-![简单照片编辑](docs/photo-edit.png)
+![专辑页面](docs/albums.jpg)
+![读书划线与想法](docs/reading.jpg)
+![简单照片编辑](docs/photo-edit.jpg)
 
 「识别 / 收录」不代表某种容器内的所有编码都可以内置播放。系统应用入口需要你已安装相应软件，例如 VLC、mpv、Office、WPS 或其他阅读器。kok 不包含它们，也不自动安装解码器。
 
@@ -84,6 +86,7 @@ data/WebView2/              浏览器内核缓存与用户数据
 在 Windows PowerShell 或 PowerShell 7 中运行：
 
 ```powershell
+npm ci --omit=optional
 .\build.ps1 -Test
 ```
 
@@ -125,4 +128,3 @@ PDF 检查验证实际 Canvas 渲染、文字层、标记和插入恢复；不�
 ## 许可
 
 项目原创源码与示例使用 [MIT License](LICENSE)。WebView2 SDK 使用微软自己的许可，见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
-

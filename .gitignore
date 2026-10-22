@@ -1,0 +1,10 @@
+dist/
+tools/webview2/
+tools/webview2.zip
+node_modules/
+ui/vendor/
+data/
+test-output/
+*.user
+*.log
+.vs/

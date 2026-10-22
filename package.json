@@ -1,0 +1,24 @@
+{
+  "name": "kok",
+  "version": "1.0.0",
+  "description": "kok Windows desktop library development tests (not needed to run the app)",
+  "private": true,
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test:ui": "node tests/ui.cjs && node tests/features.cjs",
+    "check": "node --check ui/app.js && node --check ui/features.js",
+    "test:features": "node tests/features.cjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "type": "commonjs",
+  "devDependencies": {
+    "playwright-core": "1.64.1"
+  },
+  "dependencies": {
+    "pdfjs-dist": "6.4.299"
+  }
+}

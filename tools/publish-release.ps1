@@ -1,0 +1,36 @@
+$ErrorActionPreference = 'Stop'
+$repo = $env:GITHUB_REPOSITORY
+if ($repo -ne '878kouyier/kok') { throw 'Release publishing is configured for 878kouyier/kok.' }
+if (-not $env:GITHUB_TOKEN) { throw 'GITHUB_TOKEN is required inside GitHub Actions.' }
+$headers = @{ Authorization = 'Bearer ' + $env:GITHUB_TOKEN; Accept = 'application/vnd.github+json'; 'X-GitHub-Api-Version' = '2022-11-28' }
+$version = (Get-Content (Join-Path $PSScriptRoot '..\package.json') -Raw | ConvertFrom-Json).version
+$tag = 'v' + $version
+$base = 'https://api.github.com/repos/' + $repo
+$existing = $null
+try { $existing = Invoke-RestMethod -Uri ($base + '/releases/tags/' + $tag) -Headers $headers }
+catch { if ([int]$_.Exception.Response.StatusCode -ne 404) { throw } }
+if ($existing) { Write-Output ('Release already exists: ' + $existing.html_url); exit 0 }
+$notes = @'
+kok Windows x64 首个便携版本。
+
+- iOS 风格磨砂玻璃界面，支持浅色和深色。
+- 视频、照片、音乐、文档、读书统一资料库，自动与自定义分类。
+- 视频倍速、静音自动加速、同名文字字幕自动加载。
+- 专辑页面与专辑播放队列。
+- 三种常用字体，以及 TTF / OTF 导入。
+- 文档插入文字、下划线、荧光标记；读书划线与想法弹窗。
+- 照片亮度、对比度、饱和度、裁剪、旋转与翻转，另存副本。
+
+解压后双击 kok.exe。需要 Windows 10 / 11 x64、.NET Framework 4.8 和 WebView2 Runtime。批注保存为本地阅读副本，原文件保留。完整格式范围与限制见 README。
+'@
+$body = @{ tag_name = $tag; target_commitish = $env:GITHUB_SHA; name = 'kok ' + $version; body = $notes; draft = $true; prerelease = $false } | ConvertTo-Json
+$release = Invoke-RestMethod -Method Post -Uri ($base + '/releases') -Headers $headers -ContentType 'application/json; charset=utf-8' -Body ([Text.Encoding]::UTF8.GetBytes($body))
+$upload = $release.upload_url -replace '\{.*$', ''
+foreach ($name in @("kok-$version-win-x64.zip", "kok-$version-win-x64.zip.sha256")) {
+    $file = Join-Path $PSScriptRoot ('..\dist\' + $name)
+    if (-not (Test-Path -LiteralPath $file)) { throw "Missing release asset: $name" }
+    Invoke-RestMethod -Method Post -Uri ($upload + '?name=' + [Uri]::EscapeDataString($name)) -Headers $headers -ContentType 'application/octet-stream' -InFile $file | Out-Null
+}
+$publish = @{ draft = $false } | ConvertTo-Json
+$release = Invoke-RestMethod -Method Patch -Uri ($base + '/releases/' + $release.id) -Headers $headers -ContentType 'application/json' -Body $publish
+Write-Output ('Published: ' + $release.html_url)
