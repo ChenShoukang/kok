@@ -1,24 +1,23 @@
-## v0.2.1 · 顺滑菜单、视频封面与右键属性
+## v0.3.1 · 纯净 / 智能与私密文件夹
 
-- 设置和资料库排序使用统一的玻璃选择菜单，支持打开 / 收起动画、键盘导航、深浅主题、中英文和减少动态效果。
-- 视频导入后在空闲时静音提取真实画面并缓存封面；已有资料库也会补齐。打开预览或播放媒体时暂停后台提取，不修改原片。
-- 视频右键菜单新增属性：文件名、位置、大小、修改时间，以及内核实际读取的时长、分辨率。
-- 汇总此前本地版本的主题统一、照片编辑增强、视频快捷键、无边框全屏、小窗口适配与大视频稳定性修复。
-- 整理截图目录、开发 / 测试说明和版本记录，通过 GitHub Actions 构建并发布 Windows 便携包。
+- 首次只选择纯净 / 智能模式；私密功能放在资料库内的文件夹中，保留统一界面。
+- 纯净模式保留离线基础功能，原生层阻止 AI；智能模式首次说明内容发送与接口配置。
+- 新增密码保护的私密文件夹：加密索引、笔记与封面，离开窗口、最小化或闲置自动锁定，支持加密备份。原始文件仍在原位置，不会被加密。
+- AI 配置加入 12 个入口、模型列表读取、本机免密服务和输出参数选择；密钥以 Windows DPAPI 本机加密，地址变更不复用旧密钥。
+- 新增指定文件夹扫描、AI 分类与标签预览、时间 / 类型 / 自定义分组，以及视频、文档和读书的流式 AI 内容对话。
+- 横竖屏媒体自适应；流式消息只刷新当前回复；补齐文案、导出原文件保护、任务取消与锁定清理。
+- 重新检查媒体、阅读批注、照片编辑、窗口适配、菜单和模式切换；发布包按明确清单构建并审计密钥与私密数据。
 
-封面提取取决于当前内核能否解码视频。本版不新增解码器，编码与多音轨详情暂不解析。
+详见 [中文说明](https://github.com/ChenShoukang/kok/blob/main/README.md)。解压便携包运行 kok.exe；保留附带文件。Windows 10 / 11 x64，.NET Framework 4.8 与 WebView2。源码与安装包不含个人 API 配置、资料库或私密缓存。
 
----
+## v0.3.1 · Pure / Smart and a private folder
 
-## v0.2.1 · Smooth menus, video covers and properties
+- First-run Pure / Smart selector, with a password-protected folder inside the ordinary library and consistent glass UI.
+- Pure keeps offline basics and blocks AI natively; Smart explains content sharing and model setup on first use.
+- Password-protected private folder inside the library with encrypted index, notes and covers; locks on deactivation, minimize or idle and exports encrypted backups. Original source files remain in place and are not encrypted.
+- AI setup adds 12 entries, model discovery, local no-key servers and output-limit compatibility. Credentials use Windows DPAPI and are never reused silently across changed endpoints.
+- Selected-folder scanning, AI category/tag previews, timeline/type/custom groups and streamed file chat for videos, documents and books.
+- Orientation-aware previews, efficient streaming updates, translation fixes, original-file export protection, cancellation and private-content cleanup.
+- Reviewed media, annotations, photo edits, responsive layouts, menus and modes; release packages use an allowlist and audit credential patterns and private files.
 
-- Settings and library sorting share animated glass menus with keyboard navigation, themes, Chinese / English and reduced motion.
-- Imported and existing videos receive cached real-frame covers when idle. Extraction stays paused and muted, yields to previews or playback, and preserves source files.
-- Video context menus show file name, location, size, modification date, and actual duration / resolution from the playback engine.
-- Includes the previous local builds: consistent themes, expanded photo editing, configurable video shortcuts, borderless fullscreen, adaptive windows and large-video crash fixes.
-- Organizes screenshots, development / testing instructions and version history, with Windows portable builds published through GitHub Actions.
-
-Cover extraction requires a decodable video. This release adds no codecs and does not parse codec or multiple-audio-track details.
-
-更新时保留原来的 data 文件夹。
-Preserve the existing data folder when updating.
+See the [English guide](https://github.com/ChenShoukang/kok/blob/main/README.en.md). Extract the portable ZIP and run kok.exe with its accompanying files. Requires Windows 10 / 11 x64, .NET Framework 4.8 and WebView2. Source and packages exclude personal API configuration, libraries and private caches.

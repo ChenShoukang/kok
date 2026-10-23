@@ -15,3 +15,8 @@ ai-settings.json
 Thumbs.db
 Desktop.ini
 *.dmp
+
+private-vault/
+*.vault
+*.sealed
+vault-info.json

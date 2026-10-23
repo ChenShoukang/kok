@@ -2,104 +2,69 @@
 
 中文 · [English](README.en.md)
 
-一个轻量的 **Windows 本地资料库**。在简洁的毛玻璃界面中整理视频、照片、音乐、文档和电子书。
+一个轻量的 Windows 本地资料库，在简洁的毛玻璃界面中收藏视频、照片、音乐、文档和电子书。
 
-本地整理不需要账号。原文件按路径收录，不会被移动或复制；日常使用无需联网。可选 AI 翻译会将选中的字幕或正文发送到你配置的 API，按服务商规则计费。
+**v0.3.1** · [下载便携版](https://github.com/ChenShoukang/kok/releases/tag/v0.3.1) · [格式兼容性](docs/FORMATS.md) · [使用模式](docs/MODES.md) · [版本记录](CHANGELOG.md)
 
-![kok 总览](docs/screenshots/overview.jpg)
+![kok 资料库](docs/screenshots/overview.jpg)
 
-**[下载 GitHub 已发布的 Windows 便携版](https://github.com/878kouyier/kok/releases/latest)** · 私有仓库下载时需要登录有权限的 GitHub 账号。
+## 开始使用
 
-文档：[格式兼容性](docs/FORMATS.md) · [开发与测试](docs/DEVELOPMENT.md) · [版本记录](CHANGELOG.md) · [路线图](ROADMAP.md)
+1. 从 Release 下载 `kok-0.3.1-win-x64.zip`，解压到有写入权限的目录，运行 `kok.exe`，保留旁边的文件和文件夹。
+2. 第一次选择纯净或智能模式；资料库里的“私密文件夹”可按需用密码打开。
+3. 拖入文件或文件夹即可按类型收录；也可点击导入，或体验仓库附带的原创示例。
 
-## 使用
+运行环境：**Windows 10 / 11 x64、.NET Framework 4.8、WebView2 Evergreen Runtime**。应用使用已安装的 WebView2，不打包独立 Chromium；缺少运行环境时请从[微软官网](https://developer.microsoft.com/microsoft-edge/webview2/)安装。运行 kok 不需要 Node.js 或 .NET SDK。便携包未签名，请核对随附的 SHA-256。
 
-1. 获取本地便携包 `kok-0.2.1-win-x64.zip`，解压到你有写入权限的目录。
-2. 双击 `kok.exe`。请保留旁边的 DLL、`ui` 和 `samples` 文件夹。
-3. 点击「导入文件」，或打开旁边的菜单选择「导入文件夹」。文件夹会包含子目录，自动跳过重复路径与不支持的文件。
-4. 也可把文件或文件夹直接拖入 kok 窗口，松开导入；可多选，文件夹包含子目录。重复路径和不支持的文件会跳过。
-5. 想先体验时，点击空资料库中的「体验示例资料」，或在设置中添加示例。
+## 使用模式与私密文件夹
 
-**运行环境：Windows 10 / 11 x64、.NET Framework 4.8、微软 WebView2 Evergreen Runtime。** 多数 Windows 11 环境已具备这些组件。如果出现运行环境提示，请从[微软官网下载 WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/)。首次安装运行环境需要联网。应用本身不需要 Python、Node.js、Rust 或 .NET SDK。
+- **纯净模式**：本地视频、照片、音乐、文档和读书，简洁界面，原生层阻止 AI 请求，应用资源离线加载。
+- **智能模式**：本地功能加可选 AI 翻译、内容对话、文件夹扫描和整理预览。进入模式不会调用模型。
+- **私密文件夹**：资料库内的密码保护文件夹，加密文件索引、笔记和封面缓存，关闭 AI；离开窗口、最小化或闲置 5 分钟自动锁定。**原始媒体和文档保留在原位置，不会被加密。** 密码无法找回。详见[模式与私密文件夹](docs/MODES.md)。
 
-未使用代码签名证书，Windows 可能显示未知发布者。请仅从你信任的项目 Release 下载，并核对随附的 SHA-256。
+## 主要功能
 
-## 功能与兼容性
+| 类别 | 功能 |
+| --- | --- |
+| 视频 | 单排玻璃控件、无边框全屏、续播、倍速、静音片段加速、自动匹配外挂字幕、可配置快捷键、封面与右键属性、横竖屏适配 |
+| 音乐 | 专辑唱片架、专辑详情与队列、持续播放、随机与循环、音量及进度 |
+| 照片 | 自适应预览、缩放、旋转、幻灯片；滤镜、色彩调整、裁剪、翻转、撤销与重做、另存 PNG / JPEG |
+| 文档与读书 | 本地 PDF 阅读、DOCX / EPUB / 文本正文、目录与搜索、下划线、荧光标记、插入文字、旁侧想法与笔记、导出 HTML 阅读副本 |
+| 资料整理 | 时间 / 类型 / 自定义分组、分类、收藏、最近打开、搜索；智能模式提供指定文件夹的自动扫描与 AI 分类预览 |
+| 外观 | 中文 / English 切换、浅色 / 深色 / 系统主题、三种常用中文字体、导入 TTF / OTF、玻璃菜单与减少动态效果支持 |
 
-| 类别 | 内置功能 | 范围与限制 |
-| --- | --- | --- |
-| 视频 | 播放、跳转、音量、全屏、续播、0.5×–3× 倍速、静音片段自动加速、同名字幕自动加载 | MP4 / M4V / MOV / MKV 的 H.264 / AAC、WebM 的 VP8 / VP9 / Opus 已实测；其他编码依赖内核与系统。内嵌或位图字幕及特殊编码可使用系统播放器 |
-| 照片 | 缩略图、预览、缩放、旋转、前后切换、幻灯片；滤镜、亮度 / 对比度 / 饱和度 / 色温 / 暗角、裁剪、旋转 / 翻转、撤销 / 重做、另存副本 | 常见 JPG / PNG / GIF / WebP / BMP 等；HEIC / TIFF 等特殊格式可调用系统应用。编辑长边最多 4096 px，原片保留 |
-| 音乐 | 专辑唱片架、专辑详情、专辑队列、持续播放、切歌、随机、单曲循环、音量与续播 | 按文件夹自动组成专辑，可编辑专辑名与歌手；识别 MP3 / WAV / FLAC / M4A / OGG / OPUS 等，实测 MP3 / PCM WAV / FLAC / Vorbis OGG / Opus / AAC M4A / ADTS AAC |
-| 文档 | PDF 文字层与缩放、下划线 / 荧光标记、位置插入文字；DOCX / 文本正文阅读、插入文字、标记与批注 | PDF 使用本地 PDF.js；DOCX 不保留原版式；标记和插入内容保存为阅读副本，原文件保留，可导出 HTML。XLSX / PPTX / DOC 等使用系统应用 |
-| 读书 | EPUB 目录、TXT 分节、字号、三种纸色、续读；选中文字划线 / 荧光标记、旁边的想法弹窗、批注列表 | EPUB 为文字阅读，暂不还原图片、复杂排版与脚注交互；不解密 DRM；MOBI / AZW / FB2 等使用系统应用 |
-| 分类归纳 | 按文件类型与来源文件夹自动归纳；新建主题分类、手动重新归类；收藏、最近打开、搜索、网格 / 列表、排序 | 索引引用原路径；移动或重命名原文件后，请移除旧记录并重新导入 |
-| 字体与界面 | 磨砂玻璃、浅色 / 深色 / 跟随系统；微软雅黑 / 宋体 / 楷体；导入本地 TTF / OTF 字体 | 字体应用于界面和正文阅读，PDF 原始文字不重新排版。导入字体最多 20 MB，需有使用权 |
-| 随手记 | 每个文件独立笔记、每处标记独立想法、本地保存、随索引导出 | 正常关闭预览或窗口时保存当前笔记与进度；断电或强制结束进程可能丢失最后尚未保存的修改 |
+内置打开范围以[格式实测表](docs/FORMATS.md)为准。媒体取决于**容器、编码、内核与系统**，并非 PotPlayer 式全解码器。未来独立解码器目标见[路线图](ROADMAP.md)。不支持的格式可打开已安装的系统应用。
 
-TXT 支持 UTF-8、UTF-16 与 GB18030。文件内容不会作为脚本执行。阅读器对大文本、章节和 XML 设置了读取上限；超过上限时可使用系统应用。
+DOCX / EPUB 为文字阅读，不还原复杂原始排版；扫描 PDF 需外部 OCR；不解密 DRM。标记、插入文字和照片编辑保留原文件，导出副本。字幕支持 SRT、VTT、ASS / SSA 文字兼容、MicroDVD SUB、SBV、LRC、TTML / DFXP、SMI；不提取内嵌或位图字幕，不做语音转字幕。
 
-字幕支持 SRT、VTT、ASS / SSA（文字兼容模式）、MicroDVD SUB、SBV、LRC、TTML / DFXP 和 SAMI SMI。将字幕命名为与视频同名，或者加语言后缀（如 `电影.zh.srt`），放在视频旁边即可自动加载；也可点击「载入字幕」手动选择。ASS 的特效、复杂定位、IDX / SUB 位图字幕不在内置范围。静音加速依据音频音量，不做语义分析或语音转字幕。
+## AI 配置与内容范围
 
-文档插入与批注属于 **kok 阅读副本**：不会写回原 DOCX / PDF。DOCX / 文本可导出含插入正文与标记的 HTML；PDF 可导出批注摘要 HTML。扫描版 PDF 需要先进行 OCR 才能选择文字。照片编辑另存为 PNG 或 JPEG，并自动收录新文件。
+智能模式 → 设置 → AI 服务：选择预设或自定义兼容 Chat Completions 接口，填写地址、模型与密钥，可读取模型列表。提供 DeepSeek、OpenAI、通义千问、硅基流动、智谱、Z.ai、Gemini 兼容接口、Groq、OpenRouter、Ollama、LM Studio 和自定义入口。预设不代表服务商的每种模型都支持所有功能；详见[服务配置](docs/AI_PROVIDERS.md)。
 
-![专辑页面](docs/screenshots/albums.jpg)
-![读书划线与想法](docs/screenshots/reading.jpg)
-![简单照片编辑](docs/screenshots/photo-edit.jpg)
+视频问答使用已加载字幕及可选当前画面，**不会将整段电影上传或完整分析**。文档 / 读书可结合当前内容、选文与笔记问答；长内容会截取并在界面说明。AI 整理可选择仅文件名信息或附带有限正文，预览后确认应用；只改资料库记录，不移动原文件。详见[智能整理](docs/SMART_LIBRARY.md)。
 
-「识别 / 收录」不代表某种容器内的所有编码都可以内置播放。系统应用入口需要你已安装相应软件，例如 VLC、mpv、Office、WPS 或其他阅读器。kok 不包含它们，也不自动安装解码器。
-
-## 轻量化设计
-
-- 原生 WinForms 窗口搭配系统 WebView2，不附带独立 Chromium。
-- C# 后端 + 原生 HTML / CSS / JavaScript，没有前端框架，应用运行时无需 Node.js / npm；PDF.js 资源随包离线提供。
-- 媒体通过可定位的文件流读取，支持 HTTP 字节区间，避免将整个视频读入内存。
-- 缩略图按需在导入时生成并缓存，列表分批显示。
-- Windows 专用实现；当前没有声称提供 macOS / Linux 版本。
-
-体积以实际发布包为准。WebView2 运行时体积不包含在发布包中；运行内存取决于浏览器内核、打开的媒体和资料库大小。
+远程请求仅发送功能所需的选定上下文，按服务商规则计费。自动翻译默认关闭；连接测试也会发送短请求。密钥只在原生层使用，以 Windows DPAPI 加密存入本地 `data/ai-settings.json`，不会返回给网页界面；更改 API 地址后必须重新填写密钥。源码、便携包与 GitHub Release 排除所有个人模型配置、资料库与缓存。
 
 ## 数据与备份
 
-应用目录下的 `data/` 保存索引、笔记、偏好和内核用户数据（含 `library.json`、缩略图缓存、导入字体、AI 配置与译文缓存、WebView2 缓存）。备份可在设置中导出 JSON，也可以在**退出 kok 后**复制整个 `data/`。JSON 导出包含本地文件路径，不包含原文件。恢复时退出 kok，再将有效备份放回 `data/library.json`。
+普通资料库在应用目录 `data/` 保存索引、笔记、设置、字体和缓存；索引引用原路径，移除记录不删除原文件。设置可导出普通 JSON 索引与笔记；关闭 kok 后复制整个 `data/` 可备份完整本地状态。JSON 包含路径，不含原媒体及密钥。
 
-「从资料库移除」只删除索引记录，不删除磁盘上的原文件。资料库读取损坏时会报错并保留原文件，不会自动以空库覆盖。使用不同资料库目录可加 `--data-dir "D:\MykokData"`。
+私密文件夹的设置提供 `.kokvault` 加密备份，包含加密索引、笔记和封面，不含原文件、AI 配置或浏览器缓存。恢复说明和保护边界见[私密文件夹说明](docs/MODES.md)。可用 `--data-dir "D:\MykokData"` 指定独立目录。
 
-## 快捷键
+常用快捷键：`Ctrl K` 搜索，`Esc` 关闭预览，视频 `空格` 暂停、`← / →` 跳转、`F` 全屏，私密文件夹 `Ctrl Shift L` 锁定。视频键位和跳跃秒数可在设置修改。
 
-- `Ctrl K`：搜索。
-- `Esc`：关闭预览或弹窗。
-- 照片预览中的 `← / →`：上一张 / 下一张。
-- 阅读中的 `← / →`：上一节 / 下一节。
-- 音乐中的 `空格`：播放 / 暂停。
-- 视频默认 `空格` 播放 / 暂停，`← / →` 跳跃 10 秒，`↑ / ↓` 调节音量，`F` 全屏。可在设置 → 播放偏好或视频设置中修改 / 关闭。
-- 照片编辑中 `Ctrl Z` 撤销，`Ctrl Shift Z` / `Ctrl Y` 重做。
-
-## 从源码构建
-
-在 Windows PowerShell 或 PowerShell 7 中运行：
+## 构建与检查
 
 ```powershell
 npm ci --omit=optional
+npm run check
 .\build.ps1 -Test
-```
-
-首次构建前需安装 Node.js 24，并执行 `npm ci --omit=optional` 以准备本地 PDF.js 资源。构建使用 Windows 自带的 .NET Framework C# 编译器，无需安装 .NET SDK。首次构建从 NuGet 下载固定版本的微软官方 WebView2 SDK（`1.0.4258.31`），验证 SHA-256 后缓存。输出在 `dist/kok/`。
-
-```powershell
+.\tools\test-desktop.ps1
 .\package.ps1
 ```
 
-生成便携压缩包和 SHA-256 文件，明确排除开发测试程序、用户资料库与内核缓存。
+开发需要 Node.js 24；构建使用 Windows .NET Framework 编译器与固定版本的官方 WebView2 SDK。测试使用独立资料库、静音窗口及本地模拟 AI 服务，不使用个人密钥。打包执行私密文件与密钥模式审计。详见[开发与测试](docs/DEVELOPMENT.md)。
 
-## 验证
+## 许可与参考
 
-`build.ps1 -Test` 运行 59 项原生测试，涵盖去重、中文文件名、编码、持久化、备份、DOCX / EPUB、字节区间、损坏索引保留、批注与插入正文恢复、分类、字幕解析与自动匹配、照片副本保存和原片保护、字体导入，以及密钥加密、翻译分批 / 缓存 / 顺序校验、取消、接口异常、语言偏好与原生文本本地化。
-
-真实 WebView2 桌面窗口的集成检查、全部测试脚本与截图生成见 [开发与测试](docs/DEVELOPMENT.md)。界面测试会重置隔离的测试资料库，请勿指向日常 `data/`。
-
-## 参考项目与许可
-
-研究了以下开源项目的定位与组织方式，代码为本项目独立实现：[MicrosoftEdge / WebView2Samples](https://github.com/MicrosoftEdge/WebView2Samples)（原生窗口与 WebView2 集成）、[tauri-apps / tauri](https://github.com/tauri-apps/tauri)（复用系统 WebView 减小体积的思路，未使用 Tauri）、[johnfactotum / foliate](https://github.com/johnfactotum/foliate)（阅读体验参考，未复制其 GPL 代码）、[mpv-player / mpv](https://github.com/mpv-player/mpv)（媒体播放器功能范围参考）、[mozilla / pdf.js](https://github.com/mozilla/pdf.js)（Apache-2.0，随包打包）。
-
-项目原创源码与示例使用 [MIT License](LICENSE)。WebView2 SDK 使用微软自己的许可，见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+原创代码与示例采用 [MIT](LICENSE)；PDF.js 与 WebView2 的许可见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。参考了 [WebView2Samples](https://github.com/MicrosoftEdge/WebView2Samples) 的宿主集成、[Foliate](https://github.com/johnfactotum/foliate) 的阅读体验与 [mpv](https://github.com/mpv-player/mpv) 的播放器功能范围；不附带外部播放器，也未复制它们的 GPL 实现。

@@ -22,10 +22,16 @@ namespace kok {
             catch(Exception ex) { RuntimeLog.Write("host-error",ex);MessageBox.Show(Localization.Translate(ex.Message,System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName=="en"),Localization.Translate("kok · 无法启动",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName=="en"),MessageBoxButtons.OK,MessageBoxIcon.Error); }
         }
     }
-    public class MainWindow : Form {
+    public partial class MainWindow : Form {
         readonly WebView2 web = new WebView2();
-        readonly Library library;
+        Library library;
+        readonly Library normalLibrary;
         readonly TranslationService translations;
+        readonly System.Windows.Forms.Timer folderTimer=new System.Windows.Forms.Timer { Interval=5000 };
+        CancellationTokenSource folderCancellation,organizationCancellation;
+        List<OrganizeSuggestion> organizationPreview;
+        CancellationTokenSource fileChatCancellation,modelListCancellation;
+        string fileChatJob="";
         readonly Dictionary<string,CancellationTokenSource> translationJobs=new Dictionary<string,CancellationTokenSource>();
         readonly string appDir = AppDomain.CurrentDomain.BaseDirectory;
         bool importing;
@@ -51,21 +57,26 @@ namespace kok {
             int dataIndex=Array.IndexOf(args,"--data-dir");
             if(dataIndex>=0 && dataIndex+1<args.Length) dataDir=Path.GetFullPath(args[dataIndex+1]);
             Directory.CreateDirectory(dataDir);
-            RuntimeLog.Configure(dataDir);RuntimeLog.Write("startup","version=0.2.1 process="+Process.GetCurrentProcess().Id);
+            RuntimeLog.Configure(dataDir);RuntimeLog.Write("startup","version=0.3.1 process="+Process.GetCurrentProcess().Id);
             try { databaseLock=new FileStream(Path.Combine(dataDir,".kok.lock"),FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None); }
             catch(IOException) { throw new InvalidOperationException("这个资料库已经在另一个 kok 窗口中打开，请使用原窗口。\n如需独立窗口，请通过 --data-dir 指定其他资料库。"); }
             library=new Library(dataDir);
+            normalLibrary=library;InitializePrivateWindow();
             translations=new TranslationService(dataDir);
-            FormClosed+=delegate { databaseLock.Dispose(); };
+            folderTimer.Tick+=async delegate {folderTimer.Interval=45000;if(library.AiEnabled&&!privateOpening&&!importing&&!closingPending&&library.HasEnabledFolders())try{await ScanSources();}catch(Exception ex){RuntimeLog.Write("folder-scan-error",ex.GetType().Name);}};
+            folderTimer.Start();
+            FormClosed+=delegate { folderTimer.Dispose(); databaseLock.Dispose(); };
             FormClosing+=HandleWindowClosing;
             web.DefaultBackgroundColor=BackColor; web.Dock=DockStyle.Fill; web.AllowExternalDrop=true; Controls.Add(web);
-            Shown+=async delegate { await Init(); };
+            Load+=async delegate { await Init(); };
         }
         async void HandleWindowClosing(object sender,FormClosingEventArgs e) {
             if(closeReady||engineUnavailable||web.CoreWebView2==null)return;
             e.Cancel=true;if(closingPending)return;
             if(importing){MessageBox.Show(this,L("正在导入文件，请等待本次整理完成后再退出。"),"kok");return;}
             closingPending=true;
+            folderTimer.Stop();if(folderCancellation!=null)folderCancellation.Cancel();if(organizationCancellation!=null)organizationCancellation.Cancel();
+            if(fileChatCancellation!=null)fileChatCancellation.Cancel();if(modelListCancellation!=null)modelListCancellation.Cancel();
             foreach(var job in translationJobs.Values)job.Cancel();
             try {
                 string encoded=await web.CoreWebView2.ExecuteScriptAsync("window.kokSession ? JSON.stringify(window.kokSession()) : '[]'");
@@ -91,8 +102,10 @@ namespace kok {
                 web.CoreWebView2.Settings.AreDevToolsEnabled=debug;
                 web.CoreWebView2.Settings.IsStatusBarEnabled=false;
                 web.CoreWebView2.Settings.AreDefaultContextMenusEnabled=false;
+                web.CoreWebView2.Settings.IsPasswordAutosaveEnabled=false;
+                web.CoreWebView2.Settings.IsGeneralAutofillEnabled=false;
                 web.CoreWebView2.SetVirtualHostNameToFolderMapping("app.kok.local",Path.Combine(appDir,"ui"),CoreWebView2HostResourceAccessKind.DenyCors);
-                web.CoreWebView2.AddWebResourceRequestedFilter("https://media.kok.local/*",CoreWebView2WebResourceContext.All);
+                web.CoreWebView2.AddWebResourceRequestedFilter("*",CoreWebView2WebResourceContext.All);
                 web.CoreWebView2.WebResourceRequested+=Resource;
                 web.CoreWebView2.WebMessageReceived+=Message;
                 web.CoreWebView2.ProcessFailed+=HandleProcessFailed;
@@ -104,7 +117,7 @@ namespace kok {
                 web.CoreWebView2.NewWindowRequested+=delegate(object sender,CoreWebView2NewWindowRequestedEventArgs e){ e.Handled=true; };
                 web.CoreWebView2.NavigationStarting+=delegate(object sender,CoreWebView2NavigationStartingEventArgs e){ if(!e.Uri.StartsWith("https://app.kok.local/",StringComparison.OrdinalIgnoreCase)) e.Cancel=true; };
                 web.CoreWebView2.PermissionRequested+=delegate(object sender,CoreWebView2PermissionRequestedEventArgs e){ e.State=CoreWebView2PermissionState.Deny; };
-                web.CoreWebView2.Navigate("https://app.kok.local/index.html?v=0.2.1");
+                web.CoreWebView2.Navigate("https://app.kok.local/index.html?v=0.3.1-release");
             } catch(Exception ex) { RuntimeLog.Write("engine-init-error",ex);MessageBox.Show(this,L(ex.Message),L("kok · 初始化失败"),MessageBoxButtons.OK,MessageBoxIcon.Error); Close(); }
         }
         void HandleProcessFailed(object sender,CoreWebView2ProcessFailedEventArgs e) {
@@ -114,8 +127,9 @@ namespace kok {
             engineUnavailable=true;
             foreach(var job in translationJobs.Values)job.Cancel();
             if(IsDisposed||Disposing||!IsHandleCreated)return;
-            BeginInvoke((Action)(()=>{
+            BeginInvoke((Action)(async ()=>{
                 if(IsDisposed||Disposing)return;
+                if(library.IsPrivate)try{await LockPrivateVault();}catch(Exception error){RuntimeLog.Write("private-recovery-lock-error",error);ShowEngineError();return;}
                 SetMediaFullScreen(false);
                 if(kind==CoreWebView2ProcessFailedKind.RenderProcessExited) {
                     try { recoveryNotice=true;engineUnavailable=false;web.CoreWebView2.Reload();return; }
@@ -164,15 +178,30 @@ namespace kok {
         static string StringArg(Dictionary<string,object> a,string key) { return a.ContainsKey(key) ? Convert.ToString(a[key]) : ""; }
         async void Message(object sender,CoreWebView2WebMessageReceivedEventArgs e) {
             if(!e.Source.StartsWith("https://app.kok.local/",StringComparison.OrdinalIgnoreCase)) return;
-            string requestId="";
+            string requestId="";bool nativeDialogScope=false;
             try {
                 var message=Library.Json.Deserialize<Dictionary<string,object>>(e.WebMessageAsJson);
                 requestId=StringArg(message,"requestId"); string action=StringArg(message,"action");
                 var a=message.ContainsKey("args") ? message["args"] as Dictionary<string,object> : null;
                 if(a==null) a=new Dictionary<string,object>();
+                if(privateOpening&&!new[]{"diagnostics","vaultStatus","vaultActivity","cancelTranslation","cancelOrganization","cancelFileChat"}.Contains(action))throw new InvalidOperationException("私密文件夹正在打开，请稍候。");
+                nativeDialogScope=new[]{"importFiles","importFolder","importFont","chooseSubtitle","savePhoto","exportTranslation","exportReading","export"}.Contains(action);if(nativeDialogScope)nativeFileDialogOpen=true;
+                if(privateGate&&library.IsPrivate&&!new[]{"lockPrivate","unlockPrivate","vaultStatus","vaultActivity","cancelTranslation","cancelOrganization","cancelFileChat"}.Contains(action))throw new InvalidOperationException("私密资料库正在锁定，请稍候。");
+                if(new[]{"aiConfig","saveAiConfig","aiModels","translate","organizeFiles","chatWithFile","applyOrganization"}.Contains(action))library.RequireAiMode();
                 object result=null;
                 switch(action) {
-                    case "library": result=Library.Json.DeserializeObject(library.Snapshot()); break;
+                    case "appModeState": result=library.ModeState();break;
+                    case "setAppMode": {
+                        library.SetAppMode(StringArg(a,"mode"),a.ContainsKey("acknowledged")&&Convert.ToBoolean(a["acknowledged"]));
+                        if(!library.AiEnabled){foreach(var job in translationJobs.Values.ToArray())job.Cancel();if(fileChatCancellation!=null)fileChatCancellation.Cancel();if(organizationCancellation!=null)organizationCancellation.Cancel();if(modelListCancellation!=null)modelListCancellation.Cancel();if(folderCancellation!=null)folderCancellation.Cancel();organizationPreview=null;}
+                        result=library.ModeState();break;
+                    }
+                    case "library": {var snapshot=Library.Json.Deserialize<Dictionary<string,object>>(library.Snapshot());snapshot["isPrivate"]=library.IsPrivate;if(library.IsPrivate)snapshot["navigation"]=new{items=normalLibrary.Db.items.Select(item=>new{kind=item.kind,collection=item.collection}).ToArray(),collections=normalLibrary.Db.collections};result=snapshot;break;}
+                    case "vaultStatus": result=new{exists=File.Exists(Path.Combine(VaultDirectory,"vault-info.json")),unlocked=library.IsPrivate,autoLockMinutes=5};break;
+                    case "createPrivate": result=await OpenPrivateVault(StringArg(a,"password"),true);break;
+                    case "unlockPrivate": result=await OpenPrivateVault(StringArg(a,"password"),false);break;
+                    case "lockPrivate": await LockPrivateVault();result=true;break;
+                    case "vaultActivity": lastPrivateActivity=DateTime.UtcNow;result=true;break;
                     case "readHelp": result=File.ReadAllText(Path.Combine(appDir,L("README.md")),Encoding.UTF8);break;
                     case "importSamples": {
                         if(importing) throw new InvalidOperationException("正在导入，请稍候。");
@@ -197,11 +226,12 @@ namespace kok {
                     case "importFiles": case "importFolder":
                         if(importing) throw new InvalidOperationException("正在导入，请稍候。");
                         string[] paths;
-                        if(action=="importFiles") {
+                        nativeFileDialogOpen=true;
+                        try{if(action=="importFiles") {
                             using(var dialog=new OpenFileDialog { Multiselect=true, Title=L("选择视频、照片、音乐、文档或电子书"), Filter=L("所有文件|*.*") }) { if(dialog.ShowDialog(this)!=DialogResult.OK) { result=new { cancelled=true }; break; } paths=dialog.FileNames; }
                         } else {
                             using(var dialog=new FolderBrowserDialog { Description=L("选择资料文件夹（包含子文件夹）"), ShowNewFolderButton=false }) { if(dialog.ShowDialog(this)!=DialogResult.OK) { result=new { cancelled=true }; break; } paths=new[]{dialog.SelectedPath}; }
-                        }
+                        }}finally{nativeFileDialogOpen=false;}
                         importing=true; Notify("importing",new { count=0 });
                         try {
                             bool folder=action=="importFolder";
@@ -215,14 +245,46 @@ namespace kok {
                         break;
                     case "update": library.Update(StringArg(a,"id"),(Dictionary<string,object>)a["patch"]); result=true; break;
                     case "remove": library.Remove(StringArg(a,"id")); result=true; break;
-                    case "settings": library.Settings(a); result=true; break;
-                    case "saveVideoCover": result=await Task.Run(()=>library.SaveVideoCover(StringArg(a,"id"),StringArg(a,"image")));break;
+                    case "settings": library.Settings(a);if(library.IsPrivate){var shared=a.Where(pair=>pair.Key=="theme"||pair.Key=="uiLanguage").ToDictionary(pair=>pair.Key,pair=>pair.Value);if(shared.Count>0)normalLibrary.Settings(shared);} result=true; break;
+                    case "saveVideoCover": {var targetLibrary=library;backgroundLibraryWrites++;try{result=await Task.Run(()=>targetLibrary.SaveVideoCover(StringArg(a,"id"),StringArg(a,"image")));}finally{backgroundLibraryWrites--;}break;}
                     case "fileProperties": {
                         var item=RequireEntry(a);var info=new FileInfo(item.path);
                         result=new { name=info.Name,path=info.FullName,size=info.Length,extension=item.ext,modified=info.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss") };break;
                     }
                     case "aiConfig": result=translations.PublicConfig();break;
+                    case "fileDates": await Task.Run(()=>library.FillFileDates());result=true;break;
+                    case "bulkClassify": library.BulkClassify(Library.Json.Deserialize<List<string>>(Library.Json.Serialize(a["ids"])),StringArg(a,"collection"));result=true;break;
+                    case "fileChatHistory": result=library.ChatHistory(StringArg(a,"id"));break;
+                    case "clearFileChat": if(fileChatCancellation!=null)throw new InvalidOperationException("请先停止当前回答。");library.ClearChat(StringArg(a,"id"));result=true;break;
+                    case "cancelFileChat": if(fileChatCancellation!=null&&fileChatJob==StringArg(a,"jobId"))fileChatCancellation.Cancel();result=true;break;
+                    case "chatWithFile": {
+                        if(fileChatCancellation!=null)throw new InvalidOperationException("请先停止当前回答。");var item=RequireEntry(a);string jobId=StringArg(a,"jobId"),question=StringArg(a,"question"),source=StringArg(a,"source");if(jobId.Length<1||jobId.Length>80)throw new InvalidDataException("提问或引用内容过长，请缩小范围。");
+                        using(var cancel=new CancellationTokenSource()){fileChatCancellation=cancel;fileChatJob=jobId;
+                            try{var answer=await translations.ChatAsync(item.name,StringArg(a,"context"),source,question,library.ChatHistory(item.id),StringArg(a,"image"),library.Db.settings.ContainsKey("uiLanguage")&&Convert.ToString(library.Db.settings["uiLanguage"])=="en",cancel.Token,delta=>Notify("fileChatDelta",new{jobId=jobId,text=delta}));cancel.Token.ThrowIfCancellationRequested();library.AddChat(item.id,question,answer,source);result=library.ChatHistory(item.id);}
+                            catch(OperationCanceledException){throw new InvalidOperationException("AI 回答已停止。");}finally{fileChatCancellation=null;fileChatJob="";}
+                        }break;
+                    }
+                    case "sources": result=new {folders=library.Folders(),busy=importing};break;
+                    case "addSource": {
+                        if(importing)throw new InvalidOperationException("正在导入，请稍候。");
+                        using(var dialog=new FolderBrowserDialog{Description=L("选择自动扫描的文件夹"),ShowNewFolderButton=false}){if(dialog.ShowDialog(this)==DialogResult.OK)result=library.AddFolder(dialog.SelectedPath);else result=new{cancelled=true};}break;
+                    }
+                    case "changeSource": library.ChangeFolder(StringArg(a,"id"),a.ContainsKey("enabled")?(bool?)Convert.ToBoolean(a["enabled"]):null);result=true;break;
+                    case "scanSources": result=await ScanSources();break;
+                    case "cancelSourceScan": if(folderCancellation!=null)folderCancellation.Cancel();result=true;break;
+                    case "organizeFiles": {
+                        if(organizationCancellation!=null)throw new InvalidOperationException("AI 正在整理，请等待或取消当前任务。");
+                        var ids=Library.Json.Deserialize<List<string>>(Library.Json.Serialize(a["ids"]));bool content=a.ContainsKey("content")&&Convert.ToBoolean(a["content"]);
+                        using(var cancel=new CancellationTokenSource()){organizationCancellation=cancel;organizationPreview=null;
+                            try{var inputs=await Task.Run(()=>library.OrganizeInputs(ids,content));cancel.Token.ThrowIfCancellationRequested();var rows=await translations.OrganizeAsync(inputs,content,library.Db.settings.ContainsKey("uiLanguage")&&Convert.ToString(library.Db.settings["uiLanguage"])=="en",cancel.Token,(done,total)=>Notify("organizationProgress",new{done=done,total=total}));cancel.Token.ThrowIfCancellationRequested();organizationPreview=rows;result=rows;}
+                            catch(OperationCanceledException){throw new InvalidOperationException("AI 整理已取消。");}finally{organizationCancellation=null;}
+                        }break;
+                    }
+                    case "cancelOrganization": if(organizationCancellation!=null)organizationCancellation.Cancel();result=true;break;
+                    case "applyOrganization": if(organizationPreview==null)throw new InvalidDataException("整理结果已失效，请重新分析。");result=library.ApplyOrganization(organizationPreview,Library.Json.Deserialize<List<string>>(Library.Json.Serialize(a["ids"])));organizationPreview=null;break;
+                    case "editOrganization": library.EditOrganization(StringArg(a,"id"),StringArg(a,"category"),Library.Json.Deserialize<List<string>>(Library.Json.Serialize(a["tags"])),StringArg(a,"summary"));result=true;break;
                     case "saveAiConfig": result=translations.SaveConfig(a);break;
+                    case "aiModels": {if(modelListCancellation!=null)throw new InvalidOperationException("正在读取模型列表，请稍候。");using(var cancel=new CancellationTokenSource()){modelListCancellation=cancel;try{result=await translations.ModelsAsync(a,cancel.Token);}finally{modelListCancellation=null;}}break;}
                     case "splitTranslationText": result=TranslationService.SplitText(StringArg(a,"text"));break;
                     case "cancelTranslation": {CancellationTokenSource job;if(translationJobs.TryGetValue(StringArg(a,"jobId"),out job))job.Cancel();result=true;break;}
                     case "translate": {
@@ -239,7 +301,7 @@ namespace kok {
                         string text=StringArg(a,"text"),format=StringArg(a,"format");if(text.Length>16*1024*1024)throw new InvalidDataException("译文过大。");
                         string extension=format=="srt"?"srt":"txt";
                         using(var dialog=new SaveFileDialog{Title=L("导出译文"),Filter=L(extension=="srt"?"SRT 字幕|*.srt":"文本译文|*.txt"),FileName=StringArg(a,"name")+L("-译文")+"."+extension}){
-                            if(dialog.ShowDialog(this)==DialogResult.OK){string destination=Path.GetFullPath(dialog.FileName);if(library.Db.items.Any(item=>String.Equals(Path.GetFullPath(item.path),destination,StringComparison.OrdinalIgnoreCase)))throw new InvalidDataException("请选择新的文件名，避免覆盖已收录的原文件。");File.WriteAllText(destination,text,new UTF8Encoding(false));result=true;}
+                            if(dialog.ShowDialog(this)==DialogResult.OK){EnsureExportDestination(dialog.FileName);File.WriteAllText(dialog.FileName,text,new UTF8Encoding(false));result=true;}
                         }break;
                     }
                     case "addCollection": library.AddCollection(StringArg(a,"name"));result=true;break;
@@ -258,6 +320,7 @@ namespace kok {
                         string encoded=StringArg(a,"image");if(!encoded.StartsWith("data:image/png;base64,")||encoded.Length>48*1024*1024)throw new InvalidDataException("图片数据无效或过大。");
                         using(var dialog=new SaveFileDialog{Title=L("另存编辑后的照片"),Filter=L("PNG 图片|*.png|JPEG 图片|*.jpg"),FileName=StringArg(a,"name")+L("-编辑")+".png"}) {
                             if(dialog.ShowDialog(this)==DialogResult.OK) {
+                                EnsureExportDestination(dialog.FileName);
                                 byte[] bytes=Convert.FromBase64String(encoded.Substring(22));
                                 library.SaveEditedPhoto(original.path,dialog.FileName,bytes);result=true;
                             }
@@ -265,7 +328,7 @@ namespace kok {
                     }
                     case "exportReading": {
                         string html=StringArg(a,"html");if(html.Length>32*1024*1024)throw new InvalidDataException("导出内容过大。");
-                        using(var dialog=new SaveFileDialog{Title=L("导出带标记的阅读副本"),Filter=L("HTML 阅读副本|*.html"),FileName=StringArg(a,"name")+L("-批注")+".html"}) { if(dialog.ShowDialog(this)==DialogResult.OK){File.WriteAllText(dialog.FileName,html,new UTF8Encoding(false));result=true;} }break;
+                        using(var dialog=new SaveFileDialog{Title=L("导出带标记的阅读副本"),Filter=L("HTML 阅读副本|*.html"),FileName=StringArg(a,"name")+L("-批注")+".html"}) { if(dialog.ShowDialog(this)==DialogResult.OK){EnsureExportDestination(dialog.FileName);File.WriteAllText(dialog.FileName,html,new UTF8Encoding(false));result=true;} }break;
                     }
                     case "read": {
                         Entry item=RequireEntry(a); result=await Task.Run(()=>Library.ReadBook(item)); break;
@@ -277,20 +340,37 @@ namespace kok {
                         Entry item=RequireEntry(a); Process.Start("explorer.exe","/select,\""+item.path+"\""); result=true; break;
                     }
                     case "export": {
+                        if(library.IsPrivate){using(var privateDialog=new SaveFileDialog{Title=L("导出加密私密备份"),Filter=L("私密资料库备份|*.kokvault"),FileName="kok-private-"+DateTime.Now.ToString("yyyyMMdd")+".kokvault"}){if(privateDialog.ShowDialog(this)==DialogResult.OK){ExportPrivateBackup(privateDialog.FileName);result=true;}}break;}
                         using(var dialog=new SaveFileDialog { Title=L("导出资料库索引与笔记"), Filter=L("JSON 资料库|*.json"), FileName="kok-library-"+DateTime.Now.ToString("yyyyMMdd")+".json" }) {
-                            if(dialog.ShowDialog(this)==DialogResult.OK) { File.WriteAllText(dialog.FileName,library.Snapshot(),new UTF8Encoding(false)); result=true; }
+                            if(dialog.ShowDialog(this)==DialogResult.OK) { EnsureExportDestination(dialog.FileName);File.WriteAllText(dialog.FileName,library.Snapshot(),new UTF8Encoding(false)); result=true; }
                         } break;
                     }
-                    case "diagnostics": result=new { engine=web.CoreWebView2.Environment.BrowserVersionString, count=library.Db.items.Count, dataDir=library.DataDir, version="0.2.1", mediaResponseLimit=MediaResponseLimit, logFile=RuntimeLog.FilePath, silentTest=silentTest, window=new { fullScreen=mediaFullScreen, border=FormBorderStyle.ToString(), state=WindowState.ToString(), bounds=new { x=Left,y=Top,width=Width,height=Height }, screen=Screen.FromControl(this).Bounds } }; break;
+                    case "diagnostics": result=new { engine=web.CoreWebView2.Environment.BrowserVersionString, count=library.Db.items.Count, dataDir=library.DataDir, version="0.3.1", mediaResponseLimit=MediaResponseLimit, logFile=RuntimeLog.FilePath, silentTest=silentTest, window=new { handle=Handle.ToInt64(),fullScreen=mediaFullScreen, border=FormBorderStyle.ToString(), state=WindowState.ToString(), bounds=new { x=Left,y=Top,width=Width,height=Height }, screen=Screen.FromControl(this).Bounds } }; break;
                     case "formats": result=Compatibility.Groups; break;
                     default: throw new InvalidOperationException("未知操作。");
                 }
                 Send(new { requestId=requestId, result=result });
-            } catch(Exception ex) { Send(new { requestId=requestId, error=ex.Message }); }
+            } catch(Exception ex) { Send(new { requestId=requestId, error=ex.Message }); }finally{if(nativeDialogScope)nativeFileDialogOpen=false;}
         }
         Entry RequireEntry(Dictionary<string,object> a) { Entry item=library.Find(StringArg(a,"id")); if(item==null || !File.Exists(item.path)) throw new FileNotFoundException("找不到原文件，文件可能已移动。请从资料库移除后重新导入。"); return item; }
+        async Task<ImportResult> ScanSources() {
+            if(importing)throw new InvalidOperationException("正在导入，请稍候。");
+            importing=true;Notify("sourceScan",new{busy=true});
+            using(var cancel=new CancellationTokenSource()){folderCancellation=cancel;
+                try{var report=await Task.Run(()=>library.ScanFolders(appDir,cancel.Token,n=>BeginInvoke((Action)(()=>Notify("sourceScan",new{busy=true,count=n})))));Notify("sourceScan",new{busy=false,added=report.added,errors=report.errors});if(report.added>0)Notify("libraryChanged",null);return report;}
+                catch(OperationCanceledException){library.Save();Notify("sourceScan",new{busy=false,cancelled=true});Notify("libraryChanged",null);return new ImportResult();}
+                catch{Notify("sourceScan",new{busy=false});throw;}
+                finally{importing=false;folderCancellation=null;}
+            }
+        }
         void Resource(object sender,CoreWebView2WebResourceRequestedEventArgs e) {
             try {
+                var requestUri=new Uri(e.Request.Uri);
+                if(privateGate&&requestUri.Host.Equals("media.kok.local",StringComparison.OrdinalIgnoreCase)){RespondError(e,403,"Vault Locked");return;}
+                if(!requestUri.Host.Equals("media.kok.local",StringComparison.OrdinalIgnoreCase)){
+                    if(!library.AiEnabled&&(requestUri.Scheme=="http"||requestUri.Scheme=="https")&&!requestUri.Host.Equals("app.kok.local",StringComparison.OrdinalIgnoreCase))RespondError(e,403,"Offline Mode");
+                    return;
+                }
                 if(e.Request.Method=="OPTIONS") {
                     e.Response=web.CoreWebView2.Environment.CreateWebResourceResponse(new MemoryStream(),204,"No Content","Content-Length: 0\r\nAccess-Control-Allow-Origin: https://app.kok.local\r\nAccess-Control-Allow-Methods: GET, HEAD, OPTIONS\r\nAccess-Control-Allow-Headers: Range\r\nAccess-Control-Max-Age: 600\r\n");return;
                 }
@@ -308,10 +388,10 @@ namespace kok {
                 }
                 string path=parts[0]=="thumb" ? library.ThumbnailPath(item) : parts[0]=="file" ? item.path : null;
                 if(path==null || !File.Exists(path)) { RespondError(e,404,"Not Found"); return; }
-                var file=new FileStream(path,FileMode.Open,FileAccess.Read,FileShare.ReadWrite|FileShare.Delete);
+                Stream file=parts[0]=="thumb"?library.OpenThumbnail(item):(Stream)new FileStream(path,FileMode.Open,FileAccess.Read,FileShare.ReadWrite|FileShare.Delete);
                 long size=file.Length,start=0,end=size-1;
                 string mime=parts[0]=="thumb" ? "image/jpeg" : Mime(item.ext);
-                string headers="Content-Type: "+mime+"\r\nAccept-Ranges: bytes\r\nAccess-Control-Allow-Origin: https://app.kok.local\r\nAccess-Control-Expose-Headers: Content-Range, Accept-Ranges, Content-Length\r\nX-Content-Type-Options: nosniff\r\nCache-Control: no-cache\r\n";
+                string headers="Content-Type: "+mime+"\r\nAccept-Ranges: bytes\r\nAccess-Control-Allow-Origin: https://app.kok.local\r\nAccess-Control-Expose-Headers: Content-Range, Accept-Ranges, Content-Length\r\nX-Content-Type-Options: nosniff\r\nCache-Control: no-store\r\n";
                 string range=e.Request.Headers.Contains("Range") ? e.Request.Headers.GetHeader("Range") : null;
                 bool partial=!String.IsNullOrEmpty(range);
                 if(partial && !TryRange(range,size,out start,out end)) { file.Dispose(); e.Response=web.CoreWebView2.Environment.CreateWebResourceResponse(new MemoryStream(),416,"Range Not Satisfiable",headers+"Content-Range: bytes */"+size+"\r\n"); return; }

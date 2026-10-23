@@ -1,6 +1,6 @@
 $ErrorActionPreference = 'Stop'
 $repo = $env:GITHUB_REPOSITORY
-if ($repo -ne '878kouyier/kok') { throw 'Release publishing is configured for 878kouyier/kok.' }
+if ($repo -ne 'ChenShoukang/kok') { throw 'Release publishing is configured for ChenShoukang/kok.' }
 if (-not $env:GITHUB_TOKEN) { throw 'GITHUB_TOKEN is required inside GitHub Actions.' }
 $headers = @{ Authorization = 'Bearer ' + $env:GITHUB_TOKEN; Accept = 'application/vnd.github+json'; 'X-GitHub-Api-Version' = '2022-11-28' }
 $version = (Get-Content (Join-Path $PSScriptRoot '..\package.json') -Raw | ConvertFrom-Json).version

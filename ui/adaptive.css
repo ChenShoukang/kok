@@ -53,3 +53,6 @@ body[data-theme] .video-workspace:fullscreen{--panel-bg:#1f2b3ce8;--panel-ink:#e
 .preference-check input[type=checkbox]:before{content:'';position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#fff;box-shadow:0 1px 4px #0002;transition:transform .28s var(--ease)}
 .preference-check input[type=checkbox]:checked{background:#7597cc;border-color:#7597cc}.preference-check input[type=checkbox]:checked:before{transform:translateX(12px)}
 @media(prefers-reduced-motion:reduce){.preference-check input[type=checkbox],.preference-check input[type=checkbox]:before{transition:none}}
+
+/* Keep privacy and settings reachable while the library navigation scrolls. */
+.sidebar-scroll{min-height:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;flex:1}.sidebar>.brand,.sidebar-bottom{flex-shrink:0}.sidebar-bottom{margin-top:0}

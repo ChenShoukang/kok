@@ -17,7 +17,8 @@ function setupSettings(){
  $('#theme-select').closest('.setting-row').after(row);$('#font-select').value=state.settings.fontFamily||'system';
  row.insertAdjacentHTML('afterend',`<div class="setting-row"><div>导入字体<small>本地 TTF / OTF，最多 20 MB</small></div><button class="button secondary" data-import-font>${svg('plus')}导入</button></div>`);
  $('#small-dialog .about-details').insertAdjacentHTML('beforebegin','<div class="setting-row"><div>视频操作<small>快捷键、跳跃距离与双击全屏</small></div><button class="button secondary" data-video-preferences>播放偏好</button></div>');
- if(typeof setupTranslationSettings==='function')setupTranslationSettings();
+ if(isSmartMode()&&typeof setupTranslationSettings==='function')setupTranslationSettings();
+ $('#small-dialog .about-details').insertAdjacentHTML('beforebegin','<div class="setting-row smart-settings-row"><div>智能整理<small>文件夹扫描、AI 分类与标签</small></div><button class="button secondary" data-organizer="open">打开</button></div>');
 }
 function newCollection(itemId){showSmall(`<h2>${itemId?'整理到一个分类':'建立自己的分类'}</h2><p class="dialog-description">文件会按类型与来源文件夹自动归纳，也可以按项目、旅行或主题重新整理。</p>${itemId?`<label class="form-label">已有分类<select id="collection-existing"><option value="">不归类</option>${(state.collections||[]).map(n=>`<option data-user-content value="${esc(n)}">${esc(n)}</option>`).join('')}</select></label>`:''}<label class="form-label">${itemId?'或者新建分类':'分类名称'}<input id="collection-name" maxlength="100" placeholder="例如：今年的旅行"></label><button class="button primary dialog-submit" data-save-collection="${itemId||'new'}">保存分类</button>`);if(itemId)$('#collection-existing').value=byId(itemId).collection||'';$('#collection-name').focus();}
 function albumArt(name,large=false){return `<div class="album-art ${large?'large':''}" style="--album-hue:${hashHue(name)}"><div class="album-art-orb"></div><div class="album-vinyl"></div><span>kok</span><small ${name==='未命名专辑'?'':'data-user-content'}>${esc(name)}</small></div>`;}

@@ -1,4 +1,4 @@
-# Format compatibility · kok v0.1.7
+# Format compatibility · kok v0.3.1
 
 [中文](FORMATS.md) · English
 

@@ -51,4 +51,17 @@ npm run test:i18n
 
 `package.ps1` creates `dist/kok-<version>-win-x64.zip` and its SHA-256 file from an explicit allowlist and current resource folders, excluding profiles, credentials, test binaries and temporary data.
 
-Pushes to `main` trigger the [Windows workflow](https://github.com/878kouyier/kok/blob/main/.github/workflows/build.yml). It checks scripts, runs native tests and reads `package.json` plus [release notes](RELEASE_NOTES.md) to publish the matching GitHub Release. `tools/publish-release.ps1` uses the built-in Actions token.
+Pushes to `main` trigger the [Windows workflow](https://github.com/ChenShoukang/kok/blob/main/.github/workflows/build.yml). It checks scripts, runs native tests and reads `package.json` plus [release notes](RELEASE_NOTES.md) to publish the matching GitHub Release. `tools/publish-release.ps1` uses the built-in Actions token.
+
+## v0.3.1 desktop audit
+
+`tools/test-desktop.ps1` launches a fresh isolated profile for each of 16 desktop suites, always with `--debug --test-silent`. It covers core features, translation, languages, motion, drag/drop, workspaces, borderless video, photo/shortcut refinements, menus/covers, actual codec decoding, organization, file chat, private passwords/auto-lock, modes and renderer recovery. Results stay in ignored `test-output/`.
+
+```powershell
+.\tools\test-desktop.ps1
+.\tools\test-desktop.ps1 -Suites private-space,app-modes
+.\tools\audit-release.ps1
+.\tools\audit-release.ps1 -Archive .\dist\kok-0.3.1-win-x64.zip
+```
+
+The native suite covers authenticated private storage and provider credential isolation as well as existing features. AI tests use mock servers only. FFmpeg is a test-only fixture generator, excluded from packages. Packaging audits both the staging directory and final archive; a matching credential pattern fails the build without printing its value.

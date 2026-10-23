@@ -1,6 +1,6 @@
 {
   "name": "kok",
-  "version": "0.2.1",
+  "version": "0.3.1",
   "description": "kok Windows desktop library development tests (not needed to run the app)",
   "private": true,
   "directories": {
@@ -8,7 +8,7 @@
   },
   "scripts": {
     "test:ui": "node tests/ui.cjs && node tests/features.cjs",
-    "check": "node --check ui/app.js && node --check ui/features.js && node --check ui/translation.js && node --check ui/i18n.js && node --check ui/compatibility.js && node --check ui/drop.js && node --check ui/workspaces.js && node --check ui/preferences.js && node --check ui/photo-editor.js && node --check ui/menus.js && node --check ui/video-covers.js && node --check ui/video-properties.js && node tools/check-locales.cjs && node tools/check-docs.cjs",
+    "check": "node --check ui/app.js && node --check ui/features.js && node --check ui/translation.js && node --check ui/i18n.js && node --check ui/compatibility.js && node --check ui/drop.js && node --check ui/workspaces.js && node --check ui/preferences.js && node --check ui/photo-editor.js && node --check ui/menus.js && node --check ui/video-covers.js && node --check ui/video-properties.js && node --check ui/organizer.js && node --check ui/organization-modes.js && node --check ui/media-layout.js && node --check ui/file-assistant.js && node --check ui/app-modes.js && node --check ui/ai-providers.js && node --check ui/private-space.js && node tools/check-locales.cjs && node tools/check-docs.cjs",
     "test:features": "node tests/features.cjs",
     "test:design": "node tests/minimal.cjs",
     "test:translation": "node tests/translation.cjs",
@@ -20,7 +20,13 @@
     "test:recovery": "node tests/recovery.cjs",
     "test:video-layout": "node tests/video-layout.cjs",
     "test:refinements": "node tests/refinements.cjs",
-    "test:menus-covers": "node tests/menus-covers.cjs"
+    "test:menus-covers": "node tests/menus-covers.cjs",
+    "test:organizer": "node tests/organizer.cjs",
+    "test:companion": "node tests/companion.cjs",
+    "test:modes": "node tests/app-modes.cjs",
+    "test:privacy": "node tests/private-space.cjs",
+    "test:desktop": "powershell -ExecutionPolicy Bypass -File tools/test-desktop.ps1",
+    "audit:release": "powershell -ExecutionPolicy Bypass -File tools/audit-release.ps1"
   },
   "keywords": [],
   "author": "",

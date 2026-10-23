@@ -1,7 +1,7 @@
 {
-  "version": "0.1.7",
+  "version": "0.3.1",
   "webView2": "155.0.4283.62",
-  "checkedAt": "2026-10-23T09:34:03.587Z",
+  "checkedAt": "2026-10-23T14:51:30.097Z",
   "method": "Original FFmpeg-generated files imported through the native library; HTMLMediaElement playback advances and image canvas pixels are decoded through the native media route.",
   "results": [
     {

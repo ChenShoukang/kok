@@ -13,7 +13,7 @@ module.exports={chromium:{async connectOverCDP(...args){
    for(const context of browser.contexts()){
      await context.addInitScript(silencePage);
      for(const page of context.pages().filter(page=>page.url().startsWith('https://app.kok.local'))){
-       await page.evaluate(silencePage);await page.waitForFunction(()=>typeof native==='function');
+       await page.evaluate(silencePage);await page.waitForFunction(()=>typeof native==='function'&&!document.body.classList.contains('booting'));
        const diagnostics=await page.evaluate(()=>native('diagnostics'));
        if(!diagnostics.silentTest)throw Error('Start the isolated test window with --debug --test-silent. Media tests will not run with audible output.');
      }

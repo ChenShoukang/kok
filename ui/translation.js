@@ -5,16 +5,9 @@ const translationLanguageLabels={'简体中文':'简体中文','繁體中文':'�
 async function getAiConfig(){if(!aiConfig)aiConfig=await native('aiConfig');return aiConfig;}
 function setupTranslationSettings(){
  const details=$('.about-details');if(!details||$('[data-ai-settings]'))return;
- details.insertAdjacentHTML('beforebegin',`<div class="setting-row"><div>AI 翻译<small>字幕、文档与电子书</small></div><button class="button secondary" data-ai-settings>配置 API</button></div>`);
+ details.insertAdjacentHTML('beforebegin',`<div class="setting-row smart-settings-row"><div>AI 服务<small>翻译、整理与内容对话</small></div><button class="button secondary" data-ai-settings>配置 API</button></div>`);
 }
-async function showAiSettings(){
- const config=await getAiConfig();
- showSmall(`<h2>AI 翻译</h2><p class="dialog-description">连接你使用的大模型服务，翻译字幕、文档和电子书。支持 OpenAI 兼容接口。</p><form id="ai-form"><label class="form-label">API 地址<input id="ai-endpoint" type="url" required value="${esc(config.endpoint)}" placeholder="https://你的服务地址/v1" spellcheck="false"></label><label class="form-label">模型名称<input id="ai-model" required maxlength="200" value="${esc(config.model)}" placeholder="填写服务商提供的模型名称" spellcheck="false"></label><label class="form-label">API 密钥<input id="ai-key" type="password" autocomplete="new-password" maxlength="4096" placeholder="${config.hasKey?'已保存 · 留空保留现有密钥':'填写密钥；本机免密服务可留空'}"></label>${config.hasKey?'<label class="ai-check"><input id="ai-clear-key" type="checkbox">移除已保存的密钥</label>':''}<label class="form-label">目标语言<select id="ai-language">${translationLanguages.map(l=>`<option value="${esc(l)}" ${config.language===l?'selected':''}>${translationLanguageLabels[l]}</option>`).join('')}</select></label><label class="ai-check"><input id="ai-automatic" type="checkbox" ${config.automatic?'checked':''}>自动翻译打开的字幕、章节或 PDF 当前页</label><p class="ai-disclosure">翻译内容会发送到此接口，费用按服务商规则计算。密钥在本机加密保存。</p><div class="ai-form-actions"><button type="button" class="button secondary" id="ai-test">测试连接</button><button type="submit" class="button primary">保存设置</button></div><p id="ai-config-status" class="ai-status" role="status"></p></form>`);
- const form=$('#ai-form');
- async function save(){const next=await native('saveAiConfig',{endpoint:$('#ai-endpoint').value,model:$('#ai-model').value,apiKey:$('#ai-key').value,language:$('#ai-language').value,automatic:$('#ai-automatic').checked,clearKey:!!$('#ai-clear-key')?.checked});$('#ai-key').value='';aiConfig=next;translationAttempt='';return next;}
- form.addEventListener('submit',async e=>{e.preventDefault();const button=form.querySelector('[type=submit]');button.disabled=true;try{await save();await closeSmall();toast('AI 翻译设置已保存。');if(state.viewer)scheduleAutoTranslation();}catch(error){if(form.isConnected)$('#ai-config-status').textContent=error.message;}finally{button.disabled=false;}});
- $('#ai-test').addEventListener('click',async()=>{const button=$('#ai-test');button.disabled=true;try{await save();$('#ai-config-status').textContent='正在测试…';await native('translate',{jobId:uid(),parts:['Hello.'],test:true});if(form.isConnected)$('#ai-config-status').textContent='连接成功，可以开始翻译。';}catch(error){if(form.isConnected)$('#ai-config-status').textContent=error.message;}finally{button.disabled=false;}});
-}
+async function showAiSettings(){if(!isSmartMode())return;await showProviderSettings();}
 function ensureTranslationPanel(){
  if(!$('#translate-button'))$('.viewer-actions').insertAdjacentHTML('afterbegin',`<button class="button secondary translate-toggle hidden" id="translate-button" title="翻译字幕或正文"><span aria-hidden="true">A/文</span>翻译</button>`);
  if($('#translation-panel'))return;
@@ -39,7 +32,7 @@ function beginTranslationView(item){
  $('#translation-export').classList.add('hidden');$('#translation-status').textContent='点击开始翻译';
 }
 function scheduleAutoTranslation(){
- clearTimeout(autoTranslationTimer);const generation=translationGeneration;
+ clearTimeout(autoTranslationTimer);if(!isSmartMode())return;const generation=translationGeneration;
  autoTranslationTimer=setTimeout(async()=>{try{const config=await getAiConfig();if(generation!==translationGeneration||!state.viewer||!config.automatic||!config.model)return;await startTranslation(true);}catch(error){if(generation===translationGeneration)fail(error);}},650);
 }
 function initDocumentTranslation(){if(state.book||pdfState)scheduleAutoTranslation();}
@@ -71,6 +64,7 @@ async function cancelTranslation(){
  if(job.generation===translationGeneration&&!translationJob){if($('#translation-status'))$('#translation-status').textContent='翻译已取消';$('#translation-cancel')?.classList.add('hidden');$('.translation-progress')?.classList.add('hidden');}
 }
 async function startTranslation(automatic=false){
+ if(!isSmartMode())return;
  const generation=translationGeneration,config=await getAiConfig();if(!config.model){if(!automatic)await showAiSettings();return;}
  const source=await translationSource();if(generation!==translationGeneration)return;
  const attempt=JSON.stringify([config.endpoint,config.model,config.language,source.itemId,source.title,source.parts]);

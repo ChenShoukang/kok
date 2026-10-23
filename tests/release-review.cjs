@@ -1,0 +1,20 @@
+const {chromium}=require('./browser.cjs');
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+(async()=>{
+ let browser=await chromium.connectOverCDP('http://127.0.0.1:9225');let page=browser.contexts()[0].pages().find(p=>p.url().startsWith('https://app.kok.local'));
+ const shot=async name=>{await sleep(800);await page.screenshot({path:'docs/screenshots/'+name+'.jpg',type:'jpeg',quality:90,scale:'css'});};
+ async function english(root){const missing=await page.locator(root).evaluate(root=>{const found=[],walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);let n;while(n=walker.nextNode())if(n.nodeValue.trim()&&!I18n.isProtected(n.parentElement)&&!n.parentElement.closest('svg,script,style,textarea')&&n.parentElement.getClientRects().length&&/[\u3400-\u9fff]/.test(n.nodeValue))found.push(n.nodeValue.trim());return found;});assert.deepEqual(missing,[],'New interfaces must have complete English text');}
+ try{
+  await page.setViewportSize({width:1400,height:960});await page.evaluate(async()=>{await native('importSamples');await refresh();await setting({uiLanguage:'zh',theme:'light'});I18n.applyLanguage('zh');applyTheme();navigate('overview');});await shot('overview');
+  await page.evaluate(async()=>{await setting({uiLanguage:'en'});I18n.applyLanguage('en');});await shot('overview-en');await page.locator('#settings-button').click();await page.locator('[data-ai-settings]').click();await page.waitForSelector('#ai-form');await english('#small-dialog');await shot('ai-providers-en');await page.evaluate(()=>closeSmall());
+  await page.evaluate(async()=>{await setting({uiLanguage:'zh'});I18n.applyLanguage('zh');showModeChooser(true);});assert.equal(await page.locator('.mode-card').count(),2);await shot('mode-choice');await page.locator('[data-choose-mode=smart]').click();await page.waitForFunction(()=>!$('#app-mode-dialog').open);await page.evaluate(()=>renderSmartNotice());await page.evaluate(()=>modeDialog().showModal());await shot('mode-notice');await page.evaluate(()=>modeDialog().close());
+  await page.locator('#private-space-toggle').click();await page.waitForSelector('#private-password');await page.evaluate(()=>I18n.applyLanguage('en'));await english('#small-dialog');await shot('private-unlock-en');
+  const password='release-review-temporary-password';await page.locator('#private-password').fill(password);await page.locator('#private-password-confirm').fill(password);await page.locator('#private-unlock-form [type=submit]').click();await page.waitForFunction(()=>state.isPrivate&&!$('#small-dialog').open);await page.evaluate(async()=>{await native('importSamples');await refresh();await native('update',{id:state.items[0].id,patch:{notes:'Synthetic private recovery note'}});});
+  await page.evaluate(async()=>{await setting({uiLanguage:'en'});I18n.applyLanguage('en');});await english('#main');assert.equal(await page.evaluate(()=>document.body.dataset.appMode),'smart');await shot('private-folder-en');
+  const session=await page.context().newCDPSession(page);await Promise.race([session.send('Page.crash').catch(()=>{}),sleep(1200)]);await browser.close();let recovered=false;
+  for(let attempt=0;attempt<15&&!recovered;attempt++){await sleep(400);try{browser=await chromium.connectOverCDP('http://127.0.0.1:9225');page=browser.contexts()[0].pages().find(p=>p.url().startsWith('https://app.kok.local'));await page.waitForFunction(()=>!document.querySelector('#startup')&&state.items.length>0,null,{timeout:3000});assert(!await page.evaluate(()=>state.isPrivate));assert.equal((await page.evaluate(()=>native('vaultStatus'))).unlocked,false);recovered=true;}catch{await browser?.close();}}
+  assert(recovered,'A private renderer crash must recover to the ordinary library with the vault locked');console.log('PASS: current release screenshots, fully English provider/private forms and fail-closed private renderer recovery');
+ }finally{await browser?.close();}
+})().catch(error=>{console.error(error);process.exitCode=1;});

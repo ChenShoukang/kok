@@ -2,6 +2,16 @@
 
 [中文](CHANGELOG.md)
 
+## v0.3.1 · Pure / Smart and a private folder
+
+- First-run Pure / Smart selector, with a password-protected folder inside the ordinary library and consistent glass UI.
+- Pure keeps offline basics and blocks AI natively; Smart explains content sharing and model setup on first use.
+- Password-protected private folder inside the library with encrypted index, notes and covers; locks on deactivation, minimize or idle and exports encrypted backups. Original source files remain in place and are not encrypted.
+- AI setup adds 12 entries, model discovery, local no-key servers and output-limit compatibility. Credentials use Windows DPAPI and are never reused silently across changed endpoints.
+- Selected-folder scanning, AI category/tag previews, timeline/type/custom groups and streamed file chat for videos, documents and books.
+- Orientation-aware previews, efficient streaming updates, translation fixes, original-file export protection, cancellation and private-content cleanup.
+- Reviewed media, annotations, photo edits, responsive layouts, menus and modes; release packages use an allowlist and audit credential patterns and private files.
+
 ## v0.2.1 · Smooth menus, video covers and properties
 
 - Settings and library sorting share animated glass menus with keyboard navigation, themes, Chinese / English and reduced motion.

@@ -47,7 +47,7 @@ const before=Object.fromEntries(originals.map(([,name])=>[name,digest(path.join(
    assert.equal(imported.length,5);assert.deepEqual(new Set(imported.map(i=>i.kind)),new Set(['video','photo','music','document','book']));
    assert.equal(await page.locator('#main h1').innerText(),'资料库');assert(!await page.locator('#file-drop-overlay').evaluate(el=>el.matches(':popover-open')));
    assert.match(await drop(files),/已加入 0 个文件，跳过 5/);console.log('PASS: native-backed multi-file drops, five categories, Unicode paths, unsupported-file skip and duplicate detection');
-   const target=await page.evaluate(()=>state.items.find(i=>i.ext==='PDF').id);await page.evaluate(id=>openItem(id),target);await page.waitForSelector('.pdf-page canvas');
+   const target=await page.evaluate(async()=>{await native('importSamples');await refresh();return state.items.find(i=>i.ext==='PDF').id;});await page.evaluate(id=>openItem(id),target);await page.waitForSelector('.pdf-page canvas');
    const folder=path.dirname(nested);await drag('dragEnter',[folder]);await page.waitForSelector('#file-drop-overlay:popover-open');
    assert(await page.locator('#viewer').evaluate(el=>el.open));assert(await page.locator('#file-drop-overlay').evaluate(el=>el.matches(':popover-open')));
    await drag('drop',[folder]);await page.waitForFunction(root=>state.items.filter(i=>i.path.startsWith(root)).length===7,root);

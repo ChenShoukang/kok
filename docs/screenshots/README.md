@@ -16,3 +16,11 @@
 - [启动页 / Startup](startup.jpg)
 
 重新生成入口见[开发说明](../DEVELOPMENT.md)。 / See the [development guide](../DEVELOPMENT.en.md) for capture tests.
+
+- [使用模式选择 / Mode selector](mode-choice.jpg)
+- [智能模式提示 / Smart-mode notice](mode-notice.jpg)
+
+- [AI 服务 / AI service](ai-providers-en.jpg)
+- [私密文件夹 / Private folder](private-unlock-en.jpg)
+
+- [私密文件夹内容 / Private folder contents](private-folder-en.jpg)

@@ -2,92 +2,69 @@
 
 [中文](README.md) · English
 
-A lightweight **Windows library** for videos, photos, music, documents and books, with a clean glass interface.
+A lightweight Windows library for videos, photos, music, documents and books, with a clean glass interface.
 
-Local organization needs no account or internet connection. Files are referenced by their original paths. Optional AI translation sends selected text to your configured API and is billed by your provider.
+**v0.3.1** · [Download](https://github.com/ChenShoukang/kok/releases/tag/v0.3.1) · [Supported formats](docs/FORMATS.en.md) · [Modes](docs/MODES.en.md) · [Changelog](CHANGELOG.en.md)
 
-**[Download the latest published Windows app](https://github.com/878kouyier/kok/releases/latest)**. Sign in to an authorized GitHub account to download from this private repository.
-
-![Library](docs/screenshots/overview-en.jpg)
-
-Documentation: [formats](docs/FORMATS.en.md) · [development and tests](docs/DEVELOPMENT.en.md) · [changelog](CHANGELOG.en.md) · [roadmap](ROADMAP.en.md)
+![kok library](docs/screenshots/overview-en.jpg)
 
 ## Getting started
 
-1. Get the local portable package `kok-0.2.1-win-x64.zip` and extract it to a writable folder.
-2. Run `kok.exe`. Keep the DLLs, `ui` and `samples` folders beside it.
-3. Select **Import files**, or open its adjacent menu and select **Import folder**. Folder imports include subfolders and skip duplicate paths and unsupported files.
-4. You can also drop files or folders into the kok window. Multiple files and nested folders are supported; duplicates and unsupported files are skipped.
-5. To try the app, choose **Explore sample files** in an empty library, or add samples from Settings.
+1. Download `kok-0.3.1-win-x64.zip` from Releases, extract to a writable folder and run `kok.exe`. Keep the accompanying files and folders.
+2. Choose Pure or Smart on first entry. Open the password-protected Private folder inside your library when needed.
+3. Drop files or folders to import by type, use the import button or explore the original bundled samples.
 
-Requirements: **Windows 10 / 11 x64, .NET Framework 4.8 and Microsoft WebView2 Evergreen Runtime**. If prompted, install WebView2 from [Microsoft](https://developer.microsoft.com/microsoft-edge/webview2/). kok does not require Node.js, Python, Rust or the .NET SDK to run. The app is not code-signed; Windows may identify the publisher as unknown. Use a trusted release and its SHA-256 file.
+Requirements: **Windows 10 / 11 x64, .NET Framework 4.8 and WebView2 Evergreen Runtime**. kok uses the installed runtime rather than bundling Chromium. Install a missing runtime from [Microsoft](https://developer.microsoft.com/microsoft-edge/webview2/). Node.js and the .NET SDK are not runtime requirements. The portable app is unsigned; check its supplied SHA-256.
 
-## AI translation
+## Modes and the private folder
 
-1. Go to **Settings → AI translation → Configure API** and enter the endpoint, model name, API key and target language. Supports OpenAI-compatible Chat Completions endpoints.
-2. **Test connection** sends a short request, then save. Remote services require HTTPS; local services may use localhost without a key.
-3. Open a file and select **Translate**. Documents, books and text PDFs support the current chapter / page or the entire document. Original text and annotations are retained; scanned PDFs need OCR first.
-4. Video translation uses the selected text subtitle track and keeps its timestamps; export bilingual subtitles or translation only as SRT. Embedded or bitmap subtitles and speech transcription are not included.
-5. Optional automatic translation is off by default. Long input is batched, with progress and cancellation; identical requests reuse cached translations.
+- **Pure**: core local media, reading and notes with a simple interface. The native host blocks AI calls and app resources load offline.
+- **Smart**: local features plus optional translation, content chat, watched folders and organization previews. Entering the mode does not call a model.
+- **Private folder**: a password-protected folder inside the library with encrypted index, notes and covers, with AI disabled. Locks on loss of window focus, minimize or five minutes idle. **Original source files stay in place and are not encrypted.** Passwords cannot be recovered. See [Modes and privacy](docs/MODES.en.md).
 
-Keys are encrypted with Windows DPAPI in `data/ai-settings.json` and excluded from exports and packages. Models must support the requested JSON translation format; authentication, quota, truncation and response errors appear in the translation panel.
+## Features
 
-## Features and compatibility
+| Area | Features |
+| --- | --- |
+| Video | One-row glass controls, borderless fullscreen, resume, speed, silence acceleration, sidecar subtitle matching, configurable shortcuts, covers, right-click properties and orientation-aware previews |
+| Music | Album shelf and details, queues, continuous playback, shuffle, repeat, volume and seeking |
+| Photos | Adaptive preview, zoom, rotation, slideshow; filters, color adjustments, crop, flip, undo / redo, PNG / JPEG copies |
+| Documents and books | Local PDF viewer, DOCX / EPUB / text reading, contents and search, underlines, highlights, text insertion, thought popovers and notes, HTML reading-copy export |
+| Organization | Timeline / type / custom groups, collections, favorites, recents and search; Smart adds selected-folder scanning and AI previews |
+| Appearance | Chinese / English, light / dark / system themes, three Chinese fonts, TTF / OTF import, glass menus and reduced-motion support |
 
-| Area | Built-in features | Scope |
-| --- | --- | --- |
-| Video | Playback, seeking, volume, full screen, resume, 0.5×–3× speed, silence acceleration and matching sidecar subtitles | Playback depends on the container and codec. H.264 / AAC in MP4, M4V, MOV and MKV, plus VP8 / VP9 / Opus in WebM, are tested. Use a system player for unsupported codecs. |
-| Photos | Thumbnails, zoom, rotation, browsing, slideshow; presets, color controls, vignette, positioned crop, flip, undo / redo; save a copy | Common JPG, PNG, GIF, WebP and BMP formats. Special formats such as HEIC or TIFF may need a system app. Editing is limited to 4096 px on the long side. |
-| Music | Album shelf, album details and queues, continuous playback, shuffle, repeat, volume and resume | Albums are grouped by folder; edit album and artist names. Common audio formats are indexed; MP3, PCM WAV, FLAC, Vorbis OGG, Opus, AAC M4A and ADTS AAC playback is tested. |
-| Documents | PDF canvas and text layer, zoom, underlines, highlights and inserted annotations; DOCX and text reading and insertion | DOCX original layout is not preserved. Changes belong to the kok reading copy. XLSX, PPTX and legacy DOC use system apps. |
-| Books | EPUB contents, TXT sections, font size, paper themes and resume; highlights, underlines, thought popovers and annotation index | EPUB is text-only. Complex layouts, images, footnotes and DRM decryption are not supported. Other ebook formats may need a system reader. |
-| Organization | File-type and folder grouping, custom collections, favorites, recent files, search, grid / list and sorting | If a source file moves or is renamed, remove its old record and import it again. |
-| Fonts and appearance | Chinese / English, glass surfaces, light / dark / system themes; Microsoft YaHei, SimSun, KaiTi and font import | TTF / OTF files up to 20 MB. Use fonts you are licensed to use. PDF original typography is not reflowed. |
-| Notes | Per-file notes and per-mark thoughts, local persistence and index export | Normal preview or window closing saves edits. Power loss or a forced process termination may lose the latest unsaved changes. |
+See the [measured format matrix](docs/FORMATS.en.md). Media playback depends on **container, codec, runtime and system**; kok does not bundle a full decoder collection. Independent decoding remains a [roadmap goal](ROADMAP.en.md). Unsupported formats can open in an installed system application.
 
-Text supports UTF-8, UTF-16 and GB18030. Imported content is not executed as scripts. Large text, XML and chapters have read limits.
+DOCX / EPUB reading extracts text without complex original layout; scanned PDFs need external OCR and DRM is not decrypted. Annotations, inserted text and photo copies preserve originals. Subtitles: SRT, VTT, ASS / SSA text compatibility, MicroDVD SUB, SBV, LRC, TTML / DFXP and SMI. Embedded / bitmap extraction and speech transcription are not included.
 
-Subtitles: SRT, VTT, ASS / SSA text compatibility, MicroDVD SUB, SBV, LRC, TTML / DFXP and SAMI SMI. Place matching subtitles beside the video, with the same base name or a language suffix such as `movie.en.srt`, or select **Load subtitles**. ASS effects, complex positioning and bitmap IDX / SUB are not supported. Silence acceleration uses audio volume, not speech recognition.
+## AI configuration and context
 
-Document changes belong to a **kok reading copy** and do not overwrite original DOCX or PDF files. Export DOCX / text as annotated HTML, or PDF annotations as an HTML summary. Photo edits are saved as a new PNG or JPEG and added to the library.
+Smart → Settings → AI service: choose a preset or custom Chat Completions-compatible endpoint, enter the model and credential, and optionally load model IDs. Presets include DeepSeek, OpenAI, Qwen, SiliconFlow, BigModel, Z.ai, Gemini compatibility, Groq, OpenRouter, Ollama, LM Studio and Custom. Individual models have different capabilities; see [Provider configuration](docs/AI_PROVIDERS.en.md).
 
-Indexing a format does not guarantee playback of every codec. System-app actions require an appropriate installed application, such as a media player, Office app or ebook reader. kok does not bundle or install them.
+Video chat uses loaded subtitles and an optional current frame; **it does not upload or analyze the entire movie**. Document and book chat can include current content, selected text and notes; long context is sampled with a visible notice. Organization can use names only or limited text, previews changes and waits for application. It updates library records without moving source files. See [Smart library](docs/SMART_LIBRARY.en.md).
 
-## Lightweight design
-
-- Native WinForms with the installed WebView2 runtime; no separately bundled Chromium.
-- C# and plain HTML / CSS / JavaScript; PDF.js is included for offline PDF viewing.
-- Seekable file streams and HTTP byte ranges avoid loading whole videos into memory.
-- Cached thumbnails and batched library cards.
-- This release targets Windows. macOS and Linux builds are not provided.
-
-Release size excludes the installed WebView2 runtime. Memory use depends on the engine, media and library size.
+Remote requests send the selected feature context and follow provider billing. Automatic translation defaults off; connection testing sends a short request. Credentials are used only by the native host, encrypted locally with Windows DPAPI in `data/ai-settings.json` and never returned to the web UI. Changing the endpoint requires entering its credential again. Source, packages and Releases exclude personal configuration, libraries and caches.
 
 ## Data and backups
 
-`data/` stores file paths, favorites, progress, notes, annotations and preferences in `library.json`, plus thumbnails, imported fonts and WebView2 data; AI configuration and translation caches are stored separately. Export a JSON backup from Settings, or close kok and copy the whole `data/` folder. JSON exports include local paths, not original media. To restore, close kok and replace `data/library.json` with a valid backup. Removing an item only removes its index record. A corrupt database is preserved and reported. Use `--data-dir "D:\MykokData"` for a separate library.
+The ordinary `data/` folder stores the index, notes, preferences, fonts and caches. Entries refer to original paths; removing an entry does not delete its source. Export JSON index/notes from Settings, or close kok and copy all of `data/`. JSON includes paths, not media or credentials.
 
-## Shortcuts
+Private folder Settings exports an encrypted `.kokvault` backup containing index, notes and covers, excluding original files, AI configuration and browser caches. See [private backup and protection boundaries](docs/MODES.en.md). Use `--data-dir "D:\MykokData"` for a separate directory.
 
-- **Ctrl K**: search. **Esc**: close a preview or dialog.
-- **← / →**: browse photos or reading chapters.
-- **Space**: play / pause music. Video defaults to Space for playback, left / right for 10-second seeks, up / down for volume, and F for fullscreen. Customize or disable shortcuts in playback preferences.
-- Photo editor: **Ctrl Z** to undo, **Ctrl Shift Z / Ctrl Y** to redo.
+Shortcuts: `Ctrl K` search, `Esc` close, video `Space` pause, arrows seek, `F` fullscreen, and private `Ctrl Shift L` lock. Video shortcuts and seek increments are configurable.
 
 ## Build and verification
 
-On Windows, install Node.js 24, then run:
-
 ```powershell
 npm ci --omit=optional
+npm run check
 .\build.ps1 -Test
+.\tools\test-desktop.ps1
 .\package.ps1
 ```
 
-The build uses the Windows .NET Framework compiler and downloads the pinned official WebView2 SDK `1.0.4258.31`, verifying its SHA-256. Output is in `dist/kok/`. Packaging excludes user data and test executables.
+Development uses Node.js 24, the Windows .NET Framework compiler and a pinned official WebView2 SDK. Desktop tests use isolated libraries, silent windows and mock AI services without personal credentials. Packaging audits private files and credential patterns. See [Development and tests](docs/DEVELOPMENT.en.md).
 
-`build.ps1 -Test` runs 59 native checks; the full integration-test setup and scripts are documented in [development and tests](docs/DEVELOPMENT.en.md). Interface tests modify an isolated test library; do not point them at everyday data.
+## License and references
 
-## References and licenses
-
-Implementation references include [Microsoft WebView2 samples](https://github.com/MicrosoftEdge/WebView2Samples), [PDF.js](https://github.com/mozilla/pdf.js), [epub.js](https://github.com/futurepress/epub.js) and [mpv](https://github.com/mpv-player/mpv). Independent code is used where appropriate; this app does not bundle external players or readers. See `LICENSE` and `THIRD_PARTY_NOTICES.md` for licenses.
+Original code and samples use [MIT](LICENSE); PDF.js and WebView2 terms are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). References include [WebView2Samples](https://github.com/MicrosoftEdge/WebView2Samples) for host integration, [Foliate](https://github.com/johnfactotum/foliate) for reading experience and [mpv](https://github.com/mpv-player/mpv) for player scope. External players and their GPL implementations are not bundled.

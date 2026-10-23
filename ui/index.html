@@ -5,34 +5,44 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https://media.kok.local data: blob:; font-src 'self' https://media.kok.local data:; media-src https://media.kok.local blob:; frame-src https://media.kok.local; connect-src 'self' https://media.kok.local blob:; worker-src 'self' blob:; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'none'">
   <title>kok</title>
-  <link rel="stylesheet" href="styles.css?v=0.2.1">
-  <script defer src="i18n.js?v=0.2.1"></script>
-  <script defer src="app.js?v=0.2.1"></script>
-  <script defer src="features.js?v=0.2.1"></script>
-  <script defer src="translation.js?v=0.2.1"></script>
-  <script defer src="compatibility.js?v=0.2.1"></script>
-  <script defer src="drop.js?v=0.2.1"></script>
-  <script defer src="preferences.js?v=0.2.1"></script>
-  <script defer src="photo-editor.js?v=0.2.1"></script>
-  <script defer src="menus.js?v=0.2.1"></script>
-  <script defer src="video-covers.js?v=0.2.1"></script>
-  <script defer src="video-properties.js?v=0.2.1"></script>
-  <script defer src="workspaces.js?v=0.2.1"></script>
-  <link rel="stylesheet" href="features.css?v=0.2.1">
-  <link rel="stylesheet" href="translation.css?v=0.2.1">
-  <link rel="stylesheet" href="workspaces.css?v=0.2.1">
-  <link rel="stylesheet" href="adaptive.css?v=0.2.1">
-  <link rel="stylesheet" href="menus.css?v=0.2.1">
+  <link rel="stylesheet" href="styles.css?v=0.3.1-release">
+  <script defer src="i18n.js?v=0.3.1-release"></script>
+  <script defer src="app.js?v=0.3.1-release"></script>
+  <script defer src="features.js?v=0.3.1-release"></script>
+  <script defer src="translation.js?v=0.3.1-release"></script>
+  <script defer src="compatibility.js?v=0.3.1-release"></script>
+  <script defer src="drop.js?v=0.3.1-release"></script>
+  <script defer src="preferences.js?v=0.3.1-release"></script>
+  <script defer src="photo-editor.js?v=0.3.1-release"></script>
+  <script defer src="menus.js?v=0.3.1-release"></script>
+  <script defer src="video-covers.js?v=0.3.1-release"></script>
+  <script defer src="video-properties.js?v=0.3.1-release"></script>
+  <script defer src="workspaces.js?v=0.3.1-release"></script>
+  <script defer src="organizer.js?v=0.3.1-release"></script>
+  <link rel="stylesheet" href="organizer.css?v=0.3.1-release">
+  <link rel="stylesheet" href="features.css?v=0.3.1-release">
+  <link rel="stylesheet" href="translation.css?v=0.3.1-release">
+  <link rel="stylesheet" href="workspaces.css?v=0.3.1-release">
+  <link rel="stylesheet" href="adaptive.css?v=0.3.1-release">
+  <link rel="stylesheet" href="menus.css?v=0.3.1-release">
+  <script defer src="organization-modes.js?v=0.3.1-release"></script>
+  <script defer src="media-layout.js?v=0.3.1-release"></script>
+  <script defer src="file-assistant.js?v=0.3.1-release"></script>
+  <link rel="stylesheet" href="companion.css?v=0.3.1-release">
+  <script defer src="app-modes.js?v=0.3.1-release"></script>
+  <script defer src="ai-providers.js?v=0.3.1-release"></script>
+  <script defer src="private-space.js?v=0.3.1-release"></script>
+  <link rel="stylesheet" href="app-modes.css?v=0.3.1-release">
 </head>
-<body class="booting" aria-busy="true">
-  <div id="startup" class="startup" role="status" aria-label="正在启动 kok"><div class="startup-halo" aria-hidden="true"></div><div class="startup-mark"><img src="logo.svg?v=0.2.1" alt="" width="64" height="64"></div></div>
+<body class="booting mode-pending" data-app-mode="pure" aria-busy="true">
+  <div id="startup" class="startup" role="status" aria-label="正在启动 kok"><div class="startup-halo" aria-hidden="true"></div><div class="startup-mark"><img src="logo.svg?v=0.3.1-release" alt="" width="64" height="64"></div></div>
   <aside class="sidebar">
     <div class="nav-indicator" aria-hidden="true"></div>
-    <a class="brand" href="#overview" data-route="overview" aria-label="kok 首页"><img src="logo.svg?v=0.2.1" alt="" width="30" height="30"><span>kok</span></a>
-    <nav id="main-nav" aria-label="资料库分类"></nav>
+    <a class="brand" href="#overview" data-route="overview" aria-label="kok 首页"><img src="logo.svg?v=0.3.1-release" alt="" width="30" height="30"><span>kok</span></a>
+    <div class="sidebar-scroll"><nav id="main-nav" aria-label="资料库分类"></nav>
     <div class="sidebar-rule"></div>
     <nav id="extra-nav" aria-label="快捷访问"></nav>
-    <div class="collections-heading"><span>分类</span><button id="add-collection" class="icon-button" title="新建分类" aria-label="新建分类" data-icon="plus"></button></div><nav id="collections-nav" aria-label="自定义分类"></nav>
+    <div class="collections-heading"><span>分类</span><button id="add-collection" class="icon-button" title="新建分类" aria-label="新建分类" data-icon="plus"></button></div><nav id="collections-nav" aria-label="自定义分类"></nav></div>
     <div class="sidebar-bottom"><button class="nav-item settings-button" id="settings-button"><span data-icon="settings"></span><span>设置</span></button></div>
   </aside>
   <div class="shell">

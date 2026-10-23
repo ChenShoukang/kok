@@ -1,0 +1,32 @@
+'use strict';
+// Presets are public API addresses only. Credentials never appear in this catalog.
+const aiProviders=[
+ {id:'custom',name:'自定义兼容服务',url:'',model:'',hint:'填写提供 Chat Completions 兼容接口的服务地址。'},
+ {id:'deepseek',name:'DeepSeek',url:'https://api.deepseek.com',model:'deepseek-flash'},
+ {id:'openai',name:'OpenAI',url:'https://api.openai.com/v1',model:''},
+ {id:'qwen',name:'通义千问 · 百炼（北京）',url:'https://dashscope.aliyuncs.com/compatible-mode/v1',model:'qwen-plus',hint:'其他地域或业务空间请填写对应服务地址。'},
+ {id:'siliconflow',name:'硅基流动 · SiliconFlow',url:'https://api.siliconflow.cn/v1',model:''},
+ {id:'glm',name:'智谱 · BigModel',url:'https://open.bigmodel.cn/api/paas/v4',model:''},
+ {id:'zai',name:'Z.ai',url:'https://api.z.ai/api/paas/v4',model:''},
+ {id:'gemini',name:'Google Gemini',url:'https://generativelanguage.googleapis.com/v1beta/openai',model:''},
+ {id:'groq',name:'Groq',url:'https://api.groq.com/openai/v1',model:''},
+ {id:'openrouter',name:'OpenRouter',url:'https://openrouter.ai/api/v1',model:''},
+ {id:'ollama',name:'Ollama · 本机',url:'http://localhost:11434/v1',model:'',local:true},
+ {id:'lmstudio',name:'LM Studio · 本机',url:'http://localhost:1234/v1',model:'',local:true}
+];
+function providerFor(endpoint){const normal=s=>s.replace(/\/chat\/completions\/?$/,'').replace(/\/$/,'');return aiProviders.find(p=>p.url&&normal(p.url)===normal(endpoint))||aiProviders[0];}
+async function showProviderSettings(){
+ const config=await getAiConfig(),provider=providerFor(config.endpoint);
+ showSmall(`<h2>AI 服务</h2><p class="dialog-description">翻译、整理和内容对话，共用你选择的模型。支持云端服务与本机模型。</p><form id="ai-form"><label class="form-label">服务商<select id="ai-provider">${aiProviders.map(p=>`<option value="${p.id}" ${p.id===provider.id?'selected':''}>${esc(p.name)}</option>`).join('')}</select></label><p class="ai-provider-hint" id="ai-provider-hint"></p><label class="form-label">API 地址<input id="ai-endpoint" type="url" required value="${esc(config.endpoint)}" placeholder="https://你的服务地址/v1" spellcheck="false"></label><label class="form-label">API 密钥<input id="ai-key" type="password" autocomplete="new-password" maxlength="4096" placeholder="${config.hasKey?'已保存 · 留空保留现有密钥':'填写密钥；本机免密服务可留空'}"></label><label class="ai-check"><input id="ai-clear-key" type="checkbox">移除已保存的密钥</label><div class="ai-model-heading"><label class="form-label" for="ai-model">模型名称</label><button type="button" class="text-button" id="ai-load-models">读取模型列表</button></div><input class="ai-model-input" id="ai-model" required maxlength="200" value="${esc(config.model)}" placeholder="填写服务商提供的模型名称" spellcheck="false"><label id="ai-model-options" class="form-label hidden">可用模型<select id="ai-model-list" aria-label="可用模型"></select></label><label class="form-label">目标语言<select id="ai-language">${translationLanguages.map(l=>`<option value="${esc(l)}" ${config.language===l?'selected':''}>${translationLanguageLabels[l]}</option>`).join('')}</select></label><label class="ai-check"><input id="ai-automatic" type="checkbox" ${config.automatic?'checked':''}>自动翻译打开的字幕、章节或 PDF 当前页</label><details class="ai-advanced"><summary>高级兼容设置</summary><label class="form-label">输出长度参数<select id="ai-token-parameter"><option value="auto">自动选择</option><option value="max_tokens" data-user-content>max_tokens</option><option value="max_completion_tokens" data-user-content>max_completion_tokens</option></select></label></details><p class="ai-disclosure">仅在使用 AI 功能时发送选定内容。密钥在本机加密保存，不随程序发布。画面问答需要支持图片的模型。</p><div class="ai-form-actions"><button type="button" class="button secondary" id="ai-test">测试连接</button><button type="submit" class="button primary">保存设置</button></div><p id="ai-config-status" class="ai-status" role="status"></p></form>`);
+ $('#ai-token-parameter').value=config.tokenParameter||'auto';const form=$('#ai-form'),status=$('#ai-config-status');let revision=0;
+ const changed=()=>{revision++;$('#ai-model-options').classList.add('hidden');$('#ai-model-list').innerHTML='';status.textContent='';};
+ function hint(){const p=aiProviders.find(p=>p.id===$('#ai-provider').value);$('#ai-provider-hint').textContent=p.hint||(p.local?'先在本机启动模型服务，再读取模型列表。':'可读取服务端模型列表，也可直接填写账户支持的模型名称。');I18n.localize($('#ai-provider-hint'));}
+ $('#ai-provider').onchange=()=>{const p=aiProviders.find(p=>p.id===$('#ai-provider').value);changed();if(p.url){$('#ai-endpoint').value=p.url;$('#ai-model').value=p.model;}$('#ai-key').value='';$('#ai-key').placeholder=I18n.text(p.local?'填写密钥；本机免密服务可留空':'填写此服务对应的密钥');$('#ai-clear-key').checked=!!p.local;hint();};
+ $('#ai-endpoint').addEventListener('input',()=>{changed();$('#ai-provider').value=providerFor($('#ai-endpoint').value).id;hint();});$('#ai-key').addEventListener('input',()=>{revision++;});
+ const values=()=>({endpoint:$('#ai-endpoint').value,model:$('#ai-model').value,apiKey:$('#ai-key').value,language:$('#ai-language').value,automatic:$('#ai-automatic').checked,clearKey:$('#ai-clear-key').checked,tokenParameter:$('#ai-token-parameter').value});
+ async function save(){const next=await native('saveAiConfig',values());if(form.isConnected)$('#ai-key').value='';aiConfig=next;translationAttempt='';return next;}
+ $('#ai-load-models').onclick=async()=>{const button=$('#ai-load-models'),generation=revision;button.disabled=true;status.textContent='正在读取模型列表…';try{const models=await native('aiModels',values());if(!form.isConnected||generation!==revision)return;const select=$('#ai-model-list');select.innerHTML='<option value="">选择模型</option>'+models.map(m=>`<option value="${esc(m)}" data-user-content>${esc(m)}</option>`).join('');$('#ai-model-options').classList.remove('hidden');status.textContent=models.length?'模型列表已加载，请选择或手动填写。':'此服务暂无可用模型，请手动填写。';}catch(error){if(form.isConnected&&generation===revision)status.textContent=error.message;}finally{button.disabled=false;}};
+ $('#ai-model-list').onchange=event=>{if(event.target.value)$('#ai-model').value=event.target.value;};
+ form.onsubmit=async event=>{event.preventDefault();const button=form.querySelector('[type=submit]');button.disabled=true;try{await save();await closeSmall();toast('AI 服务设置已保存。');}catch(error){if(form.isConnected)status.textContent=error.message;}finally{button.disabled=false;}};
+ $('#ai-test').onclick=async()=>{const button=$('#ai-test');button.disabled=true;try{await save();status.textContent='正在测试…';await native('translate',{jobId:uid(),parts:['Hello.'],test:true});if(form.isConnected)status.textContent='连接成功，可以开始翻译。';}catch(error){if(form.isConnected)status.textContent=error.message;}finally{button.disabled=false;}};hint();
+}

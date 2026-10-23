@@ -98,6 +98,8 @@ class Tests {
             bool largeCover=false;using(var image=new System.Drawing.Bitmap(641,8))using(var stream=new MemoryStream()){image.Save(stream,System.Drawing.Imaging.ImageFormat.Jpeg);try{lib.SaveVideoCover(coverItem.id,"data:image/jpeg;base64,"+Convert.ToBase64String(stream.ToArray()));}catch(InvalidDataException){largeCover=true;}}Check(largeCover&&coverBefore.SequenceEqual(File.ReadAllBytes(lib.ThumbnailPath(coverItem))),"oversized cover dimensions rejected without replacing the cache");
             bool wrongKind=false;try{lib.SaveVideoCover("not-an-entry",coverData);}catch(InvalidDataException){wrongKind=true;}Check(wrongKind,"cover cache writes require an indexed video");
             TranslationTests.Run(Path.Combine(temp,"ai"),Check);
+            OrganizationTests.Run(Path.Combine(temp,"organization"),Check);
+            PrivacyProviderTests.Run(Path.Combine(temp,"privacy-providers"),Check);
             File.WriteAllText(Path.Combine(lib.DataDir,"library.json"),"bad json"); bool rejected=false;try{new Library(lib.DataDir);}catch(InvalidDataException){rejected=true;}
             Check(rejected&&File.ReadAllText(Path.Combine(lib.DataDir,"library.json"))=="bad json","corrupt database preserved and reported");
             Console.WriteLine(count+" tests passed.");return 0;

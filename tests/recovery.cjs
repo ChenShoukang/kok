@@ -4,7 +4,7 @@ const fs=require('node:fs');
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 (async()=>{
  let browser=await chromium.connectOverCDP('http://127.0.0.1:9225');let page=browser.contexts()[0].pages().find(p=>p.url().startsWith('https://app.kok.local'));
- await page.waitForFunction(()=>!$('#startup'));await page.evaluate(()=>openItem(state.items.find(i=>i.kind==='video').id));await page.waitForFunction(()=>video.readyState>=2);await page.locator('#video-fullscreen').click();await page.waitForFunction(async()=>(await native('diagnostics')).window.fullScreen);const before=await page.evaluate(()=>({count:state.items.length,prefix:requestPrefix}));
+ await page.waitForFunction(()=>!$('#startup'));await page.evaluate(async()=>{await native('importSamples');await refresh();await openItem(state.items.find(i=>i.kind==='video').id);});await page.waitForFunction(()=>video.readyState>=2);await page.locator('#video-fullscreen').click();await page.waitForFunction(async()=>(await native('diagnostics')).window.fullScreen);const before=await page.evaluate(()=>({count:state.items.length,prefix:requestPrefix}));
  const session=await page.context().newCDPSession(page);
  // Crash only this isolated WebView renderer. The native host must survive and restore the library.
  await Promise.race([session.send('Page.crash').catch(()=>{}),sleep(1200)]);await browser.close();

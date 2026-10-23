@@ -43,6 +43,8 @@ if ($Test) {
     foreach ($reference in $references) { $testArgs += '/reference:' + $reference }
     $testArgs += Join-Path $root 'tests\NativeTests.cs'
     $testArgs += Join-Path $root 'tests\TranslationTests.cs'
+    $testArgs += Join-Path $root 'tests\OrganizationTests.cs'
+    $testArgs += Join-Path $root 'tests\PrivacyProviderTests.cs'
     & $compiler $testArgs
     if ($LASTEXITCODE -ne 0) { throw 'Test compilation failed.' }
     & $testExe

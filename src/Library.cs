@@ -20,6 +20,11 @@ namespace kok {
         public string notes = "";
         public bool hasCover;
         public string coverVersion = "";
+        public string aiCategory = "", aiSummary = "", aiFingerprint = "";
+        public List<string> tags = new List<string>();
+        public string modified="";
+        public int width,height;
+        public List<ChatTurn> aiChat=new List<ChatTurn>();
         public List<Annotation> annotations = new List<Annotation>();
         public Dictionary<string,string> chapterTexts = new Dictionary<string,string>();
     }
@@ -32,13 +37,17 @@ namespace kok {
         public Dictionary<string, object> settings = new Dictionary<string, object>();
         public List<string> collections = new List<string>();
         public List<FontAsset> fonts = new List<FontAsset>();
+        public List<WatchFolder> watchFolders = new List<WatchFolder>();
+        public List<string> ignoredAutoPaths = new List<string>();
     }
     public class Chapter { public string title, text; public bool placeholder,generatedTitle; }
     public class Book { public string title; public List<Chapter> chapters = new List<Chapter>(); }
     public class ImportResult { public int added, skipped; public List<string> errors = new List<string>(); }
 
-    public class Library {
+    public partial class Library {
         public readonly string DataDir;
+        readonly VaultSession vault;
+        public bool IsPrivate {get{return vault!=null;}}
         public Database Db;
         private readonly object gate = new object();
         public static readonly JavaScriptSerializer Json = new JavaScriptSerializer { MaxJsonLength = 64 * 1024 * 1024, RecursionLimit = 100 };
@@ -48,23 +57,25 @@ namespace kok {
         }
         static void AddFormats(string kind, string extensions) { foreach (string x in extensions.Split(' ')) Formats["." + x] = kind; }
         public static string Classify(string path) { string kind; return Formats.TryGetValue(Path.GetExtension(path), out kind) ? kind : null; }
-        public Library(string dataDir) {
+        public Library(string dataDir,VaultSession privateVault=null) {
+            vault=privateVault;
             DataDir = dataDir;
             Directory.CreateDirectory(DataDir);
             Directory.CreateDirectory(Path.Combine(DataDir, "thumbs"));
-            string file = Path.Combine(DataDir, "library.json");
+            string file = Path.Combine(DataDir, vault==null?"library.json":"library.vault");
             if (File.Exists(file)) {
-                try { Db = Json.Deserialize<Database>(File.ReadAllText(file, Encoding.UTF8)); if (Db == null || Db.items == null || Db.settings == null) throw new InvalidDataException(); }
-                catch (Exception ex) { throw new InvalidDataException("资料库无法读取。原文件已保留，请检查 data/library.json 或 library.json.bak 备份。", ex); }
-            } else Db = new Database();
+                try { Db = Json.Deserialize<Database>(vault==null?File.ReadAllText(file, Encoding.UTF8):Encoding.UTF8.GetString(vault.Unseal(File.ReadAllBytes(file),"library"))); if (Db == null || Db.items == null || Db.settings == null) throw new InvalidDataException(); }
+                catch (Exception ex) { throw new InvalidDataException(vault==null?"资料库无法读取。原文件已保留，请检查 data/library.json 或 library.json.bak 备份。":"私密资料库校验失败，原数据已保留。", ex); }
+            } else {if(vault!=null&&File.Exists(file+".bak"))throw new InvalidDataException("私密资料库索引缺失，请保留备份并恢复后再试。");Db = new Database();}
+            if(vault!=null)Db.settings["appMode"]="pure";
             foreach(var item in Db.items.Where(x=>x.kind=="video"))item.hasCover=File.Exists(ThumbnailPath(item));
         }
         public string Snapshot() { lock(gate) return Json.Serialize(Db); }
         public Entry Find(string id) { lock(gate) return Db.items.FirstOrDefault(x => x.id == id); }
         public void Save() {
             lock(gate) {
-                string file = Path.Combine(DataDir, "library.json"), temp = file + ".tmp";
-                File.WriteAllText(temp, Json.Serialize(Db), new UTF8Encoding(false));
+                string file = Path.Combine(DataDir, vault==null?"library.json":"library.vault"), temp = file + ".tmp";
+                if(vault==null)File.WriteAllText(temp, Json.Serialize(Db), new UTF8Encoding(false));else File.WriteAllBytes(temp,vault.Seal(Encoding.UTF8.GetBytes(Json.Serialize(Db)),"library"));
                 if (File.Exists(file)) File.Replace(temp, file, file + ".bak"); else File.Move(temp, file);
             }
         }
@@ -80,8 +91,8 @@ namespace kok {
                     if (kind == null || !File.Exists(path) || !known.Add(path)) { result.skipped++; continue; }
                     var info = new FileInfo(path);
                     string folder = new DirectoryInfo(Path.GetDirectoryName(path)).Name;
-                    var entry = new Entry { id = Guid.NewGuid().ToString("N"), path = path, name = Path.GetFileNameWithoutExtension(path), kind = kind, ext = info.Extension.TrimStart('.').ToUpperInvariant(), size = info.Length, added = DateTime.UtcNow.ToString("o"), opened = "", collection = folder=="samples" ? "kok 示例" : folder, album = folder=="samples" ? "kok · 原创音景" : folder };
-                    lock(gate) { Db.items.Add(entry); if(!Db.collections.Contains(entry.collection)) Db.collections.Add(entry.collection); }
+                    var entry = new Entry { id = Guid.NewGuid().ToString("N"), path = path, name = Path.GetFileNameWithoutExtension(path), kind = kind, ext = info.Extension.TrimStart('.').ToUpperInvariant(), size = info.Length, added = DateTime.UtcNow.ToString("o"), modified=info.LastWriteTimeUtc.ToString("o"), opened = "", collection = folder=="samples" ? "kok 示例" : folder, album = folder=="samples" ? "kok · 原创音景" : folder };
+                    lock(gate) { Db.items.Add(entry); Db.ignoredAutoPaths.RemoveAll(x=>String.Equals(x,path,StringComparison.OrdinalIgnoreCase)); if(!Db.collections.Contains(entry.collection)) Db.collections.Add(entry.collection); }
                     result.added++;
                     if (kind == "photo") MakeThumbnail(entry);
                 } catch (Exception ex) { if (result.errors.Count < 20) result.errors.Add(Path.GetFileName(input) + ": " + ex.Message); }
@@ -125,6 +136,7 @@ namespace kok {
                 if(patch.ContainsKey("collection")) { e.collection = Limit(Convert.ToString(patch["collection"]),100); if(e.collection!=""&&!Db.collections.Contains(e.collection))Db.collections.Add(e.collection); }
                 if(patch.ContainsKey("album")) e.album=Limit(Convert.ToString(patch["album"]),200);
                 if(patch.ContainsKey("artist")) e.artist=Limit(Convert.ToString(patch["artist"]),200);
+                if(patch.ContainsKey("width")&&patch.ContainsKey("height")){int width=Convert.ToInt32(patch["width"]),height=Convert.ToInt32(patch["height"]);if(width<1||height<1||width>100000||height>100000)throw new InvalidDataException("媒体尺寸无效。");e.width=width;e.height=height;}
                 if(patch.ContainsKey("annotations")) {
                     var annotations=Json.Deserialize<List<Annotation>>(Json.Serialize(patch["annotations"]));
                     if(annotations==null||annotations.Count>10000)throw new InvalidDataException("标记数量超过上限。");
@@ -140,8 +152,8 @@ namespace kok {
         public void AddCollection(string name) { name=Limit(name.Trim(),100);if(name=="")throw new InvalidDataException("请输入分类名称。");lock(gate){if(!Db.collections.Contains(name))Db.collections.Add(name);Save();} }
         public void DeleteCollection(string name) { lock(gate){Db.collections.Remove(name);foreach(var item in Db.items)if(item.collection==name)item.collection="";Save();} }
         static double Clamp(double n,double a,double b) { return double.IsNaN(n) || double.IsInfinity(n) ? a : Math.Max(a,Math.Min(b,n)); }
-        public void Remove(string id) { lock(gate) { Db.items.RemoveAll(x=>x.id==id); Save(); } }
-        public void Settings(Dictionary<string,object> value) { lock(gate) { foreach(var pair in value) if(new[]{"theme","readerSize","readerTheme","volume","view","sort","loop","shuffle","fontFamily","videoRate","smartSpeed","uiLanguage","readerToc","videoVolume","readerFollowTheme","videoShortcutsEnabled","videoPlayKey","videoSeekKeys","videoSeekSeconds","videoVolumeKeys","videoDoubleClick"}.Contains(pair.Key)) Db.settings[pair.Key] = pair.Value; Save(); } }
+        public void Remove(string id) { lock(gate) { var item=Find(id); if(item!=null&&!Db.ignoredAutoPaths.Contains(item.path))Db.ignoredAutoPaths.Add(item.path); Db.items.RemoveAll(x=>x.id==id); Save(); } }
+        public void Settings(Dictionary<string,object> value) { lock(gate) { foreach(var pair in value) if(new[]{"theme","readerSize","readerTheme","volume","view","sort","loop","shuffle","fontFamily","videoRate","smartSpeed","uiLanguage","readerToc","videoVolume","readerFollowTheme","videoShortcutsEnabled","videoPlayKey","videoSeekKeys","videoSeekSeconds","videoVolumeKeys","videoDoubleClick","organizeMode"}.Contains(pair.Key)) Db.settings[pair.Key] = pair.Value; Save(); } }
         public FontAsset ImportFont(string source) {
             var info=new FileInfo(source);if(info.Length>20*1024*1024)throw new InvalidDataException("字体文件不可超过 20 MB。");
             using(var stream=File.OpenRead(source)){byte[] head=new byte[4];if(stream.Read(head,0,4)!=4||!((head[0]==0&&head[1]==1&&head[2]==0&&head[3]==0)||Encoding.ASCII.GetString(head)=="OTTO"))throw new InvalidDataException("请选择有效的 TTF 或 OTF 字体。");}
@@ -157,7 +169,9 @@ namespace kok {
             }
             Import(new[]{target},null);
         }
-        public string ThumbnailPath(Entry e) { return Path.Combine(DataDir,"thumbs",e.id + ".jpg"); }
+        public string ThumbnailPath(Entry e) { return Path.Combine(DataDir,"thumbs",e.id + (vault==null?".jpg":".sealed")); }
+        public Stream OpenThumbnail(Entry e){return vault==null?(Stream)File.OpenRead(ThumbnailPath(e)):new MemoryStream(vault.Unseal(File.ReadAllBytes(ThumbnailPath(e)),"thumb/"+e.id),false);}
+        void WriteThumbnail(string file,Entry item,byte[] image){File.WriteAllBytes(file,vault==null?image:vault.Seal(image,"thumb/"+item.id));}
         public object SaveVideoCover(string id,string encoded) {
             var item=Find(id);if(item==null||item.kind!="video")throw new InvalidDataException("请选择资料库中的视频。");
             const string prefix="data:image/jpeg;base64,";
@@ -168,7 +182,7 @@ namespace kok {
                 using(var stream=new MemoryStream(bytes))using(var image=Image.FromStream(stream)) {
                     if(image.Width<1||image.Height<1||image.Width>640||image.Height>1280)throw new InvalidDataException("视频封面尺寸无效。");
                     using(var bitmap=new Bitmap(image.Width,image.Height))using(var graphics=Graphics.FromImage(bitmap)) {
-                        graphics.Clear(Color.Black);graphics.DrawImage(image,0,0,image.Width,image.Height);bitmap.Save(temp,System.Drawing.Imaging.ImageFormat.Jpeg);
+                        graphics.Clear(Color.Black);graphics.DrawImage(image,0,0,image.Width,image.Height);using(var output=new MemoryStream()){bitmap.Save(output,System.Drawing.Imaging.ImageFormat.Jpeg);WriteThumbnail(temp,item,output.ToArray());}
                     }
                 }
                 lock(gate) {
@@ -187,7 +201,7 @@ namespace kok {
                     using(var image = new Bitmap(Math.Max(1,(int)(source.Width*scale)),Math.Max(1,(int)(source.Height*scale))))
                     using(var g = Graphics.FromImage(image)) {
                         g.Clear(Color.FromArgb(240,240,235)); g.InterpolationMode = InterpolationMode.HighQualityBicubic; g.DrawImage(source,0,0,image.Width,image.Height);
-                        image.Save(ThumbnailPath(e),System.Drawing.Imaging.ImageFormat.Jpeg);
+                        using(var output=new MemoryStream()){image.Save(output,System.Drawing.Imaging.ImageFormat.Jpeg);WriteThumbnail(ThumbnailPath(e),e,output.ToArray());}
                     }
                 }
             } catch { /* Unsupported images remain accessible through their system application. */ }

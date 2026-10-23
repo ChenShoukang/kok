@@ -14,10 +14,11 @@ namespace kok {
     public class AiConfig {
         public string endpoint="https://api.openai.com/v1",model="",language="简体中文",protectedKey="";
         public bool automatic;
+        public string tokenParameter="auto";
     }
     public class TranslationResult { public List<string> parts; public bool cached; }
     // Credentials stay in Windows DPAPI storage; the web UI receives only hasKey.
-    public class TranslationService {
+    public partial class TranslationService {
         readonly string directory,configPath;
         readonly object gate=new object();
         readonly Func<HttpMessageHandler> handlerFactory;
@@ -27,7 +28,7 @@ namespace kok {
             try{config=File.Exists(configPath)?Library.Json.Deserialize<AiConfig>(File.ReadAllText(configPath,Encoding.UTF8)):new AiConfig();}catch{config=new AiConfig();}
             if(config==null)config=new AiConfig();
         }
-        public object PublicConfig() { lock(gate)return new {endpoint=config.endpoint,model=config.model,language=config.language,automatic=config.automatic,hasKey=!String.IsNullOrEmpty(config.protectedKey)}; }
+        public object PublicConfig() { lock(gate)return new {endpoint=config.endpoint,model=config.model,language=config.language,automatic=config.automatic,tokenParameter=config.tokenParameter,hasKey=!String.IsNullOrEmpty(config.protectedKey)}; }
         static string Value(Dictionary<string,object> values,string key,string fallback) { return values.ContainsKey(key)?Convert.ToString(values[key]):fallback; }
         public static Uri Endpoint(string value) {
             Uri uri;if(!Uri.TryCreate((value??"").Trim(),UriKind.Absolute,out uri)||!String.IsNullOrEmpty(uri.UserInfo)||!String.IsNullOrEmpty(uri.Query)||!String.IsNullOrEmpty(uri.Fragment)||!(uri.Scheme=="https"||(uri.Scheme=="http"&&uri.IsLoopback)))throw new InvalidDataException("请输入 HTTPS 接口地址；本机服务可使用 http://localhost 或 127.0.0.1。");
@@ -36,8 +37,8 @@ namespace kok {
         }
         public object SaveConfig(Dictionary<string,object> values) {
             lock(gate) {
-                var next=new AiConfig {endpoint=Value(values,"endpoint",config.endpoint).Trim(),model=Value(values,"model",config.model).Trim(),language=Value(values,"language",config.language).Trim(),automatic=values.ContainsKey("automatic")?Convert.ToBoolean(values["automatic"]):config.automatic,protectedKey=config.protectedKey};
-                Uri endpoint=Endpoint(next.endpoint);
+                var next=new AiConfig {endpoint=Value(values,"endpoint",config.endpoint).Trim(),model=Value(values,"model",config.model).Trim(),language=Value(values,"language",config.language).Trim(),automatic=values.ContainsKey("automatic")?Convert.ToBoolean(values["automatic"]):config.automatic,protectedKey=config.protectedKey,tokenParameter=Value(values,"tokenParameter",config.tokenParameter??"auto")};
+                Uri endpoint=Endpoint(next.endpoint);if(!new[]{"auto","max_tokens","max_completion_tokens"}.Contains(next.tokenParameter))throw new InvalidDataException("输出参数类型无效。");
                 if(next.model.Length==0||next.model.Length>200||next.language.Length==0||next.language.Length>80)throw new InvalidDataException("请填写模型名称和目标语言。");
                 string key=Value(values,"apiKey","").Trim();bool clear=values.ContainsKey("clearKey")&&Convert.ToBoolean(values["clearKey"]);
                 if(clear)next.protectedKey="";
