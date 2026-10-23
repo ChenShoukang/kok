@@ -11,10 +11,15 @@ try { $existing = Invoke-RestMethod -Uri ($base + '/releases/tags/' + $tag) -Hea
 catch { if ([int]$_.Exception.Response.StatusCode -ne 404) { throw } }
 if ($existing) { Write-Output ('Release already exists: ' + $existing.html_url); exit 0 }
 $notes = @'
-kok Windows x64 便携版：更简洁的界面与独立启动 Logo。
+kok Windows x64 便携版：更柔和的动效、更丰富的玻璃层次、更宽的侧栏与可配置 AI 翻译。
 
-- 精简首页与侧栏，删除装饰性横幅、标语和重复入口。
-- 克制的磨砂玻璃、短时平滑过渡与简洁启动 Logo，支持减少动态效果。
+- 加宽侧栏，分类选中背景平滑移动，适配小窗口。
+- 玻璃 Logo 柔和显现，主界面分层进入；页面采用新旧内容交叠过渡。
+- 统一弹窗、菜单、笔记面板、照片与按钮的动画节奏，快速连续操作可安全打断。
+- 增强侧栏、顶部栏、播放器与批注浮层的毛玻璃，保留减少动态效果支持。
+- 可填写大模型 API 地址、模型与密钥，自动 / 手动翻译字幕、文档、PDF 与电子书。
+- 双语对照、保持字幕时间轴、译文缓存、进度与取消，支持 TXT / SRT 导出。
+- 密钥按当前 Windows 账户加密保存；AI 翻译需联网并按服务商规则计费。
 - 支持浅色和深色。
 - 视频、照片、音乐、文档、读书统一资料库，自动与自定义分类。
 - 视频倍速、静音自动加速、同名文字字幕自动加载。

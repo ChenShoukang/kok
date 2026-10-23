@@ -20,6 +20,8 @@ jobs:
           cache: npm
       - name: Prepare local PDF viewer
         run: npm ci --omit=optional
+      - name: Check interface scripts
+        run: npm run check
       - name: Compile, test and package
         shell: pwsh
         run: ./package.ps1

@@ -21,7 +21,7 @@ $out = Join-Path $root 'dist\kok'
 New-Item -ItemType Directory -Force $out | Out-Null
 $core = Join-Path $sdk 'lib\net462\Microsoft.Web.WebView2.Core.dll'
 $forms = Join-Path $sdk 'lib\net462\Microsoft.Web.WebView2.WinForms.dll'
-$references = @('System.dll','System.Core.dll','System.Drawing.dll','System.Windows.Forms.dll','System.Web.Extensions.dll','System.Xml.dll','System.Xml.Linq.dll','System.IO.Compression.dll','System.IO.Compression.FileSystem.dll',$core,$forms)
+$references = @('System.dll','System.Core.dll','System.Drawing.dll','System.Windows.Forms.dll','System.Web.Extensions.dll','System.Xml.dll','System.Xml.Linq.dll','System.IO.Compression.dll','System.IO.Compression.FileSystem.dll','System.Net.Http.dll','System.Security.dll',$core,$forms)
 $arguments = @('/nologo','/target:winexe','/platform:x64','/optimize+','/utf8output',('/out:' + (Join-Path $out 'kok.exe')))
 if (Test-Path (Join-Path $root 'ui\kok.ico')) { $arguments += '/win32icon:' + (Join-Path $root 'ui\kok.ico') }
 foreach ($reference in $references) { $arguments += '/reference:' + $reference }
@@ -42,6 +42,7 @@ if ($Test) {
     $testArgs = @('/nologo','/target:exe','/platform:x64','/utf8output',('/out:'+$testExe),('/reference:'+(Join-Path $out 'kok.exe')))
     foreach ($reference in $references) { $testArgs += '/reference:' + $reference }
     $testArgs += Join-Path $root 'tests\NativeTests.cs'
+    $testArgs += Join-Path $root 'tests\TranslationTests.cs'
     & $compiler $testArgs
     if ($LASTEXITCODE -ne 0) { throw 'Test compilation failed.' }
     & $testExe

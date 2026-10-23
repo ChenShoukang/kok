@@ -8,11 +8,14 @@
   <link rel="stylesheet" href="styles.css">
   <script defer src="app.js"></script>
   <script defer src="features.js"></script>
+  <script defer src="translation.js"></script>
   <link rel="stylesheet" href="features.css">
+  <link rel="stylesheet" href="translation.css">
 </head>
 <body class="booting" aria-busy="true">
-  <div id="startup" class="startup" role="status" aria-label="正在启动 kok"><img src="logo.svg" alt="" width="64" height="64"></div>
+  <div id="startup" class="startup" role="status" aria-label="正在启动 kok"><div class="startup-halo" aria-hidden="true"></div><div class="startup-mark"><img src="logo.svg" alt="" width="64" height="64"></div></div>
   <aside class="sidebar">
+    <div class="nav-indicator" aria-hidden="true"></div>
     <a class="brand" href="#overview" data-route="overview" aria-label="kok 首页"><img src="logo.svg" alt="" width="30" height="30"><span>kok</span></a>
     <nav id="main-nav" aria-label="资料库分类"></nav>
     <div class="sidebar-rule"></div>

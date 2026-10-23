@@ -68,6 +68,7 @@ class Tests {
             bool protectedPhoto=false;try{lib.SaveEditedPhoto(originalPhoto,originalPhoto,imageBytes);}catch(InvalidDataException){protectedPhoto=true;}Check(protectedPhoto,"photo editor refuses to overwrite original");
             string arial=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Fonts),"arial.ttf");
             if(File.Exists(arial)){var font=lib.ImportFont(arial);Check(File.Exists(font.path)&&new Library(lib.DataDir).Db.fonts.Any(f=>f.id==font.id),"TTF font copied and persisted");}
+            TranslationTests.Run(Path.Combine(temp,"ai"),Check);
             File.WriteAllText(Path.Combine(lib.DataDir,"library.json"),"bad json"); bool rejected=false;try{new Library(lib.DataDir);}catch(InvalidDataException){rejected=true;}
             Check(rejected&&File.ReadAllText(Path.Combine(lib.DataDir,"library.json"))=="bad json","corrupt database preserved and reported");
             Console.WriteLine(count+" tests passed.");return 0;

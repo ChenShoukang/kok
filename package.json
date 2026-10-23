@@ -1,6 +1,6 @@
 {
   "name": "kok",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "kok Windows desktop library development tests (not needed to run the app)",
   "private": true,
   "directories": {
@@ -8,9 +8,10 @@
   },
   "scripts": {
     "test:ui": "node tests/ui.cjs && node tests/features.cjs",
-    "check": "node --check ui/app.js && node --check ui/features.js",
+    "check": "node --check ui/app.js && node --check ui/features.js && node --check ui/translation.js",
     "test:features": "node tests/features.cjs",
-    "test:design": "node tests/minimal.cjs"
+    "test:design": "node tests/minimal.cjs",
+    "test:translation": "node tests/translation.cjs"
   },
   "keywords": [],
   "author": "",

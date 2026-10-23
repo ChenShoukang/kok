@@ -16,6 +16,7 @@ function setupSettings(){
  const row=document.createElement('div');row.className='setting-row';row.innerHTML=`<div>常用字体<small>同时应用于界面与正文阅读</small></div><select id="font-select" aria-label="字体选择">${[['system','系统默认'],['yahei','微软雅黑'],['song','宋体'],['kai','楷体'],...(state.fonts||[]).map(f=>[f.id,f.name])].map(([v,l])=>`<option value="${esc(v)}">${esc(l)}</option>`).join('')}</select>`;
  $('#theme-select').closest('.setting-row').after(row);$('#font-select').value=state.settings.fontFamily||'system';
  row.insertAdjacentHTML('afterend',`<div class="setting-row"><div>导入字体<small>本地 TTF / OTF，最多 20 MB</small></div><button class="button secondary" data-import-font>${svg('plus')}导入</button></div>`);
+ if(typeof setupTranslationSettings==='function')setupTranslationSettings();
 }
 function newCollection(itemId){showSmall(`<h2>${itemId?'整理到一个分类':'建立自己的分类'}</h2><p class="dialog-description">文件会按类型与来源文件夹自动归纳，也可以按项目、旅行或主题重新整理。</p>${itemId?`<label class="form-label">已有分类<select id="collection-existing"><option value="">不归类</option>${(state.collections||[]).map(n=>`<option>${esc(n)}</option>`).join('')}</select></label>`:''}<label class="form-label">${itemId?'或者新建分类':'分类名称'}<input id="collection-name" maxlength="100" placeholder="例如：今年的旅行"></label><button class="button primary dialog-submit" data-save-collection="${itemId||'new'}">保存分类</button>`);if(itemId)$('#collection-existing').value=byId(itemId).collection||'';$('#collection-name').focus();}
 function albumArt(name,large=false){return `<div class="album-art ${large?'large':''}" style="--album-hue:${hashHue(name)}"><div class="album-art-orb"></div><div class="album-vinyl"></div><span>kok</span><small>${esc(name)}</small></div>`;}
@@ -35,6 +36,7 @@ async function initVideoFeatures(item,player){
  speedTimer=setInterval(analyse,120);
  const tracks=await native('subtitles',{id:item.id});if(state.viewer?.id!==item.id)return;
  subtitleTracks=tracks||[];renderSubtitleOptions();if(subtitleTracks.length){$('#subtitle-select').value='0';setSubtitle(0);$('#video-hint').textContent=`自动找到 ${subtitleTracks.length} 份字幕 · ASS/SSA 使用文字兼容模式`;}else $('#video-hint').textContent='自动寻找同名字幕 · 内嵌 / 位图字幕可使用系统播放器';
+ if(typeof scheduleAutoTranslation==='function'&&subtitleTracks.length)scheduleAutoTranslation();
 }
 function renderSubtitleOptions(){const select=$('#subtitle-select');if(!select)return;select.innerHTML='<option value="-1">关闭</option>'+subtitleTracks.map((t,n)=>`<option value="${n}">${esc(t.name)}</option>`).join('');}
 function setSubtitle(index){
@@ -50,6 +52,7 @@ function markedText(item,text,chapter){
  let html='';for(let n=0;n<edges.length-1;n++){const start=edges[n],end=edges[n+1];const active=marks.filter(a=>a.start<end&&a.end>start);const piece=esc(text.slice(start,end));html+=active.length?`<span class="text-mark ${active.map(a=>'mark-'+a.style).join(' ')}" data-mark="${active[0].id}" title="${esc(active[0].note||'点击记录想法')}">${piece}</span>`:piece;}return html;
 }
 function initReadingFeatures(){
+ if(typeof initDocumentTranslation==='function')initDocumentTranslation();
  const tools=$('.reader-tools');if(tools){tools.insertAdjacentHTML('beforeend',`<span>｜</span><button class="icon-button text-tool" data-show-marks>${svg('edit')}标记与想法</button>${state.viewer.kind==='document'?'<button class="icon-button text-tool" data-insert-text>插入文字</button>':''}<button class="icon-button text-tool" data-export-reading title="导出带标记的 HTML 副本">${svg('download')}</button>`);}
  const root=$('#reader-text');if(root){root.addEventListener('mouseup',()=>setTimeout(captureSelection,0));root.addEventListener('keyup',()=>setTimeout(captureSelection,0));}
  renderAnnotationIndex();
@@ -119,8 +122,8 @@ async function renderPdf(item){
   const n=Number(wrapper.dataset.page);if(session.rendered.has(n)||pdfState!==session)return;session.rendered.add(n);
   try{const source=await doc.getPage(n);const viewport=source.getViewport({scale});wrapper.style.height=viewport.height+'px';const canvas=document.createElement('canvas');const density=Math.min(devicePixelRatio,2);canvas.width=Math.floor(viewport.width*density);canvas.height=Math.floor(viewport.height*density);canvas.style.width=viewport.width+'px';canvas.style.height=viewport.height+'px';wrapper.append(canvas);await source.render({canvasContext:canvas.getContext('2d'),viewport,transform:density===1?null:[density,0,0,density,0,0]}).promise;if(pdfState!==session)return;const layer=document.createElement('div');layer.className='textLayer';wrapper.append(layer);const content=await source.getTextContent();const textLayer=new pdfjs.TextLayer({textContentSource:content,container:layer,viewport});await textLayer.render();const marks=document.createElement('div');marks.className='pdf-marks';wrapper.append(marks);layer.addEventListener('mouseup',()=>setTimeout(captureSelection,0));drawPdfMarks(n);}catch(error){if(pdfState===session)toast('第 '+n+' 页无法渲染：'+error.message,true);}
  }
- const observer=new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting)draw(entry.target);},{root:scroll,rootMargin:'400px'});session.observer=observer;scroll.querySelectorAll('.pdf-page').forEach(page=>observer.observe(page));
- scroll.scrollTop=(item.position||0)*Math.max(0,scroll.scrollHeight-scroll.clientHeight);scroll.addEventListener('scroll',()=>{hideSelectionTools();clearTimeout(readerTimer);readerTimer=setTimeout(()=>savePdf().catch(fail),700);});
+ const observer=new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting)draw(entry.target);},{root:scroll,rootMargin:'400px'});session.observer=observer;if(typeof initDocumentTranslation==='function')initDocumentTranslation();scroll.querySelectorAll('.pdf-page').forEach(page=>observer.observe(page));
+ scroll.scrollTop=(item.position||0)*Math.max(0,scroll.scrollHeight-scroll.clientHeight);scroll.addEventListener('scroll',()=>{hideSelectionTools();clearTimeout(readerTimer);readerTimer=setTimeout(()=>savePdf().catch(fail),700);if(typeof scheduleAutoTranslation==='function')scheduleAutoTranslation();});
  scroll.addEventListener('click',e=>{if(!pdfState?.inserting||e.target.closest('[data-mark]'))return;const wrapper=e.target.closest('.pdf-page');if(!wrapper)return;const box=wrapper.getBoundingClientRect();pdfState.insertPoint={page:Number(wrapper.dataset.page),x:(e.clientX-box.left)/box.width,y:(e.clientY-box.top)/box.height};pdfState.inserting=false;scroll.classList.remove('inserting');showSmall(`<h2>在 PDF 上插入文字</h2><p class="dialog-description">文字保存为本地阅读批注，不改变原 PDF。第 ${wrapper.dataset.page} 页。</p><textarea id="pdf-insert-value" class="dialog-textarea" placeholder="输入补充的文字…"></textarea><button class="button primary dialog-submit" data-confirm-pdf-insert>插入并保存</button>`);$('#pdf-insert-value').focus();});
  renderAnnotationIndex();
 }
@@ -141,6 +144,7 @@ function drawPhotoEdit(){
  let w=Math.max(1,Math.round(sw*e.scale)),h=Math.max(1,Math.round(sh*e.scale));const swapped=e.rotation%180!==0;canvas.width=swapped?h:w;canvas.height=swapped?w:h;const ctx=canvas.getContext('2d');ctx.filter=`brightness(${1+e.brightness/100}) contrast(${1+e.contrast/100}) saturate(${1+e.saturation/100})`;ctx.translate(canvas.width/2,canvas.height/2);ctx.rotate(e.rotation*Math.PI/180);ctx.scale(e.flip?-1:1,1);ctx.drawImage(image,sx,sy,sw,sh,-w/2,-h/2,w,h);
 }
 function cleanupFeatures(){
+ if(typeof resetTranslationView==='function')resetTranslationView();
  hideSelectionTools();viewer.querySelector('.mark-popover')?.remove();selectionAnchor=null;photoEditor=null;
  if(pdfState){pdfState.observer?.disconnect();pdfState.doc.loadingTask.destroy().catch(()=>{});pdfState=null;}
  if(speedTimer)clearInterval(speedTimer);speedTimer=null;if(videoAudioContext){videoAudioContext.close().catch(()=>{});videoAudioContext=null;}
@@ -154,26 +158,26 @@ document.addEventListener('click',async e=>{
  try{
   if(el.dataset.collection){state.collection=el.dataset.collection;navigate('collection');return;}
   if(el.dataset.classify){newCollection(el.dataset.classify);return;}
-  if(el.hasAttribute('data-save-collection')){const name=$('#collection-name').value.trim()||$('#collection-existing')?.value||'';const id=el.dataset.saveCollection;if(id==='new'){await native('addCollection',{name});}else await patch(byId(id),{collection:name});$('#small-dialog').close();await refresh();toast('分类已保存。');return;}
+  if(el.hasAttribute('data-save-collection')){const name=$('#collection-name').value.trim()||$('#collection-existing')?.value||'';const id=el.dataset.saveCollection;if(id==='new'){await native('addCollection',{name});}else await patch(byId(id),{collection:name});await closeSmall();await refresh();toast('分类已保存。');return;}
   if(el.dataset.musicMode){state.musicMode=el.dataset.musicMode;render();return;}
   if(el.hasAttribute('data-album')){state.musicAlbum=el.dataset.album;render();return;}
   if(el.hasAttribute('data-album-back')){state.musicAlbum=null;render();return;}
   if(el.hasAttribute('data-play-album')){state.queue=state.items.filter(i=>i.kind==='music'&&albumName(i)===el.dataset.playAlbum);if(state.queue.length)await openItem(state.queue[0].id);return;}
   if(el.dataset.albumEdit){const item=byId(el.dataset.albumEdit);showSmall(`<h2>这一首的归属</h2><p class="dialog-description">专辑名相同的歌曲会归在同一张专辑里。</p><label class="form-label">专辑<input id="album-name" maxlength="200" value="${esc(item.album||'')}"></label><label class="form-label">歌手 / 演奏者<input id="artist-name" maxlength="200" value="${esc(item.artist||'本地音乐')}"></label><button class="button primary dialog-submit" data-save-album="${item.id}">保存</button>`);return;}
-  if(el.dataset.saveAlbum){await patch(byId(el.dataset.saveAlbum),{album:$('#album-name').value.trim(),artist:$('#artist-name').value.trim()});$('#small-dialog').close();state.musicAlbum=null;render();return;}
-  if(el.hasAttribute('data-import-font')){const font=await native('importFont');if(font){await refresh();await setting({fontFamily:font.id});await applyFont();$('#small-dialog').close();toast('字体已导入并应用：'+font.name);}return;}
+  if(el.dataset.saveAlbum){await patch(byId(el.dataset.saveAlbum),{album:$('#album-name').value.trim(),artist:$('#artist-name').value.trim()});await closeSmall();state.musicAlbum=null;render();return;}
+  if(el.hasAttribute('data-import-font')){const font=await native('importFont');if(font){await refresh();await setting({fontFamily:font.id});await applyFont();await closeSmall();toast('字体已导入并应用：'+font.name);}return;}
   if(el.id==='smart-speed'){await setting({smartSpeed:!state.settings.smartSpeed});el.classList.toggle('enabled',!!state.settings.smartSpeed);if(!state.settings.smartSpeed&&video){video.playbackRate=Number(state.settings.videoRate)||1;$('#rate-status').textContent='';}return;}
-  if(el.id==='load-subtitle'){const track=await native('chooseSubtitle');if(track){subtitleTracks.push(track);renderSubtitleOptions();$('#subtitle-select').value=String(subtitleTracks.length-1);setSubtitle(subtitleTracks.length-1);}return;}
+  if(el.id==='load-subtitle'){const track=await native('chooseSubtitle');if(track){subtitleTracks.push(track);renderSubtitleOptions();$('#subtitle-select').value=String(subtitleTracks.length-1);setSubtitle(subtitleTracks.length-1);if(typeof scheduleAutoTranslation==='function')scheduleAutoTranslation();}return;}
   if(el.dataset.addMark){await addMark(el.dataset.addMark);return;}
   if(el.dataset.mark){showMarkPopover(el.dataset.mark);return;}
-  if(el.hasAttribute('data-close-popover')){viewer.querySelector('.mark-popover')?.remove();return;}
-  if(el.dataset.saveMark){const mark=state.viewer.annotations.find(a=>a.id===el.dataset.saveMark);mark.note=$('#mark-note').value;await patch(state.viewer,{annotations:state.viewer.annotations});viewer.querySelector('.mark-popover')?.remove();renderAnnotationIndex();toast('想法已保存。');return;}
-  if(el.dataset.deleteMark){state.viewer.annotations=state.viewer.annotations.filter(a=>a.id!==el.dataset.deleteMark);await patch(state.viewer,{annotations:state.viewer.annotations});viewer.querySelector('.mark-popover')?.remove();if(pdfState)document.querySelectorAll('.pdf-page').forEach(p=>drawPdfMarks(Number(p.dataset.page)));else{const p=readerPosition();renderReader(p);}renderAnnotationIndex();return;}
+  if(el.hasAttribute('data-close-popover')){await dismissElement(viewer.querySelector('.mark-popover'));return;}
+  if(el.dataset.saveMark){const mark=state.viewer.annotations.find(a=>a.id===el.dataset.saveMark);mark.note=$('#mark-note').value;await patch(state.viewer,{annotations:state.viewer.annotations});await dismissElement(viewer.querySelector('.mark-popover'));renderAnnotationIndex();toast('想法已保存。');return;}
+  if(el.dataset.deleteMark){state.viewer.annotations=state.viewer.annotations.filter(a=>a.id!==el.dataset.deleteMark);await patch(state.viewer,{annotations:state.viewer.annotations});await dismissElement(viewer.querySelector('.mark-popover'));if(pdfState)document.querySelectorAll('.pdf-page').forEach(p=>drawPdfMarks(Number(p.dataset.page)));else{const p=readerPosition();renderReader(p);}renderAnnotationIndex();return;}
   if(el.hasAttribute('data-show-marks')){$('#notes-panel').classList.remove('hidden');viewer.classList.add('notes-open');renderAnnotationIndex();return;}
   if(el.dataset.jumpMark){const mark=state.viewer.annotations.find(a=>a.id===el.dataset.jumpMark);if(!mark)return;if(pdfState){$(`.pdf-page[data-page="${mark.page}"]`)?.scrollIntoView({block:'center'});}else if(mark.chapter!==state.chapter)await changeChapter(mark.chapter);const span=viewer.querySelector(`[data-mark="${mark.id}"]`);span?.scrollIntoView({block:'center'});showMarkPopover(mark.id);return;}
   if(el.hasAttribute('data-insert-text')){insertTextDialog();return;}
-  if(el.hasAttribute('data-confirm-insert')){const text=$('#insert-value').value;const at=Number(el.dataset.confirmInsert);$('#small-dialog').close();await insertDocumentText(at,text);return;}
-  if(el.hasAttribute('data-confirm-pdf-insert')){const text=$('#pdf-insert-value').value;if(!text.trim())return;const point=pdfState.insertPoint;const mark={id:uid(),style:'insert',text,note:'',page:point.page,chapter:0,start:0,end:0,rects:[],x:point.x,y:point.y};state.viewer.annotations=state.viewer.annotations||[];state.viewer.annotations.push(mark);await patch(state.viewer,{annotations:state.viewer.annotations});$('#small-dialog').close();drawPdfMarks(point.page);renderAnnotationIndex();toast('文字已保存为 PDF 阅读批注。');return;}
+  if(el.hasAttribute('data-confirm-insert')){const text=$('#insert-value').value;const at=Number(el.dataset.confirmInsert);await closeSmall();await insertDocumentText(at,text);return;}
+  if(el.hasAttribute('data-confirm-pdf-insert')){const text=$('#pdf-insert-value').value;if(!text.trim())return;const point=pdfState.insertPoint;const mark={id:uid(),style:'insert',text,note:'',page:point.page,chapter:0,start:0,end:0,rects:[],x:point.x,y:point.y};state.viewer.annotations=state.viewer.annotations||[];state.viewer.annotations.push(mark);await patch(state.viewer,{annotations:state.viewer.annotations});await closeSmall();drawPdfMarks(point.page);renderAnnotationIndex();toast('文字已保存为 PDF 阅读批注。');return;}
   if(el.hasAttribute('data-export-reading')){await exportReading();return;}
   if(el.hasAttribute('data-photo-edit')){await startPhotoEditor();return;}
   if(el.hasAttribute('data-edit-rotate')){photoEditor.rotation=(photoEditor.rotation+90)%360;drawPhotoEdit();return;}
@@ -183,7 +187,7 @@ document.addEventListener('click',async e=>{
  }catch(error){fail(error);}
 });
 document.addEventListener('change',async e=>{
- try{if(e.target.id==='font-select'){await setting({fontFamily:e.target.value});await applyFont();}if(e.target.id==='video-rate'){await setting({videoRate:Number(e.target.value)});video.playbackRate=Number(e.target.value);}if(e.target.id==='subtitle-select')setSubtitle(Number(e.target.value));if(e.target.id==='crop-ratio'){photoEditor.ratio=e.target.value;drawPhotoEdit();}if(e.target.id==='pdf-zoom'&&pdfState){await savePdf();state.pdfZoom=Number(e.target.value);pdfState.observer.disconnect();await pdfState.doc.loadingTask.destroy();pdfState=null;await renderPdf(state.viewer);}}catch(error){fail(error);}
+ try{if(e.target.id==='font-select'){await setting({fontFamily:e.target.value});await applyFont();}if(e.target.id==='video-rate'){await setting({videoRate:Number(e.target.value)});video.playbackRate=Number(e.target.value);}if(e.target.id==='subtitle-select'){setSubtitle(Number(e.target.value));if(typeof scheduleAutoTranslation==='function'&&!subtitleTracks[Number(e.target.value)]?.translated)scheduleAutoTranslation();}if(e.target.id==='crop-ratio'){photoEditor.ratio=e.target.value;drawPhotoEdit();}if(e.target.id==='pdf-zoom'&&pdfState){await savePdf();state.pdfZoom=Number(e.target.value);pdfState.observer.disconnect();await pdfState.doc.loadingTask.destroy();pdfState=null;await renderPdf(state.viewer);}}catch(error){fail(error);}
 });
 document.addEventListener('input',e=>{if(e.target.dataset.edit&&photoEditor){const key=e.target.dataset.edit;photoEditor[key]=Number(e.target.value);$('#'+key+'-value').textContent=e.target.value;drawPhotoEdit();}});
 // The native window asks for this synchronous snapshot before closing.

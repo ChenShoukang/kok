@@ -1,0 +1,49 @@
+const {chromium}=require('playwright-core');
+const assert=require('node:assert/strict');
+const http=require('node:http');
+const fs=require('node:fs');
+const path=require('node:path');
+(async()=>{
+ let mode='ok',calls=0,authenticated=false;const routes=[];
+ const server=http.createServer(async(req,res)=>{
+  let raw='';for await(const chunk of req)raw+=chunk;
+  calls++;authenticated=req.headers.authorization==='Bearer kok-test-only-not-a-real-key';routes.push(req.url);
+  if(mode==='delay')await new Promise(r=>setTimeout(r,1600));
+  if(mode==='429'){res.writeHead(429);res.end('not displayed');return;}
+  const body=JSON.parse(raw),parts=JSON.parse(body.messages[1].content);
+  const translations=parts.map(p=>({id:p.id,text:'译文：'+p.text})).reverse();
+  res.setHeader('Content-Type','application/json');res.end(JSON.stringify({choices:[{finish_reason:'stop',message:{content:JSON.stringify({translations})}}]}));
+ });
+ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+ const endpoint=`http://127.0.0.1:${server.address().port}/v1`;
+ let browser,page;const errors=[];
+ try{
+  browser=await chromium.connectOverCDP('http://127.0.0.1:9225');page=browser.contexts()[0].pages().find(p=>p.url().startsWith('https://app.kok.local'));
+  page.on('pageerror',error=>errors.push(error.message));await page.reload();await page.waitForFunction(()=>!document.querySelector('#startup'));await page.setViewportSize({width:1440,height:1000});
+  await page.evaluate(async()=>{await native('importSamples');await refresh();});
+  await page.locator('#settings-button').click();await page.locator('[data-ai-settings]').click();
+  await page.locator('#ai-endpoint').fill(endpoint);await page.locator('#ai-model').fill('kok-test-model');await page.locator('#ai-key').fill('kok-test-only-not-a-real-key');await page.locator('#ai-test').click();await page.waitForFunction(()=>$('#ai-config-status').textContent.includes('连接成功'));
+  assert(authenticated);assert(routes.every(route=>route==='/v1/chat/completions'));
+  await page.locator('#ai-form [type=submit]').click();await page.waitForFunction(()=>!$('#small-dialog').open);
+  const config=await page.evaluate(()=>native('aiConfig'));assert.equal(config.hasKey,true);assert(!JSON.stringify(config).includes('kok-test-only'));assert(!JSON.stringify(await page.evaluate(()=>native('library'))).includes('kok-test-only'));
+  console.log('PASS: provider configuration, encrypted native credential, connection test and redacted UI/exports');
+  const items=await page.evaluate(()=>state.items.map(i=>({id:i.id,ext:i.ext,kind:i.kind})));const doc=items.find(i=>i.ext==='DOCX'),pdf=items.find(i=>i.ext==='PDF'),movie=items.find(i=>i.kind==='video'),photo=items.find(i=>i.kind==='photo'),book=items.find(i=>i.ext==='EPUB');
+  await page.evaluate(id=>openItem(id),doc.id);await page.waitForSelector('#reader-text');const original=await page.locator('#reader-text').innerText();await page.locator('#translate-button').click();await page.waitForSelector('.translation-text');assert.equal(await page.locator('#reader-text').innerText(),original);assert((await page.locator('.translation-text').first().innerText()).startsWith('译文：'));
+  const beforeCache=calls;await page.locator('#translation-start').click();await page.waitForFunction(()=>$('#translation-status').textContent.includes('已读取本地译文'));assert.equal(calls,beforeCache);
+  await page.evaluate(()=>{window.translationNative=native;native=(action,args)=>action==='exportTranslation'?(window.lastTranslationExport=args,Promise.resolve(true)):window.translationNative(action,args);});
+  await page.locator('#translation-export').click();const exported=await page.evaluate(()=>lastTranslationExport);assert.equal(exported.format,'txt');assert(exported.text.includes(original.slice(0,30)));await page.evaluate(()=>{native=window.translationNative;});
+  await page.screenshot({path:'test-output/translation-document.png',scale:'css'});console.log('PASS: document bilingual translation, original preservation, persistent cache and text export');
+  await page.evaluate(id=>openItem(id),pdf.id);await page.waitForSelector('.textLayer span');await page.locator('#translate-button').click();await page.waitForSelector('.translation-text');assert.match(await page.locator('#translation-status').innerText(),/第 1 页/);await page.locator('#translation-scope').selectOption('all');await page.waitForFunction(()=>$('#translation-status').textContent.includes('整份文档')&&!translationJob);console.log('PASS: PDF text extraction and current-page/full-document translation');
+  await page.evaluate(async()=>{await native('saveAiConfig',{automatic:true});aiConfig=null;});await page.evaluate(id=>openItem(id),movie.id);await page.waitForFunction(()=>subtitleTracks.some(t=>t.translated));
+  const tracks=await page.evaluate(()=>subtitleTracks);const translated=tracks.find(t=>t.translated),source=tracks[translated.sourceIndex];assert.deepEqual(translated.cues.map(c=>[c.start,c.end]),source.cues.map(c=>[c.start,c.end]));assert(translated.cues.every((c,n)=>c.text.includes(source.cues[n].text)&&c.text.includes('译文：')));
+  const beforeToggle=calls;await page.locator('#translation-bilingual').uncheck();assert.equal(calls,beforeToggle);await page.waitForFunction(()=>$('#video').textTracks[0]?.cues?.length>0);
+  await page.evaluate(()=>{window.translationNative=native;native=(action,args)=>action==='exportTranslation'?(window.lastTranslationExport=args,Promise.resolve(true)):window.translationNative(action,args);});await page.locator('#translation-export').click();const subtitle=await page.evaluate(()=>lastTranslationExport);assert.equal(subtitle.format,'srt');assert.match(subtitle.text,/\d{2}:\d{2}:\d{2},\d{3} --> /);await page.evaluate(()=>{native=window.translationNative;});
+  console.log('PASS: automatic subtitle translation, unchanged timing, bilingual track switch and SRT export');
+  await page.evaluate(async()=>{await native('saveAiConfig',{automatic:false,language:'English'});aiConfig=null;});mode='delay';const beforeCancel=calls;await page.evaluate(()=>{startTranslation(false);});await page.waitForFunction(()=>translationJob!==null);for(let n=0;calls===beforeCancel&&n<30;n++)await new Promise(r=>setTimeout(r,30));await page.locator('#translation-cancel').click();await page.waitForFunction(()=>translationJob===null);await page.waitForTimeout(1750);assert.equal(await page.locator('.translation-text').count(),0);assert.match(await page.locator('#translation-status').innerText(),/取消/);
+  mode='429';await page.locator('#translation-start').click();await page.waitForFunction(()=>$('#translation-status').textContent.includes('额度'));assert.equal(await page.locator('.translation-text').count(),0);console.log('PASS: request cancellation prevents stale results and quota errors remain actionable');
+  mode='delay';await page.evaluate(async()=>{await native('saveAiConfig',{language:'Deutsch'});aiConfig=null;});await page.evaluate(()=>{startTranslation(false);});await page.waitForFunction(()=>translationJob!==null);await page.evaluate(id=>openItem(id),photo.id);await page.waitForTimeout(1800);assert.equal(await page.locator('#translate-button').isVisible(),false);assert.equal(await page.locator('#translation-panel').isVisible(),false);assert.equal(await page.evaluate(()=>translationJob),null);console.log('PASS: switching files cancels obsolete translation and keeps the new viewer intact');
+  mode='ok';await page.evaluate(async()=>{await native('saveAiConfig',{automatic:true,language:'简体中文'});aiConfig=null;});await page.evaluate(id=>openItem(id),book.id);await page.waitForSelector('.translation-text');await page.reload();await page.waitForFunction(()=>!$('#startup'));const beforeRestart=calls;await page.evaluate(id=>openItem(id),book.id);await page.waitForSelector('.translation-text');assert.equal(calls,beforeRestart);assert.match(await page.locator('#translation-status').innerText(),/已读取本地译文/);console.log('PASS: automatic chapter translation and disk cache survive a UI restart');
+  const dataDir=await page.evaluate(async()=>(await native('diagnostics')).dataDir);const configFile=fs.readFileSync(path.join(dataDir,'ai-settings.json'),'utf8');assert(!configFile.includes('kok-test-only-not-a-real-key'));
+  await page.evaluate(async()=>{await native('saveAiConfig',{clearKey:true,automatic:false});aiConfig=null;await closeViewer();});assert.deepEqual(errors,[]);console.log('All AI translation checks passed using a local mock; no paid API calls.');
+ }finally{if(page)await page.evaluate(async()=>{try{await native('saveAiConfig',{clearKey:true,automatic:false});aiConfig=null;}catch{}}).catch(()=>{});if(browser)await browser.close();server.closeAllConnections();await new Promise(resolve=>server.close(resolve));}
+})().catch(error=>{console.error(error);process.exit(1);});

@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Threading;
 using System.Windows.Forms;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.WinForms;
@@ -23,6 +24,8 @@ namespace kok {
     public class MainWindow : Form {
         readonly WebView2 web = new WebView2();
         readonly Library library;
+        readonly TranslationService translations;
+        readonly Dictionary<string,CancellationTokenSource> translationJobs=new Dictionary<string,CancellationTokenSource>();
         readonly string appDir = AppDomain.CurrentDomain.BaseDirectory;
         bool importing;
         readonly bool debug;
@@ -40,6 +43,7 @@ namespace kok {
             try { databaseLock=new FileStream(Path.Combine(dataDir,".kok.lock"),FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None); }
             catch(IOException) { throw new InvalidOperationException("这个资料库已经在另一个 kok 窗口中打开，请使用原窗口。\n如需独立窗口，请通过 --data-dir 指定其他资料库。"); }
             library=new Library(dataDir);
+            translations=new TranslationService(dataDir);
             FormClosed+=delegate { databaseLock.Dispose(); };
             FormClosing+=HandleWindowClosing;
             web.DefaultBackgroundColor=BackColor; web.Dock=DockStyle.Fill; Controls.Add(web);
@@ -50,6 +54,7 @@ namespace kok {
             e.Cancel=true;if(closingPending)return;
             if(importing){MessageBox.Show(this,"正在导入文件，请等待本次整理完成后再退出。","kok");return;}
             closingPending=true;
+            foreach(var job in translationJobs.Values)job.Cancel();
             try {
                 string encoded=await web.CoreWebView2.ExecuteScriptAsync("window.kokSession ? JSON.stringify(window.kokSession()) : '[]'");
                 string json=Library.Json.Deserialize<string>(encoded);
@@ -128,6 +133,27 @@ namespace kok {
                     case "update": library.Update(StringArg(a,"id"),(Dictionary<string,object>)a["patch"]); result=true; break;
                     case "remove": library.Remove(StringArg(a,"id")); result=true; break;
                     case "settings": library.Settings(a); result=true; break;
+                    case "aiConfig": result=translations.PublicConfig();break;
+                    case "saveAiConfig": result=translations.SaveConfig(a);break;
+                    case "splitTranslationText": result=TranslationService.SplitText(StringArg(a,"text"));break;
+                    case "cancelTranslation": {CancellationTokenSource job;if(translationJobs.TryGetValue(StringArg(a,"jobId"),out job))job.Cancel();result=true;break;}
+                    case "translate": {
+                        string jobId=StringArg(a,"jobId");if(jobId.Length<1||jobId.Length>80||translationJobs.ContainsKey(jobId)||translationJobs.Count>=4)throw new InvalidOperationException("翻译任务正在切换，请稍后重试。");
+                        var parts=Library.Json.Deserialize<List<string>>(Library.Json.Serialize(a["parts"]));
+                        using(var cancel=new CancellationTokenSource()){
+                            translationJobs.Add(jobId,cancel);
+                            try{result=await translations.TranslateAsync(parts,cancel.Token,(done,total)=>{if(!IsDisposed)Notify("translationProgress",new{jobId=jobId,completed=done,total=total});},!a.ContainsKey("test")||!Convert.ToBoolean(a["test"]));}
+                            catch(OperationCanceledException){throw new InvalidOperationException("翻译已取消。");}
+                            finally{translationJobs.Remove(jobId);}
+                        }break;
+                    }
+                    case "exportTranslation": {
+                        string text=StringArg(a,"text"),format=StringArg(a,"format");if(text.Length>16*1024*1024)throw new InvalidDataException("译文过大。");
+                        string extension=format=="srt"?"srt":"txt";
+                        using(var dialog=new SaveFileDialog{Title="导出译文",Filter=extension=="srt"?"SRT 字幕|*.srt":"文本译文|*.txt",FileName=StringArg(a,"name")+"-译文."+extension}){
+                            if(dialog.ShowDialog(this)==DialogResult.OK){string destination=Path.GetFullPath(dialog.FileName);if(library.Db.items.Any(item=>String.Equals(Path.GetFullPath(item.path),destination,StringComparison.OrdinalIgnoreCase)))throw new InvalidDataException("请选择新的文件名，避免覆盖已收录的原文件。");File.WriteAllText(destination,text,new UTF8Encoding(false));result=true;}
+                        }break;
+                    }
                     case "addCollection": library.AddCollection(StringArg(a,"name"));result=true;break;
                     case "deleteCollection": library.DeleteCollection(StringArg(a,"name"));result=true;break;
                     case "importFont": {
@@ -167,7 +193,7 @@ namespace kok {
                             if(dialog.ShowDialog(this)==DialogResult.OK) { File.WriteAllText(dialog.FileName,library.Snapshot(),new UTF8Encoding(false)); result=true; }
                         } break;
                     }
-                    case "diagnostics": result=new { engine=web.CoreWebView2.Environment.BrowserVersionString, count=library.Db.items.Count, dataDir=library.DataDir, version="0.1.2" }; break;
+                    case "diagnostics": result=new { engine=web.CoreWebView2.Environment.BrowserVersionString, count=library.Db.items.Count, dataDir=library.DataDir, version="0.1.3" }; break;
                     default: throw new InvalidOperationException("未知操作。");
                 }
                 Send(new { requestId=requestId, result=result });

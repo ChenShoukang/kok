@@ -39,7 +39,7 @@ window.chrome?.webview?.addEventListener('message',e=>{
   const p=pending.get(m.requestId);if(!p)return;pending.delete(m.requestId);m.error?p.reject(new Error(m.error)):p.resolve(m.result);
 });
 const state={items:[],settings:{},route:'overview',filter:'all',query:'',limit:60,viewer:null,book:null,chapter:0,photoIndex:0,photoList:[],rotation:0,zoom:1,slide:null,queue:[],track:null,shuffle:false,loop:false};
-function toast(message,error=false){const el=document.createElement('div');el.className='toast'+(error?' error':'');el.textContent=message;$('#toasts').append(el);setTimeout(()=>el.remove(),error?8000:4500);}
+function toast(message,error=false){const el=document.createElement('div');el.className='toast'+(error?' error':'');el.textContent=message;$('#toasts').append(el);setTimeout(()=>dismissElement(el),error?8000:4500);}
 function fail(error){toast(error.message||String(error),true);}
 const size=n=>n>=1073741824?(n/1073741824).toFixed(1)+' GB':n>=1048576?(n/1048576).toFixed(1)+' MB':Math.max(1,Math.round(n/1024))+' KB';
 const time=s=>{s=Number.isFinite(s)?Math.floor(s):0;return (s>=3600?Math.floor(s/3600)+':':'')+String(Math.floor(s/60)%60).padStart(s>=3600?2:1,'0')+':'+String(s%60).padStart(2,'0');};
@@ -53,7 +53,17 @@ function renderNav(){
   $('#main-nav').innerHTML=[['overview','全部文件','grid'],...kinds.map(k=>[k[0],k[1],k[0]])].map(([r,l,i])=>`<button class="nav-item ${state.route===r?'active':''}" data-route="${r}">${svg(i)}<span>${l}</span>${r==='overview'?'':`<span class="count">${state.items.filter(x=>x.kind===r).length||''}</span>`}</button>`).join('');
   $('#extra-nav').innerHTML=[['favorites','收藏','heart'],['recent','最近打开','clock']].map(([r,l,i])=>`<button class="nav-item ${state.route===r?'active':''}" data-route="${r}">${svg(i)}<span>${l}</span></button>`).join('');
   $('#collections-nav').innerHTML=(state.collections||[]).map(name=>`<button class="nav-item ${state.route==='collection'&&state.collection===name?'active':''}" data-collection="${esc(name)}">${svg('folder')}<span>${esc(name)}</span><span class="count">${state.items.filter(i=>i.collection===name).length}</span></button>`).join('');
+  updateNavIndicator();
 }
+function updateNavIndicator(){
+ const indicator=$('.nav-indicator'),active=$('.sidebar .nav-item.active');if(!indicator)return;
+ if(!active){indicator.style.opacity='0';return;}
+ const box=active.getBoundingClientRect(),side=$('.sidebar').getBoundingClientRect();
+ indicator.style.width=box.width+'px';indicator.style.height=box.height+'px';indicator.style.transform=`translate(${box.left-side.left}px,${box.top-side.top}px)`;indicator.style.opacity='1';
+ requestAnimationFrame(()=>indicator.classList.add('ready'));
+}
+window.addEventListener('resize',updateNavIndicator);
+$('#collections-nav').addEventListener('scroll',updateNavIndicator);
 function heading(title,subtitle=''){return `<div class="page-heading"><h1>${esc(title)}</h1>${subtitle?`<span>${esc(subtitle)}</span>`:''}</div>`;}
 function viewOptions(sort=state.settings.sort||'added'){
  return `<div class="view-options"><select class="sort-select" id="sort" aria-label="排序方式">${[['added','最近加入'],['opened','最近打开'],['name','名称'],['size','文件大小']].map(([key,label])=>`<option value="${key}" ${sort===key?'selected':''}>${label}</option>`).join('')}</select><div class="view-toggle"><button class="${state.settings.view!=='list'?'active':''}" data-view="grid" title="网格视图" aria-label="网格视图">${svg('grid')}</button><button class="${state.settings.view==='list'?'active':''}" data-view="list" title="列表视图" aria-label="列表视图">${svg('list')}</button></div></div>`;
@@ -93,13 +103,39 @@ function collection(){
  const showTabs=!labels[route]&&route!=='recent';
  return `<div class="collection-heading">${heading(title,`${items.length} 个文件`)}${viewOptions(state.settings.sort||(route==='recent'?'opened':'added'))}</div>${showTabs?`<div class="library-toolbar"><div class="filter-tabs">${[['all','全部'],...kinds.map(k=>[k[0],k[1]])].map(([key,label])=>`<button class="filter-tab ${state.filter===key?'active':''}" data-filter="${key}">${label}</button>`).join('')}</div></div>`:''}`+(items.length?fileCollection(items):empty(state.query?'没有找到相关文件':route==='favorites'?'还没有收藏':route==='recent'?'还没有打开记录':'这个分类还没有文件',state.query?'试试文件名、格式或笔记里的关键词。':route==='favorites'?'点击文件上的爱心即可收藏。':'导入文件，或在文件菜单中更改分类。'));
 }
-let pageAnimation=null;
-function animateIn(element){if(!element||matchMedia('(prefers-reduced-motion: reduce)').matches)return;element.getAnimations().forEach(a=>a.cancel());return element.animate([{opacity:.25,transform:'translateY(5px)'},{opacity:1,transform:'translateY(0)'}],{duration:180,easing:'cubic-bezier(.2,.8,.2,1)'});}
+let pageAnimation=null,pageTransition=null,renderSequence=0;
+const elementMotions=new WeakMap();
+const reducedMotion=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
+function animateIn(element){
+ if(!element||reducedMotion())return;
+ const dialog=element.tagName==='DIALOG';
+ const previous=elementMotions.get(element),interrupted=previous&&previous.playState==='running';
+ const current=interrupted?{opacity:getComputedStyle(element).opacity,transform:getComputedStyle(element).transform}:null;
+ if(previous)previous.cancel();
+ const animation=element.animate([current||{opacity:0,transform:dialog?'translateY(16px) scale(.985)':'translateY(8px)'},{opacity:1,transform:'translateY(0) scale(1)'}],{duration:dialog?460:380,easing:'cubic-bezier(.16,1,.3,1)'});
+ elementMotions.set(element,animation);animation.finished.catch(()=>{}).finally(()=>{if(elementMotions.get(element)===animation)elementMotions.delete(element);});return animation;
+}
+async function dismissElement(element){if(!element)return;element.style.pointerEvents='none';await animateOut(element);element.remove();}
+async function animateOut(element){
+ if(!element||reducedMotion())return;
+ const style=getComputedStyle(element),from={opacity:style.opacity,transform:style.transform};
+ elementMotions.get(element)?.cancel();
+ const animation=element.animate([from,{opacity:0,transform:element.tagName==='DIALOG'?'translateY(10px) scale(.99)':'translateY(5px)'}],{duration:220,easing:'cubic-bezier(.4,0,1,1)',fill:'forwards'});
+ try{await animation.finished;}catch{}finally{animation.cancel();}
+}
 function render(){
- renderNav();if(pageAnimation)pageAnimation.cancel();
- $('#main').innerHTML=state.route==='overview'&&!state.query?overview():state.route==='music'&&!state.query&&typeof renderMusic==='function'?renderMusic():collection();
+ renderNav();
+ const html=state.route==='overview'&&!state.query?overview():state.route==='music'&&!state.query&&typeof renderMusic==='function'?renderMusic():collection();
  const key=state.route+'|'+(state.musicAlbum||'')+'|'+(state.musicMode||'');
- if(render.previousKey!==key&&!state.query){pageAnimation=animateIn($('#main'));render.previousKey=key;}
+ const changed=render.previousKey!==key&&!state.query;render.previousKey=key;
+ const sequence=++renderSequence;
+ if(pageAnimation)pageAnimation.cancel();
+ if(pageTransition){pageTransition.skipTransition();pageTransition=null;}
+ const update=()=>{if(sequence===renderSequence)$('#main').innerHTML=html;};
+ if(changed&&!document.body.classList.contains('booting')&&!reducedMotion()&&document.startViewTransition&&!viewer?.open){
+   const transition=document.startViewTransition(update);pageTransition=transition;
+   transition.finished.catch(()=>{}).finally(()=>{if(pageTransition===transition)pageTransition=null;});
+ }else {update();if(changed&&!document.body.classList.contains('booting')&&!reducedMotion())pageAnimation=animateIn($('#main'));}
 }
 function navigate(route){state.route=route;state.filter='all';state.limit=60;state.query='';state.musicAlbum=null;$('#search').value='';render();window.scrollTo(0,0);}
 async function importItems(action){
@@ -108,11 +144,18 @@ async function importItems(action){
  if(result.errors?.length)toast('部分文件未能导入：\n'+result.errors.slice(0,4).join('\n'),true);
 }
 async function favorite(id){const item=byId(id);if(!item)return;await patch(item,{favorite:!item.favorite});render();if(state.viewer?.id===id)$('#viewer-favorite').classList.toggle('selected',item.favorite);if(state.track?.id===id)$('#track-favorite').classList.toggle('selected',item.favorite);}
-function showSmall(content){const d=$('#small-dialog');if(d.open)d.close();d.innerHTML=`<div class="dialog-top"><div></div><button class="icon-button dialog-close" data-close-dialog aria-label="关闭">${svg('close')}</button></div>${content}`;d.showModal();animateIn(d);}
+let smallClose=null;
+function showSmall(content){const d=$('#small-dialog');smallClose=null;closeSmall.token=null;elementMotions.get(d)?.cancel();d.classList.remove('is-closing');if(d.open)d.close();d.innerHTML=`<div class="dialog-top"><div></div><button class="icon-button dialog-close" data-close-dialog aria-label="关闭">${svg('close')}</button></div>${content}`;d.showModal();animateIn(d);}
+function closeSmall(){
+ const d=$('#small-dialog');if(!d.open)return Promise.resolve();if(smallClose)return smallClose;
+ const token={};closeSmall.token=token;d.classList.add('is-closing');
+ smallClose=animateOut(d).then(()=>{if(closeSmall.token!==token)return;d.close();d.classList.remove('is-closing');smallClose=null;});return smallClose;
+}
+$('#small-dialog').addEventListener('cancel',e=>{e.preventDefault();closeSmall();});
 function fileMenu(id){const i=byId(id);if(!i)return;showSmall(`<h2>${esc(i.name)}</h2><p class="dialog-description">${labels[i.kind]} · ${esc(i.ext)} · ${size(i.size)}</p><div class="menu-actions"><button data-open="${id}">${svg('external')}在 kok 中打开</button><button data-favorite="${id}">${svg('heart')}${i.favorite?'取消收藏':'加入收藏'}</button><button data-classify="${id}">${svg('layers')}分类归纳${i.collection?' · '+esc(i.collection):''}</button>${i.kind==='music'?`<button data-album-edit="${id}">${svg('edit')}编辑专辑和歌手</button>`:''}<button data-native="reveal" data-id="${id}">${svg('folder')}在文件夹中显示</button><button data-native="openExternal" data-id="${id}">${svg('external')}使用系统应用打开</button><button class="danger" data-remove="${id}">${svg('trash')}从资料库移除</button></div><div class="dialog-footnote">移除仅删除资料库记录，原文件会保留。<br>${esc(i.path)}</div>`);}
 async function settings(){
  const diag=await native('diagnostics');
- showSmall(`<h2>设置</h2><div class="setting-row"><div>界面外观<small>选择适合当下的颜色</small></div><select id="theme-select" aria-label="界面外观"><option value="light">清新浅色</option><option value="dark">安静深色</option><option value="system">跟随系统</option></select></div><div class="setting-row"><div>资料库备份<small>导出索引、进度与笔记，不包含原文件</small></div><button class="button secondary" data-action="export">${svg('download')}导出</button></div><div class="setting-row"><div>体验示例<small>加入五类本地示例文件</small></div><button class="button secondary" data-action="importSamples">添加示例</button></div><details class="about-details"><summary>关于 kok</summary><div class="dialog-footnote"><b>kok</b><br>v${esc(diag.version)} · Windows x64 · WebView2 ${esc(diag.engine)}<br>本地保存 · 无需账号 · 无需联网<br><br>资料库位置：<br><code>${esc(diag.dataDir)}</code><br><br>快捷键：Ctrl K 搜索 · Esc 关闭预览<br>照片：← → 切换 · 阅读：← → 切换章节<br>音乐或视频：空格播放 / 暂停<br><br>兼容性：加密电子书、OCR、Office 原始排版和部分媒体编码需使用相应系统应用。</div></details>`);
+ showSmall(`<h2>设置</h2><div class="setting-row"><div>界面外观<small>选择适合当下的颜色</small></div><select id="theme-select" aria-label="界面外观"><option value="light">清新浅色</option><option value="dark">安静深色</option><option value="system">跟随系统</option></select></div><div class="setting-row"><div>资料库备份<small>导出索引、进度与笔记，不包含原文件</small></div><button class="button secondary" data-action="export">${svg('download')}导出</button></div><div class="setting-row"><div>体验示例<small>加入五类本地示例文件</small></div><button class="button secondary" data-action="importSamples">添加示例</button></div><details class="about-details"><summary>关于 kok</summary><div class="dialog-footnote"><b>kok</b><br>v${esc(diag.version)} · Windows x64 · WebView2 ${esc(diag.engine)}<br>本地保存 · AI 翻译需联网<br><br>资料库位置：<br><code>${esc(diag.dataDir)}</code><br><br>快捷键：Ctrl K 搜索 · Esc 关闭预览<br>照片：← → 切换 · 阅读：← → 切换章节<br>音乐或视频：空格播放 / 暂停<br><br>兼容性：加密电子书、OCR、Office 原始排版和部分媒体编码需使用相应系统应用。</div></details>`);
  $('#theme-select').value=state.settings.theme||'light';
  if(typeof setupSettings==='function')setupSettings();
 }
@@ -120,11 +163,11 @@ const viewer=$('#viewer');let readerTimer=null,video=null,mediaSaveTime=0,closin
 async function openItem(id){
  if(closingViewer)await closingViewer;
  const item=byId(id);if(!item)return;
- if($('#small-dialog').open)$('#small-dialog').close();
+ if($('#small-dialog').open)await closeSmall();
  await patch(item,{opened:new Date().toISOString()});
  if(item.kind==='music'){state.queue=state.items.filter(i=>i.kind==='music'&&(!state.musicAlbum||albumName(i)===state.musicAlbum));await playTrack(item);render();return;}
  if(viewer.open){await saveViewer();clearViewer();}else {viewer.showModal();animateIn(viewer);}
- state.viewer=item;viewer.classList.remove('notes-open');$('#notes-panel').classList.add('hidden');$('#notes').value=item.notes||'';
+ state.viewer=item;if(typeof beginTranslationView==='function')beginTranslationView(item);viewer.classList.remove('notes-open');$('#notes-panel').classList.add('hidden');$('#notes').value=item.notes||'';
  $('#viewer-title').textContent=item.name;$('#viewer-subtitle').textContent=`${labels[item.kind]} · ${item.ext} · ${size(item.size)}`;$('#viewer-icon').innerHTML=svg(item.kind);$('#viewer-favorite').classList.toggle('selected',item.favorite);
  $('#viewer-content').innerHTML='<div class="loading-view"><span class="spinner"></span>正在打开…</div>';
  const token=item.id;
@@ -168,11 +211,11 @@ function renderReader(scroll=0){
 }
 function readerPosition(){const el=$('#reader-scroll');return el?Math.max(0,Math.min(1,el.scrollTop/Math.max(1,el.scrollHeight-el.clientHeight))):0;}
 async function saveReader(){if(!state.book||!state.viewer||!$('#reader-scroll'))return;const el=$('#reader-scroll');const ratio=el.scrollHeight<=el.clientHeight?1:readerPosition();await patch(state.viewer,{chapter:state.chapter,position:readerPosition(),progress:(state.chapter+ratio)/state.book.chapters.length});}
-async function changeChapter(n){if(!state.book||n<0||n>=state.book.chapters.length)return;await saveReader();state.chapter=n;renderReader(0);await patch(state.viewer,{chapter:n,position:0,progress:n/state.book.chapters.length});}
+async function changeChapter(n){if(!state.book||n<0||n>=state.book.chapters.length)return;await saveReader();state.chapter=n;renderReader(0);animateIn($('#reader-scroll'));await patch(state.viewer,{chapter:n,position:0,progress:n/state.book.chapters.length});}
 async function saveNotes(){if(state.viewer&&$('#notes').value!==(state.viewer.notes||''))await patch(state.viewer,{notes:$('#notes').value});}
 async function saveViewer(){clearTimeout(readerTimer);await saveVideo();await saveReader();await saveNotes();if(typeof savePdf==='function')await savePdf();}
 function clearViewer(){if(typeof cleanupFeatures==='function')cleanupFeatures();if(video){video.pause();video.removeAttribute('src');video.load();video=null;}if(state.slide)clearInterval(state.slide);state.slide=null;state.book=null;state.viewer=null;$('#viewer-content').innerHTML='';}
-async function closeViewer(){if(closingViewer)return closingViewer;closingViewer=(async()=>{await saveViewer();viewer.getAnimations().forEach(a=>a.cancel());if(!matchMedia('(prefers-reduced-motion: reduce)').matches)await viewer.animate([{opacity:1,transform:'translateY(0)'},{opacity:0,transform:'translateY(4px)'}],{duration:120,easing:'ease-out'}).finished;clearViewer();viewer.close();render();})();try{await closingViewer;}finally{closingViewer=null;}}
+async function closeViewer(){if(closingViewer)return closingViewer;closingViewer=(async()=>{await saveViewer();viewer.classList.add('is-closing');await animateOut(viewer);clearViewer();viewer.close();viewer.classList.remove('is-closing');render();})();try{await closingViewer;}finally{closingViewer=null;}}
 // The audio element survives navigation, so a collection can be browsed while music plays.
 const audio=$('#audio');let audioSaveAt=0;
 async function playTrack(item){
@@ -215,12 +258,12 @@ document.addEventListener('click',async e=>{
  const el=e.target.closest('button,[data-route]');if(!el)return;
  try{
   if(el.dataset.route){navigate(el.dataset.route);return;}
-  if(el.hasAttribute('data-close-dialog')){$('#small-dialog').close();return;}
+  if(el.hasAttribute('data-close-dialog')){await closeSmall();return;}
   if(el.dataset.open){await openItem(el.dataset.open);return;}
-  if(el.dataset.favorite){await favorite(el.dataset.favorite);if($('#small-dialog').open)$('#small-dialog').close();return;}
+  if(el.dataset.favorite){await favorite(el.dataset.favorite);if($('#small-dialog').open)await closeSmall();return;}
   if(el.dataset.menu){fileMenu(el.dataset.menu);return;}
   if(el.dataset.native){await native(el.dataset.native,{id:el.dataset.id});return;}
-  if(el.dataset.remove){const item=byId(el.dataset.remove);await native('remove',{id:item.id});if(state.track?.id===item.id)$('#close-player').click();state.items=state.items.filter(i=>i.id!==item.id);state.queue=state.queue.filter(i=>i.id!==item.id);$('#small-dialog').close();render();toast('已从资料库移除，原文件已保留。');return;}
+  if(el.dataset.remove){const item=byId(el.dataset.remove);await native('remove',{id:item.id});if(state.track?.id===item.id)$('#close-player').click();state.items=state.items.filter(i=>i.id!==item.id);state.queue=state.queue.filter(i=>i.id!==item.id);await closeSmall();render();toast('已从资料库移除，原文件已保留。');return;}
   if(el.dataset.filter){state.filter=el.dataset.filter;state.limit=60;render();return;}
   if(el.dataset.view){await setting({view:el.dataset.view});render();return;}
   if(el.dataset.photo){await photoAction(el.dataset.photo);return;}
@@ -228,7 +271,7 @@ document.addEventListener('click',async e=>{
   if(el.dataset.reader){await changeChapter(state.chapter+(el.dataset.reader==='next'?1:-1));return;}
   if(el.dataset.font){const scroll=readerPosition();await setting({readerSize:Math.max(12,Math.min(32,(Number(state.settings.readerSize)||18)+Number(el.dataset.font)))});renderReader(scroll);return;}
   if(el.dataset.paper){const scroll=readerPosition();await setting({readerTheme:el.dataset.paper});renderReader(scroll);return;}
-  if(el.dataset.action){if(el.dataset.action.startsWith('import')){await importItems(el.dataset.action);if($('#small-dialog').open)$('#small-dialog').close();}else if(el.dataset.action==='export'){if(await native('export'))toast('资料库索引与笔记已导出。');}else if(el.dataset.action==='loadMore'){state.limit+=60;render();}return;}
+  if(el.dataset.action){if(el.dataset.action.startsWith('import')){await importItems(el.dataset.action);if($('#small-dialog').open)await closeSmall();}else if(el.dataset.action==='export'){if(await native('export'))toast('资料库索引与笔记已导出。');}else if(el.dataset.action==='loadMore'){state.limit+=60;render();}return;}
  }catch(error){fail(error);}
 });
 document.addEventListener('change',async e=>{try{if(e.target.id==='sort'){await setting({sort:e.target.value});render();}if(e.target.id==='theme-select'){await setting({theme:e.target.value});applyTheme();}}catch(error){fail(error);}});
@@ -244,10 +287,21 @@ document.addEventListener('keydown',e=>{
 });
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(state.settings.theme==='system')applyTheme();});
 async function init(){hydrate();try{await refresh();audio.volume=Math.max(0,Math.min(1,Number(state.settings.volume??.7)));$('#volume').value=audio.volume;state.shuffle=!!state.settings.shuffle;state.loop=!!state.settings.loop;updateTransport();}catch(e){$('#main').innerHTML=heading('欢迎来到 kok','给喜欢的一切，留一点空间。')+empty('无法打开资料库',e.message);}finally{finishStartup();}}
-function finishStartup(){
- const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
- const delay=reduced?0:Math.max(0,420-performance.now());
- setTimeout(()=>{document.body.classList.remove('booting');document.body.setAttribute('aria-busy','false');const screen=$('#startup');if(!screen)return;if(reduced){screen.remove();return;}screen.classList.add('leaving');setTimeout(()=>screen.remove(),230);},delay);
+async function finishStartup(){
+ const screen=$('#startup');if(!screen)return;
+ try{await screen.querySelector('img').decode();}catch{}
+ const reduced=reducedMotion();
+ const delay=reduced?0:Math.max(0,780-performance.now());
+ setTimeout(()=>{
+   document.body.classList.remove('booting');document.body.setAttribute('aria-busy','false');
+   if(reduced){screen.remove();return;}
+   screen.classList.add('leaving');
+   for(const [selector,x,y,delay] of [['.sidebar',-8,0,70],['.topbar',0,6,110],['#main',0,12,160]]){
+     $(selector).animate([{opacity:0,transform:`translate(${x}px,${y}px)`},{opacity:1,transform:'translate(0,0)'}],{duration:650,delay,easing:'cubic-bezier(.16,1,.3,1)',fill:'backwards'});
+   }
+   screen.addEventListener('transitionend',e=>{if(e.target===screen&&e.propertyName==='opacity')screen.remove();},{once:true});
+   setTimeout(()=>screen.remove(),750);
+ },delay);
 }
 $('#import-more').addEventListener('click',()=>{const menu=$('#import-menu');const open=menu.classList.toggle('hidden')===false;$('#import-more').setAttribute('aria-expanded',String(open));if(open)animateIn(menu);});
 document.addEventListener('click',e=>{if(!e.target.closest('.import-control')){$('#import-menu').classList.add('hidden');$('#import-more').setAttribute('aria-expanded','false');}else if(e.target.closest('[data-action]')){$('#import-menu').classList.add('hidden');$('#import-more').setAttribute('aria-expanded','false');}});

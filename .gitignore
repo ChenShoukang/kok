@@ -8,3 +8,6 @@ test-output/
 *.user
 *.log
 .vs/
+.env
+.env.*
+ai-settings.json
