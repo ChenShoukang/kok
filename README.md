@@ -12,16 +12,6 @@
 
 文档：[格式兼容性](docs/FORMATS.md) · [开发与测试](docs/DEVELOPMENT.md) · [版本记录](CHANGELOG.md) · [路线图](ROADMAP.md)
 
-## v0.2.1 · 顺滑菜单、视频封面与右键属性
-
-- 设置和资料库排序使用统一的玻璃选择菜单，支持打开 / 收起动画、键盘导航、深浅主题、中英文和减少动态效果。
-- 视频导入后在空闲时静音提取真实画面并缓存封面；已有资料库也会补齐。打开预览或播放媒体时暂停后台提取，不修改原片。
-- 视频右键菜单新增属性：文件名、位置、大小、修改时间，以及内核实际读取的时长、分辨率。
-- 汇总此前本地版本的主题统一、照片编辑增强、视频快捷键、无边框全屏、小窗口适配与大视频稳定性修复。
-- 整理截图目录、开发 / 测试说明和版本记录，通过 GitHub Actions 构建并发布 Windows 便携包。
-
-封面提取取决于当前内核能否解码视频。本版不新增解码器，编码与多音轨详情暂不解析。
-
 ## 使用
 
 1. 获取本地便携包 `kok-0.2.1-win-x64.zip`，解压到你有写入权限的目录。
@@ -39,7 +29,7 @@
 | 类别 | 内置功能 | 范围与限制 |
 | --- | --- | --- |
 | 视频 | 播放、跳转、音量、全屏、续播、0.5×–3× 倍速、静音片段自动加速、同名字幕自动加载 | MP4 / M4V / MOV / MKV 的 H.264 / AAC、WebM 的 VP8 / VP9 / Opus 已实测；其他编码依赖内核与系统。内嵌或位图字幕及特殊编码可使用系统播放器 |
-| 照片 | 缩略图、预览、缩放、旋转、前后切换、幻灯片；滤镜、亮度 / 对比度 / 饱和度 / 色温 / 暗角、裁剪位置、旋转 / 双向翻转、撤销 / 重做、另存副本 | 常见 JPG / PNG / GIF / WebP / BMP 等；HEIC / TIFF 等特殊格式可调用系统应用。编辑长边最多 4096 px，原片保留 |
+| 照片 | 缩略图、预览、缩放、旋转、前后切换、幻灯片；滤镜、亮度 / 对比度 / 饱和度 / 色温 / 暗角、裁剪、旋转 / 翻转、撤销 / 重做、另存副本 | 常见 JPG / PNG / GIF / WebP / BMP 等；HEIC / TIFF 等特殊格式可调用系统应用。编辑长边最多 4096 px，原片保留 |
 | 音乐 | 专辑唱片架、专辑详情、专辑队列、持续播放、切歌、随机、单曲循环、音量与续播 | 按文件夹自动组成专辑，可编辑专辑名与歌手；识别 MP3 / WAV / FLAC / M4A / OGG / OPUS 等，实测 MP3 / PCM WAV / FLAC / Vorbis OGG / Opus / AAC M4A / ADTS AAC |
 | 文档 | PDF 文字层与缩放、下划线 / 荧光标记、位置插入文字；DOCX / 文本正文阅读、插入文字、标记与批注 | PDF 使用本地 PDF.js；DOCX 不保留原版式；标记和插入内容保存为阅读副本，原文件保留，可导出 HTML。XLSX / PPTX / DOC 等使用系统应用 |
 | 读书 | EPUB 目录、TXT 分节、字号、三种纸色、续读；选中文字划线 / 荧光标记、旁边的想法弹窗、批注列表 | EPUB 为文字阅读，暂不还原图片、复杂排版与脚注交互；不解密 DRM；MOBI / AZW / FB2 等使用系统应用 |
@@ -71,22 +61,7 @@ TXT 支持 UTF-8、UTF-16 与 GB18030。文件内容不会作为脚本执行。�
 
 ## 数据与备份
 
-应用目录下的 `data/` 保存索引、笔记、偏好和内核用户数据：
-
-```text
-kok.exe
-ui/                         界面资源
-samples/                    原创示例，可选导入
-data/library.json           文件路径、收藏、进度、笔记与偏好
-data/library.json.bak       上一次保存的自动备份
-data/thumbs/                照片缩略图缓存
-data/fonts/                 用户导入的字体
-data/ai-settings.json       AI 接口配置与 Windows 加密密钥
-data/translations/          本地译文缓存
-data/WebView2/              浏览器内核缓存与用户数据
-```
-
-备份可在设置中导出 JSON，也可以在**退出 kok 后**复制整个 `data/`。JSON 导出包含本地文件路径，不包含原文件。请同时备份你需要保留的媒体与文档。恢复时退出 kok，再将有效备份放回 `data/library.json`。
+应用目录下的 `data/` 保存索引、笔记、偏好和内核用户数据（含 `library.json`、缩略图缓存、导入字体、AI 配置与译文缓存、WebView2 缓存）。备份可在设置中导出 JSON，也可以在**退出 kok 后**复制整个 `data/`。JSON 导出包含本地文件路径，不包含原文件。恢复时退出 kok，再将有效备份放回 `data/library.json`。
 
 「从资料库移除」只删除索引记录，不删除磁盘上的原文件。资料库读取损坏时会报错并保留原文件，不会自动以空库覆盖。使用不同资料库目录可加 `--data-dir "D:\MykokData"`。
 
@@ -115,46 +90,16 @@ npm ci --omit=optional
 .\package.ps1
 ```
 
-生成便携压缩包和 SHA-256 文件。打包明确排除开发测试程序、用户资料库与内核缓存。附带示例为本项目原创，可随程序分发。重新生成大部分示例可运行 `python tools/generate_samples.py`；WebM 示例由本机 WebView2 的 Canvas + MediaRecorder 创建。
+生成便携压缩包和 SHA-256 文件，明确排除开发测试程序、用户资料库与内核缓存。
 
 ## 验证
 
-`build.ps1 -Test` 在标准 Windows 用户账户环境中运行 59 项原生测试，涵盖去重、中文文件名、编码、持久化、备份、DOCX / EPUB、字节区间、损坏索引保留、批注与插入正文恢复、分类、字幕解析与自动匹配、照片副本保存和原片保护、字体导入，以及密钥加密、翻译分批 / 缓存 / 顺序校验、取消、接口异常、语言偏好与原生文本本地化。DPAPI 加密测试需要已加载的正常 Windows 用户配置文件。
+`build.ps1 -Test` 运行 59 项原生测试，涵盖去重、中文文件名、编码、持久化、备份、DOCX / EPUB、字节区间、损坏索引保留、批注与插入正文恢复、分类、字幕解析与自动匹配、照片副本保存和原片保护、字体导入，以及密钥加密、翻译分批 / 缓存 / 顺序校验、取消、接口异常、语言偏好与原生文本本地化。
 
-真实 WebView2 桌面窗口的集成检查：
+真实 WebView2 桌面窗口的集成检查、全部测试脚本与截图生成见 [开发与测试](docs/DEVELOPMENT.md)。界面测试会重置隔离的测试资料库，请勿指向日常 `data/`。
 
-```powershell
-npm ci
-.\dist\kok\kok.exe --debug --test-silent --data-dir "$PWD\test-output\ui-data"
-# 在另一个终端运行：
-npm run test:ui
-npm run test:design
-npm run test:translation
-npm run test:i18n
-npm run test:drop
-npm run test:workspaces
-```
+## 参考项目与许可
 
-调试端口仅在 `--debug` 下开启。请为测试使用专门的资料库目录；UI 测试会重置测试资料库的进度、批注、正文编辑、笔记和偏好，并导入示例。两组测试覆盖基础资料管理与播放，以及文字选择标记、想法弹窗、DOCX 插入、PDF 文字层 / 标记 / 插入、照片编辑输出、专辑、分类、三种字体、自动字幕与静音加速。截图生成在 `test-output/`。`test:design` 另外检查启动 Logo、精简首页、导入菜单、毛玻璃、导航动画和减少动态效果。
-
-PDF 检查验证实际 Canvas 渲染、文字层、标记和插入恢复；不代表对所有 PDF 版式、表单或扫描件的认证。媒体测试使用原创示例，不代表支持所有编码。另存照片与 HTML 导出的原生文件选择对话框需人工选择位置；原生保存逻辑和图片输出另有测试。
-
-`test:translation` 启动临时本地 HTTP 模拟服务，覆盖配置、连接测试、真实本地桥接请求、双语对照、PDF 提取、自动字幕翻译与时间轴保留、导出、取消、额度错误、切换文件和重载后缓存。仅使用测试数据与模拟密钥，不调用付费 API。
-
-## 参考项目
-
-研究了以下开源项目的定位与组织方式，代码为本项目独立实现：
-
-- [MicrosoftEdge / WebView2Samples](https://github.com/MicrosoftEdge/WebView2Samples)：原生桌面窗口与 WebView2 的集成方式。
-- [tauri-apps / tauri](https://github.com/tauri-apps/tauri)：复用系统 WebView 以减小分发体积的设计思路；本项目没有使用 Tauri。
-- [johnfactotum / foliate](https://github.com/johnfactotum/foliate)：电子书章节、目录与阅读体验的组织参考；未复制其 GPL 代码。
-- [mpv-player / mpv](https://github.com/mpv-player/mpv)：了解专业媒体播放器的功能范围；本项目没有内嵌 mpv。
-- [mozilla / pdf.js](https://github.com/mozilla/pdf.js)：以 Apache-2.0 许可随应用打包的 PDF 渲染与文字选择组件。
-
-## 许可
+研究了以下开源项目的定位与组织方式，代码为本项目独立实现：[MicrosoftEdge / WebView2Samples](https://github.com/MicrosoftEdge/WebView2Samples)（原生窗口与 WebView2 集成）、[tauri-apps / tauri](https://github.com/tauri-apps/tauri)（复用系统 WebView 减小体积的思路，未使用 Tauri）、[johnfactotum / foliate](https://github.com/johnfactotum/foliate)（阅读体验参考，未复制其 GPL 代码）、[mpv-player / mpv](https://github.com/mpv-player/mpv)（媒体播放器功能范围参考）、[mozilla / pdf.js](https://github.com/mozilla/pdf.js)（Apache-2.0，随包打包）。
 
 项目原创源码与示例使用 [MIT License](LICENSE)。WebView2 SDK 使用微软自己的许可，见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
-
-`test:i18n` 逐页检查英文导航、菜单、设置、播放器、照片编辑、阅读与批注、PDF、翻译设置、帮助和无障碍标签，并验证中英文来回切换、重载后记忆、原始文件名 / 正文 / 笔记保留和英文导出说明。
-
-自动化媒体测试必须带 `--test-silent` 启动隔离测试窗口；该参数在浏览器引擎层静音，测试脚本会拒绝在有声窗口运行。正常打开 kok.exe 不受影响。

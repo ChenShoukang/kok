@@ -12,37 +12,25 @@ Local organization needs no account or internet connection. Files are referenced
 
 Documentation: [formats](docs/FORMATS.en.md) · [development and tests](docs/DEVELOPMENT.en.md) · [changelog](CHANGELOG.en.md) · [roadmap](ROADMAP.en.md)
 
-## v0.2.1 · Smooth menus, video covers and properties
-
-- Settings and library sorting share animated glass menus with keyboard navigation, themes, Chinese / English and reduced motion.
-- Imported and existing videos receive cached real-frame covers when idle. Extraction stays paused and muted, yields to previews or playback, and preserves source files.
-- Video context menus show file name, location, size, modification date, and actual duration / resolution from the playback engine.
-- Includes the previous local builds: consistent themes, expanded photo editing, configurable video shortcuts, borderless fullscreen, adaptive windows and large-video crash fixes.
-- Organizes screenshots, development / testing instructions and version history, with Windows portable builds published through GitHub Actions.
-
-Cover extraction requires a decodable video. This release adds no codecs and does not parse codec or multiple-audio-track details.
-
 ## Getting started
 
 1. Get the local portable package `kok-0.2.1-win-x64.zip` and extract it to a writable folder.
 2. Run `kok.exe`. Keep the DLLs, `ui` and `samples` folders beside it.
 3. Select **Import files**, or open its adjacent menu and select **Import folder**. Folder imports include subfolders and skip duplicate paths and unsupported files.
 4. You can also drop files or folders into the kok window. Multiple files and nested folders are supported; duplicates and unsupported files are skipped.
-5. To try the app, choose **Explore sample files** in an empty library, or add samples from Settings. Samples are original local documents and media; their Chinese file names and content are preserved as source files.
+5. To try the app, choose **Explore sample files** in an empty library, or add samples from Settings.
 
 Requirements: **Windows 10 / 11 x64, .NET Framework 4.8 and Microsoft WebView2 Evergreen Runtime**. If prompted, install WebView2 from [Microsoft](https://developer.microsoft.com/microsoft-edge/webview2/). kok does not require Node.js, Python, Rust or the .NET SDK to run. The app is not code-signed; Windows may identify the publisher as unknown. Use a trusted release and its SHA-256 file.
 
 ## AI translation
 
-1. Go to **Settings → AI translation → Configure API**. Enter the endpoint, model name, API key and target language. Supports OpenAI-compatible Chat Completions endpoints. Enter the provider's base path, such as `/v1`, or the complete `/chat/completions` endpoint. See the [official API reference](https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create).
-2. **Test connection** sends a short request. Save the settings. Local services may use HTTP localhost / 127.0.0.1 without a key; remote services require HTTPS.
-3. Open a file and select **Translate**. Documents, books and text PDFs support the current chapter / page or the entire document. Translation appears separately; original text and annotations are retained. Scanned PDFs need OCR first.
-4. Video translation uses the selected text subtitle track and keeps its timestamps. Switch between bilingual subtitles and translation only, and export SRT. Embedded or bitmap subtitles and speech transcription are not included.
-5. Optional automatic translation handles opened subtitles, chapters and the current PDF page. It is off by default. Full-document translation requires an explicit selection. Long input is batched, with progress and cancellation. Identical content, service, model and language reuse cached translations.
+1. Go to **Settings → AI translation → Configure API** and enter the endpoint, model name, API key and target language. Supports OpenAI-compatible Chat Completions endpoints.
+2. **Test connection** sends a short request, then save. Remote services require HTTPS; local services may use localhost without a key.
+3. Open a file and select **Translate**. Documents, books and text PDFs support the current chapter / page or the entire document. Original text and annotations are retained; scanned PDFs need OCR first.
+4. Video translation uses the selected text subtitle track and keeps its timestamps; export bilingual subtitles or translation only as SRT. Embedded or bitmap subtitles and speech transcription are not included.
+5. Optional automatic translation is off by default. Long input is batched, with progress and cancellation; identical requests reuse cached translations.
 
-Keys are encrypted with Windows DPAPI for the current account in `data/ai-settings.json`. They are excluded from library exports and release packages. Enter the key again after moving to another account or computer. Models must support the requested JSON translation format. Authentication, quota, truncation and response errors appear in the translation panel. Translations are cached in `data/translations/`.
-
-The translation pipeline is tested with a local HTTP mock, without paid API requests. Actual connectivity and translation quality depend on the configured provider and model.
+Keys are encrypted with Windows DPAPI in `data/ai-settings.json` and excluded from exports and packages. Models must support the requested JSON translation format; authentication, quota, truncation and response errors appear in the translation panel.
 
 ## Features and compatibility
 
@@ -70,16 +58,14 @@ Indexing a format does not guarantee playback of every codec. System-app actions
 - Native WinForms with the installed WebView2 runtime; no separately bundled Chromium.
 - C# and plain HTML / CSS / JavaScript; PDF.js is included for offline PDF viewing.
 - Seekable file streams and HTTP byte ranges avoid loading whole videos into memory.
-- Cached thumbnails and batched library cards. Translation panels load large result lists in sections.
+- Cached thumbnails and batched library cards.
 - This release targets Windows. macOS and Linux builds are not provided.
 
 Release size excludes the installed WebView2 runtime. Memory use depends on the engine, media and library size.
 
 ## Data and backups
 
-`data/library.json` stores file paths, favorites, progress, notes, annotations and preferences; `.bak` keeps the previous save. `data/thumbs/` holds thumbnails, `data/fonts/` imported fonts, and `data/WebView2/` browser-engine data. AI configuration and translation caches are stored separately as described above.
-
-Export a JSON backup from Settings, or close kok and copy the whole `data/` folder. JSON exports include local paths, not original media. Back up the source files separately. To restore, close kok and replace `data/library.json` with a valid backup. Removing an item only removes its index record. A corrupt database is preserved and reported. Use `--data-dir "D:\MykokData"` for a separate library.
+`data/` stores file paths, favorites, progress, notes, annotations and preferences in `library.json`, plus thumbnails, imported fonts and WebView2 data; AI configuration and translation caches are stored separately. Export a JSON backup from Settings, or close kok and copy the whole `data/` folder. JSON exports include local paths, not original media. To restore, close kok and replace `data/library.json` with a valid backup. Removing an item only removes its index record. A corrupt database is preserved and reported. Use `--data-dir "D:\MykokData"` for a separate library.
 
 ## Shortcuts
 
@@ -98,14 +84,10 @@ npm ci --omit=optional
 .\package.ps1
 ```
 
-The build uses the Windows .NET Framework compiler. It downloads the pinned official WebView2 SDK `1.0.4258.31`, verifies its SHA-256 and caches it. Output is in `dist/kok/`. Packaging excludes user data and test executables. Media samples are original project assets.
+The build uses the Windows .NET Framework compiler and downloads the pinned official WebView2 SDK `1.0.4258.31`, verifying its SHA-256. Output is in `dist/kok/`. Packaging excludes user data and test executables.
 
-For actual WebView2 integration tests, start a dedicated test library with `kok.exe --debug --test-silent --data-dir "$PWD\test-output\ui-data"`, then run `npm run test:ui`, `npm run test:design`, `npm run test:translation` and `npm run test:i18n`. Tests reset the test library and must not use personal data. The debug port is enabled only with `--debug`. DPAPI tests require a normally loaded Windows user profile.
-
-Checks cover native persistence and media streaming, reading and PDF annotations, photo editing, albums, fonts, subtitles, translation configuration and cancellation, local cache reuse, interface language switching and user-content preservation. Render and playback tests use sample files and do not certify every format or layout. Native save dialogs need a user-selected destination; their save logic and export contents have separate checks.
+`build.ps1 -Test` runs 59 native checks; the full integration-test setup and scripts are documented in [development and tests](docs/DEVELOPMENT.en.md). Interface tests modify an isolated test library; do not point them at everyday data.
 
 ## References and licenses
 
 Implementation references include [Microsoft WebView2 samples](https://github.com/MicrosoftEdge/WebView2Samples), [PDF.js](https://github.com/mozilla/pdf.js), [epub.js](https://github.com/futurepress/epub.js) and [mpv](https://github.com/mpv-player/mpv). Independent code is used where appropriate; this app does not bundle external players or readers. See `LICENSE` and `THIRD_PARTY_NOTICES.md` for licenses.
-
-Automated media tests require an isolated window launched with `--test-silent`. This mutes the browser engine, and tests refuse an audible window. Normal kok.exe launches are unaffected. Additional checks: `npm run test:workspaces` and `npm run test:drop`.
