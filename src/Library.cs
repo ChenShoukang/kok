@@ -31,7 +31,7 @@ namespace kok {
         public List<string> collections = new List<string>();
         public List<FontAsset> fonts = new List<FontAsset>();
     }
-    public class Chapter { public string title, text; }
+    public class Chapter { public string title, text; public bool placeholder,generatedTitle; }
     public class Book { public string title; public List<Chapter> chapters = new List<Chapter>(); }
     public class ImportResult { public int added, skipped; public List<string> errors = new List<string>(); }
 
@@ -130,7 +130,7 @@ namespace kok {
         public void DeleteCollection(string name) { lock(gate){Db.collections.Remove(name);foreach(var item in Db.items)if(item.collection==name)item.collection="";Save();} }
         static double Clamp(double n,double a,double b) { return double.IsNaN(n) || double.IsInfinity(n) ? a : Math.Max(a,Math.Min(b,n)); }
         public void Remove(string id) { lock(gate) { Db.items.RemoveAll(x=>x.id==id); Save(); } }
-        public void Settings(Dictionary<string,object> value) { lock(gate) { foreach(var pair in value) if(new[]{"theme","readerSize","readerTheme","volume","view","sort","loop","shuffle","fontFamily","videoRate","smartSpeed"}.Contains(pair.Key)) Db.settings[pair.Key] = pair.Value; Save(); } }
+        public void Settings(Dictionary<string,object> value) { lock(gate) { foreach(var pair in value) if(new[]{"theme","readerSize","readerTheme","volume","view","sort","loop","shuffle","fontFamily","videoRate","smartSpeed","uiLanguage"}.Contains(pair.Key)) Db.settings[pair.Key] = pair.Value; Save(); } }
         public FontAsset ImportFont(string source) {
             var info=new FileInfo(source);if(info.Length>20*1024*1024)throw new InvalidDataException("字体文件不可超过 20 MB。");
             using(var stream=File.OpenRead(source)){byte[] head=new byte[4];if(stream.Read(head,0,4)!=4||!((head[0]==0&&head[1]==1&&head[2]==0&&head[3]==0)||Encoding.ASCII.GetString(head)=="OTTO"))throw new InvalidDataException("请选择有效的 TTF 或 OTF 字体。");}
@@ -210,7 +210,7 @@ namespace kok {
                         var blocks=body.Descendants().Where(x=>new[]{"p","h1","h2","h3","h4","li","blockquote","pre"}.Contains(x.Name.LocalName) && !x.Ancestors().Any(a=>a!=body && new[]{"p","li","blockquote","pre"}.Contains(a.Name.LocalName))).Select(x=>x.Value.Trim()).Where(x=>x.Length>0).ToList();
                         if(blocks.Count>1&&blocks[0]==title)blocks.RemoveAt(0);
                         string text=blocks.Count>0 ? String.Join("\n\n",blocks) : body.Value.Trim();
-                        if(text.Length>0) book.chapters.Add(new Chapter { title=String.IsNullOrWhiteSpace(title) ? "第 " + (book.chapters.Count+1) + " 节" : title, text=text });
+                        if(text.Length>0) book.chapters.Add(new Chapter { generatedTitle=String.IsNullOrWhiteSpace(title),title=String.IsNullOrWhiteSpace(title) ? "第 " + (book.chapters.Count+1) + " 节" : title, text=text });
                     }
                 }
             } else if(ext==".docx") {
@@ -225,11 +225,11 @@ namespace kok {
                 while(text.Length>0) {
                     int end=Math.Min(chunk,text.Length);
                     if(end<text.Length) { int newline=text.IndexOf('\n',end); if(newline>=0 && newline<end+4000) end=newline+1; }
-                    book.chapters.Add(new Chapter { title=book.chapters.Count==0 ? e.name : "第 "+(book.chapters.Count+1)+" 节", text=text.Substring(0,end) });
+                    book.chapters.Add(new Chapter { generatedTitle=book.chapters.Count>0,title=book.chapters.Count==0 ? e.name : "第 "+(book.chapters.Count+1)+" 节", text=text.Substring(0,end) });
                     text=text.Substring(end);
                 }
             } else throw new InvalidDataException("此格式请使用系统应用打开。内置阅读支持 EPUB、TXT、DOCX、Markdown 和常见文本；PDF 使用内置预览。");
-            if(book.chapters.Count==0) book.chapters.Add(new Chapter { title=e.name,text="这个文件没有可读取的文字内容。扫描版文档需要先进行 OCR；加密电子书需要授权阅读器。" });
+            if(book.chapters.Count==0) book.chapters.Add(new Chapter { title=e.name,placeholder=true,text="这个文件没有可读取的文字内容。扫描版文档需要先进行 OCR；加密电子书需要授权阅读器。" });
             if(e.chapterTexts!=null)foreach(var edit in e.chapterTexts){int index;if(Int32.TryParse(edit.Key,out index)&&index>=0&&index<book.chapters.Count)book.chapters[index].text=edit.Value;}
             return book;
         }

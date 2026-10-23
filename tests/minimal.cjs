@@ -7,6 +7,7 @@ const path=require('node:path');
  const page=browser.contexts()[0].pages().find(p=>p.url().startsWith('https://app.kok.local'));
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.setViewportSize({width:1440,height:1000});
+ await page.evaluate(async()=>{await setting({uiLanguage:'zh'});I18n.applyLanguage('zh');});
  await page.reload({waitUntil:'commit'});await page.waitForSelector('#startup');
  assert.equal(await page.locator('#startup img').getAttribute('src'),'logo.svg');
  assert.equal((await page.locator('#startup').innerText()).trim(),'');

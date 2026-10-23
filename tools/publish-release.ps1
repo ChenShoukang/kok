@@ -11,7 +11,11 @@ try { $existing = Invoke-RestMethod -Uri ($base + '/releases/tags/' + $tag) -Hea
 catch { if ([int]$_.Exception.Response.StatusCode -ne 404) { throw } }
 if ($existing) { Write-Output ('Release already exists: ' + $existing.html_url); exit 0 }
 $notes = @'
-kok Windows x64 便携版：更柔和的动效、更丰富的玻璃层次、更宽的侧栏与可配置 AI 翻译。
+kok Windows x64：完整中英文界面、流畅玻璃设计与 AI 翻译。
+
+- 设置 → 界面语言，可切换中文 / English，立即生效并记住选择。
+- 导航、菜单、工具、设置、提示、帮助与应用对话框标题均有中英文。
+- 文件名、分类名、正文、笔记和译文保留原内容。
 
 - 加宽侧栏，分类选中背景平滑移动，适配小窗口。
 - 玻璃 Logo 柔和显现，主界面分层进入；页面采用新旧内容交叠过渡。
@@ -29,6 +33,15 @@ kok Windows x64 便携版：更柔和的动效、更丰富的玻璃层次、更�
 - 照片亮度、对比度、饱和度、裁剪、旋转与翻转，另存副本。
 
 解压后双击 kok.exe。需要 Windows 10 / 11 x64、.NET Framework 4.8 和 WebView2 Runtime。批注保存为本地阅读副本，原文件保留。完整格式范围与限制见 README。
+
+English
+
+- Switch between Chinese and English in Settings → Interface language. The choice is remembered.
+- Navigation, menus, tools, settings, messages, help and application-owned dialog titles are localized.
+- File names, collections, source text, notes and AI translations keep their original content.
+- Smoother glass startup and transitions, a wider sidebar, and configurable AI translation.
+- Enter your provider endpoint, model and key for subtitle, document, PDF and book translation. Bilingual view, persistent cache, cancellation and TXT / SRT export are included.
+- Extract the ZIP and run kok.exe on Windows 10 / 11 x64 with .NET Framework 4.8 and WebView2 Runtime. AI translation requires a configured service and follows provider billing. See README.en.md for details.
 '@
 $body = @{ tag_name = $tag; target_commitish = $env:GITHUB_SHA; name = 'kok ' + $version; body = $notes; draft = $true; prerelease = $false } | ConvertTo-Json
 $release = Invoke-RestMethod -Method Post -Uri ($base + '/releases') -Headers $headers -ContentType 'application/json; charset=utf-8' -Body ([Text.Encoding]::UTF8.GetBytes($body))

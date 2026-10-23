@@ -1,6 +1,7 @@
 'use strict';
 let aiConfig=null,translationJob=null,translationGeneration=0,translationResult=null,translationAttempt='',autoTranslationTimer=null;
 const translationLanguages=['简体中文','繁體中文','English','日本語','한국어','Français','Deutsch','Español'];
+const translationLanguageLabels={'简体中文':'简体中文','繁體中文':'繁体中文',English:'英语','日本語':'日语','한국어':'韩语','Français':'法语',Deutsch:'德语','Español':'西班牙语'};
 async function getAiConfig(){if(!aiConfig)aiConfig=await native('aiConfig');return aiConfig;}
 function setupTranslationSettings(){
  const details=$('.about-details');if(!details||$('[data-ai-settings]'))return;
@@ -8,7 +9,7 @@ function setupTranslationSettings(){
 }
 async function showAiSettings(){
  const config=await getAiConfig();
- showSmall(`<h2>AI 翻译</h2><p class="dialog-description">连接你使用的大模型服务，翻译字幕、文档和电子书。支持 OpenAI 兼容接口。</p><form id="ai-form"><label class="form-label">API 地址<input id="ai-endpoint" type="url" required value="${esc(config.endpoint)}" placeholder="https://你的服务地址/v1" spellcheck="false"></label><label class="form-label">模型名称<input id="ai-model" required maxlength="200" value="${esc(config.model)}" placeholder="填写服务商提供的模型名称" spellcheck="false"></label><label class="form-label">API 密钥<input id="ai-key" type="password" autocomplete="new-password" maxlength="4096" placeholder="${config.hasKey?'已保存 · 留空保留现有密钥':'填写密钥；本机免密服务可留空'}"></label>${config.hasKey?'<label class="ai-check"><input id="ai-clear-key" type="checkbox">移除已保存的密钥</label>':''}<label class="form-label">目标语言<select id="ai-language">${translationLanguages.map(l=>`<option ${config.language===l?'selected':''}>${l}</option>`).join('')}</select></label><label class="ai-check"><input id="ai-automatic" type="checkbox" ${config.automatic?'checked':''}>自动翻译打开的字幕、章节或 PDF 当前页</label><p class="ai-disclosure">翻译内容会发送到此接口，费用按服务商规则计算。密钥在本机加密保存。</p><div class="ai-form-actions"><button type="button" class="button secondary" id="ai-test">测试连接</button><button type="submit" class="button primary">保存设置</button></div><p id="ai-config-status" class="ai-status" role="status"></p></form>`);
+ showSmall(`<h2>AI 翻译</h2><p class="dialog-description">连接你使用的大模型服务，翻译字幕、文档和电子书。支持 OpenAI 兼容接口。</p><form id="ai-form"><label class="form-label">API 地址<input id="ai-endpoint" type="url" required value="${esc(config.endpoint)}" placeholder="https://你的服务地址/v1" spellcheck="false"></label><label class="form-label">模型名称<input id="ai-model" required maxlength="200" value="${esc(config.model)}" placeholder="填写服务商提供的模型名称" spellcheck="false"></label><label class="form-label">API 密钥<input id="ai-key" type="password" autocomplete="new-password" maxlength="4096" placeholder="${config.hasKey?'已保存 · 留空保留现有密钥':'填写密钥；本机免密服务可留空'}"></label>${config.hasKey?'<label class="ai-check"><input id="ai-clear-key" type="checkbox">移除已保存的密钥</label>':''}<label class="form-label">目标语言<select id="ai-language">${translationLanguages.map(l=>`<option value="${esc(l)}" ${config.language===l?'selected':''}>${translationLanguageLabels[l]}</option>`).join('')}</select></label><label class="ai-check"><input id="ai-automatic" type="checkbox" ${config.automatic?'checked':''}>自动翻译打开的字幕、章节或 PDF 当前页</label><p class="ai-disclosure">翻译内容会发送到此接口，费用按服务商规则计算。密钥在本机加密保存。</p><div class="ai-form-actions"><button type="button" class="button secondary" id="ai-test">测试连接</button><button type="submit" class="button primary">保存设置</button></div><p id="ai-config-status" class="ai-status" role="status"></p></form>`);
  const form=$('#ai-form');
  async function save(){const next=await native('saveAiConfig',{endpoint:$('#ai-endpoint').value,model:$('#ai-model').value,apiKey:$('#ai-key').value,language:$('#ai-language').value,automatic:$('#ai-automatic').checked,clearKey:!!$('#ai-clear-key')?.checked});$('#ai-key').value='';aiConfig=next;translationAttempt='';return next;}
  form.addEventListener('submit',async e=>{e.preventDefault();const button=form.querySelector('[type=submit]');button.disabled=true;try{await save();await closeSmall();toast('AI 翻译设置已保存。');if(state.viewer)scheduleAutoTranslation();}catch(error){if(form.isConnected)$('#ai-config-status').textContent=error.message;}finally{button.disabled=false;}});
@@ -49,20 +50,20 @@ async function translationSource(){
    if(!track||!track.cues?.length)throw Error('请先选择或载入一份文字字幕。');
    return{kind:'subtitle',itemId:item.id,name:item.name,title:track.name,sourceIndex:index,cues:track.cues.map(c=>({...c})),parts:track.cues.map(c=>c.text),headings:[]};
  }
- const all=$('#translation-scope').value==='all',parts=[],headings=[];
- async function add(text,title){const chunks=await native('splitTranslationText',{text});for(const chunk of chunks){parts.push(chunk);headings.push(title);}}
- if(state.book){for(const [index,chapter] of state.book.chapters.entries())if(all||index===state.chapter)await add(chapter.text,chapter.title);}
+ const all=$('#translation-scope').value==='all',parts=[],headings=[],headingUi=[];
+ async function add(text,title,isUi=false){const chunks=await native('splitTranslationText',{text});for(const chunk of chunks){parts.push(chunk);headings.push(title);headingUi.push(isUi);}}
+ if(state.book){for(const [index,chapter] of state.book.chapters.entries())if(all||index===state.chapter)await add(chapter.text,chapter.title,!!chapter.generatedTitle);}
  else if(pdfState){
    const session=pdfState,scroll=$('.pdf-scroll');let pageNumber=1;
    for(const wrapper of scroll.querySelectorAll('.pdf-page'))if(wrapper.offsetTop+wrapper.offsetHeight>scroll.scrollTop+scroll.clientHeight*.25){pageNumber=Number(wrapper.dataset.page);break;}
    for(let n=all?1:pageNumber;n<=(all?session.doc.numPages:pageNumber);n++){
      if(pdfState!==session)throw Error('文件已切换。');const page=await session.doc.getPage(n),content=await page.getTextContent();
      let text='';for(const word of content.items)if('str'in word)text+=word.str+(word.hasEOL?'\n':' ');
-     if(text.trim())await add(text.trim(),'第 '+n+' 页');
+     if(text.trim())await add(text.trim(),'第 '+n+' 页',true);
    }
  }else throw Error('文件文字还未加载完成，请稍后再试。');
  if(!parts.some(p=>p.trim()))throw Error('没有可翻译的文字。扫描版 PDF 需要先进行 OCR。');
- return{kind:'document',itemId:item.id,name:item.name,title:all?'整份文档':headings[0],parts,headings};
+ return{kind:'document',itemId:item.id,name:item.name,title:all?'整份文档':headings[0],titleIsUi:all||!!headingUi[0],parts,headings,headingUi};
 }
 async function cancelTranslation(){
  const job=translationJob;if(!job)return;translationJob=null;
@@ -80,7 +81,7 @@ async function startTranslation(automatic=false){
  try{
    const result=await native('translate',{jobId:job.id,parts:source.parts});if(translationJob!==job||generation!==translationGeneration)return;
    translationResult={...source,parts:result.parts,originalParts:source.parts,language:config.language};
-   $('#translation-status').textContent=(result.cached?'已读取本地译文':'翻译完成')+' · '+config.language+' · '+source.title;
+   $('#translation-status').innerHTML=`<span>${result.cached?'已读取本地译文':'翻译完成'}</span> · <span>${esc(translationLanguageLabels[config.language]||config.language)}</span> · <span ${source.titleIsUi?'':'data-user-content'}>${esc(source.title)}</span>`;
    renderTranslationResult();applyTranslatedSubtitles();$('#translation-export').classList.remove('hidden');
  }catch(error){if(translationJob===job&&generation===translationGeneration){$('#translation-status').textContent=error.message;$('#translation-body').innerHTML='<p class="translation-empty">可检查 API 设置后重新开始。</p>';}}
  finally{if(translationJob===job){translationJob=null;$('#translation-cancel').classList.add('hidden');$('.translation-progress').classList.add('hidden');}}
@@ -88,11 +89,11 @@ async function startTranslation(automatic=false){
 function renderTranslationResult(){
  const result=translationResult;if(!result)return;const bilingual=$('#translation-bilingual').checked;let heading='';
  const limit=result.displayLimit||200;
- $('#translation-body').innerHTML=result.parts.slice(0,limit).map((text,n)=>{let title='';if(result.headings[n]&&result.headings[n]!==heading){heading=result.headings[n];title=`<h3>${esc(heading)}</h3>`;}return`${title}<section>${bilingual?`<div class="translation-original">${esc(result.originalParts[n])}</div>`:''}<div class="translation-text">${esc(text)}</div></section>`;}).join('')+(result.parts.length>limit?'<button class="button secondary" data-more-translation>显示更多译文</button>':'');
+ $('#translation-body').innerHTML=result.parts.slice(0,limit).map((text,n)=>{let title='';if(result.headings[n]&&result.headings[n]!==heading){heading=result.headings[n];title=`<h3 ${result.headingUi?.[n]?'data-ui-content':''}>${esc(heading)}</h3>`;}return`${title}<section>${bilingual?`<div class="translation-original">${esc(result.originalParts[n])}</div>`:''}<div class="translation-text">${esc(text)}</div></section>`;}).join('')+(result.parts.length>limit?'<button class="button secondary" data-more-translation>显示更多译文</button>':'');
 }
 function applyTranslatedSubtitles(){
  const result=translationResult;if(!result||result.kind!=='subtitle'||result.itemId!==state.viewer?.id||!$('#video'))return;
- const track={name:result.language+' · AI '+($('#translation-bilingual').checked?'双语':'译文'),translated:true,sourceIndex:result.sourceIndex,cues:result.cues.map((c,n)=>({start:c.start,end:c.end,text:($('#translation-bilingual').checked?c.text+'\n':'')+result.parts[n]}))};
+ const track={name:(translationLanguageLabels[result.language]||result.language)+' · AI '+($('#translation-bilingual').checked?'双语':'译文'),translated:true,language:result.language,sourceIndex:result.sourceIndex,cues:result.cues.map((c,n)=>({start:c.start,end:c.end,text:($('#translation-bilingual').checked?c.text+'\n':'')+result.parts[n]}))};
  let index=subtitleTracks.findIndex(t=>t.translated&&t.sourceIndex===result.sourceIndex);if(index<0){index=subtitleTracks.length;subtitleTracks.push(track);}else subtitleTracks[index]=track;
  renderSubtitleOptions();$('#subtitle-select').value=String(index);setSubtitle(index);
 }

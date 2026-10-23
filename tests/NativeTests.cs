@@ -68,6 +68,9 @@ class Tests {
             bool protectedPhoto=false;try{lib.SaveEditedPhoto(originalPhoto,originalPhoto,imageBytes);}catch(InvalidDataException){protectedPhoto=true;}Check(protectedPhoto,"photo editor refuses to overwrite original");
             string arial=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Fonts),"arial.ttf");
             if(File.Exists(arial)){var font=lib.ImportFont(arial);Check(File.Exists(font.path)&&new Library(lib.DataDir).Db.fonts.Any(f=>f.id==font.id),"TTF font copied and persisted");}
+            lib.Settings(new Dictionary<string,object>{{"uiLanguage","en"}});Check(Convert.ToString(new Library(lib.DataDir).Db.settings["uiLanguage"])=="en","interface language preference persists independently of source content");
+            Check(Localization.Translate("导出译文",true)=="Export translation"&&Localization.Translate("导出译文",false)=="导出译文","native dialog titles share the Chinese and English UI catalog");
+            Check(Localization.Translate("SRT 字幕|*.srt",true)=="SRT subtitles|*.srt"&&Localization.Translate("已加入 3 个文件。",true)=="Added 3 files.","native localized filters preserve extensions and dynamic messages preserve values");
             TranslationTests.Run(Path.Combine(temp,"ai"),Check);
             File.WriteAllText(Path.Combine(lib.DataDir,"library.json"),"bad json"); bool rejected=false;try{new Library(lib.DataDir);}catch(InvalidDataException){rejected=true;}
             Check(rejected&&File.ReadAllText(Path.Combine(lib.DataDir,"library.json"))=="bad json","corrupt database preserved and reported");
