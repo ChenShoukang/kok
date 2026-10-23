@@ -1,0 +1,54 @@
+# Development and tests
+
+[中文](DEVELOPMENT.md) · [Documentation](README.en.md)
+
+## Layout
+
+| Path | Purpose |
+| --- | --- |
+| `src/` | WinForms / WebView2 host, file access, library, subtitles and translation |
+| `ui/` | Glass interface, menus, media / reading workspaces and localization |
+| `tests/` | Native checks and integration tests against the actual desktop window |
+| `tools/` | Dependencies, icon / sample generation, format reports and publishing |
+| `samples/` | Redistributable original examples |
+| `docs/screenshots/` | Documentation captures |
+| `dist/` | Ignored local builds and portable packages |
+| `test-output/` | Ignored isolated profiles and temporary evidence |
+
+Scripts share one local bridge and state object, loading in the order in `ui/index.html`. Custom menus preserve native select values, focus and change events. One paused, muted video element extracts cached covers sequentially into `data/thumbs/`, yielding to previews and playback.
+
+## Build
+
+Use Windows x64, Node.js 24, .NET Framework 4.8 and the WebView2 runtime:
+
+```powershell
+npm ci --omit=optional
+npm run check
+.\build.ps1 -Test
+.\package.ps1
+```
+
+`build.ps1` pins the WebView2 SDK and verifies its download hash. PDF.js resources are prepared locally. Building requires no AI API key.
+
+## Interface verification
+
+Start a separate profile with both debugging and engine-level silence:
+
+```powershell
+Start-Process -FilePath '.\dist\kok\kok.exe' -ArgumentList @('--debug','--test-silent','--data-dir',"$PWD\test-output\ui-data") -WindowStyle Hidden
+npm run test:ui
+npm run test:menus-covers
+npm run test:refinements
+npm run test:video-layout
+npm run test:i18n
+```
+
+`tests/browser.cjs` refuses media tests unless the engine is silent. Normal app startup stays audible. Tests modify their isolated library; do not target everyday data. Photo and video-cover checks verify that sources stay unchanged.
+
+`test:large-media` accepts a local video path for byte-range and seeking checks without uploading it. Translation tests use a local mock service.
+
+## Packaging and publishing
+
+`package.ps1` creates `dist/kok-<version>-win-x64.zip` and its SHA-256 file from an explicit allowlist and current resource folders, excluding profiles, credentials, test binaries and temporary data.
+
+Pushes to `main` trigger the [Windows workflow](https://github.com/878kouyier/kok/blob/main/.github/workflows/build.yml). It checks scripts, runs native tests and reads `package.json` plus [release notes](RELEASE_NOTES.md) to publish the matching GitHub Release. `tools/publish-release.ps1` uses the built-in Actions token.

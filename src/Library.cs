@@ -18,6 +18,8 @@ namespace kok {
         public double progress, position;
         public int chapter;
         public string notes = "";
+        public bool hasCover;
+        public string coverVersion = "";
         public List<Annotation> annotations = new List<Annotation>();
         public Dictionary<string,string> chapterTexts = new Dictionary<string,string>();
     }
@@ -42,11 +44,7 @@ namespace kok {
         public static readonly JavaScriptSerializer Json = new JavaScriptSerializer { MaxJsonLength = 64 * 1024 * 1024, RecursionLimit = 100 };
         private static readonly Dictionary<string,string> Formats = new Dictionary<string,string>(StringComparer.OrdinalIgnoreCase);
         static Library() {
-            AddFormats("video", "mp4 m4v webm mov mkv avi wmv mpg mpeg ts m2ts flv 3gp");
-            AddFormats("photo", "jpg jpeg png gif webp bmp tif tiff avif heic heif");
-            AddFormats("music", "mp3 wav ogg oga flac m4a aac opus wma aiff ape");
-            AddFormats("document", "pdf docx doc rtf xlsx xls pptx ppt csv md markdown log json html htm");
-            AddFormats("book", "epub txt mobi azw azw3 fb2");
+            foreach(var group in Compatibility.Groups) AddFormats(group.kind,group.extensions);
         }
         static void AddFormats(string kind, string extensions) { foreach (string x in extensions.Split(' ')) Formats["." + x] = kind; }
         public static string Classify(string path) { string kind; return Formats.TryGetValue(Path.GetExtension(path), out kind) ? kind : null; }
@@ -59,6 +57,7 @@ namespace kok {
                 try { Db = Json.Deserialize<Database>(File.ReadAllText(file, Encoding.UTF8)); if (Db == null || Db.items == null || Db.settings == null) throw new InvalidDataException(); }
                 catch (Exception ex) { throw new InvalidDataException("资料库无法读取。原文件已保留，请检查 data/library.json 或 library.json.bak 备份。", ex); }
             } else Db = new Database();
+            foreach(var item in Db.items.Where(x=>x.kind=="video"))item.hasCover=File.Exists(ThumbnailPath(item));
         }
         public string Snapshot() { lock(gate) return Json.Serialize(Db); }
         public Entry Find(string id) { lock(gate) return Db.items.FirstOrDefault(x => x.id == id); }
@@ -89,6 +88,18 @@ namespace kok {
                 if (++seen % 25 == 0 && progress != null) progress(seen);
             }
             Save(); return result;
+        }
+        public ImportResult ImportDropped(IEnumerable<string> paths, Action<int> progress) {
+            var errors = new List<string>();
+            var result = Import(ExpandDropped(paths, errors), progress);
+            result.errors.AddRange(errors.Take(Math.Max(0,20-result.errors.Count)));
+            return result;
+        }
+        static IEnumerable<string> ExpandDropped(IEnumerable<string> paths, List<string> errors) {
+            foreach(string path in paths) {
+                if(Directory.Exists(path)) { foreach(string file in Walk(path,errors)) yield return file; }
+                else yield return path;
+            }
         }
         public static IEnumerable<string> Walk(string folder, List<string> errors) {
             var stack = new Stack<string>(); stack.Push(folder);
@@ -130,7 +141,7 @@ namespace kok {
         public void DeleteCollection(string name) { lock(gate){Db.collections.Remove(name);foreach(var item in Db.items)if(item.collection==name)item.collection="";Save();} }
         static double Clamp(double n,double a,double b) { return double.IsNaN(n) || double.IsInfinity(n) ? a : Math.Max(a,Math.Min(b,n)); }
         public void Remove(string id) { lock(gate) { Db.items.RemoveAll(x=>x.id==id); Save(); } }
-        public void Settings(Dictionary<string,object> value) { lock(gate) { foreach(var pair in value) if(new[]{"theme","readerSize","readerTheme","volume","view","sort","loop","shuffle","fontFamily","videoRate","smartSpeed","uiLanguage"}.Contains(pair.Key)) Db.settings[pair.Key] = pair.Value; Save(); } }
+        public void Settings(Dictionary<string,object> value) { lock(gate) { foreach(var pair in value) if(new[]{"theme","readerSize","readerTheme","volume","view","sort","loop","shuffle","fontFamily","videoRate","smartSpeed","uiLanguage","readerToc","videoVolume","readerFollowTheme","videoShortcutsEnabled","videoPlayKey","videoSeekKeys","videoSeekSeconds","videoVolumeKeys","videoDoubleClick"}.Contains(pair.Key)) Db.settings[pair.Key] = pair.Value; Save(); } }
         public FontAsset ImportFont(string source) {
             var info=new FileInfo(source);if(info.Length>20*1024*1024)throw new InvalidDataException("字体文件不可超过 20 MB。");
             using(var stream=File.OpenRead(source)){byte[] head=new byte[4];if(stream.Read(head,0,4)!=4||!((head[0]==0&&head[1]==1&&head[2]==0&&head[3]==0)||Encoding.ASCII.GetString(head)=="OTTO"))throw new InvalidDataException("请选择有效的 TTF 或 OTF 字体。");}
@@ -147,6 +158,27 @@ namespace kok {
             Import(new[]{target},null);
         }
         public string ThumbnailPath(Entry e) { return Path.Combine(DataDir,"thumbs",e.id + ".jpg"); }
+        public object SaveVideoCover(string id,string encoded) {
+            var item=Find(id);if(item==null||item.kind!="video")throw new InvalidDataException("请选择资料库中的视频。");
+            const string prefix="data:image/jpeg;base64,";
+            if(encoded==null||!encoded.StartsWith(prefix,StringComparison.Ordinal)||encoded.Length>1024*1024)throw new InvalidDataException("视频封面数据无效。");
+            byte[] bytes=Convert.FromBase64String(encoded.Substring(prefix.Length));
+            string target=ThumbnailPath(item),temp=target+"."+Guid.NewGuid().ToString("N")+".tmp";
+            try {
+                using(var stream=new MemoryStream(bytes))using(var image=Image.FromStream(stream)) {
+                    if(image.Width<1||image.Height<1||image.Width>640||image.Height>1280)throw new InvalidDataException("视频封面尺寸无效。");
+                    using(var bitmap=new Bitmap(image.Width,image.Height))using(var graphics=Graphics.FromImage(bitmap)) {
+                        graphics.Clear(Color.Black);graphics.DrawImage(image,0,0,image.Width,image.Height);bitmap.Save(temp,System.Drawing.Imaging.ImageFormat.Jpeg);
+                    }
+                }
+                lock(gate) {
+                    if(!Db.items.Contains(item))return new { saved=false };
+                    if(File.Exists(target))File.Replace(temp,target,null);else File.Move(temp,target);
+                    item.hasCover=true;item.coverVersion=DateTime.UtcNow.Ticks.ToString();Save();
+                    return new { saved=true,hasCover=true,coverVersion=item.coverVersion };
+                }
+            } finally { if(File.Exists(temp))File.Delete(temp); }
+        }
         void MakeThumbnail(Entry e) {
             try {
                 using(var source = Image.FromFile(e.path)) {

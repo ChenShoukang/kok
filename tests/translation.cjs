@@ -1,4 +1,4 @@
-const {chromium}=require('playwright-core');
+const {chromium}=require('./browser.cjs');
 const assert=require('node:assert/strict');
 const http=require('node:http');
 const fs=require('node:fs');

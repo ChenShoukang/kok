@@ -1,0 +1,139 @@
+{
+  "version": "0.1.7",
+  "webView2": "155.0.4283.62",
+  "checkedAt": "2026-10-23T09:34:03.587Z",
+  "method": "Original FFmpeg-generated files imported through the native library; HTMLMediaElement playback advances and image canvas pixels are decoded through the native media route.",
+  "results": [
+    {
+      "file": "h264-aac.mp4",
+      "kind": "video",
+      "decoded": true
+    },
+    {
+      "file": "h264-aac.m4v",
+      "kind": "video",
+      "decoded": true
+    },
+    {
+      "file": "h264-aac.mov",
+      "kind": "video",
+      "decoded": true
+    },
+    {
+      "file": "vp8-opus.webm",
+      "kind": "video",
+      "decoded": true
+    },
+    {
+      "file": "vp9-opus.webm",
+      "kind": "video",
+      "decoded": true
+    },
+    {
+      "file": "h264-aac.mkv",
+      "kind": "video",
+      "decoded": true
+    },
+    {
+      "file": "mpeg4-mp3.avi",
+      "kind": "video",
+      "decoded": false,
+      "error": "media error 4"
+    },
+    {
+      "file": "wmv2-wma2.wmv",
+      "kind": "video",
+      "decoded": false,
+      "error": "media error 4"
+    },
+    {
+      "file": "h264-aac.ts",
+      "kind": "video",
+      "decoded": false,
+      "error": "media error 4"
+    },
+    {
+      "file": "mp3.mp3",
+      "kind": "music",
+      "decoded": true
+    },
+    {
+      "file": "pcm.wav",
+      "kind": "music",
+      "decoded": true
+    },
+    {
+      "file": "flac.flac",
+      "kind": "music",
+      "decoded": true
+    },
+    {
+      "file": "vorbis.ogg",
+      "kind": "music",
+      "decoded": true
+    },
+    {
+      "file": "opus.opus",
+      "kind": "music",
+      "decoded": true
+    },
+    {
+      "file": "aac.m4a",
+      "kind": "music",
+      "decoded": true
+    },
+    {
+      "file": "adts.aac",
+      "kind": "music",
+      "decoded": true
+    },
+    {
+      "file": "wma.wma",
+      "kind": "music",
+      "decoded": false,
+      "error": "media error 4"
+    },
+    {
+      "file": "pcm.aiff",
+      "kind": "music",
+      "decoded": false,
+      "error": "media error 4"
+    },
+    {
+      "file": "photo.jpg",
+      "kind": "photo",
+      "decoded": true
+    },
+    {
+      "file": "photo.png",
+      "kind": "photo",
+      "decoded": true
+    },
+    {
+      "file": "photo.gif",
+      "kind": "photo",
+      "decoded": true
+    },
+    {
+      "file": "photo.webp",
+      "kind": "photo",
+      "decoded": true
+    },
+    {
+      "file": "photo.bmp",
+      "kind": "photo",
+      "decoded": true
+    },
+    {
+      "file": "photo.avif",
+      "kind": "photo",
+      "decoded": true
+    },
+    {
+      "file": "photo.tiff",
+      "kind": "photo",
+      "decoded": false,
+      "error": "The source image cannot be decoded."
+    }
+  ]
+}

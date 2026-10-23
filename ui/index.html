@@ -5,19 +5,30 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https://media.kok.local data: blob:; font-src 'self' https://media.kok.local data:; media-src https://media.kok.local blob:; frame-src https://media.kok.local; connect-src 'self' https://media.kok.local blob:; worker-src 'self' blob:; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'none'">
   <title>kok</title>
-  <link rel="stylesheet" href="styles.css">
-  <script defer src="i18n.js"></script>
-  <script defer src="app.js"></script>
-  <script defer src="features.js"></script>
-  <script defer src="translation.js"></script>
-  <link rel="stylesheet" href="features.css">
-  <link rel="stylesheet" href="translation.css">
+  <link rel="stylesheet" href="styles.css?v=0.2.1">
+  <script defer src="i18n.js?v=0.2.1"></script>
+  <script defer src="app.js?v=0.2.1"></script>
+  <script defer src="features.js?v=0.2.1"></script>
+  <script defer src="translation.js?v=0.2.1"></script>
+  <script defer src="compatibility.js?v=0.2.1"></script>
+  <script defer src="drop.js?v=0.2.1"></script>
+  <script defer src="preferences.js?v=0.2.1"></script>
+  <script defer src="photo-editor.js?v=0.2.1"></script>
+  <script defer src="menus.js?v=0.2.1"></script>
+  <script defer src="video-covers.js?v=0.2.1"></script>
+  <script defer src="video-properties.js?v=0.2.1"></script>
+  <script defer src="workspaces.js?v=0.2.1"></script>
+  <link rel="stylesheet" href="features.css?v=0.2.1">
+  <link rel="stylesheet" href="translation.css?v=0.2.1">
+  <link rel="stylesheet" href="workspaces.css?v=0.2.1">
+  <link rel="stylesheet" href="adaptive.css?v=0.2.1">
+  <link rel="stylesheet" href="menus.css?v=0.2.1">
 </head>
 <body class="booting" aria-busy="true">
-  <div id="startup" class="startup" role="status" aria-label="正在启动 kok"><div class="startup-halo" aria-hidden="true"></div><div class="startup-mark"><img src="logo.svg" alt="" width="64" height="64"></div></div>
+  <div id="startup" class="startup" role="status" aria-label="正在启动 kok"><div class="startup-halo" aria-hidden="true"></div><div class="startup-mark"><img src="logo.svg?v=0.2.1" alt="" width="64" height="64"></div></div>
   <aside class="sidebar">
     <div class="nav-indicator" aria-hidden="true"></div>
-    <a class="brand" href="#overview" data-route="overview" aria-label="kok 首页"><img src="logo.svg" alt="" width="30" height="30"><span>kok</span></a>
+    <a class="brand" href="#overview" data-route="overview" aria-label="kok 首页"><img src="logo.svg?v=0.2.1" alt="" width="30" height="30"><span>kok</span></a>
     <nav id="main-nav" aria-label="资料库分类"></nav>
     <div class="sidebar-rule"></div>
     <nav id="extra-nav" aria-label="快捷访问"></nav>
@@ -28,11 +39,12 @@
     <header class="topbar"><label class="search"><span data-icon="search"></span><input id="search" type="search" placeholder="搜索资料库" autocomplete="off" aria-label="搜索资料库"><kbd>Ctrl K</kbd></label><div class="import-control"><button class="button primary" id="import-top"><span data-icon="plus"></span>导入文件</button><button class="import-more" id="import-more" aria-label="更多导入选项" aria-expanded="false" aria-controls="import-menu"><span data-icon="chevron"></span></button><div id="import-menu" class="import-menu hidden"><button data-action="importFiles"><span data-icon="document"></span>导入文件</button><button data-action="importFolder"><span data-icon="folder"></span>导入文件夹</button></div></div></header>
     <main id="main" tabindex="-1"></main>
   </div>
-  <section class="music-bar hidden" id="music-bar" aria-label="音乐播放器"><div class="now-playing"><div class="mini-cover" data-icon="music"></div><div><b id="track-name">未播放</b><small id="track-subtitle"></small></div><button class="icon-button" id="track-favorite" title="收藏音乐" aria-label="收藏音乐" data-icon="heart"></button></div><div class="music-center"><div class="transport"><button class="icon-button" id="shuffle" title="随机播放" aria-label="随机播放" data-icon="shuffle"></button><button class="icon-button" id="prev-track" title="上一首" aria-label="上一首" data-icon="skipBack"></button><button class="play-main" id="play-pause" title="播放或暂停" aria-label="播放或暂停" data-icon="play"></button><button class="icon-button" id="next-track" title="下一首" aria-label="下一首" data-icon="skipForward"></button><button class="icon-button" id="repeat" title="循环播放" aria-label="循环播放" data-icon="repeat"></button></div><div class="timeline"><span id="current-time">0:00</span><input id="audio-seek" type="range" min="0" max="1000" value="0" aria-label="音乐播放进度"><span id="duration">0:00</span></div></div><div class="volume-controls"><span data-icon="volume"></span><input type="range" id="volume" min="0" max="1" step="0.01" value="0.7" aria-label="音量"><button class="icon-button" id="queue-button" title="播放队列" aria-label="播放队列" data-icon="listMusic"></button><button class="icon-button" id="close-player" title="停止音乐" aria-label="停止音乐" data-icon="close"></button></div></section>
+  <section class="music-bar hidden" id="music-bar" aria-label="音乐播放器"><div class="now-playing"><button class="mini-cover" id="open-now-playing" data-icon="music" aria-label="打开完整播放器" title="打开完整播放器"></button><div><b id="track-name">未播放</b><small id="track-subtitle"></small></div><button class="icon-button" id="track-favorite" title="收藏音乐" aria-label="收藏音乐" data-icon="heart"></button></div><div class="music-center"><div class="transport"><button class="icon-button" id="shuffle" title="随机播放" aria-label="随机播放" data-icon="shuffle"></button><button class="icon-button" id="prev-track" title="上一首" aria-label="上一首" data-icon="skipBack"></button><button class="play-main" id="play-pause" title="播放或暂停" aria-label="播放或暂停" data-icon="play"></button><button class="icon-button" id="next-track" title="下一首" aria-label="下一首" data-icon="skipForward"></button><button class="icon-button" id="repeat" title="循环播放" aria-label="循环播放" data-icon="repeat"></button></div><div class="timeline"><span id="current-time">0:00</span><input id="audio-seek" type="range" min="0" max="1000" value="0" aria-label="音乐播放进度"><span id="duration">0:00</span></div></div><div class="volume-controls"><span data-icon="volume"></span><input type="range" id="volume" min="0" max="1" step="0.01" value="0.7" aria-label="音量"><button class="icon-button" id="queue-button" title="播放队列" aria-label="播放队列" data-icon="listMusic"></button><button class="icon-button" id="close-player" title="停止音乐" aria-label="停止音乐" data-icon="close"></button></div></section>
   <audio id="audio" preload="metadata"></audio>
   <dialog id="viewer" class="viewer"><div class="viewer-header"><div class="viewer-title"><span id="viewer-icon"></span><div><b id="viewer-title"></b><small id="viewer-subtitle"></small></div></div><div class="viewer-actions"><button class="icon-button" id="viewer-favorite" title="收藏" aria-label="收藏" data-icon="heart"></button><button class="icon-button" id="notes-button" title="笔记" aria-label="笔记" data-icon="edit"></button><button class="icon-button" id="external-button" title="使用系统应用打开" aria-label="使用系统应用打开" data-icon="external"></button><button class="icon-button" id="close-viewer" title="关闭 (Esc)" aria-label="关闭" data-icon="close"></button></div></div><div id="viewer-content"></div><aside id="notes-panel" class="notes-panel hidden"><h3>笔记</h3><textarea id="notes" placeholder="写下想法…" aria-label="文件笔记"></textarea><button class="button primary" id="save-notes">保存笔记</button></aside></dialog>
   <dialog id="small-dialog" class="small-dialog"></dialog>
-  <div class="toast-stack" id="toasts" role="status" aria-live="polite"></div>
+  <div class="toast-stack" id="toasts" popover="manual" role="status" aria-live="polite"></div>
   <div class="import-status hidden" id="import-status"><span class="spinner"></span><span>正在整理你的资料…</span></div>
+  <div id="file-drop-overlay" class="file-drop-overlay" popover="manual" role="status" aria-live="polite"><div class="file-drop-card"><span data-icon="plus"></span><h2>松开即可导入</h2><p>自动识别视频、照片、音乐、文档与电子书</p><small>可多选文件或拖入文件夹，原文件保留</small></div></div>
 </body>
 </html>

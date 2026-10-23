@@ -1,6 +1,6 @@
 {
   "name": "kok",
-  "version": "0.1.4",
+  "version": "0.2.1",
   "description": "kok Windows desktop library development tests (not needed to run the app)",
   "private": true,
   "directories": {
@@ -8,11 +8,19 @@
   },
   "scripts": {
     "test:ui": "node tests/ui.cjs && node tests/features.cjs",
-    "check": "node --check ui/app.js && node --check ui/features.js && node --check ui/translation.js && node --check ui/i18n.js && node tools/check-locales.cjs",
+    "check": "node --check ui/app.js && node --check ui/features.js && node --check ui/translation.js && node --check ui/i18n.js && node --check ui/compatibility.js && node --check ui/drop.js && node --check ui/workspaces.js && node --check ui/preferences.js && node --check ui/photo-editor.js && node --check ui/menus.js && node --check ui/video-covers.js && node --check ui/video-properties.js && node tools/check-locales.cjs && node tools/check-docs.cjs",
     "test:features": "node tests/features.cjs",
     "test:design": "node tests/minimal.cjs",
     "test:translation": "node tests/translation.cjs",
-    "test:i18n": "node tests/i18n.cjs"
+    "test:i18n": "node tests/i18n.cjs",
+    "test:compatibility": "node tests/compatibility.cjs",
+    "test:drop": "node tests/drop.cjs",
+    "test:workspaces": "node tests/workspaces.cjs",
+    "test:large-media": "node tests/large-media.cjs",
+    "test:recovery": "node tests/recovery.cjs",
+    "test:video-layout": "node tests/video-layout.cjs",
+    "test:refinements": "node tests/refinements.cjs",
+    "test:menus-covers": "node tests/menus-covers.cjs"
   },
   "keywords": [],
   "author": "",

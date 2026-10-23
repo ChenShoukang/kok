@@ -11,3 +11,7 @@ test-output/
 .env
 .env.*
 ai-settings.json
+
+Thumbs.db
+Desktop.ini
+*.dmp

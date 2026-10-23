@@ -16,9 +16,10 @@ namespace kok {
     static class Program {
         [System.Runtime.InteropServices.DllImport("user32.dll")] static extern bool SetProcessDPIAware();
         [STAThread] static void Main(string[] args) {
+            AppDomain.CurrentDomain.UnhandledException+=delegate(object sender,UnhandledExceptionEventArgs e) { var error=e.ExceptionObject as Exception;if(error!=null)RuntimeLog.Write("unhandled",error); };
             SetProcessDPIAware(); Application.EnableVisualStyles(); Application.SetCompatibleTextRenderingDefault(false);
             try { Application.Run(new MainWindow(args)); }
-            catch(Exception ex) { MessageBox.Show(Localization.Translate(ex.Message,System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName=="en"),Localization.Translate("kok · 无法启动",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName=="en"),MessageBoxButtons.OK,MessageBoxIcon.Error); }
+            catch(Exception ex) { RuntimeLog.Write("host-error",ex);MessageBox.Show(Localization.Translate(ex.Message,System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName=="en"),Localization.Translate("kok · 无法启动",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName=="en"),MessageBoxButtons.OK,MessageBoxIcon.Error); }
         }
     }
     public class MainWindow : Form {
@@ -28,29 +29,40 @@ namespace kok {
         readonly Dictionary<string,CancellationTokenSource> translationJobs=new Dictionary<string,CancellationTokenSource>();
         readonly string appDir = AppDomain.CurrentDomain.BaseDirectory;
         bool importing;
-        readonly bool debug;
+        readonly bool debug,silentTest;
         readonly FileStream databaseLock;
         bool closeReady,closingPending;
+        bool engineUnavailable,recoveryNotice;
+        Panel engineErrorPanel;
+        string lastMediaId;
+        bool mediaFullScreen;
+        Rectangle windowedBounds;
+        FormWindowState windowedState;
+        FormBorderStyle windowedBorder;
+        Size windowedMinimum;
+        public const int MediaResponseLimit=4*1024*1024;
         public MainWindow(string[] args) {
-            Text="kok"; Width=1440; Height=940; MinimumSize=new Size(960,640);
+            Text="kok"; Width=1440; Height=940; MinimumSize=new Size(760,520);
             StartPosition=FormStartPosition.CenterScreen; BackColor=Color.FromArgb(248,249,251);
             Icon=Icon.ExtractAssociatedIcon(Application.ExecutablePath);
             debug=args.Contains("--debug");
+            silentTest=debug&&args.Contains("--test-silent");
             string dataDir=Path.Combine(appDir,"data");
             int dataIndex=Array.IndexOf(args,"--data-dir");
             if(dataIndex>=0 && dataIndex+1<args.Length) dataDir=Path.GetFullPath(args[dataIndex+1]);
             Directory.CreateDirectory(dataDir);
+            RuntimeLog.Configure(dataDir);RuntimeLog.Write("startup","version=0.2.1 process="+Process.GetCurrentProcess().Id);
             try { databaseLock=new FileStream(Path.Combine(dataDir,".kok.lock"),FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None); }
             catch(IOException) { throw new InvalidOperationException("这个资料库已经在另一个 kok 窗口中打开，请使用原窗口。\n如需独立窗口，请通过 --data-dir 指定其他资料库。"); }
             library=new Library(dataDir);
             translations=new TranslationService(dataDir);
             FormClosed+=delegate { databaseLock.Dispose(); };
             FormClosing+=HandleWindowClosing;
-            web.DefaultBackgroundColor=BackColor; web.Dock=DockStyle.Fill; Controls.Add(web);
+            web.DefaultBackgroundColor=BackColor; web.Dock=DockStyle.Fill; web.AllowExternalDrop=true; Controls.Add(web);
             Shown+=async delegate { await Init(); };
         }
         async void HandleWindowClosing(object sender,FormClosingEventArgs e) {
-            if(closeReady||web.CoreWebView2==null)return;
+            if(closeReady||engineUnavailable||web.CoreWebView2==null)return;
             e.Cancel=true;if(closingPending)return;
             if(importing){MessageBox.Show(this,L("正在导入文件，请等待本次整理完成后再退出。"),"kok");return;}
             closingPending=true;
@@ -72,7 +84,7 @@ namespace kok {
                     browser=candidates.FirstOrDefault(x=>File.Exists(Path.Combine(x,"msedge.exe")));
                     if(browser==null) throw new InvalidOperationException("请安装微软 WebView2 Evergreen Runtime，然后重新打开 kok。\n下载：https://developer.microsoft.com/microsoft-edge/webview2/");
                 }
-                var options=new CoreWebView2EnvironmentOptions(debug ? "--remote-debugging-port=9225" : "");
+                var options=new CoreWebView2EnvironmentOptions((debug ? "--remote-debugging-port=9225" : "")+(silentTest ? " --mute-audio" : ""));
                 options.Language=library.Db.settings.ContainsKey("uiLanguage")&&Convert.ToString(library.Db.settings["uiLanguage"])=="en"?"en-US":"zh-CN";
                 var env=await CoreWebView2Environment.CreateAsync(browser,Path.Combine(library.DataDir,"WebView2"),options);
                 await web.EnsureCoreWebView2Async(env);
@@ -83,13 +95,70 @@ namespace kok {
                 web.CoreWebView2.AddWebResourceRequestedFilter("https://media.kok.local/*",CoreWebView2WebResourceContext.All);
                 web.CoreWebView2.WebResourceRequested+=Resource;
                 web.CoreWebView2.WebMessageReceived+=Message;
+                web.CoreWebView2.ProcessFailed+=HandleProcessFailed;
+                web.CoreWebView2.ContainsFullScreenElementChanged+=delegate { SetMediaFullScreen(web.CoreWebView2.ContainsFullScreenElement); };
+                web.CoreWebView2.NavigationCompleted+=delegate(object sender,CoreWebView2NavigationCompletedEventArgs e) {
+                    if(e.IsSuccess&&recoveryNotice) { engineUnavailable=false;recoveryNotice=false;Notify("engineRecovered",null); }
+                    else if(!e.IsSuccess&&recoveryNotice) { engineUnavailable=true;ShowEngineError(); }
+                };
                 web.CoreWebView2.NewWindowRequested+=delegate(object sender,CoreWebView2NewWindowRequestedEventArgs e){ e.Handled=true; };
                 web.CoreWebView2.NavigationStarting+=delegate(object sender,CoreWebView2NavigationStartingEventArgs e){ if(!e.Uri.StartsWith("https://app.kok.local/",StringComparison.OrdinalIgnoreCase)) e.Cancel=true; };
                 web.CoreWebView2.PermissionRequested+=delegate(object sender,CoreWebView2PermissionRequestedEventArgs e){ e.State=CoreWebView2PermissionState.Deny; };
-                web.CoreWebView2.Navigate("https://app.kok.local/index.html");
-            } catch(Exception ex) { MessageBox.Show(this,L(ex.Message),L("kok · 初始化失败"),MessageBoxButtons.OK,MessageBoxIcon.Error); Close(); }
+                web.CoreWebView2.Navigate("https://app.kok.local/index.html?v=0.2.1");
+            } catch(Exception ex) { RuntimeLog.Write("engine-init-error",ex);MessageBox.Show(this,L(ex.Message),L("kok · 初始化失败"),MessageBoxButtons.OK,MessageBoxIcon.Error); Close(); }
         }
-        void Send(object value) { if(IsDisposed || web.CoreWebView2==null) return; web.CoreWebView2.PostWebMessageAsJson(Library.Json.Serialize(value)); }
+        void HandleProcessFailed(object sender,CoreWebView2ProcessFailedEventArgs e) {
+            var kind=e.ProcessFailedKind;
+            RuntimeLog.Write("engine-failure","kind="+kind+" reason="+e.Reason+" exit="+e.ExitCode);
+            if(kind!=CoreWebView2ProcessFailedKind.RenderProcessExited&&kind!=CoreWebView2ProcessFailedKind.BrowserProcessExited)return;
+            engineUnavailable=true;
+            foreach(var job in translationJobs.Values)job.Cancel();
+            if(IsDisposed||Disposing||!IsHandleCreated)return;
+            BeginInvoke((Action)(()=>{
+                if(IsDisposed||Disposing)return;
+                SetMediaFullScreen(false);
+                if(kind==CoreWebView2ProcessFailedKind.RenderProcessExited) {
+                    try { recoveryNotice=true;engineUnavailable=false;web.CoreWebView2.Reload();return; }
+                    catch(Exception error) { engineUnavailable=true;RuntimeLog.Write("engine-reload-error",error); }
+                }
+                ShowEngineError();
+            }));
+        }
+        void SetMediaFullScreen(bool enabled) {
+            if(enabled==mediaFullScreen||IsDisposed)return;
+            SuspendLayout();
+            try {
+                if(enabled) {
+                    var screen=Screen.FromControl(this).Bounds;
+                    windowedState=WindowState;windowedBorder=FormBorderStyle;windowedMinimum=MinimumSize;
+                    windowedBounds=WindowState==FormWindowState.Normal?Bounds:RestoreBounds;
+                    mediaFullScreen=true;MinimumSize=Size.Empty;WindowState=FormWindowState.Normal;
+                    FormBorderStyle=FormBorderStyle.None;Bounds=screen;
+                } else {
+                    mediaFullScreen=false;WindowState=FormWindowState.Normal;FormBorderStyle=windowedBorder;
+                    MinimumSize=windowedMinimum;Bounds=windowedBounds;WindowState=windowedState;
+                }
+            } finally { ResumeLayout(true); }
+        }
+        void ShowEngineError() {
+            if(engineErrorPanel!=null)return;
+            engineErrorPanel=new Panel { Dock=DockStyle.Fill,BackColor=BackColor,Padding=new Padding(48) };
+            var layout=new FlowLayoutPanel { Dock=DockStyle.Fill,FlowDirection=FlowDirection.TopDown,WrapContents=false,AutoScroll=true };
+            layout.Controls.Add(new Label { AutoSize=true,Text=L("播放内核已停止，窗口和资料库已保留。"),Font=new Font("Segoe UI",15),Margin=new Padding(0,35,0,20) });
+            layout.Controls.Add(new Label { AutoSize=true,Text=L("请关闭窗口并重新打开 kok。故障日志位于 data/logs/kok.log。"),MaximumSize=new Size(700,0),Margin=new Padding(0,0,0,25) });
+            var item=lastMediaId==null?null:library.Find(lastMediaId);
+            if(item!=null&&File.Exists(item.path)) {
+                var external=new Button { AutoSize=true,Padding=new Padding(15,8,15,8),Text=L("系统播放器打开") };
+                external.Click+=delegate { try{Process.Start(new ProcessStartInfo(item.path){UseShellExecute=true});}catch(Exception error){RuntimeLog.Write("external-open-error",error);} };layout.Controls.Add(external);
+            }
+            var close=new Button { AutoSize=true,Padding=new Padding(15,8,15,8),Text=L("关闭窗口"),Margin=new Padding(0,18,0,0) };close.Click+=delegate{closeReady=true;Close();};layout.Controls.Add(close);
+            engineErrorPanel.Controls.Add(layout);Controls.Add(engineErrorPanel);engineErrorPanel.BringToFront();
+        }
+        void Send(object value) {
+            if(IsDisposed||engineUnavailable||web.CoreWebView2==null)return;
+            try { web.CoreWebView2.PostWebMessageAsJson(Library.Json.Serialize(value)); }
+            catch(Exception error) { RuntimeLog.Write("message-delivery-error",error); }
+        }
         void Notify(string name,object value) { Send(new { eventName=name, data=value }); }
         string L(string value) { return Localization.Translate(value,library!=null&&library.Db.settings.ContainsKey("uiLanguage")&&Convert.ToString(library.Db.settings["uiLanguage"])=="en"); }
         static string StringArg(Dictionary<string,object> a,string key) { return a.ContainsKey(key) ? Convert.ToString(a[key]) : ""; }
@@ -111,6 +180,17 @@ namespace kok {
                         if(!Directory.Exists(samples)) throw new DirectoryNotFoundException("示例目录不存在。");
                         importing=true; Notify("importing",new { count=0 });
                         try { result=await Task.Run(()=>library.Import(Directory.GetFiles(samples),null)); }
+                        finally { importing=false; Notify("imported",null); }
+                        break;
+                    }
+                    case "importDropped": {
+                        if(importing) throw new InvalidOperationException("正在导入，请稍候。");
+                        // Use native-backed DOM files only. Never accept a path supplied in page JSON.
+                        var objects=e.AdditionalObjects;
+                        string[] dropped=objects==null ? new string[0] : objects.OfType<CoreWebView2File>().Select(f=>f.Path).Where(p=>!String.IsNullOrWhiteSpace(p)).ToArray();
+                        if(dropped.Length==0) throw new InvalidDataException("未收到本地文件，请从文件资源管理器拖入，或点击导入文件。");
+                        importing=true; Notify("importing",new { count=0 });
+                        try { result=await Task.Run(()=>library.ImportDropped(dropped,n=>BeginInvoke((Action)(()=>Notify("importing",new{count=n}))))); }
                         finally { importing=false; Notify("imported",null); }
                         break;
                     }
@@ -136,6 +216,11 @@ namespace kok {
                     case "update": library.Update(StringArg(a,"id"),(Dictionary<string,object>)a["patch"]); result=true; break;
                     case "remove": library.Remove(StringArg(a,"id")); result=true; break;
                     case "settings": library.Settings(a); result=true; break;
+                    case "saveVideoCover": result=await Task.Run(()=>library.SaveVideoCover(StringArg(a,"id"),StringArg(a,"image")));break;
+                    case "fileProperties": {
+                        var item=RequireEntry(a);var info=new FileInfo(item.path);
+                        result=new { name=info.Name,path=info.FullName,size=info.Length,extension=item.ext,modified=info.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss") };break;
+                    }
                     case "aiConfig": result=translations.PublicConfig();break;
                     case "saveAiConfig": result=translations.SaveConfig(a);break;
                     case "splitTranslationText": result=TranslationService.SplitText(StringArg(a,"text"));break;
@@ -196,7 +281,8 @@ namespace kok {
                             if(dialog.ShowDialog(this)==DialogResult.OK) { File.WriteAllText(dialog.FileName,library.Snapshot(),new UTF8Encoding(false)); result=true; }
                         } break;
                     }
-                    case "diagnostics": result=new { engine=web.CoreWebView2.Environment.BrowserVersionString, count=library.Db.items.Count, dataDir=library.DataDir, version="0.1.4" }; break;
+                    case "diagnostics": result=new { engine=web.CoreWebView2.Environment.BrowserVersionString, count=library.Db.items.Count, dataDir=library.DataDir, version="0.2.1", mediaResponseLimit=MediaResponseLimit, logFile=RuntimeLog.FilePath, silentTest=silentTest, window=new { fullScreen=mediaFullScreen, border=FormBorderStyle.ToString(), state=WindowState.ToString(), bounds=new { x=Left,y=Top,width=Width,height=Height }, screen=Screen.FromControl(this).Bounds } }; break;
+                    case "formats": result=Compatibility.Groups; break;
                     default: throw new InvalidOperationException("未知操作。");
                 }
                 Send(new { requestId=requestId, result=result });
@@ -205,6 +291,11 @@ namespace kok {
         Entry RequireEntry(Dictionary<string,object> a) { Entry item=library.Find(StringArg(a,"id")); if(item==null || !File.Exists(item.path)) throw new FileNotFoundException("找不到原文件，文件可能已移动。请从资料库移除后重新导入。"); return item; }
         void Resource(object sender,CoreWebView2WebResourceRequestedEventArgs e) {
             try {
+                if(e.Request.Method=="OPTIONS") {
+                    e.Response=web.CoreWebView2.Environment.CreateWebResourceResponse(new MemoryStream(),204,"No Content","Content-Length: 0\r\nAccess-Control-Allow-Origin: https://app.kok.local\r\nAccess-Control-Allow-Methods: GET, HEAD, OPTIONS\r\nAccess-Control-Allow-Headers: Range\r\nAccess-Control-Max-Age: 600\r\n");return;
+                }
+                bool head=e.Request.Method=="HEAD";
+                if(e.Request.Method!="GET"&&!head){RespondError(e,405,"Method Not Allowed");return;}
                 Uri uri=new Uri(e.Request.Uri); string[] parts=uri.AbsolutePath.Trim('/').Split('/');
                 if(parts.Length!=2) { RespondError(e,404,"Not Found"); return; }
                 if(parts[0]=="font") {
@@ -212,6 +303,9 @@ namespace kok {
                     e.Response=web.CoreWebView2.Environment.CreateWebResourceResponse(File.OpenRead(font.path),200,"OK","Content-Type: font/ttf\r\nAccess-Control-Allow-Origin: https://app.kok.local\r\n");return;
                 }
                 Entry item=library.Find(parts[1]); if(item==null) { RespondError(e,404,"Not Found"); return; }
+                if(parts[0]=="file"&&(item.kind=="video"||item.kind=="music")&&lastMediaId!=item.id) {
+                    lastMediaId=item.id;RuntimeLog.Write("media-open","id="+item.id+" type="+item.ext+" bytes="+item.size);
+                }
                 string path=parts[0]=="thumb" ? library.ThumbnailPath(item) : parts[0]=="file" ? item.path : null;
                 if(path==null || !File.Exists(path)) { RespondError(e,404,"Not Found"); return; }
                 var file=new FileStream(path,FileMode.Open,FileAccess.Read,FileShare.ReadWrite|FileShare.Delete);
@@ -221,10 +315,19 @@ namespace kok {
                 string range=e.Request.Headers.Contains("Range") ? e.Request.Headers.GetHeader("Range") : null;
                 bool partial=!String.IsNullOrEmpty(range);
                 if(partial && !TryRange(range,size,out start,out end)) { file.Dispose(); e.Response=web.CoreWebView2.Environment.CreateWebResourceResponse(new MemoryStream(),416,"Range Not Satisfiable",headers+"Content-Range: bytes */"+size+"\r\n"); return; }
+                // The WebView2 response bridge can buffer the response even when the .NET
+                // source is a FileStream. Never hand it an entire multi-gigabyte movie.
+                long count=Math.Max(0,end-start+1);
+                if(!head&&parts[0]=="file"&&(item.kind=="video"||item.kind=="music")&&count>MediaResponseLimit) {
+                    if(!partial) { file.Dispose(); RespondError(e,413,"Range Required"); return; }
+                    count=MediaResponseLimit;end=start+count-1;
+                }
                 if(partial) headers+="Content-Range: bytes "+start+"-"+end+"/"+size+"\r\n";
-                long count=Math.Max(0,end-start+1); headers+="Content-Length: "+count+"\r\n";
-                e.Response=web.CoreWebView2.Environment.CreateWebResourceResponse(new SliceStream(file,start,count),partial?206:200,partial?"Partial Content":"OK",headers);
-            } catch { RespondError(e,500,"Read Error"); }
+                headers+="Content-Length: "+count+"\r\n";
+                Stream body;
+                if(head){file.Dispose();body=new MemoryStream();}else body=new SliceStream(file,start,count);
+                e.Response=web.CoreWebView2.Environment.CreateWebResourceResponse(body,partial?206:200,partial?"Partial Content":"OK",headers);
+            } catch(Exception error) { RuntimeLog.Write("resource-error",error);try{RespondError(e,500,"Read Error");}catch(Exception responseError){RuntimeLog.Write("resource-response-error",responseError);} }
         }
         void RespondError(CoreWebView2WebResourceRequestedEventArgs e,int code,string reason) { e.Response=web.CoreWebView2.Environment.CreateWebResourceResponse(new MemoryStream(),code,reason,"Content-Length: 0\r\nAccess-Control-Allow-Origin: https://app.kok.local\r\n"); }
         public static bool TryRange(string range,long size,out long start,out long end) {
