@@ -29,7 +29,7 @@
     "audit:release": "powershell -ExecutionPolicy Bypass -File tools/audit-release.ps1",
     "check:windows": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/check-powershell.ps1",
     "audit:history": "node tools/audit-history.cjs",
-    "audit:dependencies": "npm audit --omit=optional --audit-level=low"
+    "audit:dependencies": "npm audit --omit=optional --audit-level=info"
   },
   "keywords": [],
   "author": "",
