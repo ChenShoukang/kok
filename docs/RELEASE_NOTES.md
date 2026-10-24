@@ -1,5 +1,7 @@
 ## v0.3.1 · 纯净 / 智能与私密文件夹
 
+**测试版 / Preview**。兼容性与独立电脑验证范围见[发布验证](https://github.com/ChenShoukang/kok/blob/main/docs/TESTING.md)。
+
 - 首次只选择纯净 / 智能模式；私密功能放在资料库内的文件夹中，保留统一界面。
 - 纯净模式保留离线基础功能，原生层阻止 AI；智能模式首次说明内容发送与接口配置。
 - 新增密码保护的私密文件夹：加密索引、笔记与封面，离开窗口、最小化或闲置自动锁定，支持加密备份。原始文件仍在原位置，不会被加密。
@@ -11,6 +13,8 @@
 详见 [中文说明](https://github.com/ChenShoukang/kok/blob/main/README.md)。解压便携包运行 kok.exe；保留附带文件。Windows 10 / 11 x64，.NET Framework 4.8 与 WebView2。源码与安装包不含个人 API 配置、资料库或私密缓存。
 
 ## v0.3.1 · Pure / Smart and a private folder
+
+**Preview release.** See [release verification](https://github.com/ChenShoukang/kok/blob/main/docs/TESTING.en.md) for compatibility and independent-machine coverage.
 
 - First-run Pure / Smart selector, with a password-protected folder inside the ordinary library and consistent glass UI.
 - Pure keeps offline basics and blocks AI natively; Smart explains content sharing and model setup on first use.

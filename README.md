@@ -4,6 +4,8 @@
 
 [下载 v0.3.1](https://github.com/ChenShoukang/kok/releases/tag/v0.3.1) · [English](README.en.md) · [格式兼容性](docs/FORMATS.md) · [更新记录](CHANGELOG.md)
 
+当前为 **v0.3.1 测试版**，欢迎反馈问题；不同电脑与编码的验证范围见[发布验证](docs/TESTING.md)。
+
 ## 开始使用
 
 1. 下载 Release 中的 `kok-0.3.1-win-x64.zip`，解压后运行 `kok.exe`，保留附带文件。
@@ -58,7 +60,7 @@ AI 问答支持视频字幕及可选当前画面，或文档 / 读书正文、�
 
 ## 文档与开发
 
-[AI 服务配置](docs/AI_PROVIDERS.md) · [智能整理与内容问答](docs/SMART_LIBRARY.md) · [构建与测试](docs/DEVELOPMENT.md) · [路线图](ROADMAP.md)
+[AI 服务配置](docs/AI_PROVIDERS.md) · [智能整理与内容问答](docs/SMART_LIBRARY.md) · [构建与测试](docs/DEVELOPMENT.md) · [路线图](ROADMAP.md) · [反馈问题](https://github.com/ChenShoukang/kok/issues/new/choose) · [安全报告](SECURITY.md)
 
 ```powershell
 npm ci --omit=optional

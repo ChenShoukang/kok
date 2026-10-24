@@ -4,6 +4,8 @@
 
 [Download v0.3.1](https://github.com/ChenShoukang/kok/releases/tag/v0.3.1) · [中文](README.md) · [Supported formats](docs/FORMATS.en.md) · [Changelog](CHANGELOG.en.md)
 
+**v0.3.1 is a preview.** Bug reports are welcome; see [release verification](docs/TESTING.en.md) for machine and codec coverage.
+
 ## Get started
 
 1. Download `kok-0.3.1-win-x64.zip` from Releases, extract and run `kok.exe`. Keep the accompanying files.
@@ -58,7 +60,7 @@ Shortcuts: `Ctrl K` search · `Esc` close · video `Space` play / pause, arrows 
 
 ## Documentation and development
 
-[AI setup](docs/AI_PROVIDERS.en.md) · [Smart organization and file chat](docs/SMART_LIBRARY.en.md) · [Build and tests](docs/DEVELOPMENT.en.md) · [Roadmap](ROADMAP.en.md)
+[AI setup](docs/AI_PROVIDERS.en.md) · [Smart organization and file chat](docs/SMART_LIBRARY.en.md) · [Build and tests](docs/DEVELOPMENT.en.md) · [Roadmap](ROADMAP.en.md) · [Report a bug](https://github.com/ChenShoukang/kok/issues/new/choose) · [Security](SECURITY.en.md)
 
 ```powershell
 npm ci --omit=optional

@@ -1,0 +1,41 @@
+name: 问题反馈 / Bug report
+description: 报告启动、播放、阅读或界面问题 / Report startup, playback, reading or UI bugs
+body:
+  - type: markdown
+    attributes:
+      value: |
+        请勿上传密钥、私人文件或完整资料库；日志与截图请先脱敏。
+        Do not attach credentials, personal files or complete profiles. Redact logs and screenshots.
+        安全问题 / Security issues: https://github.com/ChenShoukang/kok/blob/main/SECURITY.md
+  - type: input
+    id: version
+    attributes:
+      label: kok 版本 / App version
+      placeholder: v0.3.1
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Windows、WebView2 与屏幕缩放 / Windows, WebView2 and display scale
+      description: 填写已知信息即可 / Include what you know.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤 / Steps to reproduce
+      description: 从启动软件开始描述 / Describe the steps from app startup.
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: 期望与实际结果 / Expected and actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: 可选证据 / Optional evidence
+      description: 文件后缀、编码、大小或可公开的最小样例；界面问题可附脱敏截图。File extension, codec, size or a redistributable sample; redacted screenshots for UI issues.

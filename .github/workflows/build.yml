@@ -9,11 +9,17 @@ permissions:
   contents: read
 jobs:
   build:
-    permissions:
-      contents: write
-    runs-on: windows-latest
+    name: Build (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, windows-2025]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
@@ -22,17 +28,46 @@ jobs:
         run: npm ci --omit=optional
       - name: Check interface scripts
         run: npm run check
+      - name: Check Windows PowerShell compatibility
+        run: npm run check:windows
+      - name: Audit dependency advisories
+        run: npm run audit:dependencies
+      - name: Audit source privacy
+        shell: pwsh
+        run: ./tools/audit-release.ps1
+      - name: Audit Git history privacy
+        run: npm run audit:history
+      - name: Verify history scanner
+        run: node tests/audit-history.cjs
       - name: Compile, test and package
         shell: pwsh
         run: ./package.ps1
       - uses: actions/upload-artifact@v4
         with:
-          name: kok-win-x64
+          name: kok-${{ matrix.os }}-win-x64
+          if-no-files-found: error
           path: |
             dist/kok-*-win-x64.zip
             dist/kok-*-win-x64.zip.sha256
+  release:
+    name: Publish preview
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: kok-release
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: kok-windows-2025-win-x64
+          path: dist
       - name: Publish version
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         shell: pwsh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

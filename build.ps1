@@ -34,7 +34,7 @@ Copy-Item (Join-Path $root 'ui') -Destination $out -Recurse -Force
 if (Test-Path (Join-Path $root 'samples')) { Copy-Item (Join-Path $root 'samples') -Destination $out -Recurse -Force }
 if (Test-Path (Join-Path $root 'docs')) { Copy-Item (Join-Path $root 'docs') -Destination $out -Recurse -Force }
 Copy-Item (Join-Path $root 'src\kok.exe.config') -Destination (Join-Path $out 'kok.exe.config') -Force
-foreach ($name in @('README.md','README.en.md','ROADMAP.md','ROADMAP.en.md','CHANGELOG.md','CHANGELOG.en.md','LICENSE','THIRD_PARTY_NOTICES.md')) { if (Test-Path (Join-Path $root $name)) { Copy-Item (Join-Path $root $name) -Destination $out -Force } }
+foreach ($name in @('README.md','README.en.md','ROADMAP.md','ROADMAP.en.md','CHANGELOG.md','CHANGELOG.en.md','SECURITY.md','SECURITY.en.md','LICENSE','THIRD_PARTY_NOTICES.md')) { if (Test-Path (Join-Path $root $name)) { Copy-Item (Join-Path $root $name) -Destination $out -Force } }
 if (Test-Path (Join-Path $sdk 'LICENSE.txt')) { Copy-Item (Join-Path $sdk 'LICENSE.txt') -Destination (Join-Path $out 'WEBVIEW2-LICENSE.txt') -Force }
 if (Test-Path (Join-Path $sdk 'NOTICE.txt')) { Copy-Item (Join-Path $sdk 'NOTICE.txt') -Destination (Join-Path $out 'WEBVIEW2-NOTICE.txt') -Force }
 if ($Test) {

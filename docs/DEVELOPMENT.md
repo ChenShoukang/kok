@@ -51,7 +51,9 @@ npm run test:i18n
 
 `package.ps1` 从明确的文件清单和当前资源目录生成 `dist/kok-<版本>-win-x64.zip` 及 SHA-256 文件，排除资料库、密钥、调试二进制和临时测试内容。
 
-推送 `main` 后，[Windows 构建工作流](https://github.com/ChenShoukang/kok/blob/main/.github/workflows/build.yml) 执行检查与原生测试，再读取 `package.json` 和 [发布说明](RELEASE_NOTES.md) 创建对应的 GitHub Release。`tools/publish-release.ps1` 仅在 Actions 中读取内置 `GITHUB_TOKEN`。
+推送 `main` 后，[Windows 构建工作流](https://github.com/ChenShoukang/kok/blob/main/.github/workflows/build.yml) 在 Windows Server 2022 / 2025 上执行脚本、依赖、源码及完整 Git 历史检查，再运行原生测试与打包。构建只读仓库；独立发布任务等待两个环境通过后，才使用 `contents: write` 和内置 `GITHUB_TOKEN`。后续版本默认发布为 Preview；已有版本不会被静默替换。服务器检查不能替代 Windows 10 / 11 新电脑验证，范围见[发布验证](TESTING.md)。
+
+`npm run audit:dependencies` 查询 npm 官方漏洞库，任何等级的已知漏洞都会使检查失败；网络失败也不会按通过处理。`npm run audit:history` 扫描本地所有可达提交的凭据模式和私密文件路径，报告不输出匹配值。CI 使用完整历史；手动检查前应确认仓库不是浅克隆。`node tests/audit-history.cjs` 验证已从当前文件删除、但仍留在历史中的测试凭据仍会被发现。源码与 ZIP 检查继续由 `tools/audit-release.ps1` 执行。
 
 ## v0.3.1 完整桌面检查
 

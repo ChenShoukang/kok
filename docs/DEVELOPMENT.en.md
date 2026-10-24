@@ -51,7 +51,9 @@ npm run test:i18n
 
 `package.ps1` creates `dist/kok-<version>-win-x64.zip` and its SHA-256 file from an explicit allowlist and current resource folders, excluding profiles, credentials, test binaries and temporary data.
 
-Pushes to `main` trigger the [Windows workflow](https://github.com/ChenShoukang/kok/blob/main/.github/workflows/build.yml). It checks scripts, runs native tests and reads `package.json` plus [release notes](RELEASE_NOTES.md) to publish the matching GitHub Release. `tools/publish-release.ps1` uses the built-in Actions token.
+Pushes to `main` trigger the [Windows workflow](https://github.com/ChenShoukang/kok/blob/main/.github/workflows/build.yml) on Windows Server 2022 / 2025. Script, dependency, source and complete Git-history checks run before native tests and packaging. Build jobs have read-only repository access; a separate publishing job waits for both environments before using `contents: write` and the built-in `GITHUB_TOKEN`. Future versions default to Preview; existing versions are not silently replaced. Server checks do not replace fresh Windows 10 / 11 desktop verification; see [release verification](TESTING.en.md).
+
+`npm run audit:dependencies` queries the official npm advisory database and fails on any known vulnerability level or network failure. `npm run audit:history` scans locally reachable commits for credential patterns and private-data paths without printing matching values. CI fetches complete history; ensure manual checks do not use a shallow clone. `node tests/audit-history.cjs` verifies that deleted test credentials still present in history are detected. `tools/audit-release.ps1` continues to check current source and ZIP packages.
 
 ## v0.3.1 desktop audit
 

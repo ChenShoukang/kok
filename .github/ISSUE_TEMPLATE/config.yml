@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 安全问题 / Security issues
+    url: https://github.com/ChenShoukang/kok/blob/main/SECURITY.md
+    about: 查看私密报告方式；不要公开漏洞或密钥。Read private reporting instructions; do not publish vulnerabilities or credentials.

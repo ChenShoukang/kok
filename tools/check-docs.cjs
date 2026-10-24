@@ -4,7 +4,7 @@ const assert=require('node:assert/strict');
 const root=path.resolve(__dirname,'..');
 const files=fs.readdirSync(root).filter(name=>name.endsWith('.md')).map(name=>path.join(root,name));
 function walk(folder){for(const entry of fs.readdirSync(folder,{withFileTypes:true})){const file=path.join(folder,entry.name);if(entry.isDirectory())walk(file);else if(entry.name.endsWith('.md'))files.push(file);}}
-walk(path.join(root,'docs'));const missing=[];let count=0;
+walk(path.join(root,'docs'));walk(path.join(root,'.github'));const missing=[];let count=0;
 function check(file,href){
  if(/^(?:[a-z]+:|#|\/)/i.test(href))return;
  const target=decodeURIComponent(href.split('#')[0]);if(!target)return;count++;

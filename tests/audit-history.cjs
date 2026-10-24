@@ -1,0 +1,32 @@
+'use strict';
+const fs=require('node:fs');
+const path=require('node:path');
+const {pathToFileURL}=require('node:url');
+const assert=require('node:assert/strict');
+const {execFileSync}=require('node:child_process');
+const {auditGitHistory}=require('../tools/audit-history.cjs');
+const output=path.resolve(__dirname,'../test-output');
+fs.mkdirSync(output,{recursive:true});
+const root=fs.mkdtempSync(path.join(output,'history-audit-'));
+function git(...args){return execFileSync('git',['-c','safe.directory='+root.replace(/\\/g,'/'),'-c','user.name=Audit fixture','-c','user.email=audit@example.invalid','-C',root,...args],{stdio:'pipe',encoding:'utf8'});}
+function commit(message){git('add','--all');git('commit','-m',message);}
+git('init');
+fs.writeFileSync(path.join(root,'safe.txt'),'Redistributable sample.\n');commit('Clean fixture');
+assert.equal(auditGitHistory(root).issues.length,0);
+const shallow=root+'-shallow';
+execFileSync('git',['clone','--depth=1',pathToFileURL(root).href,shallow],{stdio:'pipe'});
+assert.throws(()=>auditGitHistory(shallow),/Complete Git history is required/);
+const syntheticCredential='sk-'+'x'.repeat(40);
+fs.writeFileSync(path.join(root,'accidental.txt'),syntheticCredential);commit('Accidental credential');
+fs.unlinkSync(path.join(root,'accidental.txt'));commit('Remove credential from working tree');
+let result=auditGitHistory(root);
+assert(result.issues.some(issue=>issue.kind==='credential pattern'));
+assert(!JSON.stringify(result).includes(syntheticCredential),'Reports must not reveal the matching value');
+fs.writeFileSync(path.join(root,'.env'),'SETTING=local');commit('Accidental private file');
+fs.unlinkSync(path.join(root,'.env'));commit('Remove private file from working tree');
+result=auditGitHistory(root);
+assert(result.issues.some(issue=>issue.kind==='private-data path'&&issue.path==='.env'));
+assert(!JSON.stringify(result).includes(syntheticCredential));
+git('commit','--allow-empty','-m','Message '+syntheticCredential);
+assert(auditGitHistory(root).issues.some(issue=>issue.kind==='credential pattern in commit messages'));
+console.log('PASS: clean history, shallow-clone rejection, deleted credentials, removed private files, commit messages and redacted reporting.');

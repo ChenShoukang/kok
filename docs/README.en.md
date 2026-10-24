@@ -9,6 +9,8 @@
 | [Changelog](../CHANGELOG.en.md) | v0.3.1 and the earlier local builds |
 | [Current release notes](RELEASE_NOTES.md) | Bilingual notes consumed by GitHub Actions |
 | [Roadmap](../ROADMAP.en.md) | Future decoding and embedded-subtitle work |
+| [Release verification](TESTING.en.md) | Verified scope, first use and independent-machine checks |
+| [Security](../SECURITY.en.md) | Private reporting and data-protection boundaries |
 
 `screenshots/` contains interface captures using original samples. `assets/` contains brand previews. `compatibility-results.json` records the tested version and runtime, rather than promising support for every codec.
 
