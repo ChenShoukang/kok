@@ -1,15 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
-  <defs>
-    <linearGradient id="tile" x1="8" y1="4" x2="54" y2="62" gradientUnits="userSpaceOnUse"><stop stop-color="#489aff"/><stop offset=".48" stop-color="#3865e8"/><stop offset="1" stop-color="#4345bc"/></linearGradient>
-    <linearGradient id="ribbon" x1="24" y1="16" x2="44" y2="49" gradientUnits="userSpaceOnUse"><stop stop-color="#a9fff2"/><stop offset=".45" stop-color="#d8fff7"/><stop offset="1" stop-color="#fff"/></linearGradient>
-    <linearGradient id="rim" x1="10" y1="2" x2="55" y2="62" gradientUnits="userSpaceOnUse"><stop stop-color="#fff" stop-opacity=".65"/><stop offset=".55" stop-color="#fff" stop-opacity=".08"/><stop offset="1" stop-color="#191e75" stop-opacity=".28"/></linearGradient>
-    <radialGradient id="glow" cx="0" cy="0" r="1" gradientTransform="translate(11 4) rotate(47) scale(52 40)" gradientUnits="userSpaceOnUse"><stop stop-color="#b4f6ff" stop-opacity=".5"/><stop offset="1" stop-color="#b4f6ff" stop-opacity="0"/></radialGradient>
-  </defs>
-  <rect x="2" y="2" width="60" height="60" rx="18" fill="url(#tile)"/>
-  <rect x="2" y="2" width="60" height="60" rx="18" fill="url(#glow)"/>
-  <rect x="2.5" y="2.5" width="59" height="59" rx="17.5" stroke="url(#rim)"/>
-  <path d="M29 34 43 48" stroke="#1b3391" stroke-opacity=".24" stroke-width="10" stroke-linecap="round"/>
-  <rect x="18" y="16" width="8" height="32" rx="4" fill="#fff"/>
-  <path d="m42 19-13 13 14 14" stroke="url(#ribbon)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="m30 31 12-12" stroke="#fff" stroke-opacity=".5" stroke-width="1.2" stroke-linecap="round"/>
+  <!-- A folded K: three solid planes, one silhouette, no tile or lighting effects. -->
+  <path d="M9 14a2 2 0 0 1 1.2-1.83L21 7.4v49.2l-10.8-4.77A2 2 0 0 1 9 50V14Z" fill="#405AC8"/>
+  <path d="M21 28 42.95 8.4a2 2 0 0 1 2.24-.29L55 13.4 33 34H21v-6Z" fill="#617CF0"/>
+  <path d="M21 30h12l22 20.6-9.81 5.29a2 2 0 0 1-2.24-.29L21 36v-6Z" fill="#4C65D8"/>
 </svg>

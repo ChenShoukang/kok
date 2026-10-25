@@ -1,0 +1,22 @@
+/* Small, consistent corners; quiet surfaces and clear interaction states. */
+body[data-app-mode]{--control-radius:4px;--field-radius:6px;--menu-radius:8px}
+html:has(body[data-theme="dark"]){color-scheme:dark}
+html:has(body[data-theme="light"]){color-scheme:light}
+body[data-app-mode] :is(button,[role="button"],.button,.icon-button,.text-button,.nav-item,.nav-indicator,.view-toggle,.filter-tabs,.paper-options,.segmented,.select-trigger,.select-button,.filter-tab,.menu-item,.chip,.tag-button,.preset-button,.import-control,.appearance-presets i,.appearance-presets i:after,.preset-swatch){
+ border-radius:var(--control-radius)!important;
+}
+body[data-app-mode] :is(.button,.icon-button,.text-button,.nav-item,.view-toggle,.filter-tabs,button){
+ box-shadow:none!important;
+}
+body[data-app-mode] :is(select,input:not([type="range"]):not([type="checkbox"]):not([type="radio"]),textarea,.search){
+ border-radius:var(--field-radius)!important;
+}
+body[data-app-mode] :is(.glass-menu,.context-menu,.select-menu,.menu-popover,.import-menu){
+ border-radius:var(--menu-radius)!important;
+}
+body[data-app-mode] .small-dialog{
+ border-radius:12px!important;
+}
+body[data-app-mode] :is(.nav-item,.icon-button,.text-button,.button):focus-visible{
+ outline:2px solid var(--muted);outline-offset:3px;
+}

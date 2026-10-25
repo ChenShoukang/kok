@@ -2,6 +2,8 @@
 
 [中文](TESTING.md) · English · [Documentation](README.en.md)
 
+This page retains v0.3.1 verification records. See the [local preview guide](PREVIEW_0.4.1.en.md) for v0.4.1 scope.
+
 kok v0.3.1 is a preview. Passing checks confirm the paths covered by those checks, rather than every Windows machine, codec or AI service.
 
 ## Evidence and limits
@@ -40,6 +42,6 @@ Report app / Windows / WebView2 versions, display scaling, steps and redacted ev
 
 ## Versions and historical downloads
 
-[v0.3.1](https://github.com/ChenShoukang/kok/releases/tag/v0.3.1) is the recommended download. The historical `v1.0.0` tag was an initial prototype build number, rather than a 1.0 stable release. Its tag and assets are retained to preserve existing links.
+[v0.4.1](https://github.com/ChenShoukang/kok/releases/tag/v0.4.1) is the current preview download. The historical `v1.0.0` tag was an initial prototype build number, rather than a 1.0 stable release. Its tag and assets are retained to preserve existing links.
 
 Documentation and build procedures may be revised after the app version is published. Existing Release ZIPs are not silently replaced; use the matching commit's Actions artifacts for current source builds. Source, history and package pattern scanning is not a complete security audit.

@@ -26,8 +26,16 @@ foreach($suite in $Suites){
     }
     $database=@{version=1;items=@();settings=$preferences;collections=@();fonts=@();watchFolders=$sources;ignoredAutoPaths=@()}
     [IO.File]::WriteAllText((Join-Path $profile 'library.json'),($database|ConvertTo-Json -Depth 8),[Text.UTF8Encoding]::new($false))
+    if($suite -eq 'preview-041'){& node (Join-Path $projectRoot 'tests\preview-041.cjs') --prepare $profile;if($LASTEXITCODE -ne 0){throw 'Preview fixture preparation failed.'}}
+    if($suite -eq 'photo-tools'){& node (Join-Path $projectRoot 'tests\photo-tools.cjs') --prepare $profile;if($LASTEXITCODE -ne 0){throw 'Photo fixture preparation failed.'}}
+    if($suite -eq 'native-downloads'){& node (Join-Path $projectRoot 'tests\native-downloads.cjs') --prepare $profile;if($LASTEXITCODE -ne 0){throw 'Native download fixture preparation failed.'}}
+    if($suite -eq 'media-downloads'){& node (Join-Path $projectRoot 'tests\media-downloads.cjs') --prepare $profile;if($LASTEXITCODE -ne 0){throw 'Media download fixture preparation failed.'}}
+    if($suite -eq 'kok-downloads'){& node (Join-Path $projectRoot 'tests\kok-downloads.cjs') --prepare $profile;if($LASTEXITCODE -ne 0){throw 'kok download fixture preparation failed.'}}
+    if($suite -eq 'site-adapters'){& node (Join-Path $projectRoot 'tests\site-adapters.cjs') --prepare $profile;if($LASTEXITCODE -ne 0){throw 'Site adapter fixture preparation failed.'}}
+    if($suite -eq 'flat-chrome'){& node (Join-Path $projectRoot 'tests\flat-chrome.cjs') --prepare $profile;if($LASTEXITCODE -ne 0){throw 'Window chrome fixture preparation failed.'}}
     $process=Start-Process -FilePath $executable -ArgumentList @('--debug','--test-silent','--data-dir',('"'+$profile+'"')) -PassThru -WindowStyle Hidden
     $env:KOK_TEST_NATIVE_PID=[string]$process.Id
+    $env:KOK_TEST_PROFILE=$profile
     try{
         $ready=$false
         for($attempt=0;$attempt -lt 80;$attempt++){try{Invoke-RestMethod -Uri 'http://127.0.0.1:9225/json/version' -TimeoutSec 1 | Out-Null;$ready=$true;break}catch{Start-Sleep -Milliseconds 250}}
@@ -40,6 +48,7 @@ foreach($suite in $Suites){
         Write-Output ('SUITE PASS: '+$suite)
     }finally{
         Remove-Item Env:KOK_TEST_NATIVE_PID -ErrorAction SilentlyContinue
+        Remove-Item Env:KOK_TEST_PROFILE -ErrorAction SilentlyContinue
         $owned=Get-Process -Id $process.Id -ErrorAction SilentlyContinue
         if($owned -and $owned.Path -eq $executable){$null=$owned.CloseMainWindow();if(-not $owned.WaitForExit(4000)){Stop-Process -Id $owned.Id}}
         for($attempt=0;$attempt -lt 20;$attempt++){try{Invoke-RestMethod -Uri 'http://127.0.0.1:9225/json/version' -TimeoutSec 1|Out-Null;Start-Sleep -Milliseconds 150}catch{break}}

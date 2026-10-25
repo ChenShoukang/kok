@@ -1,0 +1,43 @@
+{
+  "commit": "1ffb34c752ecf5d402f04cfb4b392c77f57c54bc",
+  "project": "https://github.com/microsoft/fluentui-emoji",
+  "files": [
+    {
+      "blob": "5380c42c949581a84b92469e85971da6a5db8146",
+      "source": "assets/Blue book/Flat/blue_book_flat.svg",
+      "sha256": "9883812a54e1aa724f735e1e427e5874804261a2bdc07481cf38a3737df98646",
+      "file": "blue_book_flat.svg"
+    },
+    {
+      "blob": "5e87a1a9ad1c492d8e479447777d7e10cba121a8",
+      "source": "assets/Card file box/Flat/card_file_box_flat.svg",
+      "sha256": "836382ad4694160d8c2ad1646fcbce44014de562421719eb53155c6b4a692e8e",
+      "file": "card_file_box_flat.svg"
+    },
+    {
+      "blob": "8bcf482b10a630402852e692be488db2e7da651b",
+      "source": "assets/Clapper board/Flat/clapper_board_flat.svg",
+      "sha256": "15354b0944510e3d9f4969d737b5ef8f88fd330a7be3803465c61bc434898660",
+      "file": "clapper_board_flat.svg"
+    },
+    {
+      "blob": "e53557be31ae5c4d16291f6aa0bf7532d5a48aeb",
+      "source": "assets/Framed picture/Flat/framed_picture_flat.svg",
+      "sha256": "92fc0071a1e4872de34b0a450f4f7da13f3d039b9b5c06c66105e07f76837465",
+      "file": "framed_picture_flat.svg"
+    },
+    {
+      "blob": "4e40d187de0e8592f75b6633184b93419d2e24b2",
+      "source": "assets/Musical note/Flat/musical_note_flat.svg",
+      "sha256": "889610f268faa48d8c258a55df4b837595d7e91e92bc3695d0603beff12643a9",
+      "file": "musical_note_flat.svg"
+    },
+    {
+      "blob": "f19e8fa8129f3fc961dfbf0d00b40e7d643ef03c",
+      "sha256": "64766aae9c7c49b8e3aae4f6aeaec44af202bec7655d2bb8124f0a74d8b29824",
+      "file": "page_facing_up_flat.svg",
+      "source": "assets/Page facing up/Flat/page_facing_up_flat.svg"
+    }
+  ],
+  "license": "MIT"
+}

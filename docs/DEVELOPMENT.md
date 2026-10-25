@@ -51,6 +51,8 @@ npm run test:i18n
 
 `package.ps1` 从明确的文件清单和当前资源目录生成 `dist/kok-<版本>-win-x64.zip` 及 SHA-256 文件，排除资料库、密钥、调试二进制和临时测试内容。
 
+v0.4.1 以预览版发布，`package.json` 设置 `release.publish: true`。main 上传触发两个 Windows 构建与检查，成功后上传 ZIP 和 SHA-256 文件到 GitHub 预览 Release。若仅本地开发，可将此开关设为 false。已对相同原生源码完成检查后，可运行 `.\package.ps1 -SkipTests` 重新打包；暂存目录与 ZIP 隐私审计仍执行。新增功能见 [v0.4.1 说明](PREVIEW_0.4.1.md)。
+
 推送 `main` 后，[Windows 构建工作流](https://github.com/ChenShoukang/kok/blob/main/.github/workflows/build.yml) 在 Windows Server 2022 / 2025 上执行脚本、依赖、源码及完整 Git 历史检查，再运行原生测试与打包。构建只读仓库；独立发布任务等待两个环境通过后，才使用 `contents: write` 和内置 `GITHUB_TOKEN`。后续版本默认发布为 Preview；已有版本不会被静默替换。服务器检查不能替代 Windows 10 / 11 新电脑验证，范围见[发布验证](TESTING.md)。
 
 `npm run audit:dependencies` 查询 npm 官方漏洞库，任何等级的已知漏洞都会使检查失败；网络失败也不会按通过处理。`npm run audit:history` 扫描本地所有可达提交的凭据模式和私密文件路径，报告不输出匹配值。CI 使用完整历史；手动检查前应确认仓库不是浅克隆。`node tests/audit-history.cjs` 验证已从当前文件删除、但仍留在历史中的测试凭据仍会被发现。源码与 ZIP 检查继续由 `tools/audit-release.ps1` 执行。
@@ -67,3 +69,16 @@ npm run test:i18n
 ```
 
 原生测试另覆盖私密数据认证加密与服务密钥隔离。AI 测试只访问本地模拟服务。FFmpeg 仅生成测试文件，不随包分发。打包会检查暂存目录和最终 ZIP，发现密钥模式时阻止构建且不打印密钥值。
+
+## 内置下载定向检查
+
+`powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-desktop.ps1 -Suites native-downloads` 使用空白隔离资料库和本机原创媒体 HTTP 服务，不安装外部组件、不调用模型。续传依据 [HTTP Range / If-Range](https://www.rfc-editor.org/rfc/rfc9110.html#name-if-range) 校验；[ResponseHeadersRead](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpcompletionoption?view=netframework-4.8) 后对正文读取另设超时和取消。具体实现见 `src/DirectDownloads.cs`。
+
+媒体组件与分段下载定向检查：`powershell -NoProfile -Command "& ./tools/test-desktop.ps1 -Suites media-downloads"`。使用固定版本真实组件及本机生成的 HLS / DASH 点播清单；不播放声音、不调用 AI。`src/StreamDownloads.cs` 通过 FFmpeg 解复用和流复制，不包含视频网站提取器。组件来源为 FFmpeg 官网列出的 Gyan 构建，固定校验压缩包和两个程序。
+
+
+`powershell -NoProfile -Command "& ./tools/test-desktop.ps1 -Suites kok-downloads"` 使用本机原创素材检查网页解析、资源 / 画质选择、字幕、音频导出、HLS / DASH、旧组件清理与界面。
+
+网页识别参考 [HTML 媒体元素](https://html.spec.whatwg.org/multipage/media.html)、[Open Graph](https://ogp.me/) 与 [VideoObject 元数据](https://schema.org/VideoObject)，实现见 `src/MediaResolver.cs`；不执行网页 JavaScript。
+
+站点适配：`powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-desktop.ps1 -Suites site-adapters`。使用原创本机媒体与离线 HTTP 模拟验证三站数据、分轨和加密会话；实站只读取公开元数据。设 `KOK_SKIP_LIVE_SITES=1` 可跳过外部检查。YouTube 依赖由 `tools/youtube-dependencies.json` 固定，构建校验 NuGet 和 DLL SHA-256；新增许可位于 `docs/licenses/`。

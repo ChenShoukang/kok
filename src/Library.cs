@@ -27,7 +27,9 @@ namespace kok {
         public List<ChatTurn> aiChat=new List<ChatTurn>();
         public List<Annotation> annotations = new List<Annotation>();
         public Dictionary<string,string> chapterTexts = new Dictionary<string,string>();
+        public List<ReadingBookmark> bookmarks = new List<ReadingBookmark>();
     }
+    public class ReadingBookmark { public string id,name; public int chapter,page; public double position; }
     public class Annotation { public string id,style,text,note; public int chapter,start,end,page; public double x,y; public List<MarkRect> rects = new List<MarkRect>(); }
     public class MarkRect { public double x,y,w,h; }
     public class FontAsset { public string id,name,path; }
@@ -144,6 +146,12 @@ namespace kok {
                     e.annotations=annotations;
                 }
                 if(patch.ContainsKey("chapterTexts")) { var texts=Json.Deserialize<Dictionary<string,string>>(Json.Serialize(patch["chapterTexts"])); if(texts==null||texts.Count>2000||texts.Values.Sum(x=>(long)x.Length)>24*1024*1024)throw new InvalidDataException("编辑正文过大。");e.chapterTexts=texts; }
+                if(patch.ContainsKey("bookmarks")) {
+                    var bookmarks=Json.Deserialize<List<ReadingBookmark>>(Json.Serialize(patch["bookmarks"]));
+                    if(bookmarks==null||bookmarks.Count>500)throw new InvalidDataException("书签数量超过上限。");
+                    foreach(var bookmark in bookmarks){if(bookmark==null||String.IsNullOrEmpty(bookmark.id)||bookmark.id.Length>64||bookmark.chapter<0||bookmark.page<0)throw new InvalidDataException("书签格式无效。");bookmark.name=Limit(bookmark.name??"",200);bookmark.position=Clamp(bookmark.position,0,1);}
+                    e.bookmarks=bookmarks;
+                }
                 if(patch.ContainsKey("opened")) e.opened = DateTime.UtcNow.ToString("o");
                 Save();
             }
@@ -153,7 +161,7 @@ namespace kok {
         public void DeleteCollection(string name) { lock(gate){Db.collections.Remove(name);foreach(var item in Db.items)if(item.collection==name)item.collection="";Save();} }
         static double Clamp(double n,double a,double b) { return double.IsNaN(n) || double.IsInfinity(n) ? a : Math.Max(a,Math.Min(b,n)); }
         public void Remove(string id) { lock(gate) { var item=Find(id); if(item!=null&&!Db.ignoredAutoPaths.Contains(item.path))Db.ignoredAutoPaths.Add(item.path); Db.items.RemoveAll(x=>x.id==id); Save(); } }
-        public void Settings(Dictionary<string,object> value) { lock(gate) { foreach(var pair in value) if(new[]{"theme","readerSize","readerTheme","volume","view","sort","loop","shuffle","fontFamily","videoRate","smartSpeed","uiLanguage","readerToc","videoVolume","readerFollowTheme","videoShortcutsEnabled","videoPlayKey","videoSeekKeys","videoSeekSeconds","videoVolumeKeys","videoDoubleClick","organizeMode"}.Contains(pair.Key)) Db.settings[pair.Key] = pair.Value; Save(); } }
+        public void Settings(Dictionary<string,object> value) { lock(gate) { var clean=ValidateReadingAppearance(value);foreach(var pair in value) if(new[]{"theme","readerSize","readerTheme","volume","view","sort","loop","shuffle","fontFamily","videoRate","smartSpeed","uiLanguage","readerToc","videoVolume","readerFollowTheme","videoShortcutsEnabled","videoPlayKey","videoSeekKeys","videoSeekSeconds","videoVolumeKeys","videoDoubleClick","organizeMode"}.Contains(pair.Key)) Db.settings[pair.Key] = pair.Value;foreach(var pair in clean)Db.settings[pair.Key]=pair.Value;Save(); } }
         public FontAsset ImportFont(string source) {
             var info=new FileInfo(source);if(info.Length>20*1024*1024)throw new InvalidDataException("字体文件不可超过 20 MB。");
             using(var stream=File.OpenRead(source)){byte[] head=new byte[4];if(stream.Read(head,0,4)!=4||!((head[0]==0&&head[1]==1&&head[2]==0&&head[3]==0)||Encoding.ASCII.GetString(head)=="OTTO"))throw new InvalidDataException("请选择有效的 TTF 或 OTF 字体。");}

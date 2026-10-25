@@ -55,9 +55,10 @@ async function setting(values){Object.assign(state.settings,values);await native
 function applyTheme(){let theme=state.settings.theme||'light';if(theme==='system')theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.body.dataset.theme=theme;}
 function renderNav(){
   const navItems=state.navigation?.items||state.items,navCollections=state.navigation?.collections||state.collections||[];
-  $('#main-nav').innerHTML=[['overview','全部文件','grid'],...kinds.map(k=>[k[0],k[1],k[0]])].map(([r,l,i])=>`<button class="nav-item ${state.route===r?'active':''}" data-route="${r}">${svg(i)}<span>${l}</span>${r==='overview'?'':`<span class="count">${navItems.filter(x=>x.kind===r).length||''}</span>`}</button>`).join('');
-  $('#extra-nav').innerHTML=[['favorites','收藏','heart'],['recent','最近打开','clock'],['organize','智能整理','layers']].map(([r,l,i])=>`<button class="nav-item ${state.route===r?'active':''}" data-route="${r}">${svg(i)}<span>${l}</span></button>`).join('');
-  $('#collections-nav').innerHTML=navCollections.map(name=>`<button class="nav-item ${state.route==='collection'&&state.collection===name?'active':''}" data-collection="${esc(name)}">${svg('folder')}<span>${esc(name)}</span><span class="count">${navItems.filter(i=>i.collection===name).length}</span></button>`).join('');
+  $('#main-nav').innerHTML=[['overview','全部文件','grid'],...kinds.map(k=>[k[0],k[1],k[0]])].map(([r,l,i])=>`<button class="nav-item ${state.route===r?'active':''}" data-route="${r}" aria-label="${l}">${navigationIcon(i)}<span class="nav-label">${l}</span>${r==='overview'?'':`<span class="count">${navItems.filter(x=>x.kind===r).length||''}</span>`}</button>`).join('');
+  $('#extra-nav').innerHTML=[['favorites','收藏','heart'],['recent','最近打开','clock'],['organize','智能整理','layers']].map(([r,l,i])=>`<button class="nav-item ${state.route===r?'active':''}" data-route="${r}" aria-label="${l}">${svg(i)}<span class="nav-label">${l}</span></button>`).join('');
+  $('#collections-nav').innerHTML=navCollections.map(name=>`<button class="nav-item ${state.route==='collection'&&state.collection===name?'active':''}" data-collection="${esc(name)}" aria-label="${esc(name)}" data-user-content>${svg('folder')}<span class="nav-label">${esc(name)}</span><span class="count">${navItems.filter(i=>i.collection===name).length}</span></button>`).join('');
+  if(isSmartMode()&&!state.isPrivate)$('#extra-nav').insertAdjacentHTML('beforeend',`<button class="nav-item ${state.route==='downloads'?'active':''}" data-route="downloads" aria-label="视频下载">${svg('download')}<span class="nav-label">视频下载</span></button>`);
   updateNavIndicator();
 }
 function updateNavIndicator(){
@@ -81,12 +82,11 @@ function overview(){
 }
 function cover(i){
  if(i.kind==='photo')return `<img src="${media(i,'thumb')}" alt="" loading="lazy" data-fallback="photo">${svg('photo')}`;
- if(i.kind==='book')return `<div class="book-cover">${esc(i.name)}</div>`;
- if(i.kind==='music')return '<div class="music-disc"></div>';
- if(i.kind==='video')return `<div class="video-art ${i.hasCover?'has-cover':''}">${i.hasCover?`<img src="${media(i,'thumb')}?v=${encodeURIComponent(i.coverVersion||'1')}" alt="" loading="lazy" data-fallback="video">`:''}<span class="video-cover-play">${svg('play')}</span></div>`;
- return `<div class="document-art">${svg('document')}<i></i><i></i><i></i><i></i></div>`;
+ if(i.kind==='book'||i.kind==='music')return `<div class="object-cover object-cover-${i.kind}">${libraryObject(i.kind)}</div>`;
+ if(i.kind==='video')return `<div class="video-art ${i.hasCover?'has-cover':'object-cover'}">${i.hasCover?`<img src="${media(i,'thumb')}?v=${encodeURIComponent(i.coverVersion||'1')}" alt="" loading="lazy" data-fallback="video">`:libraryObject('video')}<span class="video-cover-play">${svg('play')}</span></div>`;
+ return `<div class="object-cover object-cover-document">${libraryObject('document')}</div>`;
 }
-function card(i){return `<article class="file-card ${i.kind}" data-id="${i.id}"><button class="file-open" data-open="${i.id}" title="打开 ${esc(i.name)}"><div class="file-cover">${cover(i)}<span class="ext">${esc(i.ext)}</span></div><div class="file-info"><b>${esc(i.name)}</b><p>${labels[i.kind]}<i></i>${size(i.size)}${i.progress>0?`<i></i>${Math.round(i.progress*100)}%`:''}</p></div></button><button class="card-favorite ${i.favorite?'selected':''}" data-favorite="${i.id}" title="${i.favorite?'取消收藏':'收藏'}" aria-label="${i.favorite?'取消收藏':'收藏'} ${esc(i.name)}">${svg('heart')}</button><button class="card-menu" data-menu="${i.id}" aria-label="${esc(i.name)} 的更多操作" title="更多操作">${svg('more')}</button>${i.progress>0?`<div class="file-progress"><span style="width:${Math.round(i.progress*100)}%"></span></div>`:''}</article>`;}
+function card(i){const action=['video','music'].includes(i.kind)?'播放':i.kind==='photo'?'预览':i.kind==='book'?'阅读':'打开';return `<article class="file-card ${i.kind}" data-id="${i.id}"><button class="file-open" data-open="${i.id}" title="打开 ${esc(i.name)}"><div class="file-cover">${cover(i)}<span class="ext">${esc(i.ext)}</span><span class="card-open-hint" aria-hidden="true">${svg(['video','music'].includes(i.kind)?'play':i.kind==='book'?'book':'external')}<span>${action}</span></span></div><div class="file-info"><b>${esc(i.name)}</b><p>${labels[i.kind]}<i></i>${size(i.size)}${i.progress>0?`<i></i>${Math.round(i.progress*100)}%`:''}</p></div></button><button class="card-favorite ${i.favorite?'selected':''}" data-favorite="${i.id}" title="${i.favorite?'取消收藏':'收藏'}" aria-label="${i.favorite?'取消收藏':'收藏'} ${esc(i.name)}">${svg('heart')}</button><button class="card-menu" data-menu="${i.id}" aria-label="${esc(i.name)} 的更多操作" title="更多操作">${svg('more')}</button>${i.progress>0?`<div class="file-progress"><span style="width:${Math.round(i.progress*100)}%"></span></div>`:''}</article>`;}
 function empty(title,description,samples=false){return `<div class="empty-state">${svg(state.query?'search':'folder')}<h3>${esc(title)}</h3><p>${esc(description)}</p><div class="empty-actions">${state.query?'':`<button class="button secondary" data-action="importFiles">${svg('plus')}导入文件</button>${samples?'<button class="sample-button" data-action="importSamples">体验示例资料</button>':''}`}</div></div>`;}
 function filtered(){
  let items=state.items.filter(i=>{
@@ -100,7 +100,7 @@ function filtered(){
    return !q||[i.name,i.ext,i.notes,i.collection,i.aiSummary,...(i.tags||[])].some(s=>String(s||'').toLocaleLowerCase().includes(q));
  });
  const sort=state.settings.sort||(state.route==='recent'?'opened':'added');
- items.sort((a,b)=>sort==='name'?a.name.localeCompare(b.name,'zh-CN'):sort==='size'?b.size-a.size:sort==='opened'?(b.opened||'').localeCompare(a.opened||''):b.added.localeCompare(a.added));
+ items.sort((a,b)=>sort==='name'?String(a.name||'').localeCompare(String(b.name||''),'zh-CN'):sort==='size'?(Number(b.size)||0)-(Number(a.size)||0):sort==='opened'?String(b.opened||'').localeCompare(String(a.opened||'')):String(b.added||'').localeCompare(String(a.added||'')));
  return items;
 }
 function collection(){
@@ -131,7 +131,7 @@ async function animateOut(element){
 }
 function render(){
  renderNav();
- const html=state.isPrivate?privateFolderView():state.route==='organize'&&!state.query&&typeof renderOrganizer==='function'?renderOrganizer():state.route==='overview'&&!state.query?overview():state.route==='music'&&!state.query&&typeof renderMusic==='function'?renderMusic():collection();
+ const html=state.isPrivate?privateFolderView():state.route==='downloads'&&isSmartMode()?downloadWorkspace():state.route==='organize'&&!state.query&&typeof renderOrganizer==='function'?renderOrganizer():state.route==='overview'&&!state.query?overview():state.route==='music'&&!state.query&&typeof renderMusic==='function'?renderMusic():collection();
  const key=state.route+'|'+(state.musicAlbum||'')+'|'+(state.musicMode||'');
  const changed=render.previousKey!==key&&!state.query;render.previousKey=key;
  const sequence=++renderSequence;
@@ -152,7 +152,7 @@ async function importItems(action,additionalObjects){
 }
 async function favorite(id){const item=byId(id);if(!item)return;await patch(item,{favorite:!item.favorite});render();if(state.viewer?.id===id)$('#viewer-favorite').classList.toggle('selected',item.favorite);if(state.track?.id===id)$('#track-favorite').classList.toggle('selected',item.favorite);}
 let smallClose=null;
-function showSmall(content){const d=$('#small-dialog');smallClose=null;closeSmall.token=null;elementMotions.get(d)?.cancel();d.classList.remove('is-closing','settings-dialog');if(d.open)d.close();d.innerHTML=`<div class="dialog-top"><div></div><button class="icon-button dialog-close" data-close-dialog aria-label="关闭">${svg('close')}</button></div>${content}`;d.showModal();d.scrollTop=0;animateIn(d);}
+function showSmall(content){const d=$('#small-dialog');smallClose=null;closeSmall.token=null;elementMotions.get(d)?.cancel();d.classList.remove('is-closing','settings-dialog','appearance-dialog','reading-settings-dialog');if(d.open)d.close();d.innerHTML=`<div class="dialog-top"><div></div><button class="icon-button dialog-close" data-close-dialog aria-label="关闭">${svg('close')}</button></div>${content}`;d.showModal();d.scrollTop=0;animateIn(d);}
 function closeSmall(){
  const d=$('#small-dialog');if(!d.open)return Promise.resolve();if(smallClose)return smallClose;
  const token={};closeSmall.token=token;d.classList.add('is-closing');
@@ -187,24 +187,24 @@ async function openItem(id,{play=true,keepQueue=false}={}){
 function renderVideo(item){renderVideoWorkspace(item);}
 async function saveVideo(){if(video&&state.viewer&&Number.isFinite(video.duration)&&video.duration>0)await patch(state.viewer,{position:video.currentTime,progress:video.currentTime/video.duration});}
 function renderPhoto(){
- cleanupWorkspace();const i=state.photoList[state.photoIndex];if(!i)return;state.viewer=i;beginMediaLayout(i);
+ cleanupWorkspace();const i=state.photoList[state.photoIndex];if(!i)return;state.viewer=i;state.photoPanX=0;state.photoPanY=0;beginMediaLayout(i);
  $('#viewer-title').textContent=i.name;$('#viewer-subtitle').textContent=`照片 · ${i.ext} · ${size(i.size)}`;$('#viewer-favorite').classList.toggle('selected',i.favorite);$('#notes').value=i.notes||'';
  $('#viewer-content').innerHTML=`<div class="media-stage"><div class="photo-image-wrap"><img id="photo-image" src="${media(i)}" alt="${esc(i.name)}"></div><div class="photo-tools"><button class="icon-button" data-photo="prev" title="上一张" aria-label="上一张">${svg('skipBack')}</button><span>${state.photoIndex+1} / ${state.photoList.length}</span><button class="icon-button" data-photo="next" title="下一张" aria-label="下一张">${svg('skipForward')}</button><button class="icon-button" data-photo="out" title="缩小" aria-label="缩小">${svg('zoomOut')}</button><span id="zoom-label">100%</span><button class="icon-button" data-photo="in" title="放大" aria-label="放大">${svg('zoomIn')}</button><button class="icon-button" data-photo="rotate" title="旋转" aria-label="旋转">${svg('rotate')}</button><button class="icon-button" data-photo="slideshow" title="幻灯片播放或暂停" aria-label="幻灯片播放或暂停">${svg(state.slide?'pause':'play')}</button></div></div>`;
  const photoObserver=new ResizeObserver(()=>transformPhoto());photoObserver.observe($('.photo-image-wrap'));workspaceDisposers.push(()=>photoObserver.disconnect());$('#photo-image').addEventListener('load',transformPhoto);
  $('#photo-image').addEventListener('error',()=>{$('.photo-image-wrap').innerHTML=`<div class="photo-error">此照片格式暂不支持内置预览。<br>请点击右上角的「系统应用打开」。</div>`;});
- transformPhoto();
+ transformPhoto();setupPhotoInteraction();
  const tools=$('.photo-tools');if(tools)tools.insertAdjacentHTML('beforeend',`<button class="icon-button" data-photo-edit title="编辑照片" aria-label="编辑照片">${svg('edit')}<span>编辑</span></button>`);
 }
 function transformPhoto(){
  const img=$('#photo-image'),wrap=$('.photo-image-wrap');
- if(img&&wrap&&img.naturalWidth){const rotated=Math.abs(state.rotation%180)===90,w=rotated?img.naturalHeight:img.naturalWidth,h=rotated?img.naturalWidth:img.naturalHeight;const fit=Math.min((wrap.clientWidth-24)/w,(wrap.clientHeight-24)/h);img.style.width=(img.naturalWidth*fit)+'px';img.style.height=(img.naturalHeight*fit)+'px';img.style.transform=`rotate(${state.rotation}deg) scale(${state.zoom})`;}
+ if(img&&wrap&&img.naturalWidth){const rotated=Math.abs(state.rotation%180)===90,w=rotated?img.naturalHeight:img.naturalWidth,h=rotated?img.naturalWidth:img.naturalHeight;const fit=Math.max(.001,Math.min((wrap.clientWidth-24)/w,(wrap.clientHeight-24)/h));img.style.width=(img.naturalWidth*fit)+'px';img.style.height=(img.naturalHeight*fit)+'px';const maxX=Math.max(0,(w*fit*state.zoom-wrap.clientWidth)/2),maxY=Math.max(0,(h*fit*state.zoom-wrap.clientHeight)/2);state.photoPanX=Math.max(-maxX,Math.min(maxX,state.photoPanX||0));state.photoPanY=Math.max(-maxY,Math.min(maxY,state.photoPanY||0));img.style.transform=`translate(${state.photoPanX}px,${state.photoPanY}px) rotate(${state.rotation}deg) scale(${state.zoom})`;wrap.classList.toggle('photo-zoomed',state.zoom>1.001);}
  const label=$('#zoom-label');if(label)label.textContent=Math.round(state.zoom*100)+'%';
 }
 async function photoAction(action){
  if(action==='next'||action==='prev'){
   await saveNotes();state.photoIndex=(state.photoIndex+(action==='next'?1:-1)+state.photoList.length)%state.photoList.length;state.zoom=1;state.rotation=0;renderPhoto();await patch(state.viewer,{opened:new Date().toISOString()});
- }else if(action==='rotate'){state.rotation+=90;transformPhoto();scheduleMediaFit();}
- else if(action==='in'||action==='out'){state.zoom=Math.max(.25,Math.min(4,state.zoom+(action==='in'?.25:-.25)));transformPhoto();}
+ }else if(action==='rotate'){state.rotation+=90;state.photoPanX=state.photoPanY=0;transformPhoto();scheduleMediaFit();}
+ else if(action==='in'||action==='out'){zoomPhoto(state.zoom+(action==='in'?.25:-.25));}
  else if(action==='slideshow'){if(state.slide){clearInterval(state.slide);state.slide=null;}else{state.slide=setInterval(()=>photoAction('next').catch(fail),4000);}const button=$('[data-photo="slideshow"]');button.innerHTML=svg(state.slide?'pause':'play');}
 }
 function renderReader(scroll=0){renderReadingWorkspace(scroll);}

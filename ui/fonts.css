@@ -1,0 +1,12 @@
+/* Smiley Sans v2.0.1, unmodified official WOFF2. See docs/licenses/SmileySans-OFL.txt. */
+@font-face{
+ font-family:'Smiley Sans';
+ src:url('./fonts/SmileySans-Oblique.woff2') format('woff2');
+ font-style:normal;
+ font-weight:400;
+ font-display:swap;
+}
+:root{
+ --user-font:'Smiley Sans','Segoe UI','Microsoft YaHei UI',sans-serif;
+ --reading-font:'Smiley Sans','Segoe UI','Microsoft YaHei UI',sans-serif;
+}

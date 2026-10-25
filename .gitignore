@@ -1,6 +1,7 @@
 dist/
 tools/webview2/
 tools/webview2.zip
+tools/youtube-source/
 node_modules/
 ui/vendor/
 data/

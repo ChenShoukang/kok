@@ -2,6 +2,23 @@
 
 [中文](CHANGELOG.md)
 
+## v0.4.1 · Preview
+
+- Coherent neutral white / graphite materials, custom background / glass colors, opacity / blur and independent light / dark palettes.
+- A minimal window bar follows the theme and custom background, replacing the white system title bar while retaining dragging, resizing, double-click maximize and borderless video fullscreen. Buttons have subtle 4px corners, with softly edged fields and menus and less card-like framing.
+- Redesigned layouts use compact object icons with bilingual hover / focus hints, small square covers and contextual actions. Players, readers, downloads and settings share neutral colors, spacing and fine dividers, with restrained paper, photo-print and record details plus press feedback.
+- Smiley Sans v2.0.1 is bundled as the offline default with its OFL license. System / Chinese font choices, imported fonts and existing selections remain available.
+- Category and fallback-cover icons use Microsoft Fluent Emoji Flat vectors, reducing highlights and shadows with subtle hover / press scaling. Original assets, MIT license and source hashes are bundled. Fixed music play-button glyph contrast.
+- Redrew the kok brand as a blue geometric folded K without a tile, updating startup, navigation, transparent PNG and 16–256px Windows application icons.
+- Sidebar categories and shortcuts share 24px icons, 44px targets and 6px gaps. Fallback-cover icons are 96px; list and toolbar icons align to consistent sizes within their respective contexts.
+- Normalize visible artwork bounds and centers; fix legacy collection-icon sizes and video placeholder positioning. Dark mode uses muted icon colors and dark surfaces for import and primary buttons.
+- Photo wheel zoom, panning, free crop with eight handles, undo / redo and correct rotated / flipped crop mapping.
+- Reading full-text search, chapter filters, PDF outline, persistent bookmarks, typography, paging / scrolling, focus, resume and Markdown note export.
+- Bilibili / YouTube / Douyin adapters, split-track merging, official sign-in, DPAPI-encrypted sessions, cookies.txt import and manual browser assistance for Bilibili / Douyin. YouTube uses MIT-licensed YoutubeExplode with pinned package / library hashes; the generic downloader remains.
+- A unified kok downloader: public page discovery, source / quality selection, audio export, existing SRT / VTT subtitles, queues, validated file resume, retry and automatic import. No page script execution or external extractor API.
+- One-click, automatically detected FFmpeg / FFprobe adds common unencrypted M3U8 / DASH VOD, stream-copied into MP4 / M4A. Paused streams restart with a notice. Live, DRM, inaccessible content and unsupported complex sites remain outside this stage.
+- Existing download history and media remain; retired extraction components are no longer installed or executed. Fixed legacy TLS defaults blocking HTTPS downloads. Distributed as a preview with documented compatibility limits.
+
 ## v0.3.1 · Pure / Smart and a private folder
 
 - First-run Pure / Smart selector, with a password-protected folder inside the ordinary library and consistent glass UI.

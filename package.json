@@ -1,6 +1,6 @@
 {
   "name": "kok",
-  "version": "0.3.1",
+  "version": "0.4.1",
   "description": "kok Windows desktop library development tests (not needed to run the app)",
   "private": true,
   "directories": {
@@ -8,7 +8,7 @@
   },
   "scripts": {
     "test:ui": "node tests/ui.cjs && node tests/features.cjs",
-    "check": "node --check ui/app.js && node --check ui/features.js && node --check ui/translation.js && node --check ui/i18n.js && node --check ui/compatibility.js && node --check ui/drop.js && node --check ui/workspaces.js && node --check ui/preferences.js && node --check ui/photo-editor.js && node --check ui/menus.js && node --check ui/video-covers.js && node --check ui/video-properties.js && node --check ui/organizer.js && node --check ui/organization-modes.js && node --check ui/media-layout.js && node --check ui/file-assistant.js && node --check ui/app-modes.js && node --check ui/ai-providers.js && node --check ui/private-space.js && node tools/check-locales.cjs && node tools/check-docs.cjs",
+    "check": "node --check ui/app.js && node --check ui/features.js && node --check ui/translation.js && node --check ui/i18n.js && node --check ui/compatibility.js && node --check ui/drop.js && node --check ui/workspaces.js && node --check ui/preferences.js && node --check ui/photo-editor.js && node --check ui/menus.js && node --check ui/video-covers.js && node --check ui/video-properties.js && node --check ui/organizer.js && node --check ui/organization-modes.js && node --check ui/media-layout.js && node --check ui/file-assistant.js && node --check ui/app-modes.js && node --check ui/ai-providers.js && node --check ui/private-space.js && node --check ui/appearance.js && node --check ui/reader-tools.js && node --check ui/downloads.js && node --check ui/photo-tools.js && node --check ui/window-chrome.js && node --check ui/surface-design.js && node tools/check-locales.cjs && node tools/check-docs.cjs",
     "test:features": "node tests/features.cjs",
     "test:design": "node tests/minimal.cjs",
     "test:translation": "node tests/translation.cjs",
@@ -29,7 +29,13 @@
     "audit:release": "powershell -ExecutionPolicy Bypass -File tools/audit-release.ps1",
     "check:windows": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/check-powershell.ps1",
     "audit:history": "node tools/audit-history.cjs",
-    "audit:dependencies": "npm audit --omit=optional --audit-level=info"
+    "audit:dependencies": "npm audit --omit=optional --audit-level=info",
+    "test:preview": "node tests/preview-041.cjs",
+    "test:photos": "node tests/photo-tools.cjs",
+    "test:downloads": "node tests/native-downloads.cjs",
+    "test:media-downloads": "node tests/media-downloads.cjs",
+    "test:kok-downloads": "node tests/kok-downloads.cjs",
+    "test:sites": "node tests/site-adapters.cjs"
   },
   "keywords": [],
   "author": "",
@@ -40,5 +46,9 @@
   },
   "dependencies": {
     "pdfjs-dist": "6.4.299"
+  },
+  "release": {
+    "publish": true,
+    "channel": "preview"
   }
 }

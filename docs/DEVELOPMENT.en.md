@@ -51,6 +51,8 @@ npm run test:i18n
 
 `package.ps1` creates `dist/kok-<version>-win-x64.zip` and its SHA-256 file from an explicit allowlist and current resource folders, excluding profiles, credentials, test binaries and temporary data.
 
+v0.4.1 is distributed as a preview with release.publish enabled in package.json. Uploading main runs both Windows build jobs; successful checks publish the ZIP and checksum through GitHub Actions. For local-only development, disable this flag. After native checks have passed for the same source, package.ps1 -SkipTests rebuilds resources without repeating them; staging and ZIP privacy audits still run.
+
 Pushes to `main` trigger the [Windows workflow](https://github.com/ChenShoukang/kok/blob/main/.github/workflows/build.yml) on Windows Server 2022 / 2025. Script, dependency, source and complete Git-history checks run before native tests and packaging. Build jobs have read-only repository access; a separate publishing job waits for both environments before using `contents: write` and the built-in `GITHUB_TOKEN`. Future versions default to Preview; existing versions are not silently replaced. Server checks do not replace fresh Windows 10 / 11 desktop verification; see [release verification](TESTING.en.md).
 
 `npm run audit:dependencies` queries the official npm advisory database and fails on any known vulnerability level or network failure. `npm run audit:history` scans locally reachable commits for credential patterns and private-data paths without printing matching values. CI fetches complete history; ensure manual checks do not use a shallow clone. `node tests/audit-history.cjs` verifies that deleted test credentials still present in history are detected. `tools/audit-release.ps1` continues to check current source and ZIP packages.
@@ -67,3 +69,16 @@ Pushes to `main` trigger the [Windows workflow](https://github.com/ChenShoukang/
 ```
 
 The native suite covers authenticated private storage and provider credential isolation as well as existing features. AI tests use mock servers only. FFmpeg is a test-only fixture generator, excluded from packages. Packaging audits both the staging directory and final archive; a matching credential pattern fails the build without printing its value.
+
+## Targeted native downloads check
+
+`powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-desktop.ps1 -Suites native-downloads` uses an empty isolated profile and an original-media localhost HTTP fixture, without optional components or models. Resume validates [HTTP Range / If-Range](https://www.rfc-editor.org/rfc/rfc9110.html#name-if-range). Body reads have their own timeout and cancellation after [ResponseHeadersRead](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpcompletionoption?view=netframework-4.8). Implementation: `src/DirectDownloads.cs`.
+
+Targeted media components / streams: `powershell -NoProfile -Command "& ./tools/test-desktop.ps1 -Suites media-downloads"`. Uses pinned real binaries and generated localhost HLS / DASH VOD fixtures, with no sound or AI. `src/StreamDownloads.cs` uses FFmpeg demuxing and stream copy; website extractors remain separate. Gyan Windows builds, listed by FFmpeg, have pinned archive and executable hashes.
+
+
+`powershell -NoProfile -Command "& ./tools/test-desktop.ps1 -Suites kok-downloads"` checks kok page discovery, source / quality selection, subtitles, audio export, HLS / DASH, retired-component cleanup and UI using local original fixtures.
+
+Page discovery follows [HTML media elements](https://html.spec.whatwg.org/multipage/media.html), [Open Graph](https://ogp.me/) and [VideoObject metadata](https://schema.org/VideoObject). See `src/MediaResolver.cs`; page JavaScript is not executed.
+
+Site adapters: `powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-desktop.ps1 -Suites site-adapters`. Original local media and offline HTTP fixtures verify layouts, split tracks and encrypted sessions; live checks read public metadata only. Set `KOK_SKIP_LIVE_SITES=1` to skip external checks. YouTube dependencies are pinned in `tools/youtube-dependencies.json`; build verifies package / DLL SHA-256, with licenses under `docs/licenses/`.

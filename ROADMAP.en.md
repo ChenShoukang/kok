@@ -2,7 +2,9 @@
 
 [中文](ROADMAP.md) · English
 
-## Current: v0.3.1 preview
+## Current: v0.4.1 preview
+
+This preview adds coherent colors, reading tools and kok’s own downloader; see the [v0.4.1 guide](docs/PREVIEW_0.4.1.en.md) and [preview download](https://github.com/ChenShoukang/kok/releases/tag/v0.4.1).
 
 The app includes five local library categories, drag-and-drop import, media playback, photo edits, document / book annotations and Chinese / English interfaces. Pure blocks AI requests; Smart enables optional translation, file chat and organization. A password-protected folder lives inside the library and encrypts its index, notes and covers, but not original files.
 
@@ -17,7 +19,7 @@ See the [README](README.en.md) for features and the [changelog](CHANGELOG.en.md)
 
 ## Later: broader playback inside kok
 
-Broader built-in playback remains a future goal. **v0.3.1 uses WebView2 without a separate decoding engine**; see the current [format matrix](docs/FORMATS.en.md).
+Broader built-in playback remains a future goal. **v0.4.1 uses WebView2 without a separate decoding engine**; see the current [format matrix](docs/FORMATS.en.md). Optional FFmpeg only handles download merging / conversion.
 
 - Evaluate embedded engines and codec libraries for size, memory, startup time, hardware acceleration, stability and redistribution licenses.
 - Prioritize MKV / AVI / MOV / MP4, HEVC / H.265 and common audio codecs; record container, video-codec and audio-codec results separately.

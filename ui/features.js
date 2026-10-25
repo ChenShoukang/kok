@@ -2,19 +2,19 @@
 // Desktop features share the same local bridge and persistent library as app.js.
 let selectionAnchor=null,pdfState=null,photoEditor=null,subtitleUrl=null,speedTimer=null,videoAudioContext=null;
 let subtitleTracks=[];
-const fontStacks={system:"'Segoe UI','Microsoft YaHei UI',sans-serif",yahei:"'Microsoft YaHei','Segoe UI',sans-serif",song:"'SimSun','Songti SC',serif",kai:"'KaiTi','STKaiti','SimSun',serif"};
+const fontStacks={smiley:"'Smiley Sans','Segoe UI','Microsoft YaHei UI',sans-serif",system:"'Segoe UI','Microsoft YaHei UI',sans-serif",yahei:"'Microsoft YaHei','Segoe UI',sans-serif",song:"'SimSun','Songti SC',serif",kai:"'KaiTi','STKaiti','SimSun',serif"};
 const uid=()=>crypto.randomUUID().replaceAll('-','');
 function albumName(item){return item.album||'未命名专辑';}
 function hashHue(value){let n=0;for(const c of value)n=(n*31+c.charCodeAt(0))%360;return n;}
 async function applyFont(){
- const name=state.settings.fontFamily||'system';let family=fontStacks[name];
+ const name=state.settings.fontFamily||'smiley';let family=fontStacks[name];
  if(!family){const asset=(state.fonts||[]).find(f=>f.id===name);if(asset){family=`'kokFont${asset.id}'`;if(![...document.fonts].some(f=>f.family==='kokFont'+asset.id)){try{const font=new FontFace('kokFont'+asset.id,`url(https://media.kok.local/font/${asset.id})`);await font.load();document.fonts.add(font);}catch(error){family=fontStacks.system;await setting({fontFamily:'system'});toast('字体无法加载，已恢复系统字体。',true);}}}}
  document.documentElement.style.setProperty('--user-font',family||fontStacks.system);
  document.documentElement.style.setProperty('--reading-font',name==='system'?"'Georgia','SimSun',serif":family||fontStacks.system);
 }
 function setupSettings(){
- const row=document.createElement('div');row.className='setting-row';row.innerHTML=`<div>常用字体<small>同时应用于界面与正文阅读</small></div><select id="font-select" aria-label="字体选择">${[['system','系统默认'],['yahei','微软雅黑'],['song','宋体'],['kai','楷体'],...(state.fonts||[]).map(f=>[f.id,f.name])].map(([v,l])=>`<option value="${esc(v)}">${esc(l)}</option>`).join('')}</select>`;
- $('#theme-select').closest('.setting-row').after(row);$('#font-select').value=state.settings.fontFamily||'system';
+ const row=document.createElement('div');row.className='setting-row';row.innerHTML=`<div>常用字体<small>同时应用于界面与正文阅读</small></div><select id="font-select" aria-label="字体选择">${[['smiley','得意黑（内置默认）'],['system','系统默认'],['yahei','微软雅黑'],['song','宋体'],['kai','楷体'],...(state.fonts||[]).map(f=>[f.id,f.name])].map(([v,l])=>`<option value="${esc(v)}">${esc(l)}</option>`).join('')}</select>`;
+ $('#theme-select').closest('.setting-row').after(row);$('#font-select').value=state.settings.fontFamily||'smiley';
  row.insertAdjacentHTML('afterend',`<div class="setting-row"><div>导入字体<small>本地 TTF / OTF，最多 20 MB</small></div><button class="button secondary" data-import-font>${svg('plus')}导入</button></div>`);
  $('#small-dialog .about-details').insertAdjacentHTML('beforebegin','<div class="setting-row"><div>视频操作<small>快捷键、跳跃距离与双击全屏</small></div><button class="button secondary" data-video-preferences>播放偏好</button></div>');
  if(isSmartMode()&&typeof setupTranslationSettings==='function')setupTranslationSettings();
@@ -203,7 +203,7 @@ window.kokSession=()=>{
  const edits=[];
  if(state.viewer){const item=state.viewer;const patch={notes:$('#notes').value};const pop=viewer.querySelector('[data-save-mark]');if(pop&&$('#mark-note')){const mark=item.annotations?.find(a=>a.id===pop.dataset.saveMark);if(mark)mark.note=$('#mark-note').value;patch.annotations=item.annotations||[];}
  if(video&&Number.isFinite(video.duration)&&video.duration>0){patch.position=video.currentTime;patch.progress=video.currentTime/video.duration;}
- if(state.book&&$('#reader-scroll')){patch.chapter=state.chapter;patch.position=readerPosition();const reader=$('#reader-scroll');patch.progress=(state.chapter+(reader.scrollHeight<=reader.clientHeight?1:patch.position))/state.book.chapters.length;}
+ if(state.book&&$('#reader-scroll')){patch.chapter=state.chapter;patch.position=readerPosition();patch.progress=(state.chapter+readerFraction())/state.book.chapters.length;}
  const scroll=$('.pdf-scroll');if(pdfState&&scroll){patch.position=scroll.scrollTop/Math.max(1,scroll.scrollHeight-scroll.clientHeight);patch.progress=(scroll.scrollTop+scroll.clientHeight)/Math.max(1,scroll.scrollHeight);}
  edits.push({id:item.id,patch});}
  if(state.track&&Number.isFinite(audio.duration)&&audio.duration>0)edits.push({id:state.track.id,patch:{position:audio.currentTime,progress:audio.currentTime/audio.duration}});

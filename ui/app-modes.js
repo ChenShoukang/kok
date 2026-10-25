@@ -8,7 +8,7 @@ function applyAppMode(){
   if(typeof resetTranslationView==='function')resetTranslationView();if(typeof resetFileAssistant==='function')resetFileAssistant();
   if(typeof organizer!=='undefined'){organizer.preview=[];organizer.selected.clear();organizer.api=null;}
   if(typeof subtitleTracks!=='undefined'&&$('#video')){subtitleTracks=subtitleTracks.filter(t=>!t.translated);renderSubtitleOptions();if(subtitleTracks.length){$('#subtitle-select').value='0';setSubtitle(0);}}
-  if(state.route==='organize'){state.route='overview';state.query='';$('#search').value='';}
+  if(state.route==='organize'||state.route==='downloads'){state.route='overview';state.query='';$('#search').value='';}
  }else if(state.viewer){beginTranslationView(state.viewer);beginFileAssistant(state.viewer);}
  renderNav();
 }

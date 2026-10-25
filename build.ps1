@@ -1,6 +1,13 @@
 param([switch]$Test)
 $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
+$bundledFont=Join-Path $root 'ui\fonts\SmileySans-Oblique.woff2'
+if(-not(Test-Path -LiteralPath $bundledFont) -or (Get-FileHash -LiteralPath $bundledFont -Algorithm SHA256).Hash -ne '731F22973349404B15A88A99EF3B5DD4104C0965C23B7E485C1F11E84FEA99E2'){throw 'Bundled Smiley Sans font is missing or has changed.'}
+if(-not(Test-Path -LiteralPath (Join-Path $root 'docs\licenses\SmileySans-OFL.txt'))){throw 'Bundled Smiley Sans OFL license is missing.'}
+$iconRoot=Join-Path $root 'ui\icons\fluent'
+if(-not(Test-Path -LiteralPath (Join-Path $iconRoot 'layout.css'))){throw 'Bundled icon alignment data is missing. Run node tools/generate_icon.cjs.'}
+foreach($asset in (Get-Content -LiteralPath (Join-Path $iconRoot 'manifest.json') -Raw | ConvertFrom-Json).files){$file=Join-Path $iconRoot $asset.file;if(-not(Test-Path -LiteralPath $file) -or (Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash.ToLowerInvariant() -ne $asset.sha256){throw 'Bundled Fluent icon is missing or has changed.'}}
+if(-not(Test-Path -LiteralPath (Join-Path $root 'docs\licenses\FluentEmoji-MIT.txt'))){throw 'Bundled Fluent Emoji MIT license is missing.'}
 if (-not (Test-Path (Join-Path $root 'ui\vendor\pdfjs\pdf.mjs'))) {
     if (-not (Test-Path (Join-Path $root 'node_modules\pdfjs-dist'))) { throw 'Run npm ci before building to prepare the local PDF.js viewer.' }
     & node (Join-Path $root 'tools\vendor.cjs')
@@ -21,7 +28,13 @@ $out = Join-Path $root 'dist\kok'
 New-Item -ItemType Directory -Force $out | Out-Null
 $core = Join-Path $sdk 'lib\net462\Microsoft.Web.WebView2.Core.dll'
 $forms = Join-Path $sdk 'lib\net462\Microsoft.Web.WebView2.WinForms.dll'
+& (Join-Path $root 'tools\prepare-youtube.ps1')
+$siteLibraries=@((Get-Content -LiteralPath (Join-Path $root 'tools\youtube-dependencies.json') -Raw | ConvertFrom-Json) | ForEach-Object {Join-Path $root ('tools\youtube-source\lib\'+$_.id+'.dll')})
 $references = @('System.dll','System.Core.dll','System.Drawing.dll','System.Windows.Forms.dll','System.Web.Extensions.dll','System.Xml.dll','System.Xml.Linq.dll','System.IO.Compression.dll','System.IO.Compression.FileSystem.dll','System.Net.Http.dll','System.Security.dll',$core,$forms)
+$facade=Join-Path $env:WINDIR 'Microsoft.NET\assembly\GAC_MSIL\netstandard\v4.0_2.0.0.0__cc7b13ffcd2ddd51\netstandard.dll'
+if(-not(Test-Path -LiteralPath $facade)){throw '.NET Framework 4.8 netstandard support is required.'}
+$references += $facade
+$references += @($siteLibraries | Where-Object { [IO.Path]::GetFileName($_) -in @('YoutubeExplode.dll','Microsoft.Bcl.AsyncInterfaces.dll','System.Threading.Tasks.Extensions.dll') })
 $arguments = @('/nologo','/target:winexe','/platform:x64','/optimize+','/utf8output',('/out:' + (Join-Path $out 'kok.exe')))
 if (Test-Path (Join-Path $root 'ui\kok.ico')) { $arguments += '/win32icon:' + (Join-Path $root 'ui\kok.ico') }
 foreach ($reference in $references) { $arguments += '/reference:' + $reference }
@@ -29,6 +42,7 @@ $arguments += Get-ChildItem (Join-Path $root 'src\*.cs') | ForEach-Object { $_.F
 & $compiler $arguments
 if ($LASTEXITCODE -ne 0) { throw 'Compilation failed.' }
 Copy-Item $core,$forms -Destination $out -Force
+Copy-Item $siteLibraries -Destination $out -Force
 Copy-Item (Join-Path $sdk 'runtimes\win-x64\native\WebView2Loader.dll') -Destination $out -Force
 Copy-Item (Join-Path $root 'ui') -Destination $out -Recurse -Force
 if (Test-Path (Join-Path $root 'samples')) { Copy-Item (Join-Path $root 'samples') -Destination $out -Recurse -Force }
@@ -45,6 +59,7 @@ if ($Test) {
     $testArgs += Join-Path $root 'tests\TranslationTests.cs'
     $testArgs += Join-Path $root 'tests\OrganizationTests.cs'
     $testArgs += Join-Path $root 'tests\PrivacyProviderTests.cs'
+    $testArgs += Join-Path $root 'tests\Preview041Tests.cs'
     & $compiler $testArgs
     if ($LASTEXITCODE -ne 0) { throw 'Test compilation failed.' }
     & $testExe

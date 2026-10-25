@@ -1,0 +1,123 @@
+﻿[
+    {
+        "url":  "https://api.nuget.org/v3-flatcontainer/youtubeexplode/6.6.2/youtubeexplode.6.6.2.nupkg",
+        "publicKeyToken":  "337a390ad141274e",
+        "id":  "YoutubeExplode",
+        "assemblyVersion":  "6.6.2.0",
+        "version":  "6.6.2",
+        "sha256":  "3651642bd84ebaaea8905f24553cb05f0f635b87a62d76e2f93f6ee36bca43f7",
+        "dllSha256":  "df6cea511d03bb4794f9c7fbed2549e5e51bc2d6652ec76f710e1f1dbcc10c1d",
+        "license":  "MIT",
+        "entry":  "lib/netstandard2.0/YoutubeExplode.dll"
+    },
+    {
+        "url":  "https://api.nuget.org/v3-flatcontainer/microsoft.bcl.asyncinterfaces/10.0.10/microsoft.bcl.asyncinterfaces.10.0.10.nupkg",
+        "publicKeyToken":  "cc7b13ffcd2ddd51",
+        "id":  "Microsoft.Bcl.AsyncInterfaces",
+        "assemblyVersion":  "10.0.0.10",
+        "version":  "10.0.10",
+        "sha256":  "e6bd1ebbba54526f816b1a03789dc59cbfc9ff3dd6ce834a45b4804d8f103942",
+        "dllSha256":  "55cfbfc03d586c6d306abedd92a01478e289dfe279be46224ffba805e1e5d7f4",
+        "license":  "MIT",
+        "entry":  "lib/net462/Microsoft.Bcl.AsyncInterfaces.dll"
+    },
+    {
+        "url":  "https://api.nuget.org/v3-flatcontainer/system.text.json/10.0.10/system.text.json.10.0.10.nupkg",
+        "publicKeyToken":  "cc7b13ffcd2ddd51",
+        "id":  "System.Text.Json",
+        "assemblyVersion":  "10.0.0.10",
+        "version":  "10.0.10",
+        "sha256":  "be50bbe83a74f8d6360c2e8ee6f166e9bf65a0625f83fb6084e25f292ea2efbf",
+        "dllSha256":  "aee8670c46b8eb79970a088e24df589ad7584b678c55eb0690e0aa60d52df583",
+        "license":  "MIT",
+        "entry":  "lib/net462/System.Text.Json.dll"
+    },
+    {
+        "url":  "https://api.nuget.org/v3-flatcontainer/system.threading.tasks.extensions/4.6.3/system.threading.tasks.extensions.4.6.3.nupkg",
+        "publicKeyToken":  "cc7b13ffcd2ddd51",
+        "id":  "System.Threading.Tasks.Extensions",
+        "assemblyVersion":  "4.2.4.0",
+        "version":  "4.6.3",
+        "sha256":  "1abc92c7517a021ead7e79d0b7f3c70be75bce0fac7cfe3b38e157d32245ff1a",
+        "dllSha256":  "af4e13ef418fd89b432de20cd1dfb7fa10a7179c8dd049c9856316e50c5949ca",
+        "license":  "MIT",
+        "entry":  "lib/net462/System.Threading.Tasks.Extensions.dll"
+    },
+    {
+        "url":  "https://api.nuget.org/v3-flatcontainer/system.io.pipelines/10.0.10/system.io.pipelines.10.0.10.nupkg",
+        "publicKeyToken":  "cc7b13ffcd2ddd51",
+        "id":  "System.IO.Pipelines",
+        "assemblyVersion":  "10.0.0.10",
+        "version":  "10.0.10",
+        "sha256":  "e73811c845c36b7b5da0b25f4fdb573300c691fd9f45d5698f8403de136cf88e",
+        "dllSha256":  "9b6c5f899da2a60807485a3f8afbcac3d15eedee49e4ca743e9c50b7d4e9f7a5",
+        "license":  "MIT",
+        "entry":  "lib/net462/System.IO.Pipelines.dll"
+    },
+    {
+        "url":  "https://api.nuget.org/v3-flatcontainer/system.text.encodings.web/10.0.10/system.text.encodings.web.10.0.10.nupkg",
+        "publicKeyToken":  "cc7b13ffcd2ddd51",
+        "id":  "System.Text.Encodings.Web",
+        "assemblyVersion":  "10.0.0.10",
+        "version":  "10.0.10",
+        "sha256":  "f695ce8cd0c57074dbc861cbe91ae8fec6989bb8f14a03a395427e68b0507a03",
+        "dllSha256":  "30a8f491ec3d805f62e40b90c1873310e7f8dbbcd07a37af6cbc17579907012b",
+        "license":  "MIT",
+        "entry":  "lib/net462/System.Text.Encodings.Web.dll"
+    },
+    {
+        "url":  "https://api.nuget.org/v3-flatcontainer/system.buffers/4.6.1/system.buffers.4.6.1.nupkg",
+        "publicKeyToken":  "cc7b13ffcd2ddd51",
+        "id":  "System.Buffers",
+        "assemblyVersion":  "4.0.5.0",
+        "version":  "4.6.1",
+        "sha256":  "b00451e91d016fbec091ad1e361f3a7015e1d91d4047f7e48a74455b2a673d79",
+        "dllSha256":  "2d78d770c9cb997199154ae8c018b9f1d1efbc86729f7264dde6dbad2a12cac3",
+        "license":  "MIT",
+        "entry":  "lib/net462/System.Buffers.dll"
+    },
+    {
+        "url":  "https://api.nuget.org/v3-flatcontainer/system.memory/4.6.3/system.memory.4.6.3.nupkg",
+        "publicKeyToken":  "cc7b13ffcd2ddd51",
+        "id":  "System.Memory",
+        "assemblyVersion":  "4.0.5.0",
+        "version":  "4.6.3",
+        "sha256":  "26078aeb758c9ae985e8bf851f973026061da6a5eb4837204d0c2d2204c72955",
+        "dllSha256":  "d5e8e4866f9cfa66f7765660f84b210198893e55335487afe5ebda342c0e913d",
+        "license":  "MIT",
+        "entry":  "lib/net462/System.Memory.dll"
+    },
+    {
+        "url":  "https://api.nuget.org/v3-flatcontainer/system.runtime.compilerservices.unsafe/6.1.2/system.runtime.compilerservices.unsafe.6.1.2.nupkg",
+        "publicKeyToken":  "b03f5f7f11d50a3a",
+        "id":  "System.Runtime.CompilerServices.Unsafe",
+        "assemblyVersion":  "6.0.3.0",
+        "version":  "6.1.2",
+        "sha256":  "5f6a7f53af3465f92beb6da873ebe0e496206c313313b98badee4355a6b25937",
+        "dllSha256":  "08cbd7278b66f1e68425a82d4b97181a4130d93e3dd91831407aba7212ccdacf",
+        "license":  "MIT",
+        "entry":  "lib/net462/System.Runtime.CompilerServices.Unsafe.dll"
+    },
+    {
+        "url":  "https://api.nuget.org/v3-flatcontainer/system.valuetuple/4.6.2/system.valuetuple.4.6.2.nupkg",
+        "publicKeyToken":  "cc7b13ffcd2ddd51",
+        "id":  "System.ValueTuple",
+        "assemblyVersion":  "4.0.5.0",
+        "version":  "4.6.2",
+        "sha256":  "76fd0e366a2b90655fd15d557b0b79504197748358cb578fe3193f6d97bdd9aa",
+        "dllSha256":  "400e432af60a6a2b3eedec5908be7e7ae0d063ecf0052595f7cd6cffb7e4e98e",
+        "license":  "MIT",
+        "entry":  "lib/net462/System.ValueTuple.dll"
+    },
+    {
+        "url":  "https://api.nuget.org/v3-flatcontainer/system.numerics.vectors/4.6.1/system.numerics.vectors.4.6.1.nupkg",
+        "publicKeyToken":  "b03f5f7f11d50a3a",
+        "id":  "System.Numerics.Vectors",
+        "assemblyVersion":  "4.1.6.0",
+        "version":  "4.6.1",
+        "sha256":  "2bc500a86dcb02f2032d6d877f9e2d6e9e4a79080e57239b4198679d4031f2c7",
+        "dllSha256":  "20c2fa81b8c70d651099d762954f285fd4f942e63b2d7217c145dab8d4b2f4c9",
+        "license":  "MIT",
+        "entry":  "lib/net462/System.Numerics.Vectors.dll"
+    }
+]

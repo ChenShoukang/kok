@@ -2,13 +2,13 @@
 
 **Videos, photos, music, documents and books, together.** A lightweight Windows desktop app with offline essentials, optional AI and a password-protected private folder.
 
-[Download v0.3.1](https://github.com/ChenShoukang/kok/releases/tag/v0.3.1) · [中文](README.md) · [Supported formats](docs/FORMATS.en.md) · [Changelog](CHANGELOG.en.md)
+[Download v0.4.1 preview](https://github.com/ChenShoukang/kok/releases/tag/v0.4.1) · [中文](README.md) · [Supported formats](docs/FORMATS.en.md) · [Changelog](CHANGELOG.en.md)
 
-**v0.3.1 is a preview.** Bug reports are welcome; see [release verification](docs/TESTING.en.md) for machine and codec coverage.
+**v0.4.1 preview** redesigns the flat layout, subtle corners, Fluent Flat icons and glass overlays, bundles Smiley Sans, and adds colors, reading tools and kok’s own downloader. See the [v0.4.1 guide](docs/PREVIEW_0.4.1.en.md) for features and limits, and [release verification](docs/TESTING.en.md) for coverage.
 
 ## Get started
 
-1. Download `kok-0.3.1-win-x64.zip` from Releases, extract and run `kok.exe`. Keep the accompanying files.
+1. Download `kok-0.4.1-win-x64.zip` from Releases, extract and run `kok.exe`. Keep the accompanying files.
 2. Choose **Pure** or **Smart**; switch later in Settings.
 3. Drop files or folders, choose **Import files**, or explore the original samples.
 
@@ -24,19 +24,20 @@ Requires **Windows 10 / 11 x64, .NET Framework 4.8 and [WebView2 Runtime](https:
 | Area | What you can do |
 | --- | --- |
 | Video | Borderless fullscreen, resume, 0.5×–3× speed and silence acceleration; matching or manually loaded sidecar subtitles, covers, right-click properties, configurable shortcuts and orientation-aware previews; picture-in-picture when supported by the runtime |
-| Photos | Zoom, rotate, browse and slideshows; filters, color adjustments, vignette, crop, flip, original comparison, undo / redo and PNG / JPEG copies |
+| Photos | Wheel zoom, drag-to-pan, rotation and slideshows; filters, color adjustments, vignette, freehand crop with eight resize handles, fixed ratios, flip, original comparison, undo / redo and PNG / JPEG copies |
 | Music | Album shelf and details, editable album / artist names, queues, continuous playback, resume, shuffle, repeat, seeking and volume |
-| Documents | PDF zoom, text selection, page navigation; DOCX / text reading; underlines, highlights, inserted text, annotations and HTML reading-copy exports |
-| Books | EPUB contents, TXT sections, current-chapter search, font size, paper colors and reading progress; underlines, highlights, thought popovers, annotation lists and notes |
+| Documents | PDF zoom, selection, navigation, outline and full-text search; DOCX / text reading, bookmarks and typography; annotations, inserted text and HTML / Markdown exports |
+| Books | EPUB contents, TXT sections, chapter filtering, full-text search, bookmarks, scroll / paged layouts, font / line / letter / paragraph spacing, width, focus and resume; existing highlights and thoughts remain available |
 | Library | File / folder drops, type detection and duplicate skipping; collections, favorites, recents, search, grid / list and sorting |
 | Local organization in Smart | Timeline / type / custom groups and bulk classification; selected-folder scans with pause / resume. Scanning and local groups need no AI calls |
-| Appearance | Glass surfaces, smooth transitions and compact layouts; Chinese / English, light / dark / system themes, YaHei / SimSun / KaiTi, TTF / OTF import and reduced-motion support |
+| Appearance | Flat pages, subtle corners, small square Fluent Flat category icons / covers and contextual actions; neutral white / graphite, custom backgrounds and glass; bundled Smiley Sans, languages, font choices / import, compact layouts and reduced motion |
+| Video downloads | Bilibili / YouTube / Douyin adapters, generic pages / file links, source / quality choices, audio and subtitles; site sign-in, encrypted sessions and cookies.txt import, browser assistance for Bilibili / Douyin; queues, resume, retry and import. Optional FFmpeg / FFprobe merges split tracks and M3U8 / DASH |
 | Optional AI | Subtitle / document / book translation, bilingual view, cache, progress, cancellation and TXT / SRT export; streamed file chat, per-file history and answers saved as thoughts; category / tag / summary previews with manual editing |
 
 <details>
 <summary>View the actual interface</summary>
 
-![Actual kok interface](docs/screenshots/overview-en.jpg)
+![Actual kok v0.4.1 preview](docs/screenshots/overview-041-light.png)
 
 </details>
 

@@ -1,0 +1,44 @@
+'use strict';
+const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),assert=require('node:assert/strict'),{spawnSync}=require('node:child_process');
+const {chromium}=require('./browser.cjs');
+const ffmpeg=path.resolve('test-output/component-cache/ffmpeg.exe'),ffprobe=path.resolve('test-output/component-cache/ffprobe.exe');
+const run=(exe,args)=>{const p=spawnSync(exe,args,{encoding:'utf8',windowsHide:true,maxBuffer:5*1024*1024});assert.equal(p.status,0,p.stdout+'\n'+p.stderr);return p.stdout;};
+const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+if(process.argv[2]==='--prepare'){
+ require('./kok-downloads.cjs');const profile=process.argv[3],fixtures=path.join(profile,'fixtures');
+ run(ffmpeg,['-v','error','-nostdin','-i',path.join(fixtures,'high.mp4'),'-an','-c','copy','-f','mp4',path.join(fixtures,'video.m4s')]);
+ run(ffmpeg,['-v','error','-nostdin','-i',path.join(fixtures,'high.mp4'),'-vn','-c','copy','-f','mp4',path.join(fixtures,'audio.m4s')]);
+ const compiler=path.join(process.env.WINDIR,'Microsoft.NET/Framework64/v4.0.30319/csc.exe'),exe=path.resolve('dist/kok/kok.SiteChecks.exe');
+ const references=['kok.exe','YoutubeExplode.dll','Microsoft.Bcl.AsyncInterfaces.dll','System.Threading.Tasks.Extensions.dll'].map(name=>'/reference:'+path.resolve('dist/kok',name));references.push('/reference:System.Net.Http.dll','/reference:System.Web.Extensions.dll','/reference:'+path.join(process.env.WINDIR,'Microsoft.NET/assembly/GAC_MSIL/netstandard/v4.0_2.0.0.0__cc7b13ffcd2ddd51/netstandard.dll'));
+ run(compiler,['/nologo','/utf8output','/target:exe','/out:'+exe,...references,path.resolve('tests/SiteAdapterChecks.cs')]);fs.copyFileSync('src/kok.exe.config',exe+'.config');process.stdout.write(run(exe,[path.join(profile,'native-checks')]));
+}else (async()=>{
+ const profile=process.env.KOK_TEST_PROFILE;if(!profile)throw Error('Run tools/test-desktop.ps1 -Suites site-adapters.');const fixtures=path.join(profile,'fixtures'),requests=[];
+ const server=http.createServer((req,res)=>{
+   const url=new URL(req.url,'http://localhost'),name=path.basename(url.pathname);requests.push({name,cookie:req.headers.cookie});const origin=`http://127.0.0.1:${server.address().port}`;
+   if(name==='bili'){res.writeHead(200,{'Content-Type':'text/html'});res.end('<title>Split media fixture</title><script>window.__playinfo__='+JSON.stringify({data:{timelength:4000,dash:{video:[{id:80,codecid:7,codecs:'avc1.42',height:1080,baseUrl:origin+'/video.m4s'}],audio:[{id:30280,bandwidth:64000,baseUrl:origin+'/audio.m4s'}]}}})+';</script>');return;}
+   if(name==='douyin'){res.writeHead(200,{'Content-Type':'text/html'});res.end('<script id="RENDER_DATA">'+encodeURIComponent(JSON.stringify({aweme_detail:{aweme_id:'unit123',desc:'Original vertical clip',video:{height:90,duration:4000,play_addr:{url_list:[origin+'/high.mp4'],height:90}}}}))+'</script>');return;}
+   const file=path.join(fixtures,name);if(!fs.existsSync(file)||!fs.statSync(file).isFile()){res.writeHead(404);res.end();return;}
+   const bytes=fs.readFileSync(file),range=/bytes=(\d+)-(\d*)/.exec(req.headers.range||''),from=range?Number(range[1]):0,end=range&&range[2]?Math.min(Number(range[2]),bytes.length-1):bytes.length-1;
+   if(from>=bytes.length){res.writeHead(416,{'Content-Range':`bytes */${bytes.length}`});res.end();return;}
+   res.writeHead(range?206:200,{'Content-Type':name.endsWith('.m4s')?'application/octet-stream':'video/mp4','Content-Length':end-from+1,'ETag':'"site-fixture"',...(range?{'Content-Range':`bytes ${from}-${end}/${bytes.length}`}:{})});res.end(bytes.subarray(from,end+1));
+ });await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const base=`http://127.0.0.1:${server.address().port}`;let browser,page;const errors=[];
+ try{
+   browser=await chromium.connectOverCDP('http://127.0.0.1:9225');page=browser.contexts()[0].pages().find(p=>p.url().startsWith('https://app.kok.local'));page.on('pageerror',e=>errors.push(e.message));page.setDefaultTimeout(25000);await page.waitForFunction(()=>!document.querySelector('#startup'));await page.setViewportSize({width:1280,height:900});await page.evaluate(()=>navigate('downloads'));await page.waitForFunction(()=>downloadSnapshot?.downloads);
+   const call=(action,args={})=>page.evaluate(({action,args})=>native(action,args),{action,args});const jobs=async()=>(await call('downloadState')).downloads.jobs;
+   const wait=async(fn,label)=>{const until=Date.now()+40000;while(Date.now()<until){const result=fn(await jobs());if(result)return result;await delay(120);}throw Error('Timed out: '+label);};
+   const start=async(url,quality='best')=>{const before=new Set((await jobs()).map(j=>j.id));await call('startDownloads',{urls:[url],quality});return (await jobs()).find(j=>!before.has(j.id));};
+   const done=async id=>{await wait(j=>{const item=j.find(j=>j.id===id);if(item?.status==='error')throw Error(item.error);return item?.status==='completed'&&item.imported;},id);return JSON.parse(fs.readFileSync(path.join(profile,'downloads.json'),'utf8')).jobs.find(j=>j.id===id);};
+   await page.locator('[data-download-sites]').click();assert.equal(await page.locator('.download-site-row').count(),3);assert.equal(await page.locator('[data-site-login]').count(),3);await page.locator('[data-site-clear=bilibili]').count();await page.evaluate(()=>closeSmall());
+   const split=await call('probeDownload',{url:base+'/bili',quality:'1080'});assert(split.sources.some(s=>s.kind==='video'));assert(split.sources.some(s=>s.kind==='music'));const j=await start(base+'/bili'),saved=await done(j.id);const inspected=JSON.parse(run(ffprobe,['-v','error','-show_streams','-of','json',saved.files[0]]));assert(inspected.streams.some(s=>s.codec_type==='video'));assert(inspected.streams.some(s=>s.codec_type==='audio'));
+   const audio=await start(base+'/bili','audio'),audioSaved=await done(audio.id),audioInfo=JSON.parse(run(ffprobe,['-v','error','-show_streams','-of','json',audioSaved.files[0]]));assert(audioInfo.streams.every(s=>s.codec_type==='audio'));
+   const douyin=await call('probeDownload',{url:base+'/douyin'});assert.equal(douyin.title,'Original vertical clip');const dj=await start(base+'/douyin');await done(dj.id);
+   console.log('PASS: Bilibili-layout split track parsing / merge / audio-only import, Douyin RENDER_DATA and three-site account UI.');
+   await page.evaluate(async()=>{await setting({uiLanguage:'en'});I18n.applyLanguage('en');});await page.locator('[data-download-sites]').click();const chinese=await page.locator('#small-dialog').evaluate(root=>[...root.querySelectorAll('h2,p,b,small,button')].filter(e=>e.getClientRects().length&&/[\u3400-\u9fff]/.test(e.textContent)).map(e=>e.textContent));assert.deepEqual(chinese,[]);const captures=path.join(profile,'captures');fs.mkdirSync(captures,{recursive:true});await page.screenshot({path:path.join(captures,'site-accounts-en.png'),scale:'css'});await page.evaluate(()=>closeSmall());
+   const assisted=call('browserProbeDownload',{url:'https://www.douyin.com/video/6967223681286278436',quality:'720'});await delay(2500);await call('cancelDownloadProbe');const assistedResult=await assisted;assert(assistedResult.cancelled);console.log('PASS: browser assistance opens in an isolated muted web view and cancels without blocking the app.');
+   const live=[];if(!process.env.KOK_SKIP_LIVE_SITES)for(const [site,url]of [['bilibili','https://www.bilibili.com/video/BV1GJ411x7h7'],['youtube','https://www.youtube.com/watch?v=u_yIGGhubZs'],['douyin','https://www.douyin.com/video/6967223681286278436']]){
+     const timer=setTimeout(()=>call('cancelDownloadProbe').catch(()=>{}),35000);try{const result=await call('probeDownload',{url,quality:'720'});live.push({site,status:result.cancelled?'timed-out':result.sources?.length?'metadata-resolved':'unavailable',sources:result.sources?.length||0});}catch{live.push({site,status:'restricted-or-unavailable',sources:0});}finally{clearTimeout(timer);}
+   }fs.writeFileSync(path.join(profile,'live-sites.json'),JSON.stringify(live,null,2));console.log('Live metadata checks (no account, no full video download): '+JSON.stringify(live));
+   await page.evaluate(async()=>{await native('setAppMode',{mode:'pure'});await refresh();});for(const action of ['loginDownloadSite','clearDownloadLogin','importDownloadLogin'])assert(await call(action,{site:'bilibili'}).then(()=>false,()=>true));assert(requests.every(r=>!r.cookie));assert.equal(await page.evaluate(()=>audio.paused),true);assert.deepEqual(errors,[]);
+   console.log('PASS: English account UI, Pure-mode account access blocking and no cookie leaks to unrelated localhost media.');
+ }finally{if(browser)await browser.close();server.closeAllConnections();await new Promise(resolve=>server.close(resolve));}
+})().catch(error=>{console.error(error);process.exitCode=1;});
