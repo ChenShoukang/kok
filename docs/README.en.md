@@ -10,7 +10,7 @@
 | [Editing and music](EDITING_MUSIC_0.5.1.md) | Photo objects, media clips, visual text/PDF editing, tags and AI grouping |
 | [Study tools](STUDY_TOOLS_0.5.1.md) | Multi-file comparison, related notes and subtitle chapters |
 | [Bundled fonts](FONT_CANDIDATES.md) | Smiley Sans and LXGW WenKai Lite |
-| [v0.5.1 design and AI](DESIGN_0.5.1.md) | Local development build, references and focused checks |
+| [v0.5.1 design and AI](DESIGN_0.5.1.md) | Preview, references and focused checks |
 | [v0.4.1 preview](PREVIEW_0.4.1.en.md) | Coherent colors, reading tools and video downloads |
 | [Format compatibility](FORMATS.en.md) | Built-in reading, codecs and external-app boundaries |
 | [Development and tests](DEVELOPMENT.en.md) | Builds, isolated silent tests and source layout |
