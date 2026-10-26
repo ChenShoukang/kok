@@ -13,15 +13,23 @@ namespace kok {
                 object value=pair.Value;string key=pair.Key;
                 if(new[]{"customLightBg","customLightGlass","customDarkBg","customDarkGlass"}.Contains(key)){
                     string color=Convert.ToString(value);if(!Regex.IsMatch(color??"","^#[0-9a-fA-F]{6}$"))throw new InvalidDataException("请选择有效的六位颜色。");result[key]=color.ToLowerInvariant();
-                }else if(key=="customColorsEnabled"){
+                }else if(key=="customColorsEnabled"||key=="documentReadableMode"){
                     if(!(value is bool))throw new InvalidDataException("配色开关格式无效。");result[key]=value;
                 }else if(new[]{"glassOpacity","glassBlur","readerLineHeight","readerLetterSpacing","readerParagraphSpace","readerWidth"}.Contains(key)){
                     double number;try{number=Convert.ToDouble(value);}catch{throw new InvalidDataException("阅读或外观设置数值无效。");}
                     double min=0,max=0;
                     switch(key){case "glassOpacity":min=15;max=95;break;case "glassBlur":min=0;max=48;break;case "readerLineHeight":min=1.2;max=2.8;break;case "readerLetterSpacing":min=0;max=3;break;case "readerParagraphSpace":min=0;max=2;break;case "readerWidth":min=420;max=1100;break;}
                     if(Double.IsNaN(number)||Double.IsInfinity(number)||number<min||number>max)throw new InvalidDataException("阅读或外观设置数值无效。");result[key]=number;
-                }else if(key=="readerLayout"){
-                    if(!new[]{"scroll","paged"}.Contains(Convert.ToString(value)))throw new InvalidDataException("阅读布局无效。");result[key]=Convert.ToString(value);
+                }else if(key=="studySelectionLimit"){
+                    int count;try{count=Convert.ToInt32(value);}catch{throw new InvalidDataException("阅读或外观设置数值无效。");}if(count<2||count>50)throw new InvalidDataException("阅读或外观设置数值无效。");result[key]=count;
+                }else if(new[]{"bookTextSize","documentTextSize"}.Contains(key)){
+                    double number;try{number=Convert.ToDouble(value);}catch{throw new InvalidDataException("阅读或外观设置数值无效。");}if(Double.IsNaN(number)||Double.IsInfinity(number)||number<14||number>48)throw new InvalidDataException("阅读或外观设置数值无效。");result[key]=number;
+                }else if(new[]{"bookFont","documentFont"}.Contains(key)){
+                    string font=Convert.ToString(value);if(!new[]{"system","smiley","wenkai","yahei","song","kai"}.Contains(font)&&!Regex.IsMatch(font??"","^[a-f0-9]{32}$"))throw new InvalidDataException("阅读字体无效。");result[key]=font;
+                }else if(new[]{"bookPaper","documentPaper"}.Contains(key)){
+                    if(!new[]{"auto","cream","sage","dark","white"}.Contains(Convert.ToString(value)))throw new InvalidDataException("阅读配色无效。");result[key]=Convert.ToString(value);
+                }else if(new[]{"readerLayout","bookLayout","documentLayout"}.Contains(key)){
+                    if(!new[]{"scroll","paged","spread"}.Contains(Convert.ToString(value)))throw new InvalidDataException("阅读布局无效。");result[key]=Convert.ToString(value);
                 }
             }
             return result;

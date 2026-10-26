@@ -7,7 +7,7 @@ using System.Xml.Linq;
 
 namespace kok {
     public class Cue { public double start,end; public string text; }
-    public class SubtitleTrack { public string name; public List<Cue> cues=new List<Cue>(); }
+    public class SubtitleTrack { public string name; public bool generated; public List<Cue> cues=new List<Cue>(); }
     public static class Subtitles {
         static readonly string[] extensions={".srt",".vtt",".ass",".ssa",".sub",".sbv",".lrc",".ttml",".dfxp",".smi"};
         public static List<SubtitleTrack> Discover(string video) {
@@ -29,7 +29,10 @@ namespace kok {
         public static SubtitleTrack Read(string path) {
             if(new FileInfo(path).Length>8*1024*1024)throw new InvalidDataException("字幕超过 8 MB。");
             string text=Library.ReadText(path).Replace("\r\n","\n").Replace('\r','\n');string ext=Path.GetExtension(path).ToLowerInvariant();
-            var track=new SubtitleTrack{name=Path.GetFileName(path)};
+            return ParseText(text,ext,Path.GetFileName(path));
+        }
+        public static SubtitleTrack ParseText(string text,string ext,string name="") {
+            text=text.Replace("\r\n","\n").Replace('\r','\n');var track=new SubtitleTrack{name=name};
             if(ext==".ass"||ext==".ssa") {
                 foreach(string line in text.Split('\n'))if(line.StartsWith("Dialogue:",StringComparison.OrdinalIgnoreCase)) { string[] p=line.Substring(9).Split(new[]{','},10);if(p.Length==10)try{Add(track,Timestamp(p[1]),Timestamp(p[2]),p[9]);}catch(FormatException){} }
             } else if(ext==".lrc") {

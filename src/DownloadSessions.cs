@@ -36,7 +36,7 @@ namespace kok {
         sealed class Scope : IDisposable {readonly Context previous;public Scope(DownloadSessions sessions){previous=Current.Value;Current.Value=new Context{sessions=sessions};}public void Dispose(){Current.Value=previous;}}
         public static IDisposable Use(DownloadSessions sessions){return new Scope(sessions);}
         public static CookieContainer Cookies(string site){var context=Current.Value;if(context==null||context.sessions==null)return new CookieContainer();lock(context.jars){CookieContainer jar;if(!context.jars.TryGetValue(site,out jar))context.jars[site]=jar=context.sessions.Jar(site);return jar;}}
-        public static string Agent(string url){string site=DownloadSessions.Site(url);var context=Current.Value;return context!=null&&context.sessions!=null&&site!=""?context.sessions.Agent(site):"kok/0.4.1";}
+        public static string Agent(string url){string site=DownloadSessions.Site(url);var context=Current.Value;return context!=null&&context.sessions!=null&&site!=""?context.sessions.Agent(site):"kok/0.5.1";}
         public static HttpClient Client(string url,bool redirects=false){string site=DownloadSessions.Site(url);var handler=new HttpClientHandler{AllowAutoRedirect=redirects,UseCookies=site!="",UseDefaultCredentials=false,AutomaticDecompression=DecompressionMethods.None};if(site!="")handler.CookieContainer=Cookies(site);if(new Uri(url).IsLoopback)handler.UseProxy=false;return new HttpClient(handler){Timeout=TimeSpan.FromSeconds(60)};}
     }
 }

@@ -12,6 +12,7 @@ foreach ($file in @('kok.exe','kok.exe.config','Microsoft.Web.WebView2.Core.dll'
 }
 foreach ($folder in @('ui','samples','docs')) { if(Test-Path -LiteralPath (Join-Path $root $folder)){Copy-Item -LiteralPath (Join-Path $root $folder) -Destination $stage -Recurse -Force} }
 foreach($dependency in (Get-Content -LiteralPath (Join-Path $root 'tools\youtube-dependencies.json') -Raw | ConvertFrom-Json)){Copy-Item -LiteralPath (Join-Path $source ($dependency.id+'.dll')) -Destination $stage -Force}
+Copy-Item -LiteralPath (Join-Path $source 'TagLibSharp.dll') -Destination $stage -Force
 & (Join-Path $root 'tools\audit-release.ps1') -PackageDirectory $stage
 $version = (Get-Content (Join-Path $root 'package.json') -Raw | ConvertFrom-Json).version
 $archive = Join-Path $root ("dist\kok-$version-win-x64.zip")

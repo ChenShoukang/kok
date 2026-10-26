@@ -2,7 +2,7 @@
 // Localize application chrome while keeping names, documents, notes and AI output intact.
 const I18n=(()=>{
  let language='zh',messages={},patterns=[];const textSources=new WeakMap(),attributeSources=new WeakMap();
- const protectedSelector='[data-user-content],.file-info b,.book-cover,.track-title b,#track-name,#viewer-title,.reader-scroll h2,#reader-text,.reader-toc button,.mark-popover blockquote,#annotation-index b,#annotation-index small,.queue-item span:last-child,.translation-original,.translation-text,.translation-body h3,.pdf-page,#collections-nav .nav-item>span:nth-child(2),#collection-existing option[value]:not([value=""]),code';
+ const protectedSelector='[data-user-content],.file-info b,.book-cover,.track-title b,#track-name,#viewer-title,.reader-scroll h2,#reader-text,.reader-toc .toc-chapters button,.mark-popover blockquote,#annotation-index b,#annotation-index small,.queue-item span:last-child,.translation-original,.translation-text,.translation-body h3,.pdf-page,#collections-nav .nav-item>span:nth-child(2),#collection-existing option[value]:not([value=""]),code';
  try{language=localStorage.getItem('kok.uiLanguage')==='en'?'en':'zh';}catch{}
  function text(value){
    if(language!=='en')return value;

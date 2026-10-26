@@ -2,6 +2,7 @@ dist/
 tools/webview2/
 tools/webview2.zip
 tools/youtube-source/
+tools/media-source/
 node_modules/
 ui/vendor/
 data/
@@ -12,6 +13,9 @@ test-output/
 .env
 .env.*
 ai-settings.json
+speech-settings.json
+speech-components/
+speech-work/
 
 Thumbs.db
 Desktop.ini

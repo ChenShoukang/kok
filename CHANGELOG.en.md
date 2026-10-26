@@ -2,6 +2,34 @@
 
 [中文](CHANGELOG.md)
 
+## v0.5.1 · Preview
+
+- Quiet reading adds single/adaptive two-page/vertical modes and wheel paging, fixed favorite/window controls and compact menus; coordinated opening, deferred resize work and batched bilingual measurements. See the [guide](docs/READING_FLOW_0.5.1.md).
+
+- Real EPUB NAV/NCX, Word headings and text contents, paged books, visible bookmarks, independent fonts and eye comfort. Paired reading aligns typography and paragraphs, scrolls in both directions and restores local results and annotations.
+- Coherent media chrome, idle controls, origin-based opening, compact/maximized/fullscreen and DPI fixes; collection dragging with explicit private-folder confirmation. See the [reading guide](docs/READING_RENEWAL_0.5.1.en.md).
+
+- Translation adds up to four-worker fast mode (three in standard mode), progressive output, reusable segment caches, equal-width original/translation panes, synchronized scrolling and translation-only output. DOCX / EPUB / PDF / TXT / Markdown copies use matching formats.
+- Video captions support optional local Whisper and a separately configured timestamped speech API, with installation, progress, cancellation, playback and SRT export. Speech credentials are encrypted separately.
+- Finesse-informed toolbar and paper layouts, selection previews, grapheme-safe range adjustments, duplicate/stale-selection guards, undo and damped native animations. See the [guide](docs/TRANSLATION_CAPTIONS_0.5.1.md).
+
+- Bundle Smiley Sans and LXGW WenKai Lite for offline, on-demand selection, with complete font data, OFL notices and build-time verification; guard asynchronous font switches against stale results.
+- Add unified editing: photo text/drawing/cover layers, multi-source video/audio clip timelines, joining and clip captions, visual text with DOCX/EPUB exports, and PDF merging/reordering/page-canvas edits. Save local drafts or new copies.
+- Redesign albums, artists and personal audio. Read tags and embedded covers offline, retain manual corrections, choose MusicBrainz candidates and preview metadata-only AI grouping before applying. Audio is not uploaded.
+- Open photos, videos, documents and books in independent native windows with dragging and resizing. Double-click empty content space to send a viewer behind the library; restore it from the window strip. Viewers share the engine/library, save notes and progress on close, and close during private-folder transitions.
+- Compress LXGW WenKai Lite as WOFF2 without subsetting, verifying full glyph and layout data with only required signature/format changes. Use same-version official minified PDF.js modules while retaining decoders, CMaps, standard fonts and notices.
+
+- Compare readable documents, books and video subtitles with an adjustable selection cap of 2–50 files, cross-file citations, context preview, local reports, export and cache reuse.
+- Review highlights and notes by file or collection, distinguish source text from personal thoughts, and discover related notes with local keyword matching.
+- Generate persistent subtitle-segment chapters with source timestamps, seeking and active-segment markers. Regenerating after subtitle/model changes refreshes the cache.
+
+- Shorter onboarding, download, collection and AI copy; settings grouped into Appearance, Tools and Library.
+- Consistent small corners, tactile buttons, square covers and theme materials, with press and disclosure transitions.
+- File assistant adds passage retrieval, outgoing-context preview, persistent clickable citations, answer copying, note extraction and retry.
+- Retrieval includes the middle of long chapters. PDFs over 80 pages are sampled across the document with an excerpt disclosure.
+- Chinese/English UI and AI isolation for Pure mode and private folders remain. Automatic publishing is disabled.
+- References, limits and validation: [v0.5.1 design notes](docs/DESIGN_0.5.1.md).
+
 ## v0.4.1 · Preview
 
 - Coherent neutral white / graphite materials, custom background / glass colors, opacity / blur and independent light / dark palettes.

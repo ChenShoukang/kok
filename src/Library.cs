@@ -25,12 +25,17 @@ namespace kok {
         public string modified="";
         public int width,height;
         public List<ChatTurn> aiChat=new List<ChatTurn>();
+        public List<StudyReport> aiStudies=new List<StudyReport>();
+        public VideoOutline videoOutline;
+        public AudioDetails audio=new AudioDetails();
+        public Dictionary<string,object> editDraft=new Dictionary<string,object>();
+        public SubtitleTrack generatedSubtitles;
         public List<Annotation> annotations = new List<Annotation>();
         public Dictionary<string,string> chapterTexts = new Dictionary<string,string>();
         public List<ReadingBookmark> bookmarks = new List<ReadingBookmark>();
     }
     public class ReadingBookmark { public string id,name; public int chapter,page; public double position; }
-    public class Annotation { public string id,style,text,note; public int chapter,start,end,page; public double x,y; public List<MarkRect> rects = new List<MarkRect>(); }
+    public class Annotation { public string id,style,text,note,side; public int chapter,start,end,page,part; public double x,y; public List<MarkRect> rects = new List<MarkRect>(); }
     public class MarkRect { public double x,y,w,h; }
     public class FontAsset { public string id,name,path; }
     public class Database {
@@ -42,8 +47,9 @@ namespace kok {
         public List<WatchFolder> watchFolders = new List<WatchFolder>();
         public List<string> ignoredAutoPaths = new List<string>();
     }
-    public class Chapter { public string title, text; public bool placeholder,generatedTitle; }
-    public class Book { public string title; public List<Chapter> chapters = new List<Chapter>(); }
+    public class Chapter { public string title, text,sourcePath=""; public bool placeholder,generatedTitle; }
+    public class ReadingToc {public string title,source;public int chapter,start,depth;}
+    public class Book { public string title; public List<Chapter> chapters = new List<Chapter>(); public List<ReadingToc> toc=new List<ReadingToc>(); }
     public class ImportResult { public int added, skipped; public List<string> errors = new List<string>(); }
 
     public partial class Library {
@@ -94,6 +100,7 @@ namespace kok {
                     var info = new FileInfo(path);
                     string folder = new DirectoryInfo(Path.GetDirectoryName(path)).Name;
                     var entry = new Entry { id = Guid.NewGuid().ToString("N"), path = path, name = Path.GetFileNameWithoutExtension(path), kind = kind, ext = info.Extension.TrimStart('.').ToUpperInvariant(), size = info.Length, added = DateTime.UtcNow.ToString("o"), modified=info.LastWriteTimeUtc.ToString("o"), opened = "", collection = folder=="samples" ? "kok 示例" : folder, album = folder=="samples" ? "kok · 原创音景" : folder };
+                    if(kind=="music")ReadAudioTags(entry);
                     lock(gate) { Db.items.Add(entry); Db.ignoredAutoPaths.RemoveAll(x=>String.Equals(x,path,StringComparison.OrdinalIgnoreCase)); if(!Db.collections.Contains(entry.collection)) Db.collections.Add(entry.collection); }
                     result.added++;
                     if (kind == "photo") MakeThumbnail(entry);
@@ -135,9 +142,10 @@ namespace kok {
                 if(patch.ContainsKey("position")) e.position = Clamp(Convert.ToDouble(patch["position"]),0,1e10);
                 if(patch.ContainsKey("chapter")) e.chapter = Math.Max(0, Convert.ToInt32(patch["chapter"]));
                 if(patch.ContainsKey("notes")) { string text = Convert.ToString(patch["notes"]); if(text.Length > 200000) throw new InvalidDataException("笔记过长。"); e.notes = text; }
+                if(patch.ContainsKey("editDraft")){string json=Json.Serialize(patch["editDraft"]);if(json.Length>2*1024*1024)throw new InvalidDataException("编辑草稿过大。");e.editDraft=Json.Deserialize<Dictionary<string,object>>(json);}
                 if(patch.ContainsKey("collection")) { e.collection = Limit(Convert.ToString(patch["collection"]),100); if(e.collection!=""&&!Db.collections.Contains(e.collection))Db.collections.Add(e.collection); }
-                if(patch.ContainsKey("album")) e.album=Limit(Convert.ToString(patch["album"]),200);
-                if(patch.ContainsKey("artist")) e.artist=Limit(Convert.ToString(patch["artist"]),200);
+                if(patch.ContainsKey("album")) {e.album=Limit(Convert.ToString(patch["album"]),200);if(e.audio!=null)e.audio.manual=true;}
+                if(patch.ContainsKey("artist")) {e.artist=Limit(Convert.ToString(patch["artist"]),200);if(e.audio!=null)e.audio.manual=true;}
                 if(patch.ContainsKey("width")&&patch.ContainsKey("height")){int width=Convert.ToInt32(patch["width"]),height=Convert.ToInt32(patch["height"]);if(width<1||height<1||width>100000||height>100000)throw new InvalidDataException("媒体尺寸无效。");e.width=width;e.height=height;}
                 if(patch.ContainsKey("annotations")) {
                     var annotations=Json.Deserialize<List<Annotation>>(Json.Serialize(patch["annotations"]));
@@ -233,7 +241,7 @@ namespace kok {
         static XDocument ReadXml(ZipArchiveEntry e) {
             if(e == null) throw new InvalidDataException("文档结构不完整。");
             if(e.Length > 24*1024*1024) throw new InvalidDataException("文档章节过大。");
-            using(var stream=e.Open()) using(var reader=System.Xml.XmlReader.Create(stream, new System.Xml.XmlReaderSettings { DtdProcessing = System.Xml.DtdProcessing.Ignore, XmlResolver = null, MaxCharactersInDocument = 24*1024*1024 })) return XDocument.Load(reader);
+            return BookNavigation.ReadXml(e);
         }
         public static Book ReadBook(Entry e) {
             var book = new Book { title = e.name };
@@ -264,7 +272,7 @@ namespace kok {
                         var blocks=body.Descendants().Where(x=>new[]{"p","h1","h2","h3","h4","li","blockquote","pre"}.Contains(x.Name.LocalName) && !x.Ancestors().Any(a=>a!=body && new[]{"p","li","blockquote","pre"}.Contains(a.Name.LocalName))).Select(x=>x.Value.Trim()).Where(x=>x.Length>0).ToList();
                         if(blocks.Count>1&&blocks[0]==title)blocks.RemoveAt(0);
                         string text=blocks.Count>0 ? String.Join("\n\n",blocks) : body.Value.Trim();
-                        if(text.Length>0) book.chapters.Add(new Chapter { generatedTitle=String.IsNullOrWhiteSpace(title),title=String.IsNullOrWhiteSpace(title) ? "第 " + (book.chapters.Count+1) + " 节" : title, text=text });
+                        if(text.Length>0) book.chapters.Add(new Chapter { sourcePath=name,generatedTitle=String.IsNullOrWhiteSpace(title),title=String.IsNullOrWhiteSpace(title) ? "第 " + (book.chapters.Count+1) + " 节" : title, text=text });
                     }
                 }
             } else if(ext==".docx") {
@@ -285,6 +293,7 @@ namespace kok {
             } else throw new InvalidDataException("此格式请使用系统应用打开。内置阅读支持 EPUB、TXT、DOCX、Markdown 和常见文本；PDF 使用内置预览。");
             if(book.chapters.Count==0) book.chapters.Add(new Chapter { title=e.name,placeholder=true,text="这个文件没有可读取的文字内容。扫描版文档需要先进行 OCR；加密电子书需要授权阅读器。" });
             if(e.chapterTexts!=null)foreach(var edit in e.chapterTexts){int index;if(Int32.TryParse(edit.Key,out index)&&index>=0&&index<book.chapters.Count)book.chapters[index].text=edit.Value;}
+            BookNavigation.Populate(e,book);
             return book;
         }
     }

@@ -1,0 +1,104 @@
+{
+  "format": "WOFF2 with null transforms",
+  "node": "v24.18.0",
+  "brotli": "1.2.0",
+  "subsetting": false,
+  "formatChanges": [
+    "DSIG removed per WOFF2 section 5",
+    "head.flags bit 11 set per WOFF2 section 5"
+  ],
+  "glyphsAndLayoutChanged": false,
+  "fonts": [
+    {
+      "file": "LXGWWenKaiLite-Regular.woff2",
+      "sourceFile": "LXGWWenKaiLite-Regular.ttf",
+      "sourceSha256": "f799a538a3355877e597a0ae04050e897932c9ae7689eb9227c2953c5dd549ea",
+      "sha256": "c7c27122f18f5a4a5a8cc22313620e9dc0b5d224417acf279010d0b22fe7a38e",
+      "sourceBytes": 13949472,
+      "bytes": 6353100,
+      "glyphs": 26115,
+      "tables": [
+        {
+          "tag": "GPOS",
+          "bytes": 1736,
+          "sha256": "f6eaa74ba685c7ecddf063d36ca36702e237a87e9d9fa14d98467133dc5869c3"
+        },
+        {
+          "tag": "GSUB",
+          "bytes": 8634,
+          "sha256": "78ee4c9a839b82bcfeb5bb1402f5e45a84f4b2418a8f0302f8accaba8282b7f4"
+        },
+        {
+          "tag": "OS/2",
+          "bytes": 96,
+          "sha256": "4235d61c7a7c7c8b46abc247a6fc3a7297734d65476f3e4e54b26bc2f28a7f91"
+        },
+        {
+          "tag": "cmap",
+          "bytes": 150757,
+          "sha256": "3551b770517a3414dfea71d22b37857d7dc46e6c3c58fa872e9cd34db81e8141"
+        },
+        {
+          "tag": "gasp",
+          "bytes": 8,
+          "sha256": "4ca731f86ad506ac0e320283dc9461926346de3c4d91d539ea7f6620d3826940"
+        },
+        {
+          "tag": "glyf",
+          "bytes": 13251593,
+          "sha256": "d1d728be86777a4d67072d81d738f67af1182aa0f4535c1a422dd61a6f336848"
+        },
+        {
+          "tag": "head",
+          "bytes": 54,
+          "sha256": "f5355ae473656527f4e32c8c59920c28848491ef657dec38aad183f7f9a970b4"
+        },
+        {
+          "tag": "hhea",
+          "bytes": 36,
+          "sha256": "25d0fcffaca5830c84602821287c8a8c57f90cfbeb9eea9ec34b4a96376c808b"
+        },
+        {
+          "tag": "hmtx",
+          "bytes": 104456,
+          "sha256": "df93f7b8538a82895e102d81697666e2e889512ba7408d3dabf7b767b59fcc9e"
+        },
+        {
+          "tag": "loca",
+          "bytes": 104464,
+          "sha256": "62591cf60a4a2641c5cb1952bd685d59ceebd94b43a63ee1b64ea4b52a285448"
+        },
+        {
+          "tag": "maxp",
+          "bytes": 32,
+          "sha256": "776c848da99e12faf57ff06e4ba433af2f1ce78fc4b8d5f8dd86149e1fa8b0b3"
+        },
+        {
+          "tag": "name",
+          "bytes": 1470,
+          "sha256": "be4f33d542c19d53efb259fba1221ca968b3082e5312a9d8e702af122351a290"
+        },
+        {
+          "tag": "post",
+          "bytes": 273576,
+          "sha256": "8d19722847aee0208f29e279f8dabe7f1ae5d73b72f539232e1a3a8c37cf6237"
+        },
+        {
+          "tag": "prep",
+          "bytes": 7,
+          "sha256": "907c4106ff9989c1805827d5581bdf107a253b098cb71eb374f5e47c35604452"
+        },
+        {
+          "tag": "vhea",
+          "bytes": 36,
+          "sha256": "8a5828fbb3cf4524593d3af4bcc97ff555be5dccff560aed9f4578508443efb8"
+        },
+        {
+          "tag": "vmtx",
+          "bytes": 52236,
+          "sha256": "f5095a23f66ba059ec61b56e534562addd6511b2f509c964da213c317fcf5a2a"
+        }
+      ]
+    }
+  ]
+}

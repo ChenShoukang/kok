@@ -2,7 +2,7 @@
 // One paused, muted decoder at a time. Only small JPEGs cross the native bridge.
 const VideoCovers=(()=>{
  const attempted=new Set();let current=null,timer=null;
- const busy=()=>viewer.open||$('#small-dialog').open||$('#app-mode-dialog')?.open||document.body.classList.contains('private-locking')||!audio.paused||document.hidden;
+ const busy=()=>viewer.open||!!window.kokPreviewWindowCount||$('#creative-dialog')?.open||$('#small-dialog').open||$('#app-mode-dialog')?.open||document.body.classList.contains('private-locking')||!audio.paused||document.hidden;
  function waitFor(clip,event,signal,timeout=4500){
   return new Promise((resolve,reject)=>{
    let timer;const clean=()=>{clearTimeout(timer);clip.removeEventListener(event,ready);clip.removeEventListener('error',failed);signal.removeEventListener('abort',abort);};

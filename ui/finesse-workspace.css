@@ -1,0 +1,68 @@
+/* finesse reference: product clarity, one material family, feedback-only motion.
+   kok keeps its existing fonts, small corners and user-selected palette. */
+body[data-theme][data-app-mode]{--control-radius:5px;--workspace-gap:18px;--workspace-ease:cubic-bezier(.2,.8,.2,1)}
+body[data-app-mode] :is(button,input,select,textarea){font-variant-numeric:tabular-nums}
+body[data-app-mode] :is(button,a,input,select,textarea):focus-visible{outline:2px solid color-mix(in srgb,var(--ink) 50%,transparent);outline-offset:3px}
+body[data-app-mode] :is(.button,.text-button,.icon-button){transition:background-color 160ms,color 160ms,border-color 160ms,box-shadow 160ms,transform 160ms var(--workspace-ease)}
+body[data-app-mode] :is(.button,.text-button,.icon-button):active:not(:disabled){transform:translateY(1px)}
+body[data-app-mode] :is(.file-grid,.album-grid){gap:24px 18px}
+body[data-app-mode] .file-card{border-color:transparent;box-shadow:none}
+body[data-app-mode] .file-info{padding-top:11px}
+body[data-app-mode] .file-info b{font-size:12px;line-height:1.5}
+body[data-app-mode] .file-card:hover{background:var(--kok-hover);box-shadow:none}
+body[data-app-mode] :is(.library-toolbar,.music-library-toolbar){padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:20px}
+body[data-app-mode] .viewer-header{min-height:58px;background:var(--kok-panel);backdrop-filter:blur(16px)}
+body[data-app-mode] :is(.creative-header,.creative-footer,.creative-media-controls,.creative-text-toolbar){background:var(--kok-panel);border-color:var(--line)}
+body[data-app-mode] :is(.creative-body,.creative-main,.creative-page-grid){background:var(--bg)}
+body[data-app-mode] :is(.creative-dialog,.small-dialog,.viewer){box-shadow:0 16px 60px color-mix(in srgb,var(--ink) 12%,transparent)}
+body[data-app-mode] .translation-panel{background:var(--kok-panel);color:var(--ink);border-left:1px solid var(--line);box-shadow:none;gap:0;padding:0;backdrop-filter:blur(18px);width:370px}
+body[data-app-mode] .translation-heading{padding:15px 20px;border-bottom:1px solid var(--line);flex-shrink:0;min-height:60px}
+.translation-heading>div{display:flex;align-items:center;gap:12px;min-width:0}.translation-heading b{font-size:14px}.translation-heading small{font-size:10px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px}
+body[data-app-mode] .translation-controls{padding:14px 20px 10px;gap:8px;flex-shrink:0}
+body[data-app-mode] .translation-controls :is(select,button){height:32px;min-width:0;border-radius:5px;border-color:var(--line);background:var(--kok-hover);color:var(--ink);font-size:11px}
+.translation-runbar{display:flex;gap:10px;padding:0 20px 12px;align-items:center;flex-wrap:wrap;flex-shrink:0}.translation-runbar .button{padding:7px 12px;font-size:11px;min-height:32px}.translation-runbar select{background:transparent;border:1px solid var(--line);border-radius:5px;color:var(--ink);font-size:11px;padding:6px 8px;margin-left:auto;max-width:130px}.translation-runbar .text-button{display:inline-flex;align-items:center;gap:5px;font-size:11px}.translation-runbar svg{width:14px;height:14px}
+body[data-app-mode] .translation-status{padding:0 20px 12px;min-height:28px;margin:0;font-size:11px;flex-shrink:0}
+body[data-app-mode] .translation-progress{margin:0 20px 10px;height:2px;flex-shrink:0;background:var(--line)}body[data-app-mode] .translation-progress span{background:var(--ink)}
+.translation-pane-labels{display:flex;align-items:center;gap:18px;padding:11px 20px;border-block:1px solid var(--line);font-size:10px;color:var(--muted);flex-shrink:0}.translation-pane-labels>span:first-child{display:none}.translation-pane-labels label{display:flex;gap:6px;align-items:center;margin-left:auto}.translation-pane-labels input{accent-color:var(--ink);margin:0}
+body[data-app-mode] .translation-body{padding:26px 24px 40px;scrollbar-gutter:stable;scroll-behavior:auto;background:var(--kok-hover);min-height:0;flex:1}
+body[data-app-mode] .translation-body h3{margin:0 0 20px;font-size:11px;color:var(--muted);font-weight:400}
+body[data-app-mode] .translation-body section{margin:0 0 0;padding:0 22px 18px;background:var(--kok-panel);border-inline:1px solid var(--line)}
+body[data-app-mode] .translation-body h3+section{padding-top:24px;border-top:1px solid var(--line);border-radius:4px 4px 0 0}
+body[data-app-mode] .translation-body section:has(+h3),body[data-app-mode] .translation-body section:last-child{padding-bottom:28px;border-bottom:1px solid var(--line);margin-bottom:28px;border-radius:0 0 4px 4px}
+body[data-app-mode] .translation-text{font:14px/1.95 var(--reading-font,var(--user-font));color:var(--ink);white-space:pre-wrap;overflow-wrap:anywhere}
+.translation-welcome{display:grid;place-items:center;min-height:220px;font-size:13px;color:var(--muted)}
+.translation-pending{display:grid;gap:10px;padding-block:8px}.translation-pending span{display:block;height:8px;background:var(--line);border-radius:2px;width:93%}.translation-pending span:last-child{width:65%}
+body[data-app-mode] .viewer.document-translation.translation-open #viewer-content{margin-right:50%;min-width:0}
+body[data-app-mode] .viewer.document-translation.translation-open .translation-panel{width:50%}
+body[data-app-mode] .viewer.document-translation .reader-toc{display:none}
+body[data-app-mode] .viewer.document-translation .reader-scroll{padding:28px 30px;min-width:0}
+body[data-app-mode] .viewer.document-translation .reader-tools{overflow-x:auto;white-space:nowrap;flex-wrap:nowrap;min-width:0}
+body[data-app-mode] .viewer.document-translation .pdf-toolbar{overflow-x:auto;flex-wrap:nowrap;white-space:nowrap}
+body[data-app-mode] .viewer.document-translation.translation-open.translation-only #viewer-content{visibility:hidden;pointer-events:none}
+body[data-app-mode] .viewer.document-translation.translation-open.translation-only .translation-panel{width:100%;border-left:0}
+body[data-app-mode] .viewer.document-translation.translation-only .translation-body{padding-inline:max(28px,calc((100% - 820px)/2))}
+.viewer:not(.document-translation) .translation-pane-labels{display:none}
+@media(max-width:800px){body[data-app-mode] .viewer.document-translation .reader-scroll{padding:18px 14px}body[data-app-mode] .translation-body{padding:18px 12px}body[data-app-mode] .translation-body section{padding-inline:14px}body[data-app-mode] .translation-controls{padding:10px 12px 8px}.translation-runbar{padding-inline:12px;gap:6px}.translation-runbar select{margin-left:0}.translation-heading small{max-width:110px}.translation-pane-labels{padding-inline:12px}.translation-pane-labels label{font-size:9px}body[data-app-mode] .translation-text{font-size:12px}body[data-app-mode] .translation-status{padding-inline:12px}}
+@media(prefers-reduced-motion:reduce){body[data-app-mode] :is(.button,.text-button,.icon-button,.translation-panel){transition:none!important;animation:none!important;transform:none!important}}
+/* One shared toolbar, then two equal paper lanes. */
+#translation-toolbar{flex-shrink:0;min-width:0}
+body[data-app-mode] .viewer.document-translation>#translation-toolbar{display:grid;grid-template-columns:minmax(130px,.75fr) minmax(240px,1fr) auto;align-items:center;gap:0 12px;border-bottom:1px solid var(--line);background:var(--kok-panel)}
+body[data-app-mode] .viewer.document-translation>#translation-toolbar .translation-heading{min-height:48px;padding:8px 16px;border:0}
+body[data-app-mode] .viewer.document-translation>#translation-toolbar .translation-controls{padding:8px 0;min-width:0}
+body[data-app-mode] .viewer.document-translation>#translation-toolbar .translation-runbar{margin:0;padding:8px 16px 8px 0;flex-wrap:nowrap;min-width:0}
+body[data-app-mode] .viewer.document-translation>#translation-toolbar .translation-status{grid-column:1/-1;padding:0 16px 8px;min-height:20px;font-size:10px}
+body[data-app-mode] .viewer.document-translation>#translation-toolbar .translation-progress{grid-column:1/-1;margin:0;height:2px}
+body[data-app-mode] .viewer.document-translation.translation-open .translation-panel{top:calc(58px + var(--translation-toolbar-height,80px))}
+body[data-app-mode] .viewer.document-translation .translation-pane-labels{min-height:55px;height:55px;border-top:0;padding-inline:24px}
+body[data-app-mode] .translation-sheet{padding:24px;background:var(--kok-panel);border:1px solid var(--line);border-radius:3px;margin-bottom:28px;min-width:0}
+body[data-app-mode] .viewer.document-translation .translation-sheet{aspect-ratio:1/var(--sheet-ratio)}
+body[data-app-mode] .translation-sheet>section{border:0!important;border-radius:0!important;padding:0 0 18px!important;margin:0!important;background:transparent!important}
+body[data-app-mode] .translation-sheet>section:last-child{padding-bottom:0!important}
+body[data-app-mode] .viewer.document-translation .translation-body{padding:32px 24px 40px}
+@media(max-width:1000px){body[data-app-mode] .viewer.document-translation>#translation-toolbar{grid-template-columns:85px minmax(170px,1fr) auto;gap:8px}body[data-app-mode] .viewer.document-translation>#translation-toolbar .translation-heading{gap:4px;padding-inline:10px}body[data-app-mode] .viewer.document-translation>#translation-toolbar .translation-heading small{display:none}.viewer.document-translation #translation-toolbar .translation-controls select{max-width:150px}.viewer.document-translation #translation-toolbar .translation-runbar{gap:6px}.viewer.document-translation #translation-toolbar .translation-runbar select{max-width:115px}.viewer.document-translation #translation-toolbar .translation-runbar .button{padding-inline:8px}}
+@media(max-width:750px){body[data-app-mode] .viewer.document-translation>#translation-toolbar{grid-template-columns:75px minmax(0,1fr);gap:0}body[data-app-mode] .viewer.document-translation>#translation-toolbar .translation-runbar{grid-column:1/-1;padding:0 12px 8px;flex-wrap:wrap}body[data-app-mode] .viewer.document-translation>#translation-toolbar .translation-controls{padding-right:12px}body[data-app-mode] .viewer.document-translation .translation-body{padding:18px 12px}body[data-app-mode] .translation-sheet{padding:16px}body[data-app-mode] .viewer.document-translation .translation-pane-labels{padding-inline:12px}}
+body[data-app-mode] .viewer.document-translation #viewer-content{transition:margin-right 240ms var(--workspace-ease)}
+body[data-app-mode] .viewer.document-translation .pdf-toolbar .workspace-text-button span{display:none}
+body[data-app-mode] .viewer.document-translation .pdf-toolbar{gap:6px}
+body[data-app-mode] .viewer.document-translation .pdf-toolbar #pdf-zoom{min-width:80px}
+@media(max-width:850px){body[data-app-mode] .viewer.document-translation>#translation-toolbar{grid-template-columns:95px minmax(0,1fr);gap:0}body[data-app-mode] .viewer.document-translation>#translation-toolbar .translation-runbar{grid-column:1/-1;padding:0 12px 8px;flex-wrap:wrap}body[data-app-mode] .viewer.document-translation>#translation-toolbar .translation-controls{padding-right:12px}body[data-app-mode] .viewer.document-translation .pdf-toolbar .pdf-label{display:none}}

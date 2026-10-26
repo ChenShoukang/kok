@@ -1,0 +1,25 @@
+.preview-window{display:block!important;min-width:0!important;overflow:hidden;background:var(--bg)}
+.preview-window>.sidebar,.preview-window>.shell,.preview-window>.music-bar,.preview-window>.import-status{display:none!important}
+.preview-window #viewer,.preview-window #viewer.media-fit{position:fixed;inset:0;margin:0;width:100vw!important;height:100dvh!important;max-width:none!important;max-height:none!important;border:0;border-radius:0;box-shadow:none}
+.preview-window #viewer::backdrop{background:var(--bg);backdrop-filter:none;animation:none}
+.preview-window .viewer-header{app-region:drag;-webkit-app-region:drag;padding-inline:14px;min-height:60px;height:auto}
+.preview-window .viewer-header button,.preview-window .viewer-actions{app-region:no-drag;-webkit-app-region:no-drag}
+.preview-window .viewer-actions{gap:2px;max-width:62%;flex-wrap:wrap;justify-content:flex-end;padding-block:7px}
+.preview-window .viewer-actions .icon-button{width:32px;height:32px;min-width:32px;padding:6px;border-radius:5px}
+.preview-window .viewer-title{flex:1}
+.preview-window .viewer-title small{font-size:10px}
+.preview-window .preview-native-control{color:var(--muted)}
+.preview-window #viewer-icon{flex-shrink:0}
+.preview-window #media-fit-toggle{display:none!important}
+.preview-window #toasts{max-width:calc(100vw - 32px);right:16px;bottom:16px}
+.preview-window .small-dialog{max-width:calc(100vw - 24px)}
+.preview-window-strip{position:fixed;right:20px;bottom:14px;z-index:8;display:flex;gap:5px;max-width:calc(100vw - 320px);overflow-x:auto;padding:5px;border:1px solid var(--kok-border);border-radius:6px;background:var(--kok-panel);color:var(--kok-panel-ink);backdrop-filter:blur(var(--kok-blur));box-shadow:0 4px 18px #0001;animation:arrive .28s var(--ease)}
+.has-player .preview-window-strip{bottom:112px}
+.preview-window-tab{display:flex;align-items:center;gap:7px;max-width:180px;min-width:90px;padding:7px 10px;border:0;border-radius:4px;background:transparent;color:var(--ink);font:inherit;font-size:11px;transition:background .18s var(--ease),opacity .18s var(--ease)}
+.preview-window-tab:hover{background:var(--kok-hover)}
+.preview-window-tab.is-behind{opacity:.6}
+.preview-window-tab>span:first-child{display:grid;place-items:center;flex-shrink:0}
+.preview-window-tab svg{width:14px;height:14px}
+.preview-window-tab>span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:700px){.preview-window-strip{max-width:calc(100vw - 36px)}.preview-window .viewer-title small{max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
+@media(prefers-reduced-motion:reduce){.preview-window-strip{animation:none}.preview-window-tab{transition:none}}

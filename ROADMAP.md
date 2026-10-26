@@ -2,7 +2,11 @@
 
 中文 · [English](ROADMAP.en.md)
 
-## 当前：v0.4.1 预览版
+## 开发中：v0.5.1
+
+精简界面与统一轻拟物材质，加强内容助手的段落检索、可回溯引用与笔记工作流。已形成本地开发版，暂不发布；见 [设计与验证说明](docs/DESIGN_0.5.1.md)。
+
+## 已发布：v0.4.1 预览版
 
 本版加入统一配色、阅读工具和 kok 自主下载；详见 [v0.4.1 说明](docs/PREVIEW_0.4.1.md)与[预览下载](https://github.com/ChenShoukang/kok/releases/tag/v0.4.1)。
 

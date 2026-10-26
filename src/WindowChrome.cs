@@ -55,12 +55,14 @@ namespace kok {
         void LayoutWindowChrome(){
             if(windowChrome==null||IsDisposed)return;windowChrome.Visible=!mediaFullScreen;int height=ChromeHeight,edge=ChromeEdge,width=(int)Math.Round(46*DeviceDpi/96.0);
             windowChrome.SetBounds(0,0,ClientSize.Width,height);closeWindow.SetBounds(Math.Max(0,ClientSize.Width-width),0,width,height);maximizeWindow.SetBounds(Math.Max(0,ClientSize.Width-width*2),0,width,height);minimizeWindow.SetBounds(Math.Max(0,ClientSize.Width-width*3),0,width,height);
-            maximizeWindow.Restored=WindowState==FormWindowState.Maximized;maximizeWindow.Invalidate();maximizeWindow.AccessibleName=L(maximizeWindow.Restored?"还原窗口":"最大化");chromeHints.SetToolTip(maximizeWindow,maximizeWindow.AccessibleName);
+            bool restored=WindowState==FormWindowState.Maximized;if(maximizeWindow.Restored!=restored){maximizeWindow.Restored=restored;maximizeWindow.Invalidate();maximizeWindow.AccessibleName=L(restored?"还原窗口":"最大化");chromeHints.SetToolTip(maximizeWindow,maximizeWindow.AccessibleName);}
             var content=new Rectangle(edge,height,Math.Max(0,ClientSize.Width-edge*2),Math.Max(0,ClientSize.Height-height-edge));web.Bounds=content;
             if(engineErrorPanel!=null){engineErrorPanel.Dock=DockStyle.None;engineErrorPanel.Bounds=content;}windowChrome.BringToFront();
         }
         protected override void OnHandleCreated(EventArgs e){base.OnHandleCreated(e);if(customChrome&&!mediaFullScreen)try{var margins=new ChromeMargins{left=1,right=1,top=1,bottom=1};DwmExtendFrameIntoClientArea(Handle,ref margins);}catch(DllNotFoundException){}catch(EntryPointNotFoundException){} }
         protected override void WndProc(ref Message message){
+            if(message.Msg==0x231)SendTo(web.CoreWebView2,new{eventName="windowInteraction",data=new{active=true}});
+            else if(message.Msg==0x232)SendTo(web.CoreWebView2,new{eventName="windowInteraction",data=new{active=false}});
             if(customChrome&&!mediaFullScreen){
                 if(message.Msg==0x83&&message.WParam!=IntPtr.Zero){
                     if(IsZoomed(Handle)){var rect=(ChromeRect)Marshal.PtrToStructure(message.LParam,typeof(ChromeRect));var info=new ChromeMonitor{size=Marshal.SizeOf(typeof(ChromeMonitor))};if(GetMonitorInfo(MonitorFromRect(ref rect,2),ref info))Marshal.StructureToPtr(info.work,message.LParam,false);}

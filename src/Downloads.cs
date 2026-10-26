@@ -46,6 +46,8 @@ namespace kok {
         static string FindExecutable(string name){foreach(var folder in (Environment.GetEnvironmentVariable("PATH")??"").Split(Path.PathSeparator))try{string candidate=Path.Combine(folder.Trim('"'),name);if(Path.IsPathRooted(candidate)&&File.Exists(candidate))return Path.GetFullPath(candidate);}catch(ArgumentException){}return null;}
         string Ffmpeg(){string manual=null;if(!String.IsNullOrEmpty(store.ffmpegFolder)){string file=Path.Combine(store.ffmpegFolder,"ffmpeg.exe");if(File.Exists(file)){if(File.Exists(Path.Combine(store.ffmpegFolder,"ffprobe.exe")))return file;manual=file;}}return tools.Ffmpeg??manual??FindExecutable("ffmpeg.exe");}
         string Ffprobe(){string engine=Ffmpeg();if(engine==null)return null;if(String.Equals(engine,tools.Ffmpeg,StringComparison.OrdinalIgnoreCase))return tools.Ffprobe;string probe=Path.Combine(Path.GetDirectoryName(engine),"ffprobe.exe");return File.Exists(probe)?probe:null;}
+        public string LocalEncoder {get{return Ffmpeg();}}
+        public string LocalProbe {get{return Ffprobe();}}
         void Save(){
             string temp=stateFile+".tmp";File.WriteAllText(temp,Library.Json.Serialize(store),new UTF8Encoding(false));if(File.Exists(stateFile))File.Replace(temp,stateFile,stateFile+".bak");else File.Move(temp,stateFile);
         }

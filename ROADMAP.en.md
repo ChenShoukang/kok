@@ -2,7 +2,11 @@
 
 [中文](ROADMAP.md) · English
 
-## Current: v0.4.1 preview
+## In development: v0.5.1
+
+Shorter copy, consistent tactile materials and a stronger file assistant with passage retrieval, source navigation and note workflows. A local development build is available; publishing is disabled. See [design and validation notes](docs/DESIGN_0.5.1.md).
+
+## Published: v0.4.1 preview
 
 This preview adds coherent colors, reading tools and kok’s own downloader; see the [v0.4.1 guide](docs/PREVIEW_0.4.1.en.md) and [preview download](https://github.com/ChenShoukang/kok/releases/tag/v0.4.1).
 

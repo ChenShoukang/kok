@@ -82,9 +82,79 @@ and 得意黑. Full copyright and terms: docs/licenses/SmileySans-OFL.txt.
 Version, origin and hash: ui/fonts/NOTICE.md.
 https://github.com/atelier-anchor/smiley-sans/releases/tag/v2.0.1
 
+LXGW WenKai Lite v1.530 (霞鹜文楷轻便版) is bundled as losslessly compressed WOFF2 files for offline font selection.
+All glyphs, shaping, copyright and name metadata are preserved; no subsetting or
+outline transforms are applied. Only WOFF2-required DSIG removal and head.flags
+bit 11 differ from source table data. Compression
+verification and source/runtime hashes are provided in ui/fonts/.
+It uses the SIL Open Font License 1.1; these font assets retain that license
+rather than kok's MIT code license. Upstream copyright and full terms are in
+docs/licenses/LXGWWenKaiLite-OFL.txt.
+Pinned source commits, Git blob identities and SHA-256 hashes are documented
+in ui/fonts/NOTICE.md and ui/fonts/manifest.json.
+https://github.com/lxgw/LxgwWenKai-Lite
+
 Six unmodified Microsoft Fluent Emoji Flat SVGs are bundled for navigation and
 fallback covers (card file box, clapper board, framed picture, musical note,
 page facing up and blue book). Copyright (c) Microsoft Corporation. MIT license:
 docs/licenses/FluentEmoji-MIT.txt. Source paths, pinned commit and SHA-256 hashes:
 ui/icons/fluent/manifest.json. No runtime icon downloads are made.
 https://github.com/microsoft/fluentui-emoji/tree/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc
+
+TagLibSharp 2.3.0 is shipped as the unmodified official NuGet net462 DLL, under
+LGPL-2.1-only. Copyright (c) 2006–2007 Brian Nickel and (c) 2009–2020 contributors.
+License: docs/licenses/TagLibSharp-LGPL-2.1.txt. Corresponding library source,
+upstream build files, notices and public strong-name key are included in
+docs/licenses/TagLibSharp-2.3.0-source.zip; unrelated test media are omitted.
+The separate DLL can be replaced/rebuilt. See KOK-SOURCE-NOTICE.txt in that ZIP.
+Package SHA-256: 3c3f5b55988f69e0bc84dc760feb8351fef4d5c09a322d88462e683d334dfbfc.
+DLL SHA-256: b1833a41ab1e933f7b006e5db15300b7223bfccc2c3b6689d49a9171dd27de1d.
+Source ZIP SHA-256: 68d87320595ff137ee8fe47d867a4d19af0e00135ea60dcb739872aefa260b94.
+https://github.com/mono/taglib-sharp/tree/TaglibSharp-2.3.0.0
+https://www.nuget.org/packages/TagLibSharp/2.3.0
+
+PDF-LIB 1.17.1, Copyright (c) 2019 Andrew Dillon, is bundled as its official
+minified browser module under MIT, loaded only when exporting edited PDFs.
+License: docs/licenses/PDF-Lib-MIT.txt. Version/integrity: package-lock.json.
+https://github.com/Hopding/pdf-lib
+
+MusicBrainz provides optional public metadata search. No audio, API keys or
+absolute file paths are sent to it, and no music samples or remote covers are bundled.
+https://musicbrainz.org/doc/MusicBrainz_API
+
+Editing workflow ideas were informed by storytold's PhotoCraft, FilmCraft,
+LightCraft, PdfCraft and DesignCraft public documentation. Their Rust engines,
+code, screenshots, logos and other brand assets are not copied or bundled.
+https://github.com/storytold
+
+Whisper.cpp is an optional component downloaded only at the user's request,
+not bundled in the portable package. The official Windows CPU build b5454
+is pinned to SHA-256 6ba69e3482d7826214f90a6a9c84ca07782aec1e1d0c6a7c30c994fd5d816ccb.
+Models come from ggerganov/whisper.cpp on Hugging Face and are verified before use:
+tiny: be07e048e1e599ad46341c8d2a135645097a538221678b7acdd1b1919c6e1b21;
+base: 60ed5bc3dd14eea856493d334349b405782ddcaf0028d4b5df4088345fba2efe.
+The Whisper project/model license is MIT. The project notice is included at
+docs/licenses/Whisper-MIT.txt. Optional files and models remain outside releases.
+https://github.com/ggml-org/whisper.cpp
+https://huggingface.co/ggerganov/whisper.cpp
+
+UI and motion principles reference finesse-ui (MIT), Motion (MIT) and Fluent 2
+public documentation. Their code, artwork and animation runtimes are not bundled.
+The local timing curve uses a standard critically damped response and native WAAPI.
+https://github.com/mouse-lin/finesse-skill
+https://github.com/motiondivision/motion
+https://fluent2.microsoft.design/motion
+
+Reading and viewer interaction ideas reference affectui (MIT), the Foliate-js EPUB
+implementation (MIT) and Koodo Reader documentation. Their component code,
+artwork, screenshots and runtimes are not copied or bundled.
+https://github.com/flohoeller/affectui
+https://github.com/johnfactotum/foliate-js
+https://github.com/koodo-reader/koodo-reader
+
+Window/reading interaction also references the public Foliate-js paginator,
+Motion layout scheduling and Radix Toolbar (MIT) documentation and implementations.
+No component code or additional runtime from these projects is bundled.
+https://github.com/johnfactotum/foliate-js/blob/main/paginator.js
+https://github.com/motiondivision/motion
+https://github.com/radix-ui/primitives

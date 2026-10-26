@@ -15,9 +15,10 @@ using Microsoft.Web.WebView2.WinForms;
 namespace kok {
     static class Program {
         [System.Runtime.InteropServices.DllImport("user32.dll")] static extern bool SetProcessDPIAware();
+        [System.Runtime.InteropServices.DllImport("user32.dll")] static extern bool SetProcessDpiAwarenessContext(IntPtr context);
         [STAThread] static void Main(string[] args) {
             AppDomain.CurrentDomain.UnhandledException+=delegate(object sender,UnhandledExceptionEventArgs e) { var error=e.ExceptionObject as Exception;if(error!=null)RuntimeLog.Write("unhandled",error); };
-            SetProcessDPIAware(); Application.EnableVisualStyles(); Application.SetCompatibleTextRenderingDefault(false);
+            try{if(!SetProcessDpiAwarenessContext(new IntPtr(-4)))SetProcessDPIAware();}catch(EntryPointNotFoundException){SetProcessDPIAware();} Application.EnableVisualStyles(); Application.SetCompatibleTextRenderingDefault(false);
             try { Application.Run(new MainWindow(args)); }
             catch(Exception ex) { RuntimeLog.Write("host-error",ex);MessageBox.Show(Localization.Translate(ex.Message,System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName=="en"),Localization.Translate("kok · 无法启动",System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName=="en"),MessageBoxButtons.OK,MessageBoxIcon.Error); }
         }
@@ -58,7 +59,7 @@ namespace kok {
             int dataIndex=Array.IndexOf(args,"--data-dir");
             if(dataIndex>=0 && dataIndex+1<args.Length) dataDir=Path.GetFullPath(args[dataIndex+1]);
             Directory.CreateDirectory(dataDir);
-            RuntimeLog.Configure(dataDir);RuntimeLog.Write("startup","version=0.4.1 process="+Process.GetCurrentProcess().Id);
+            RuntimeLog.Configure(dataDir);RuntimeLog.Write("startup","version=0.5.1 process="+Process.GetCurrentProcess().Id);
             try { databaseLock=new FileStream(Path.Combine(dataDir,".kok.lock"),FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None); }
             catch(IOException) { throw new InvalidOperationException("这个资料库已经在另一个 kok 窗口中打开，请使用原窗口。\n如需独立窗口，请通过 --data-dir 指定其他资料库。"); }
             library=new Library(dataDir);
@@ -67,8 +68,9 @@ namespace kok {
             InitializeDownloads();
             folderTimer.Tick+=async delegate {folderTimer.Interval=45000;if(library.AiEnabled&&!privateOpening&&!importing&&!closingPending&&library.HasEnabledFolders())try{await ScanSources();}catch(Exception ex){RuntimeLog.Write("folder-scan-error",ex.GetType().Name);}};
             folderTimer.Start();
-            FormClosed+=delegate { folderTimer.Dispose(); databaseLock.Dispose(); };
+            FormClosed+=delegate { ClosePreviewWindows();folderTimer.Dispose(); databaseLock.Dispose(); };
             FormClosing+=HandleWindowClosing;
+            Activated+=delegate{if(web.CoreWebView2!=null&&!engineUnavailable)Send(new{eventName="workspaceFocus",data=new{}});};
             web.DefaultBackgroundColor=BackColor; web.Dock=DockStyle.Fill; web.AllowExternalDrop=true; Controls.Add(web);
             InitializeWindowChrome();
             Load+=async delegate { await Init(); };
@@ -80,13 +82,12 @@ namespace kok {
             closingPending=true;
             folderTimer.Stop();if(folderCancellation!=null)folderCancellation.Cancel();if(organizationCancellation!=null)organizationCancellation.Cancel();
             if(fileChatCancellation!=null)fileChatCancellation.Cancel();if(modelListCancellation!=null)modelListCancellation.Cancel();
-            foreach(var job in translationJobs.Values)job.Cancel();
+            foreach(var job in translationJobs.Values)job.Cancel();CancelSpeechJobs();
+            CancelCreativeJobs();if(musicLookupCancellation!=null)musicLookupCancellation.Cancel();
             try {
-                string encoded=await web.CoreWebView2.ExecuteScriptAsync("window.kokSession ? JSON.stringify(window.kokSession()) : '[]'");
-                string json=Library.Json.Deserialize<string>(encoded);
-                if(json!=null){var edits=Library.Json.Deserialize<List<Dictionary<string,object>>>(json);foreach(var edit in edits){string id=StringArg(edit,"id");if(library.Find(id)!=null)library.Update(id,(Dictionary<string,object>)edit["patch"]);}}
+                await SaveCurrentSession();
             }catch(Exception ex){MessageBox.Show(this,L("退出前保存失败："+ex.Message+"\n此前自动保存的资料仍然保留。"),L("kok · 保存提示"));}
-            closeReady=true;Close();
+            ClosePreviewWindows();closeReady=true;Close();
         }
         async Task Init() {
             try {
@@ -120,7 +121,7 @@ namespace kok {
                 web.CoreWebView2.NewWindowRequested+=delegate(object sender,CoreWebView2NewWindowRequestedEventArgs e){ e.Handled=true; };
                 web.CoreWebView2.NavigationStarting+=delegate(object sender,CoreWebView2NavigationStartingEventArgs e){ if(!e.Uri.StartsWith("https://app.kok.local/",StringComparison.OrdinalIgnoreCase)) e.Cancel=true; };
                 web.CoreWebView2.PermissionRequested+=delegate(object sender,CoreWebView2PermissionRequestedEventArgs e){ e.State=CoreWebView2PermissionState.Deny; };
-                web.CoreWebView2.Navigate("https://app.kok.local/index.html?v=0.4.1-theme-aligned");
+                web.CoreWebView2.Navigate("https://app.kok.local/index.html?v=0.5.1-refined");
             } catch(Exception ex) { RuntimeLog.Write("engine-init-error",ex);MessageBox.Show(this,L(ex.Message),L("kok · 初始化失败"),MessageBoxButtons.OK,MessageBoxIcon.Error); Close(); }
         }
         void HandleProcessFailed(object sender,CoreWebView2ProcessFailedEventArgs e) {
@@ -177,28 +178,47 @@ namespace kok {
             try { web.CoreWebView2.PostWebMessageAsJson(Library.Json.Serialize(value)); }
             catch(Exception error) { RuntimeLog.Write("message-delivery-error",error); }
         }
-        void Notify(string name,object value) { Send(new { eventName=name, data=value }); }
+        void Notify(string name,object value) {
+            if(name=="privateLocking")foreach(var preview in previewWindows.ToArray())preview.Hide();
+            if(name=="librarySwitched")ClosePreviewWindows();
+            var message=new {eventName=name,data=value};Send(message);
+            foreach(var preview in previewWindows.ToArray())if(!preview.IsDisposed&&preview.SessionLibrary==library)SendTo(preview.Browser.CoreWebView2,message);
+        }
         string L(string value) { return Localization.Translate(value,library!=null&&library.Db.settings.ContainsKey("uiLanguage")&&Convert.ToString(library.Db.settings["uiLanguage"])=="en"); }
         static string StringArg(Dictionary<string,object> a,string key) { return a.ContainsKey(key) ? Convert.ToString(a[key]) : ""; }
         async void Message(object sender,CoreWebView2WebMessageReceivedEventArgs e) {
             if(!e.Source.StartsWith("https://app.kok.local/",StringComparison.OrdinalIgnoreCase)) return;
-            string requestId="";bool nativeDialogScope=false;
+            var replyCore=sender as CoreWebView2;var preview=PreviewFor(sender);
+            if(replyCore!=web.CoreWebView2&&preview==null)return;
+            string requestId="";bool nativeDialogScope=false;Form dialogOwner=preview==null?(Form)this:preview;
             try {
                 var message=Library.Json.Deserialize<Dictionary<string,object>>(e.WebMessageAsJson);
                 requestId=StringArg(message,"requestId"); string action=StringArg(message,"action");
+                if(preview!=null&&preview.SessionLibrary!=library)throw new InvalidOperationException("私密资料库正在锁定，请稍候。");
                 var a=message.ContainsKey("args") ? message["args"] as Dictionary<string,object> : null;
                 if(a==null) a=new Dictionary<string,object>();
                 if(privateOpening&&!new[]{"diagnostics","vaultStatus","vaultActivity","cancelTranslation","cancelOrganization","cancelFileChat"}.Contains(action))throw new InvalidOperationException("私密文件夹正在打开，请稍候。");
                 nativeDialogScope=new[]{"importFiles","importFolder","importFont","chooseSubtitle","savePhoto","exportTranslation","exportReading","exportReadingNotes","chooseDownloadFolder","chooseFfmpeg","export","loginDownloadSite","importDownloadLogin","browserProbeDownload"}.Contains(action);if(nativeDialogScope)nativeFileDialogOpen=true;
                 if(privateGate&&library.IsPrivate&&!new[]{"lockPrivate","unlockPrivate","vaultStatus","vaultActivity","cancelTranslation","cancelOrganization","cancelFileChat"}.Contains(action))throw new InvalidOperationException("私密资料库正在锁定，请稍候。");
-                if(new[]{"aiConfig","saveAiConfig","aiModels","translate","organizeFiles","chatWithFile","applyOrganization"}.Contains(action))library.RequireAiMode();
+                if(new[]{"aiConfig","saveAiConfig","aiModels","translate","organizeFiles","chatWithFile","applyOrganization","runStudyTask","generateVideoOutline"}.Contains(action))library.RequireAiMode();
                 object result=null;
                 switch(action) {
-                    case "setWindowAppearance": {Color color;if(!TryChromeColor(StringArg(a,"color"),out color))throw new InvalidDataException("窗口颜色无效。");ApplyWindowAppearance(color,a.ContainsKey("reduceMotion")&&Convert.ToBoolean(a["reduceMotion"]));result=true;break;}
+                    case "setWindowAppearance": {Color color;if(!TryChromeColor(StringArg(a,"color"),out color))throw new InvalidDataException("窗口颜色无效。");if(preview!=null)preview.Appearance(color);else ApplyWindowAppearance(color,a.ContainsKey("reduceMotion")&&Convert.ToBoolean(a["reduceMotion"]));result=true;break;}
+                    case "openPreview": result=await OpenPreview(a);break;
+                    case "previewWindows": result=PreviewList();break;
+                    case "focusPreview": {var target=previewWindows.FirstOrDefault(w=>w.ItemId==StringArg(a,"id")&&w.SessionLibrary==library);if(target!=null)target.RestorePreview();result=true;break;}
+                    case "previewReady": if(preview!=null){preview.Present(a.ContainsKey("reduceMotion")&&Convert.ToBoolean(a["reduceMotion"]));PreviewListChanged();}result=true;break;
+                    case "previewItemChanged": if(preview!=null){var item=RequireEntry(a);preview.ItemId=item.id;preview.Text=item.name;PreviewListChanged();}result=true;break;
+                    case "sendPreviewBehind": if(preview!=null)preview.SendBehind();result=true;break;
+                    case "dragPreview": if(preview!=null)preview.DragPreview();result=true;break;
+                    case "resizePreview": if(preview!=null)preview.ResizePreview(Convert.ToInt32(a["edge"]));result=true;break;
+                    case "maximizePreview": if(preview!=null)preview.ToggleMaximize();result=true;break;
+                    case "minimizePreview": if(preview!=null)preview.WindowState=FormWindowState.Minimized;result=true;break;
+                    case "closePreview": if(preview!=null)preview.BeginInvoke((Action)(()=>preview.Close()));result=true;break;
                     case "appModeState": result=library.ModeState();break;
                     case "setAppMode": {
                         library.SetAppMode(StringArg(a,"mode"),a.ContainsKey("acknowledged")&&Convert.ToBoolean(a["acknowledged"]));
-                        if(!library.AiEnabled){PauseNetworkDownloads();foreach(var job in translationJobs.Values.ToArray())job.Cancel();if(fileChatCancellation!=null)fileChatCancellation.Cancel();if(organizationCancellation!=null)organizationCancellation.Cancel();if(modelListCancellation!=null)modelListCancellation.Cancel();if(folderCancellation!=null)folderCancellation.Cancel();organizationPreview=null;}
+                        if(!library.AiEnabled){CancelSpeechJobs();PauseNetworkDownloads();if(musicLookupCancellation!=null)musicLookupCancellation.Cancel();foreach(var job in translationJobs.Values.ToArray())job.Cancel();if(fileChatCancellation!=null)fileChatCancellation.Cancel();if(organizationCancellation!=null)organizationCancellation.Cancel();if(modelListCancellation!=null)modelListCancellation.Cancel();if(folderCancellation!=null)folderCancellation.Cancel();organizationPreview=null;}
                         result=library.ModeState();break;
                     }
                     case "library": {var snapshot=Library.Json.Deserialize<Dictionary<string,object>>(library.Snapshot());snapshot["isPrivate"]=library.IsPrivate;if(library.IsPrivate)snapshot["navigation"]=new{items=normalLibrary.Db.items.Select(item=>new{kind=item.kind,collection=item.collection}).ToArray(),collections=normalLibrary.Db.collections};result=snapshot;break;}
@@ -233,9 +253,9 @@ namespace kok {
                         string[] paths;
                         nativeFileDialogOpen=true;
                         try{if(action=="importFiles") {
-                            using(var dialog=new OpenFileDialog { Multiselect=true, Title=L("选择视频、照片、音乐、文档或电子书"), Filter=L("所有文件|*.*") }) { if(dialog.ShowDialog(this)!=DialogResult.OK) { result=new { cancelled=true }; break; } paths=dialog.FileNames; }
+                            using(var dialog=new OpenFileDialog { Multiselect=true, Title=L("选择视频、照片、音乐、文档或电子书"), Filter=L("所有文件|*.*") }) { if(dialog.ShowDialog(dialogOwner)!=DialogResult.OK) { result=new { cancelled=true }; break; } paths=dialog.FileNames; }
                         } else {
-                            using(var dialog=new FolderBrowserDialog { Description=L("选择资料文件夹（包含子文件夹）"), ShowNewFolderButton=false }) { if(dialog.ShowDialog(this)!=DialogResult.OK) { result=new { cancelled=true }; break; } paths=new[]{dialog.SelectedPath}; }
+                            using(var dialog=new FolderBrowserDialog { Description=L("选择资料文件夹（包含子文件夹）"), ShowNewFolderButton=false }) { if(dialog.ShowDialog(dialogOwner)!=DialogResult.OK) { result=new { cancelled=true }; break; } paths=new[]{dialog.SelectedPath}; }
                         }}finally{nativeFileDialogOpen=false;}
                         importing=true; Notify("importing",new { count=0 });
                         try {
@@ -257,6 +277,8 @@ namespace kok {
                         result=new { name=info.Name,path=info.FullName,size=info.Length,extension=item.ext,modified=info.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss") };break;
                     }
                     case "aiConfig": result=translations.PublicConfig();break;
+                    case "runStudyTask": result=await RunStudyTask(a);break;
+                    case "generateVideoOutline": result=await GenerateVideoOutline(a);break;
                     case "fileDates": await Task.Run(()=>library.FillFileDates());result=true;break;
                     case "bulkClassify": library.BulkClassify(Library.Json.Deserialize<List<string>>(Library.Json.Serialize(a["ids"])),StringArg(a,"collection"));result=true;break;
                     case "fileChatHistory": result=library.ChatHistory(StringArg(a,"id"));break;
@@ -264,15 +286,16 @@ namespace kok {
                     case "cancelFileChat": if(fileChatCancellation!=null&&fileChatJob==StringArg(a,"jobId"))fileChatCancellation.Cancel();result=true;break;
                     case "chatWithFile": {
                         if(fileChatCancellation!=null)throw new InvalidOperationException("请先停止当前回答。");var item=RequireEntry(a);string jobId=StringArg(a,"jobId"),question=StringArg(a,"question"),source=StringArg(a,"source");if(jobId.Length<1||jobId.Length>80)throw new InvalidDataException("提问或引用内容过长，请缩小范围。");
+                        var references=Library.ReadChatReferences(a);
                         using(var cancel=new CancellationTokenSource()){fileChatCancellation=cancel;fileChatJob=jobId;
-                            try{var answer=await translations.ChatAsync(item.name,StringArg(a,"context"),source,question,library.ChatHistory(item.id),StringArg(a,"image"),library.Db.settings.ContainsKey("uiLanguage")&&Convert.ToString(library.Db.settings["uiLanguage"])=="en",cancel.Token,delta=>Notify("fileChatDelta",new{jobId=jobId,text=delta}));cancel.Token.ThrowIfCancellationRequested();library.AddChat(item.id,question,answer,source);result=library.ChatHistory(item.id);}
+                            try{var answer=await translations.ChatAsync(item.name,StringArg(a,"context"),source,question,library.ChatHistory(item.id),StringArg(a,"image"),library.Db.settings.ContainsKey("uiLanguage")&&Convert.ToString(library.Db.settings["uiLanguage"])=="en",cancel.Token,delta=>Notify("fileChatDelta",new{jobId=jobId,text=delta}));cancel.Token.ThrowIfCancellationRequested();library.AddChat(item.id,question,answer,source,references);result=library.ChatHistory(item.id);}
                             catch(OperationCanceledException){throw new InvalidOperationException("AI 回答已停止。");}finally{fileChatCancellation=null;fileChatJob="";}
                         }break;
                     }
                     case "sources": result=new {folders=library.Folders(),busy=importing};break;
                     case "addSource": {
                         if(importing)throw new InvalidOperationException("正在导入，请稍候。");
-                        using(var dialog=new FolderBrowserDialog{Description=L("选择自动扫描的文件夹"),ShowNewFolderButton=false}){if(dialog.ShowDialog(this)==DialogResult.OK)result=library.AddFolder(dialog.SelectedPath);else result=new{cancelled=true};}break;
+                        using(var dialog=new FolderBrowserDialog{Description=L("选择自动扫描的文件夹"),ShowNewFolderButton=false}){if(dialog.ShowDialog(dialogOwner)==DialogResult.OK)result=library.AddFolder(dialog.SelectedPath);else result=new{cancelled=true};}break;
                     }
                     case "changeSource": library.ChangeFolder(StringArg(a,"id"),a.ContainsKey("enabled")?(bool?)Convert.ToBoolean(a["enabled"]):null);result=true;break;
                     case "scanSources": result=await ScanSources();break;
@@ -297,7 +320,7 @@ namespace kok {
                         var parts=Library.Json.Deserialize<List<string>>(Library.Json.Serialize(a["parts"]));
                         using(var cancel=new CancellationTokenSource()){
                             translationJobs.Add(jobId,cancel);
-                            try{result=await translations.TranslateAsync(parts,cancel.Token,(done,total)=>{if(!IsDisposed)Notify("translationProgress",new{jobId=jobId,completed=done,total=total});},!a.ContainsKey("test")||!Convert.ToBoolean(a["test"]));}
+                            try{result=await translations.TranslateAsync(parts,cancel.Token,(done,total)=>{if(!IsDisposed)Notify("translationProgress",new{jobId=jobId,completed=done,total=total});},!a.ContainsKey("test")||!Convert.ToBoolean(a["test"]),a.ContainsKey("language")?StringArg(a,"language"):null,(start,output)=>{if(!IsDisposed)Notify("translationBatch",new{jobId=jobId,start=start,parts=output});},a.ContainsKey("fast")&&Convert.ToBoolean(a["fast"]));}
                             catch(OperationCanceledException){throw new InvalidOperationException("翻译已取消。");}
                             finally{translationJobs.Remove(jobId);}
                         }break;
@@ -306,25 +329,25 @@ namespace kok {
                         string text=StringArg(a,"text"),format=StringArg(a,"format");if(text.Length>16*1024*1024)throw new InvalidDataException("译文过大。");
                         string extension=format=="srt"?"srt":"txt";
                         using(var dialog=new SaveFileDialog{Title=L("导出译文"),Filter=L(extension=="srt"?"SRT 字幕|*.srt":"文本译文|*.txt"),FileName=StringArg(a,"name")+L("-译文")+"."+extension}){
-                            if(dialog.ShowDialog(this)==DialogResult.OK){EnsureExportDestination(dialog.FileName);File.WriteAllText(dialog.FileName,text,new UTF8Encoding(false));result=true;}
+                            if(dialog.ShowDialog(dialogOwner)==DialogResult.OK){EnsureExportDestination(dialog.FileName);File.WriteAllText(dialog.FileName,text,new UTF8Encoding(false));result=true;}
                         }break;
                     }
                     case "addCollection": library.AddCollection(StringArg(a,"name"));result=true;break;
                     case "deleteCollection": library.DeleteCollection(StringArg(a,"name"));result=true;break;
                     case "importFont": {
-                        using(var dialog=new OpenFileDialog{Title=L("导入你有权使用的字体"),Filter=L("字体文件|*.ttf;*.otf")}) { if(dialog.ShowDialog(this)==DialogResult.OK)result=library.ImportFont(dialog.FileName); }
+                        using(var dialog=new OpenFileDialog{Title=L("导入你有权使用的字体"),Filter=L("字体文件|*.ttf;*.otf")}) { if(dialog.ShowDialog(dialogOwner)==DialogResult.OK)result=library.ImportFont(dialog.FileName); }
                         break;
                     }
-                    case "subtitles": result=await Task.Run(()=>Subtitles.Discover(RequireEntry(a).path));break;
+                    case "subtitles": {var entry=RequireEntry(a);var tracks=await Task.Run(()=>Subtitles.Discover(entry.path));if(entry.generatedSubtitles!=null&&entry.generatedSubtitles.cues.Count>0)tracks.Insert(0,entry.generatedSubtitles);result=tracks;break;}
                     case "chooseSubtitle": {
-                        using(var dialog=new OpenFileDialog{Title=L("载入字幕"),Filter=L("文字字幕|*.srt;*.vtt;*.ass;*.ssa;*.sub;*.sbv;*.lrc;*.ttml;*.dfxp;*.smi|所有文件|*.*")}) { if(dialog.ShowDialog(this)==DialogResult.OK)result=Subtitles.Read(dialog.FileName); }
+                        using(var dialog=new OpenFileDialog{Title=L("载入字幕"),Filter=L("文字字幕|*.srt;*.vtt;*.ass;*.ssa;*.sub;*.sbv;*.lrc;*.ttml;*.dfxp;*.smi|所有文件|*.*")}) { if(dialog.ShowDialog(dialogOwner)==DialogResult.OK)result=Subtitles.Read(dialog.FileName); }
                         break;
                     }
                     case "savePhoto": {
                         Entry original=RequireEntry(a);
                         string encoded=StringArg(a,"image");if(!encoded.StartsWith("data:image/png;base64,")||encoded.Length>48*1024*1024)throw new InvalidDataException("图片数据无效或过大。");
                         using(var dialog=new SaveFileDialog{Title=L("另存编辑后的照片"),Filter=L("PNG 图片|*.png|JPEG 图片|*.jpg"),FileName=StringArg(a,"name")+L("-编辑")+".png"}) {
-                            if(dialog.ShowDialog(this)==DialogResult.OK) {
+                            if(dialog.ShowDialog(dialogOwner)==DialogResult.OK) {
                                 EnsureExportDestination(dialog.FileName);
                                 byte[] bytes=Convert.FromBase64String(encoded.Substring(22));
                                 library.SaveEditedPhoto(original.path,dialog.FileName,bytes);result=true;
@@ -334,7 +357,7 @@ namespace kok {
                     case "exportReadingNotes": result=ExportReadingNotes(a);break;
                     case "exportReading": {
                         string html=StringArg(a,"html");if(html.Length>32*1024*1024)throw new InvalidDataException("导出内容过大。");
-                        using(var dialog=new SaveFileDialog{Title=L("导出带标记的阅读副本"),Filter=L("HTML 阅读副本|*.html"),FileName=StringArg(a,"name")+L("-批注")+".html"}) { if(dialog.ShowDialog(this)==DialogResult.OK){EnsureExportDestination(dialog.FileName);File.WriteAllText(dialog.FileName,html,new UTF8Encoding(false));result=true;} }break;
+                        using(var dialog=new SaveFileDialog{Title=L("导出带标记的阅读副本"),Filter=L("HTML 阅读副本|*.html"),FileName=StringArg(a,"name")+L("-批注")+".html"}) { if(dialog.ShowDialog(dialogOwner)==DialogResult.OK){EnsureExportDestination(dialog.FileName);File.WriteAllText(dialog.FileName,html,new UTF8Encoding(false));result=true;} }break;
                     }
                     case "read": {
                         Entry item=RequireEntry(a); result=await Task.Run(()=>Library.ReadBook(item)); break;
@@ -346,17 +369,19 @@ namespace kok {
                         Entry item=RequireEntry(a); Process.Start("explorer.exe","/select,\""+item.path+"\""); result=true; break;
                     }
                     case "export": {
-                        if(library.IsPrivate){using(var privateDialog=new SaveFileDialog{Title=L("导出加密私密备份"),Filter=L("私密资料库备份|*.kokvault"),FileName="kok-private-"+DateTime.Now.ToString("yyyyMMdd")+".kokvault"}){if(privateDialog.ShowDialog(this)==DialogResult.OK){ExportPrivateBackup(privateDialog.FileName);result=true;}}break;}
+                        if(library.IsPrivate){using(var privateDialog=new SaveFileDialog{Title=L("导出加密私密备份"),Filter=L("私密资料库备份|*.kokvault"),FileName="kok-private-"+DateTime.Now.ToString("yyyyMMdd")+".kokvault"}){if(privateDialog.ShowDialog(dialogOwner)==DialogResult.OK){ExportPrivateBackup(privateDialog.FileName);result=true;}}break;}
                         using(var dialog=new SaveFileDialog { Title=L("导出资料库索引与笔记"), Filter=L("JSON 资料库|*.json"), FileName="kok-library-"+DateTime.Now.ToString("yyyyMMdd")+".json" }) {
-                            if(dialog.ShowDialog(this)==DialogResult.OK) { EnsureExportDestination(dialog.FileName);File.WriteAllText(dialog.FileName,library.Snapshot(),new UTF8Encoding(false)); result=true; }
+                            if(dialog.ShowDialog(dialogOwner)==DialogResult.OK) { EnsureExportDestination(dialog.FileName);File.WriteAllText(dialog.FileName,library.Snapshot(),new UTF8Encoding(false)); result=true; }
                         } break;
                     }
-                    case "diagnostics": result=new { engine=web.CoreWebView2.Environment.BrowserVersionString, count=library.Db.items.Count, dataDir=library.DataDir, version="0.4.1", mediaResponseLimit=MediaResponseLimit, logFile=RuntimeLog.FilePath, silentTest=silentTest, window=new { handle=Handle.ToInt64(),fullScreen=mediaFullScreen, border=FormBorderStyle.ToString(), state=WindowState.ToString(), bounds=new { x=Left,y=Top,width=Width,height=Height }, screen=Screen.FromControl(this).Bounds,workArea=Screen.FromControl(this).WorkingArea,clientScreen=RectangleToScreen(ClientRectangle), chrome=new { custom=customChrome,color=ColorTranslator.ToHtml(chromeColor),height=ChromeHeight,edge=ChromeEdge,handle=windowChrome.Handle.ToInt64(),content=web.Bounds,buttons=new[]{new {name="minimize",handle=minimizeWindow.Handle.ToInt64(),bounds=minimizeWindow.Bounds},new {name="maximize",handle=maximizeWindow.Handle.ToInt64(),bounds=maximizeWindow.Bounds},new {name="close",handle=closeWindow.Handle.ToInt64(),bounds=closeWindow.Bounds}}} } }; break;
+                    case "diagnostics": result=new { engine=web.CoreWebView2.Environment.BrowserVersionString, count=library.Db.items.Count, dataDir=library.DataDir, version="0.5.1", mediaResponseLimit=MediaResponseLimit, logFile=RuntimeLog.FilePath, silentTest=silentTest, window=new { handle=Handle.ToInt64(),fullScreen=mediaFullScreen, border=FormBorderStyle.ToString(), state=WindowState.ToString(), bounds=new { x=Left,y=Top,width=Width,height=Height }, screen=Screen.FromControl(this).Bounds,workArea=Screen.FromControl(this).WorkingArea,clientScreen=RectangleToScreen(ClientRectangle), chrome=new { custom=customChrome,color=ColorTranslator.ToHtml(chromeColor),height=ChromeHeight,edge=ChromeEdge,handle=windowChrome.Handle.ToInt64(),content=web.Bounds,buttons=new[]{new {name="minimize",handle=minimizeWindow.Handle.ToInt64(),bounds=minimizeWindow.Bounds},new {name="maximize",handle=maximizeWindow.Handle.ToInt64(),bounds=maximizeWindow.Bounds},new {name="close",handle=closeWindow.Handle.ToInt64(),bounds=closeWindow.Bounds}}} } }; break;
                     case "formats": result=Compatibility.Groups; break;
-                    default: if(DownloadActions.Contains(action))result=await HandleDownloadAction(action,a);else throw new InvalidOperationException("未知操作。");break;
+                    default: if(ReadingSessionActions.Contains(action))result=await HandleReadingSessionAction(action,a);else if(SpeechActions.Contains(action))result=await HandleSpeechAction(action,a,dialogOwner);else if(DocumentTranslationActions.Contains(action))result=await HandleDocumentTranslationAction(action,a,dialogOwner);else if(MusicActions.Contains(action))result=await HandleMusicAction(action,a);else if(CreativeActions.Contains(action))result=await HandleCreativeAction(action,a,dialogOwner);else if(DownloadActions.Contains(action))result=await HandleDownloadAction(action,a);else throw new InvalidOperationException("未知操作。");break;
                 }
-                Send(new { requestId=requestId, result=result });
-            } catch(Exception ex) { Send(new { requestId=requestId, error=ex.Message }); }finally{if(nativeDialogScope)nativeFileDialogOpen=false;}
+                SendTo(replyCore,new { requestId=requestId, result=result });
+                if(preview!=null&&new[]{"update","remove","savePhoto","importFont"}.Contains(action))Send(new{eventName="libraryChanged",data=(object)null});
+                if(action=="settings"||action=="setAppMode")Notify("previewPreferencesChanged",null);
+            } catch(Exception ex) { SendTo(replyCore,new { requestId=requestId, error=ex.Message }); }finally{if(nativeDialogScope)nativeFileDialogOpen=false;}
         }
         Entry RequireEntry(Dictionary<string,object> a) { Entry item=library.Find(StringArg(a,"id")); if(item==null || !File.Exists(item.path)) throw new FileNotFoundException("找不到原文件，文件可能已移动。请从资料库移除后重新导入。"); return item; }
         async Task<ImportResult> ScanSources() {
@@ -371,6 +396,7 @@ namespace kok {
         }
         void Resource(object sender,CoreWebView2WebResourceRequestedEventArgs e) {
             try {
+                var preview=PreviewFor(sender);if(preview!=null&&preview.SessionLibrary!=library){RespondError(e,403,"Library Changed");return;}
                 var requestUri=new Uri(e.Request.Uri);
                 if(privateGate&&requestUri.Host.Equals("media.kok.local",StringComparison.OrdinalIgnoreCase)){RespondError(e,403,"Vault Locked");return;}
                 if(!requestUri.Host.Equals("media.kok.local",StringComparison.OrdinalIgnoreCase)){

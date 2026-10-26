@@ -1,4 +1,5 @@
 # Preserve upstream asset bytes: build.ps1 verifies their published SHA-256 hashes.
 /ui/icons/fluent/*_flat.svg -text
 /ui/fonts/*.woff2 -text
+/ui/fonts/*.ttf -text
 /docs/licenses/** -text

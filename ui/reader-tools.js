@@ -28,19 +28,19 @@ function paragraphSpacing(root){
 function restoreReaderPosition(fraction){
  const el=$('#reader-scroll');if(!el)return;
  if(readerPaged()){
-   const column=Math.max(200,Math.min(el.clientWidth-64,Number(state.settings.readerWidth)||760));el.style.setProperty('--reading-column',column+'px');el.style.setProperty('--reading-gutter',Math.max(32,(el.clientWidth-column)/2)+'px');
+   const count=typeof readingSpreadCount==='function'?readingSpreadCount():1,column=Math.max(160,Math.min(el.clientWidth/count-64,Number(state.settings.readerWidth)||760));el.style.setProperty('--reading-column',column+'px');el.style.setProperty('--reading-gutter',Math.max(24,(el.clientWidth/count-column)/2)+'px');el.style.setProperty('--reading-visible-columns',String(count));el.dataset.visiblePages=String(count);
    let end=el.querySelector(':scope>.reader-page-end');if(!end){end=document.createElement('i');end.className='reader-page-end';end.setAttribute('aria-hidden','true');el.append(end);}end.hidden=true;
    const stride=Math.max(1,el.clientWidth),pages=Math.max(1,Math.ceil((el.scrollWidth-2)/stride));end.style.left=(pages*stride-1)+'px';end.hidden=false;
    const page=Math.max(0,Math.min(pages-1,Math.round((pages-1)*fraction)));el.scrollTo({left:page*stride,top:0,behavior:'instant'});
- }else el.scrollTo({top:Math.max(0,el.scrollHeight-el.clientHeight)*fraction,left:0,behavior:'instant'});updateReadingPosition();
+ }else el.scrollTo({top:Math.max(0,el.scrollHeight-el.clientHeight)*fraction,left:0,behavior:'instant'});el.style.setProperty('--reader-layout-width',el.clientWidth+'px');el.style.setProperty('--reader-layout-height',el.clientHeight+'px');updateReadingPosition();
 }
 function advanceReadingPage(direction){
  const el=$('#reader-scroll');if(!el)return;
  if(!readerPaged()){el.scrollBy({top:direction*el.clientHeight*.88,behavior:reducedMotion()?'instant':'smooth'});return;}
- const at=Math.round(el.scrollLeft/Math.max(1,el.clientWidth)),pages=Math.max(1,Math.ceil((el.scrollWidth-2)/Math.max(1,el.clientWidth)));
+ const at=Math.round((typeof readingPageOffset==='function'?readingPageOffset(el):el.scrollLeft)/Math.max(1,el.clientWidth)),pages=Math.max(1,Math.ceil((el.scrollWidth-2)/Math.max(1,el.clientWidth)));
  if(direction<0&&at===0&&state.chapter>0){openReadingLocation({chapter:state.chapter-1,position:1}).catch(fail);return;}
  if(direction>0&&at>=pages-1&&state.chapter<state.book.chapters.length-1){changeChapter(state.chapter+1).catch(fail);return;}
- el.scrollTo({left:Math.max(0,Math.min(el.scrollWidth-el.clientWidth,(at+direction)*el.clientWidth)),behavior:reducedMotion()?'instant':'smooth'});
+ const next=Math.max(0,Math.min(el.scrollWidth-el.clientWidth,(at+direction)*el.clientWidth));if(typeof animateReadingPage==='function')animateReadingPage(el,next);else el.scrollTo({left:next,behavior:reducedMotion()?'instant':'smooth'});
 }
 function readingToolbarMarkup(pdf=false){return `${pdf?workspaceButton('panel','目录与阅读工具','data-reading-sidebar'):''}${workspaceButton('bookmark','添加书签','data-add-bookmark')}${pdf?'':workspaceButton('settings','阅读排版','data-reading-settings')}${workspaceButton('maximize','专注阅读','data-reading-focus')}`;}
 function bookmarkMarkup(){const list=state.viewer?.bookmarks||[];return `<div class="reading-pane-heading"><b>我的书签</b><button class="icon-button" data-add-bookmark title="添加书签" aria-label="添加书签">${svg('plus')}</button></div>${list.length?list.map(b=>`<div class="reading-bookmark"><button data-open-bookmark="${esc(b.id)}"><b data-user-content>${esc(b.name)}</b><small data-user-content>${b.page?`${b.page} / ${pdfState?.doc.numPages||'—'}`:`${b.chapter+1} · ${Math.round(b.position*100)}%`}</small></button><button class="icon-button" data-remove-bookmark="${esc(b.id)}" title="删除书签" aria-label="删除书签">${svg('close')}</button></div>`).join(''):'<p class="reading-pane-empty">把想回到的位置，留在这里。</p>'}<button class="button secondary reading-export" data-export-reading-notes>${svg('download')}导出笔记与书签</button>`;}
@@ -107,7 +107,7 @@ renderReadingWorkspace=function(position=0){
  $('.reader-tools .toolbar-spacer').insertAdjacentHTML('beforebegin',readingToolbarMarkup());
  $('.reading-position').insertAdjacentHTML('beforeend','<small id="reading-page-indicator" data-user-content></small>');
  $('.reader-bottom').insertAdjacentHTML('beforebegin','<label class="reading-progress-control"><input type="range" id="reading-location" min="0" max="1000" value="0" aria-label="阅读进度跳转"></label>');
- const scroller=$('#reader-scroll');let current=position,ready=false;const resize=new ResizeObserver(()=>{const fraction=ready?readerPosition():current;scroller.style.setProperty('--reading-column',Math.max(200,scroller.clientWidth-64)+'px');requestAnimationFrame(()=>{if(scroller.isConnected){restoreReaderPosition(fraction);ready=true;}});});resize.observe(scroller);workspaceDisposers.push(()=>resize.disconnect());
+ const scroller=$('#reader-scroll');let current=position,ready=false;const resize=new ResizeObserver(()=>{const fraction=ready?readerPosition():current;if(typeof scheduleReadingFlowLayout==='function'){scheduleReadingFlowLayout(scroller,ready?undefined:current);ready=true;return;}requestAnimationFrame(()=>{if(scroller.isConnected){restoreReaderPosition(fraction);ready=true;}});});resize.observe(scroller);workspaceDisposers.push(()=>resize.disconnect());
  requestAnimationFrame(()=>requestAnimationFrame(()=>{if(scroller.isConnected)restoreReaderPosition(position);}));
  scroller.addEventListener('scroll',()=>{current=readerPosition();},{passive:true});
  $('#reader-find').addEventListener('input',()=>requestAnimationFrame(()=>{if(readerPaged())revealReadingRange([...(CSS.highlights?.get('kok-find-current')||[])][0]);}));

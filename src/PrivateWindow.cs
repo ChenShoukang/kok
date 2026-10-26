@@ -28,16 +28,16 @@ namespace kok {
         void InitializePrivateWindow(){
             privateTimer.Tick+=async delegate{if(library.IsPrivate&&!privateGate&&DateTime.UtcNow-lastPrivateActivity>TimeSpan.FromMinutes(5))try{await LockPrivateVault();}catch(Exception ex){RuntimeLog.Write("private-lock-error",ex);}};
             privateTimer.Start();
-            Deactivate+=async delegate{if(!nativeFileDialogOpen)privateDepartureGeneration++;if(library.IsPrivate&&!privateGate&&!nativeFileDialogOpen)try{await LockPrivateVault();}catch(Exception ex){RuntimeLog.Write("private-lock-error",ex);}};
+            Deactivate+=delegate{CheckPrivateDeparture();};
             Resize+=async delegate{if(WindowState==FormWindowState.Minimized&&library.IsPrivate&&!privateGate&&!nativeFileDialogOpen)try{await LockPrivateVault();}catch(Exception ex){RuntimeLog.Write("private-lock-error",ex);}};
             FormClosed+=delegate{privateTimer.Dispose();if(privateSession!=null)privateSession.Dispose();};
         }
         async Task SaveCurrentSession(){
-            if(web.CoreWebView2==null||engineUnavailable)return;
-            string encoded=await web.CoreWebView2.ExecuteScriptAsync("window.kokSession ? JSON.stringify(window.kokSession()) : '[]'");string json=Library.Json.Deserialize<string>(encoded);
-            if(json==null)return;var edits=Library.Json.Deserialize<List<Dictionary<string,object>>>(json);foreach(var edit in edits){string id=StringArg(edit,"id");if(library.Find(id)!=null)library.Update(id,(Dictionary<string,object>)edit["patch"]);}
+            await SavePreviewSessions();
+            if(web.CoreWebView2!=null&&!engineUnavailable)await SaveWebSession(web,library);
         }
         async Task StopAiForPrivate(){
+            CancelCreativeJobs();CancelSpeechJobs();if(musicLookupCancellation!=null)musicLookupCancellation.Cancel();
             PauseNetworkDownloads();
             foreach(var job in translationJobs.Values.ToArray())job.Cancel();if(fileChatCancellation!=null)fileChatCancellation.Cancel();if(organizationCancellation!=null)organizationCancellation.Cancel();if(modelListCancellation!=null)modelListCancellation.Cancel();organizationPreview=null;
             for(int n=0;n<200&&(translationJobs.Count>0||fileChatCancellation!=null||organizationCancellation!=null||modelListCancellation!=null||backgroundLibraryWrites>0);n++)await Task.Delay(25);
@@ -53,7 +53,7 @@ namespace kok {
         }
         void RegisterVaultFailure(){failedVaultAttempts++;if(failedVaultAttempts>=3)nextVaultAttempt=DateTime.UtcNow.AddSeconds(Math.Min(30,Math.Pow(2,Math.Min(8,failedVaultAttempts-3))));}
         async Task LockPrivateVault(){
-            if(!library.IsPrivate||privateGate)return;privateGate=true;Notify("privateLocking",null);
+            if(!library.IsPrivate||privateGate)return;privateGate=true;CancelCreativeJobs();if(musicLookupCancellation!=null)musicLookupCancellation.Cancel();Notify("privateLocking",null);
             try{if(folderCancellation!=null)folderCancellation.Cancel();while(importing||backgroundLibraryWrites>0)await Task.Delay(50);await SaveCurrentSession();library.Save();SetMediaFullScreen(false);library=normalLibrary;var session=privateSession;privateSession=null;if(session!=null)session.Dispose();privateGate=false;Notify("librarySwitched",new{isPrivate=false});
                 if(web.CoreWebView2!=null)try{await web.CoreWebView2.Profile.ClearBrowsingDataAsync(Microsoft.Web.WebView2.Core.CoreWebView2BrowsingDataKinds.DiskCache);}catch(Exception ex){RuntimeLog.Write("cache-clear-error",ex);}
             }catch{privateGate=library.IsPrivate;Notify("privateLockFailed",null);throw;}

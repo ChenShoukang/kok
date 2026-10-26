@@ -1,0 +1,30 @@
+{
+  "license": "SIL Open Font License 1.1",
+  "files": [
+    {
+      "id": "smiley",
+      "family": "Smiley Sans",
+      "file": "SmileySans-Oblique.woff2",
+      "version": "2.0.1",
+      "source": "https://github.com/atelier-anchor/smiley-sans/releases/tag/v2.0.1",
+      "sha256": "731f22973349404b15a88a99ef3b5dd4104c0965c23b7e485c1f11e84fea99e2",
+      "licenseFile": "SmileySans-OFL.txt"
+    },
+    {
+      "id": "wenkai",
+      "family": "LXGW WenKai Lite",
+      "file": "LXGWWenKaiLite-Regular.woff2",
+      "version": "1.530",
+      "source": "https://github.com/lxgw/LxgwWenKai-Lite/blob/d5a8a1f67872f398ef364a525a77261b3d9ae281/fonts/TTF/LXGWWenKaiLite-Regular.ttf",
+      "commit": "d5a8a1f67872f398ef364a525a77261b3d9ae281",
+      "bytes": 6353100,
+      "sha256": "c7c27122f18f5a4a5a8cc22313620e9dc0b5d224417acf279010d0b22fe7a38e",
+      "licenseFile": "LXGWWenKaiLite-OFL.txt",
+      "sourceFile": "LXGWWenKaiLite-Regular.ttf",
+      "sourceSha256": "f799a538a3355877e597a0ae04050e897932c9ae7689eb9227c2953c5dd549ea",
+      "sourceBytes": 13949472,
+      "sourceGitBlob": "b6a91870361ff0ddf5bb12d8327fda1948794074",
+      "compression": "WOFF2 null transforms; full glyphs/layout/metadata preserved; required DSIG removal and head.flags bit 11"
+    }
+  ]
+}

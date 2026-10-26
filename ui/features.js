@@ -2,25 +2,33 @@
 // Desktop features share the same local bridge and persistent library as app.js.
 let selectionAnchor=null,pdfState=null,photoEditor=null,subtitleUrl=null,speedTimer=null,videoAudioContext=null;
 let subtitleTracks=[];
-const fontStacks={smiley:"'Smiley Sans','Segoe UI','Microsoft YaHei UI',sans-serif",system:"'Segoe UI','Microsoft YaHei UI',sans-serif",yahei:"'Microsoft YaHei','Segoe UI',sans-serif",song:"'SimSun','Songti SC',serif",kai:"'KaiTi','STKaiti','SimSun',serif"};
+const fontStacks={smiley:"'Smiley Sans','Segoe UI','Microsoft YaHei UI',sans-serif",wenkai:"'LXGW WenKai Lite','KaiTi','SimSun',serif",system:"'Segoe UI','Microsoft YaHei UI',sans-serif",yahei:"'Microsoft YaHei','Segoe UI',sans-serif",song:"'SimSun','Songti SC',serif",kai:"'KaiTi','STKaiti','SimSun',serif"};
+const bundledFontFamilies={smiley:'Smiley Sans',wenkai:'LXGW WenKai Lite'};
+let fontApplyGeneration=0;
 const uid=()=>crypto.randomUUID().replaceAll('-','');
 function albumName(item){return item.album||'未命名专辑';}
 function hashHue(value){let n=0;for(const c of value)n=(n*31+c.charCodeAt(0))%360;return n;}
 async function applyFont(){
- const name=state.settings.fontFamily||'smiley';let family=fontStacks[name];
- if(!family){const asset=(state.fonts||[]).find(f=>f.id===name);if(asset){family=`'kokFont${asset.id}'`;if(![...document.fonts].some(f=>f.family==='kokFont'+asset.id)){try{const font=new FontFace('kokFont'+asset.id,`url(https://media.kok.local/font/${asset.id})`);await font.load();document.fonts.add(font);}catch(error){family=fontStacks.system;await setting({fontFamily:'system'});toast('字体无法加载，已恢复系统字体。',true);}}}}
+ const generation=++fontApplyGeneration;let name=state.settings.fontFamily||'smiley';
+ if(name==='chill'){name='smiley';await setting({fontFamily:name});if(generation!==fontApplyGeneration)return;}
+ let family=fontStacks[name];
+ try{
+  if(bundledFontFamilies[name]){const loaded=await document.fonts.load('400 14px "'+bundledFontFamilies[name]+'"','kok 中文');if(!loaded.length)throw Error('Bundled font unavailable');}
+  if(!family){const asset=(state.fonts||[]).find(f=>f.id===name);if(asset){family=`'kokFont${asset.id}'`;if(![...document.fonts].some(f=>f.family==='kokFont'+asset.id)){const font=new FontFace('kokFont'+asset.id,`url(https://media.kok.local/font/${asset.id})`);await font.load();document.fonts.add(font);}}}
+ }catch(error){if(generation!==fontApplyGeneration)return;family=fontStacks.system;await setting({fontFamily:'system'});toast('字体无法加载，已恢复系统字体。',true);}
+ if(generation!==fontApplyGeneration)return;
  document.documentElement.style.setProperty('--user-font',family||fontStacks.system);
  document.documentElement.style.setProperty('--reading-font',name==='system'?"'Georgia','SimSun',serif":family||fontStacks.system);
 }
 function setupSettings(){
- const row=document.createElement('div');row.className='setting-row';row.innerHTML=`<div>常用字体<small>同时应用于界面与正文阅读</small></div><select id="font-select" aria-label="字体选择">${[['smiley','得意黑（内置默认）'],['system','系统默认'],['yahei','微软雅黑'],['song','宋体'],['kai','楷体'],...(state.fonts||[]).map(f=>[f.id,f.name])].map(([v,l])=>`<option value="${esc(v)}">${esc(l)}</option>`).join('')}</select>`;
+ const row=document.createElement('div');row.className='setting-row';row.innerHTML=`<div>常用字体<small>同时应用于界面与正文阅读</small></div><select id="font-select" aria-label="字体选择">${[['smiley','得意黑（内置默认）'],['wenkai','霞鹜文楷轻便版（内置）'],['system','系统默认'],['yahei','微软雅黑'],['song','宋体'],['kai','楷体'],...(state.fonts||[]).map(f=>[f.id,f.name])].map(([v,l])=>`<option value="${esc(v)}">${esc(l)}</option>`).join('')}</select>`;
  $('#theme-select').closest('.setting-row').after(row);$('#font-select').value=state.settings.fontFamily||'smiley';
  row.insertAdjacentHTML('afterend',`<div class="setting-row"><div>导入字体<small>本地 TTF / OTF，最多 20 MB</small></div><button class="button secondary" data-import-font>${svg('plus')}导入</button></div>`);
  $('#small-dialog .about-details').insertAdjacentHTML('beforebegin','<div class="setting-row"><div>视频操作<small>快捷键、跳跃距离与双击全屏</small></div><button class="button secondary" data-video-preferences>播放偏好</button></div>');
  if(isSmartMode()&&typeof setupTranslationSettings==='function')setupTranslationSettings();
  $('#small-dialog .about-details').insertAdjacentHTML('beforebegin','<div class="setting-row smart-settings-row"><div>智能整理<small>文件夹扫描、AI 分类与标签</small></div><button class="button secondary" data-organizer="open">打开</button></div>');
 }
-function newCollection(itemId){showSmall(`<h2>${itemId?'整理到一个分类':'建立自己的分类'}</h2><p class="dialog-description">文件会按类型与来源文件夹自动归纳，也可以按项目、旅行或主题重新整理。</p>${itemId?`<label class="form-label">已有分类<select id="collection-existing"><option value="">不归类</option>${(state.collections||[]).map(n=>`<option data-user-content value="${esc(n)}">${esc(n)}</option>`).join('')}</select></label>`:''}<label class="form-label">${itemId?'或者新建分类':'分类名称'}<input id="collection-name" maxlength="100" placeholder="例如：今年的旅行"></label><button class="button primary dialog-submit" data-save-collection="${itemId||'new'}">保存分类</button>`);if(itemId)$('#collection-existing').value=byId(itemId).collection||'';$('#collection-name').focus();}
+function newCollection(itemId){showSmall(`<h2>${itemId?'更改分类':'新建分类'}</h2><p class="dialog-description">按项目或主题归类。</p>${itemId?`<label class="form-label">已有分类<select id="collection-existing"><option value="">不归类</option>${(state.collections||[]).map(n=>`<option data-user-content value="${esc(n)}">${esc(n)}</option>`).join('')}</select></label>`:''}<label class="form-label">${itemId?'或者新建分类':'分类名称'}<input id="collection-name" maxlength="100" placeholder="例如：今年的旅行"></label><button class="button primary dialog-submit" data-save-collection="${itemId||'new'}">保存分类</button>`);if(itemId)$('#collection-existing').value=byId(itemId).collection||'';$('#collection-name').focus();}
 function albumArt(name,large=false){return `<div class="album-art ${large?'large':''}" style="--album-hue:${hashHue(name)}"><div class="album-art-orb"></div><div class="album-vinyl"></div><span>kok</span><small ${name==='未命名专辑'?'':'data-user-content'}>${esc(name)}</small></div>`;}
 function renderMusic(){
  const songs=state.items.filter(i=>i.kind==='music');const albums=[...new Set(songs.map(albumName))];

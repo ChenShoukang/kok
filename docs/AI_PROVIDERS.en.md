@@ -2,6 +2,8 @@
 
 [中文](AI_PROVIDERS.md) · [Documentation](README.en.md)
 
+Document translation offers side-by-side and translation-only views with matching-format copies; see [translation and captions](TRANSLATION_CAPTIONS_0.5.1.md). Video transcription has separate settings for local Whisper or a timestamped speech API. A DeepSeek chat key is never forwarded to a speech provider.
+
 In Smart mode, open **Settings → AI service**. Choose one of 11 service presets or **Custom**, enter your endpoint and model ID, and enter the provider credential. The preset is a starting address, not an endorsement or a guarantee that every model supports every feature. Regional, workspace and subscription-specific addresses may differ.
 
 **Load models** queries the selected endpoint's `/models` route without saving the form or sending document content. If unsupported, fill the model ID manually. **Test connection** saves the form and sends a short translation request; provider charges may apply. Translation, organization and file chat share this configuration.

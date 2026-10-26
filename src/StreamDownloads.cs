@@ -61,7 +61,7 @@ namespace kok {
                 }
             }
         }
-        public static List<string> NetworkArguments(string kind,string referer=null){var args=new List<string>{"-hide_banner","-v","error","-protocol_whitelist","http,https,tcp,tls","-format_whitelist","hls,dash,mov,mpegts,aac,mp3,matroska,webm","-rw_timeout","20000000","-user_agent","kok/0.4.1","-f",kind};if(!String.IsNullOrEmpty(referer))args.AddRange(new[]{"-referer",referer});return args;}
+        public static List<string> NetworkArguments(string kind,string referer=null){var args=new List<string>{"-hide_banner","-v","error","-protocol_whitelist","http,https,tcp,tls","-format_whitelist","hls,dash,mov,mpegts,aac,mp3,matroska,webm","-rw_timeout","20000000","-user_agent","kok/0.5.1","-f",kind};if(!String.IsNullOrEmpty(referer))args.AddRange(new[]{"-referer",referer});return args;}
         static double Number(string value){double number;return Double.TryParse(value,NumberStyles.Float,CultureInfo.InvariantCulture,out number)&&!Double.IsNaN(number)&&!Double.IsInfinity(number)&&number>0?number:0;}
         static async Task<StreamProbe> Inspect(string executable,List<string> args,CancellationToken token){
             var json=new StringBuilder();bool overflow=false;int code=await DownloadTools.Run(executable,args,line=>{lock(json){if(json.Length+line.Length<=512*1024)json.AppendLine(line);else overflow=true;}},line=>{},token).ConfigureAwait(false);

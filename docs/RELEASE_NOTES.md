@@ -1,31 +1,25 @@
-# kok v0.4.1 · 预览版 / Preview
+# kok v0.5.1 · 预览版 / Preview
 
-视频、照片、音乐、文档和读书，一处管理。
+视频、照片、音乐、文档与读书，一处管理。
 
-- **界面**：扁平布局、轻圆角、统一玻璃浮层、自定义背景与材质；重绘蓝色 K 主图标，内置 Fluent Flat 图标和得意黑。图标按可见轮廓统一大小与位置，深色模式使用柔和配色和深色按钮。
-- **照片**：滚轮缩放、拖动查看、自由裁剪与八向调整、撤销 / 重做，保留原片。
-- **文档与读书**：目录、全文搜索、书签、排版、分页 / 滚动、续读、专注及 Markdown 笔记导出；保留下划线、高亮与想法。
-- **视频下载**：kok 原生队列、直链续传、网页发现、画质 / 音频选择和字幕；B 站、YouTube、抖音适配，官方页面登录与加密会话，B 站 / 抖音可手动网页辅助解析。FFmpeg / FFprobe 按需安装，用于分轨、M3U8 / DASH 合并。
-- 保留纯净 / 智能模式、可选 AI 翻译与问答、密码保护的私密文件夹和中英文界面。
+- **阅读重做**：真实 EPUB NAV / NCX 与 Word 标题目录、默认收起次要栏、单页 / 自适应双页 / 上下滚动、滚轮翻页、独立正文排版与护眼配色、书签选中反馈、精准标记与选词翻译 / AI 解释。
+- **窗口与界面**：独立多窗口、双击空白退到后面、无边框全屏；统一媒体工具栏、固定收藏及窗口按钮、窄窗命令菜单、同步开窗与快速缩放重排优化。
+- **翻译与字幕**：快速并发、分段缓存、对齐双语和双向滚动，本机保存译文与标记，原格式副本导出；可选本地 Whisper / 独立语音 API 生成字幕及 SRT 导出。
+- **编辑与音乐**：照片调色、自由裁剪和标注；音视频片段与时间线；正文 / PDF 编辑；专辑、歌手和个人音频整理，联网候选匹配与 AI 元数据预览。
+- 保留纯净 / 智能模式、中英文、可选 AI、分类拖入及需密码确认的私密文件夹；内置得意黑和霞鹜文楷轻便版。
 
-**使用**：下载 `kok-0.4.1-win-x64.zip`，核对随附 SHA-256，解压整个目录并运行 `kok.exe`。需要 Windows 10 / 11 x64、.NET Framework 4.8 与 WebView2。升级前备份旧版 data；预览包不包含个人资料库、API 配置、会话或私密缓存。
+**运行**：下载 kok-0.5.1-win-x64.zip，核对随附 SHA-256，完整解压并运行 kok.exe。需要 Windows 10 / 11 x64、.NET Framework 4.8 与 WebView2。升级前备份旧版 data。软件包未签名，不包含个人资料库、API 配置、私密数据或语音模型。
 
-**范围**：播放器仍使用 WebView2，尚未内置通用解码器。网站适配受网络、验证码、登录和权限限制，抖音自动解析可能需要网页辅助；不提供 DRM 或权限绕过。更多独立 Windows 电脑验证仍待补充。
+**范围**：媒体解码仍取决于 WebView2；扫描 PDF 需先 OCR。AI 使用所选服务，长内容可能节选；语音识别需额外组件或独立服务。译文批注主要保存在本机，不会自动嵌入所有导出格式。私密文件夹加密索引 / 笔记 / 封面，原文件和既有导出、共享缓存不加密。网站解析受网络、验证、登录与权限影响。
 
-[中文说明](https://github.com/ChenShoukang/kok/blob/main/docs/PREVIEW_0.4.1.md) · [验证范围](https://github.com/ChenShoukang/kok/blob/main/docs/TESTING.md)
+[阅读与窗口](https://github.com/ChenShoukang/kok/blob/main/docs/READING_FLOW_0.5.1.md) · [翻译与字幕](https://github.com/ChenShoukang/kok/blob/main/docs/TRANSLATION_CAPTIONS_0.5.1.md) · [编辑与音乐](https://github.com/ChenShoukang/kok/blob/main/docs/EDITING_MUSIC_0.5.1.md)
 
 ## English
 
-Manage videos, photos, music, documents and books together.
+This preview adds quiet single/two-page/scroll reading, real contents, wheel paging, eye comfort, independent text fonts, precise marks and selected-text AI actions. Independent native viewers gain coordinated opening, resize scheduling, fixed favorites/window buttons and compact command menus.
 
-- **Interface**: flat layout, subtle corners, coherent glass overlays and custom colors; a new blue K mark, bundled Fluent Flat icons and Smiley Sans. Visible icon sizes and centers are aligned; dark mode uses muted colors and dark buttons.
-- **Photos**: wheel zoom, panning, free crop with eight handles and undo / redo, preserving originals.
-- **Reading**: contents, full-text search, bookmarks, typography, paging / scrolling, resume, focus and Markdown note export; highlights and thoughts remain available.
-- **Downloads**: native queues, validated file resume, page discovery, quality / audio choices and subtitles; Bilibili, YouTube and Douyin adapters, official-site sign-in and encrypted sessions, plus manual browser assistance for Bilibili / Douyin. Optional FFmpeg / FFprobe handles split tracks and M3U8 / DASH merging.
-- Pure / Smart modes, optional AI translation and chat, the password-protected private folder and bilingual UI remain available.
+Translation offers fast bounded concurrency, segment caches, aligned paired text, two-way scrolling, saved local results/marks and matching-format copies. Optional local Whisper or a separate timestamped speech API generates captions. Photo/media/document editors, organized music views, matching candidates and AI metadata previews are included.
 
-**Run**: download `kok-0.4.1-win-x64.zip`, verify its SHA-256, extract the complete folder and run `kok.exe`. Requires Windows 10 / 11 x64, .NET Framework 4.8 and WebView2. Back up existing data before upgrading. Packages exclude personal libraries, model configuration, sessions and private caches.
+Download kok-0.5.1-win-x64.zip, verify SHA-256, extract completely and run kok.exe. Windows 10/11 x64, .NET Framework 4.8 and WebView2 are required. Back up existing data before upgrading. The unsigned package excludes personal libraries, API configuration, private data and speech models.
 
-**Limits**: playback uses WebView2 without a universal decoder bundle. Site availability depends on network, verification, sign-in and permissions; Douyin may need browser assistance. DRM and permission bypass are unsupported. Independent Windows-machine verification remains incomplete.
-
-[English guide](https://github.com/ChenShoukang/kok/blob/main/docs/PREVIEW_0.4.1.en.md) · [Verification scope](https://github.com/ChenShoukang/kok/blob/main/docs/TESTING.en.md)
+Playback depends on WebView2 codecs; scanned PDFs need OCR. AI may use excerpts. Speech needs optional components or a separate provider. Comparison marks remain local rather than being embedded in every exported format. The private folder encrypts indexes/notes/covers, not originals, prior exports or shared caches. Website availability depends on network, verification, sign-in and permissions.

@@ -5,7 +5,7 @@
  const query=matchMedia('(prefers-reduced-motion: reduce)');
  function update(){
   scheduled=0;if(typeof native!=='function'||!document.body)return;
-  const style=getComputedStyle(document.body),value=style.getPropertyValue('--bg').trim()||style.backgroundColor;
+  const style=getComputedStyle(document.body),surface=document.body.classList.contains('preview-window')&&$('#viewer')?.dataset.viewerKind?getComputedStyle($('#viewer')).getPropertyValue('--view-bg').trim():'',value=surface||style.getPropertyValue('--bg').trim()||style.backgroundColor;
   const probe=document.createElement('span');probe.style.color=value;probe.style.display='none';document.body.append(probe);
   const color=getComputedStyle(probe).color;probe.remove();const parts=color.match(/[\d.]+/g);if(!parts||parts.length<3)return;
   const hex='#'+parts.slice(0,3).map(n=>Math.max(0,Math.min(255,Math.round(Number(n)))).toString(16).padStart(2,'0')).join('');
@@ -14,6 +14,7 @@
  }
  function schedule(){if(!scheduled)scheduled=requestAnimationFrame(update);}
  new MutationObserver(schedule).observe(document.body,{attributes:true,attributeFilter:['data-theme','data-custom-colors','style']});
+ if($('#viewer'))new MutationObserver(schedule).observe($('#viewer'),{attributes:true,attributeFilter:['data-viewer-kind','data-reading-paper']});
  new MutationObserver(schedule).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});
  query.addEventListener('change',schedule);document.addEventListener('visibilitychange',schedule);schedule();
 })();

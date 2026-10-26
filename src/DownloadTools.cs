@@ -41,7 +41,7 @@ namespace kok {
         public async Task Install(Action<ComponentProgress> progress,CancellationToken token,string bundle="ffmpeg"){
             if(bundle!="ffmpeg")throw new InvalidDataException("请选择有效的下载组件。");
             Directory.CreateDirectory(root);
-            using(var deadline=CancellationTokenSource.CreateLinkedTokenSource(token))using(var client=new HttpClient()){deadline.CancelAfter(TimeSpan.FromMinutes(8));token=deadline.Token;client.Timeout=TimeSpan.FromMinutes(8);client.DefaultRequestHeaders.UserAgent.ParseAdd("kok/0.4.1");
+            using(var deadline=CancellationTokenSource.CreateLinkedTokenSource(token))using(var client=new HttpClient()){deadline.CancelAfter(TimeSpan.FromMinutes(8));token=deadline.Token;client.Timeout=TimeSpan.FromMinutes(8);client.DefaultRequestHeaders.UserAgent.ParseAdd("kok/0.5.1");
                 foreach(var component in new[]{components.ffmpeg}){
                     token.ThrowIfCancellationRequested();if(Trusted(component)!=null&&Ffprobe!=null)continue;
                     progress(new ComponentProgress{component="FFmpeg / FFprobe",status="downloading",total=component.size});
@@ -71,9 +71,9 @@ namespace kok {
         public static string QuoteArgument(string value){
             var result=new StringBuilder("\"");int slashes=0;foreach(char c in value){if(c=='\\'){slashes++;continue;}if(c=='"'){result.Append('\\',slashes*2+1).Append(c);slashes=0;continue;}result.Append('\\',slashes).Append(c);slashes=0;}return result.Append('\\',slashes*2).Append('"').ToString();
         }
-        public static async Task<int> Run(string executable,IEnumerable<string> args,Action<string> stdout,Action<string> stderr,CancellationToken token){
+        public static async Task<int> Run(string executable,IEnumerable<string> args,Action<string> stdout,Action<string> stderr,CancellationToken token,string workingDirectory=null){
             token.ThrowIfCancellationRequested();
-            var start=new ProcessStartInfo(executable,String.Join(" ",args.Select(QuoteArgument))){UseShellExecute=false,CreateNoWindow=true,RedirectStandardOutput=true,RedirectStandardError=true,StandardOutputEncoding=Encoding.UTF8,StandardErrorEncoding=Encoding.UTF8,WorkingDirectory=Path.GetDirectoryName(executable)};
+            var start=new ProcessStartInfo(executable,String.Join(" ",args.Select(QuoteArgument))){UseShellExecute=false,CreateNoWindow=true,RedirectStandardOutput=true,RedirectStandardError=true,StandardOutputEncoding=Encoding.UTF8,StandardErrorEncoding=Encoding.UTF8,WorkingDirectory=workingDirectory??Path.GetDirectoryName(executable)};
             using(var process=new Process{StartInfo=start})using(var children=new DownloadProcessGroup()){
                 process.OutputDataReceived+=delegate(object sender,DataReceivedEventArgs e){if(e.Data!=null&&e.Data.Length<=8*1024*1024)stdout(e.Data);};
                 process.ErrorDataReceived+=delegate(object sender,DataReceivedEventArgs e){if(e.Data!=null)stderr(e.Data);};

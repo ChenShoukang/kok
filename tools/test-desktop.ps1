@@ -1,7 +1,7 @@
-﻿param([string[]]$Suites=@('ui','features','translation','i18n','minimal','drop','workspaces','video-layout','refinements','menus-covers','compatibility','organizer','companion','private-space','app-modes','recovery'),[string]$LargeMediaFile)
+﻿param([string[]]$Suites=@('ui','features','translation','i18n','minimal','drop','workspaces','video-layout','refinements','menus-covers','compatibility','organizer','companion','private-space','app-modes','recovery'),[string]$LargeMediaFile,[string]$Executable)
 $ErrorActionPreference='Stop'
 $projectRoot=Split-Path $PSScriptRoot -Parent
-$executable=Join-Path $projectRoot 'dist\kok\kok.exe'
+$executable=if($Executable){(Resolve-Path -LiteralPath $Executable).Path}else{Join-Path $projectRoot 'dist\kok\kok.exe'}
 $auditRoot=Join-Path $projectRoot ('test-output\full-'+[DateTime]::Now.ToString('yyyyMMdd-HHmmss'))
 New-Item -ItemType Directory -Path $auditRoot -Force | Out-Null
 $results=@()
@@ -33,8 +33,15 @@ foreach($suite in $Suites){
     if($suite -eq 'kok-downloads'){& node (Join-Path $projectRoot 'tests\kok-downloads.cjs') --prepare $profile;if($LASTEXITCODE -ne 0){throw 'kok download fixture preparation failed.'}}
     if($suite -eq 'site-adapters'){& node (Join-Path $projectRoot 'tests\site-adapters.cjs') --prepare $profile;if($LASTEXITCODE -ne 0){throw 'Site adapter fixture preparation failed.'}}
     if($suite -eq 'flat-chrome'){& node (Join-Path $projectRoot 'tests\flat-chrome.cjs') --prepare $profile;if($LASTEXITCODE -ne 0){throw 'Window chrome fixture preparation failed.'}}
+    if($suite -eq 'study-tools'){& node (Join-Path $projectRoot 'tests\study-tools.cjs') --prepare $profile;if($LASTEXITCODE -ne 0){throw 'Study fixture preparation failed.'}}
+    if($suite -eq 'creative-music'){& node (Join-Path $projectRoot 'tests\creative-music.cjs') --prepare $profile;if($LASTEXITCODE -ne 0){throw 'Creative/music fixture preparation failed.'}}
+    if($suite -eq 'translation-workspace'){& node (Join-Path $projectRoot 'tests\translation-workspace.cjs') --prepare $profile;if($LASTEXITCODE -ne 0){throw 'Translation workspace fixture preparation failed.'}}
+    if($suite -eq 'selection-motion'){& node (Join-Path $projectRoot 'tests\selection-motion.cjs') --prepare $profile;if($LASTEXITCODE -ne 0){throw 'Selection motion fixture preparation failed.'}}
+    if($suite -eq 'reading-renewal'){& node (Join-Path $projectRoot 'tests\reading-renewal.cjs') --prepare $profile;if($LASTEXITCODE -ne 0){throw 'Reading renewal fixture preparation failed.'}}
+    if($suite -eq 'reading-flow'){& node (Join-Path $projectRoot 'tests\reading-flow.cjs') --prepare $profile;if($LASTEXITCODE -ne 0){throw 'Reading flow fixture preparation failed.'}}
     $process=Start-Process -FilePath $executable -ArgumentList @('--debug','--test-silent','--data-dir',('"'+$profile+'"')) -PassThru -WindowStyle Hidden
     $env:KOK_TEST_NATIVE_PID=[string]$process.Id
+    $env:KOK_TEST_EXECUTABLE=$executable
     $env:KOK_TEST_PROFILE=$profile
     try{
         $ready=$false
@@ -48,6 +55,7 @@ foreach($suite in $Suites){
         Write-Output ('SUITE PASS: '+$suite)
     }finally{
         Remove-Item Env:KOK_TEST_NATIVE_PID -ErrorAction SilentlyContinue
+        Remove-Item Env:KOK_TEST_EXECUTABLE -ErrorAction SilentlyContinue
         Remove-Item Env:KOK_TEST_PROFILE -ErrorAction SilentlyContinue
         $owned=Get-Process -Id $process.Id -ErrorAction SilentlyContinue
         if($owned -and $owned.Path -eq $executable){$null=$owned.CloseMainWindow();if(-not $owned.WaitForExit(4000)){Stop-Process -Id $owned.Id}}

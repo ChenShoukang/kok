@@ -1,7 +1,14 @@
-/* Smiley Sans v2.0.1, unmodified official WOFF2. See docs/licenses/SmileySans-OFL.txt. */
+/* Full font data with lossless WOFF2 compression; licenses/hashes: fonts/NOTICE.md. */
 @font-face{
  font-family:'Smiley Sans';
  src:url('./fonts/SmileySans-Oblique.woff2') format('woff2');
+ font-style:normal;
+ font-weight:400;
+ font-display:swap;
+}
+@font-face{
+ font-family:'LXGW WenKai Lite';
+ src:url('./fonts/LXGWWenKaiLite-Regular.woff2') format('woff2');
  font-style:normal;
  font-weight:400;
  font-display:swap;

@@ -1,102 +1,77 @@
 'use strict';
-let aiConfig=null,translationJob=null,translationGeneration=0,translationResult=null,translationAttempt='',autoTranslationTimer=null;
+let aiConfig=null,translationJob=null,translationGeneration=0,translationResult=null,translationAttempt='',autoTranslationTimer=null,translationRenderTimer=null,translationPreparing=false;
 const translationLanguages=['简体中文','繁體中文','English','日本語','한국어','Français','Deutsch','Español'];
 const translationLanguageLabels={'简体中文':'简体中文','繁體中文':'繁体中文',English:'英语','日本語':'日语','한국어':'韩语','Français':'法语',Deutsch:'德语','Español':'西班牙语'};
 async function getAiConfig(){if(!aiConfig)aiConfig=await native('aiConfig');return aiConfig;}
-function setupTranslationSettings(){
- const details=$('.about-details');if(!details||$('[data-ai-settings]'))return;
- details.insertAdjacentHTML('beforebegin',`<div class="setting-row smart-settings-row"><div>AI 服务<small>翻译、整理与内容对话</small></div><button class="button secondary" data-ai-settings>配置 API</button></div>`);
-}
-async function showAiSettings(){if(!isSmartMode())return;await showProviderSettings();}
+function setupTranslationSettings(){const details=$('.about-details');if(details&&!$('[data-ai-settings]'))details.insertAdjacentHTML('beforebegin','<div class="setting-row smart-settings-row"><div>AI 服务<small>翻译、整理与内容对话</small></div><button class="button secondary" data-ai-settings>配置 API</button></div>');}
+async function showAiSettings(){if(isSmartMode())await showProviderSettings();}
 function ensureTranslationPanel(){
- if(!$('#translate-button'))$('.viewer-actions').insertAdjacentHTML('afterbegin',`<button class="button secondary translate-toggle hidden" id="translate-button" title="翻译字幕或正文"><span aria-hidden="true">A/文</span>翻译</button>`);
+ if(!$('#translate-button'))$('.viewer-actions').insertAdjacentHTML('afterbegin','<button class="button secondary translate-toggle hidden" id="translate-button" title="翻译字幕或正文"><span aria-hidden="true">A/文</span>翻译</button>');
  if($('#translation-panel'))return;
- viewer.insertAdjacentHTML('beforeend',`<aside id="translation-panel" class="translation-panel hidden" aria-label="AI 译文"><div class="translation-heading"><b>译文</b><button class="icon-button" data-close-translation aria-label="收起译文">${svg('close')}</button></div><div class="translation-controls"><select id="translation-scope" aria-label="翻译范围"><option value="current">当前章节 / 页</option><option value="all">整份文档</option></select><button class="text-button" data-ai-settings title="翻译设置">${svg('settings')}</button><button class="text-button" id="translation-start">开始翻译</button></div><div class="translation-status" id="translation-status" role="status">点击开始翻译</div><div class="translation-progress hidden"><span></span></div><div class="translation-options"><label><input id="translation-bilingual" type="checkbox" checked>双语对照</label><button class="text-button hidden" id="translation-cancel">取消</button><button class="text-button hidden" id="translation-export">${svg('download')}导出</button></div><div id="translation-body" class="translation-body"></div></aside>`);
- $('#translate-button').addEventListener('click',async()=>{try{const config=await getAiConfig();if(!config.model){await showAiSettings();return;}showTranslationPanel();await startTranslation(false);}catch(error){fail(error);}});
+ viewer.insertAdjacentHTML('beforeend',`<aside id="translation-panel" class="translation-panel hidden" aria-label="AI 译文"><div class="translation-heading"><div><b>翻译</b><small id="translation-model" data-user-content></small></div><button class="icon-button" data-close-translation aria-label="收起译文">${svg('close')}</button></div><div class="translation-controls"><select id="translation-scope" aria-label="翻译范围"><option value="all">整份文档</option><option value="current">当前章节 / 页</option></select><select id="translation-language" aria-label="目标语言">${translationLanguages.map(l=>`<option value="${l}">${translationLanguageLabels[l]}</option>`).join('')}</select><button class="icon-button" data-ai-settings title="翻译设置">${svg('settings')}</button></div><div class="translation-runbar"><button class="button primary" id="translation-start">开始翻译</button><button class="button secondary hidden" id="translation-cancel">取消</button><select id="translation-layout" aria-label="译文显示"><option value="bilingual">左右对照</option><option value="translated">仅译文</option></select><input id="translation-bilingual" type="checkbox" checked hidden><button class="text-button hidden" id="translation-export">${svg('download')}导出</button></div><div class="translation-status" id="translation-status" role="status" aria-live="polite">点击开始翻译</div><div class="translation-progress hidden"><span></span></div><div class="translation-pane-labels"><span>原文</span><span>译文</span><label><input id="translation-sync" type="checkbox" checked>同步滚动</label></div><div id="translation-body" class="translation-body"><div class="translation-welcome">选择语言，开始翻译</div></div></aside>`);
+ $('#translate-button').addEventListener('click',async()=>{try{const config=await getAiConfig();if(!config.model){await showAiSettings();return;}showTranslationPanel();$('#translation-model').textContent=config.model;$('#translation-language').value=translationLanguages.includes(config.language)?config.language:'简体中文';}catch(error){fail(error);}});
  $('#translation-start').addEventListener('click',()=>startTranslation(false).catch(fail));
  $('#translation-cancel').addEventListener('click',()=>cancelTranslation());
  $('#translation-export').addEventListener('click',()=>exportTranslation().catch(fail));
- $('#translation-bilingual').addEventListener('change',()=>{renderTranslationResult();applyTranslatedSubtitles();});
- $('#translation-scope').addEventListener('change',()=>startTranslation(false).catch(fail));
+ $('#translation-bilingual').addEventListener('change',()=>{$('#translation-layout').value=$('#translation-bilingual').checked?'bilingual':'translated';applyTranslationLayout();renderTranslationResult();applyTranslatedSubtitles();});
+ $('#translation-layout').addEventListener('change',()=>{$('#translation-bilingual').checked=$('#translation-layout').value==='bilingual';applyTranslationLayout();renderTranslationResult();applyTranslatedSubtitles();});
+ const toolbar=document.createElement('div');toolbar.id='translation-toolbar';$('#translation-panel').prepend(toolbar);for(const selector of ['.translation-heading','.translation-controls','.translation-runbar','.translation-status','.translation-progress'])toolbar.append($(selector));
+ new ResizeObserver(()=>{if(viewer.classList.contains('document-translation'))viewer.style.setProperty('--translation-toolbar-height',toolbar.offsetHeight+'px');}).observe(toolbar);
+ document.addEventListener('scroll',syncTranslationScroll,true);
 }
-function showTranslationPanel(){
- $('#notes-panel').classList.add('hidden');viewer.classList.remove('notes-open');viewer.classList.add('translation-open');$('#translation-panel').classList.remove('hidden');
-}
-function hideTranslationPanel(){viewer.classList.remove('translation-open');$('#translation-panel')?.classList.add('hidden');}
-function resetTranslationView(){
- translationGeneration++;clearTimeout(autoTranslationTimer);cancelTranslation();translationResult=null;translationAttempt='';hideTranslationPanel();$('#translate-button')?.classList.add('hidden');$('#translation-cancel')?.classList.add('hidden');$('.translation-progress')?.classList.add('hidden');if($('#translation-body'))$('#translation-body').textContent='';
-}
-function beginTranslationView(item){
- ensureTranslationPanel();resetTranslationView();$('#translate-button').classList.toggle('hidden',!['video','document','book'].includes(item.kind));
- $('#translation-scope').classList.toggle('hidden',item.kind==='video');$('#translation-scope').value='current';
- $('#translation-export').classList.add('hidden');$('#translation-status').textContent='点击开始翻译';
-}
-function scheduleAutoTranslation(){
- clearTimeout(autoTranslationTimer);if(!isSmartMode())return;const generation=translationGeneration;
- autoTranslationTimer=setTimeout(async()=>{try{const config=await getAiConfig();if(generation!==translationGeneration||!state.viewer||!config.automatic||!config.model)return;await startTranslation(true);}catch(error){if(generation===translationGeneration)fail(error);}},650);
-}
+function applyTranslationLayout(){const doc=!!state.viewer&&state.viewer.kind!=='video',toolbar=$('#translation-toolbar');viewer.classList.toggle('document-translation',doc);viewer.classList.toggle('translation-only',!$('#translation-bilingual')?.checked);if(toolbar){if(doc&&viewer.classList.contains('translation-open'))viewer.insertBefore(toolbar,$('#viewer-content'));else $('#translation-panel').prepend(toolbar);viewer.style.setProperty('--translation-toolbar-height',toolbar.offsetHeight+'px');}}
+function showTranslationPanel(){if(typeof hideFileAssistant==='function')hideFileAssistant();$('#notes-panel').classList.add('hidden');viewer.classList.remove('notes-open');viewer.classList.add('translation-open');$('#translation-panel').classList.remove('hidden');applyTranslationLayout();}
+function hideTranslationPanel(){viewer.classList.remove('translation-open','document-translation','translation-only');$('#translation-panel')?.classList.add('hidden');if($('#translation-toolbar'))$('#translation-panel').prepend($('#translation-toolbar'));}
+function resetTranslationView(){translationGeneration++;clearTimeout(autoTranslationTimer);clearTimeout(translationRenderTimer);cancelTranslation();translationResult=null;translationAttempt='';translationPreparing=false;hideTranslationPanel();$('#translate-button')?.classList.add('hidden');$('#translation-cancel')?.classList.add('hidden');$('.translation-progress')?.classList.add('hidden');if($('#translation-body'))$('#translation-body').textContent='';}
+function beginTranslationView(item){ensureTranslationPanel();resetTranslationView();$('#translate-button').classList.toggle('hidden',!['video','document','book'].includes(item.kind));$('#translation-scope').classList.toggle('hidden',item.kind==='video');$('#translation-scope').value='all';$('#translation-export').classList.add('hidden');$('#translation-status').textContent='点击开始翻译';$('#translation-start').disabled=false;$('#translation-body').innerHTML='<div class="translation-welcome">选择语言，开始翻译</div>';}
+function scheduleAutoTranslation(){clearTimeout(autoTranslationTimer);if(!isSmartMode())return;const generation=translationGeneration;autoTranslationTimer=setTimeout(async()=>{try{const config=await getAiConfig();if(generation!==translationGeneration||!state.viewer||!config.automatic||!config.model)return;$('#translation-language').value=translationLanguages.includes(config.language)?config.language:'简体中文';await startTranslation(true);}catch(error){if(generation===translationGeneration)fail(error);}},650);}
 function initDocumentTranslation(){if(state.book||pdfState)scheduleAutoTranslation();}
+function splitTranslationLocal(text){const parts=[];text=(text||'').replaceAll('\r\n','\n');for(let offset=0;offset<text.length;){let length=Math.min(1800,text.length-offset);if(offset+length<text.length){const edge=text.lastIndexOf('\n',offset+length-1);if(edge>offset+length/3)length=edge-offset+1;const code=text.charCodeAt(offset+length-1);if(code>=0xd800&&code<=0xdbff)length--;}parts.push(text.slice(offset,offset+length));offset+=length;}return parts;}
+function readableTranslation(value,marked=false){if(value==null)return null;if(!marked)return value;const decoder=document.createElement('textarea');decoder.innerHTML=value.replace(/<\/?kok-r-\d+>/g,'');return decoder.value;}
 async function translationSource(){
  const item=state.viewer;if(!item)throw Error('请先打开文件。');
- if(item.kind==='video'){
-   let index=Number($('#subtitle-select')?.value);let track=subtitleTracks[index];if(track?.translated){index=track.sourceIndex;track=subtitleTracks[index];}
-   if(!track||!track.cues?.length)throw Error('请先选择或载入一份文字字幕。');
-   return{kind:'subtitle',itemId:item.id,name:item.name,title:track.name,sourceIndex:index,cues:track.cues.map(c=>({...c})),parts:track.cues.map(c=>c.text),headings:[]};
- }
- const all=$('#translation-scope').value==='all',parts=[],headings=[],headingUi=[];
- async function add(text,title,isUi=false){const chunks=await native('splitTranslationText',{text});for(const chunk of chunks){parts.push(chunk);headings.push(title);headingUi.push(isUi);}}
- if(state.book){for(const [index,chapter] of state.book.chapters.entries())if(all||index===state.chapter)await add(chapter.text,chapter.title,!!chapter.generatedTitle);}
- else if(pdfState){
-   const session=pdfState,scroll=$('.pdf-scroll');let pageNumber=1;
-   for(const wrapper of scroll.querySelectorAll('.pdf-page'))if(wrapper.offsetTop+wrapper.offsetHeight>scroll.scrollTop+scroll.clientHeight*.25){pageNumber=Number(wrapper.dataset.page);break;}
-   for(let n=all?1:pageNumber;n<=(all?session.doc.numPages:pageNumber);n++){
-     if(pdfState!==session)throw Error('文件已切换。');const page=await session.doc.getPage(n),content=await page.getTextContent();
-     let text='';for(const word of content.items)if('str'in word)text+=word.str+(word.hasEOL?'\n':' ');
-     if(text.trim())await add(text.trim(),'第 '+n+' 页',true);
-   }
- }else throw Error('文件文字还未加载完成，请稍后再试。');
- if(!parts.some(p=>p.trim()))throw Error('没有可翻译的文字。扫描版 PDF 需要先进行 OCR。');
- return{kind:'document',itemId:item.id,name:item.name,title:all?'整份文档':headings[0],titleIsUi:all||!!headingUi[0],parts,headings,headingUi};
+ if(item.kind==='video'){let index=Number($('#subtitle-select')?.value),track=subtitleTracks[index];if(track?.translated){index=track.sourceIndex;track=subtitleTracks[index];}if(!track?.cues?.length)throw Error('请先载入字幕，或使用生成字幕。');return{kind:'subtitle',itemId:item.id,name:item.name,title:track.name,sourceIndex:index,cues:track.cues.map(c=>({...c})),parts:track.cues.map(c=>c.text),headings:[]};}
+ const all=$('#translation-scope').value==='all',parts=[],headings=[],headingUi=[],pages=[],pageRatios={};
+ if(['DOCX','EPUB'].includes(item.ext)&&!Object.keys(item.chapterTexts||{}).length){const source=await native('translationDocument',{id:item.id}),indices=source.parts.map((_,n)=>n).filter(n=>all||source.sections[n]===(item.ext==='DOCX'?0:state.chapter));if(!indices.length)throw Error('没有可翻译的文字。扫描版 PDF 需要先进行 OCR。');return{kind:'document',itemId:item.id,name:item.name,title:all?'整份文档':state.book?.chapters[state.chapter]?.title||item.name,titleIsUi:all,parts:indices.map(n=>source.parts[n]),originalParts:indices.map(n=>source.displayParts[n]),headings:indices.map(n=>state.book?.chapters[source.sections[n]]?.title||item.name),headingUi:indices.map(()=>false),format:source.format,signature:source.signature,indices,marked:true};}
+ function add(text,title,isUi=false,page=0){for(const chunk of splitTranslationLocal(text)){parts.push(chunk);headings.push(title);headingUi.push(isUi);pages.push(page);}}
+ if(state.book){for(const [index,chapter]of state.book.chapters.entries())if(all||index===state.chapter)add(chapter.text,chapter.title,!!chapter.generatedTitle);}
+ else if(pdfState){const session=pdfState,scroll=$('.pdf-scroll');let pageNumber=1;for(const wrapper of scroll.querySelectorAll('.pdf-page'))if(wrapper.offsetTop+wrapper.offsetHeight>scroll.scrollTop+scroll.clientHeight*.25){pageNumber=Number(wrapper.dataset.page);break;}for(let n=all?1:pageNumber;n<=(all?session.doc.numPages:pageNumber);n++){if(pdfState!==session)throw Error('文件已切换。');const page=await session.doc.getPage(n),content=await page.getTextContent(),view=page.getViewport({scale:1});pageRatios[n]=view.height/view.width;let text='';for(const word of content.items)if('str'in word)text+=word.str+(word.hasEOL?'\n':' ');add(text.trim()||' ','第 '+n+' 页',true,n);}}
+ else throw Error('文件文字还未加载完成，请稍后再试。');
+ if(!parts.some(p=>p.trim()))throw Error('没有可翻译的文字。扫描版 PDF 需要先进行 OCR。');return{kind:'document',itemId:item.id,name:item.name,title:all?'整份文档':headings[0],titleIsUi:all||!!headingUi[0],parts,headings,headingUi,pages,pageRatios,format:item.ext.toLowerCase(),rebuilt:['DOCX','EPUB'].includes(item.ext)};
 }
-async function cancelTranslation(){
- const job=translationJob;if(!job)return;translationJob=null;
- try{await native('cancelTranslation',{jobId:job.id});}catch{}
- if(job.generation===translationGeneration&&!translationJob){if($('#translation-status'))$('#translation-status').textContent='翻译已取消';$('#translation-cancel')?.classList.add('hidden');$('.translation-progress')?.classList.add('hidden');}
-}
+async function cancelTranslation(){const job=translationJob;if(!job)return;translationJob=null;try{await native('cancelTranslation',{jobId:job.id});}catch{}if(job.generation===translationGeneration&&!translationJob){$('#translation-status').textContent='已停止，重新开始会复用已完成段落';$('#translation-cancel').classList.add('hidden');$('.translation-progress').classList.add('hidden');$('#translation-start').disabled=false;}}
 async function startTranslation(automatic=false){
- if(!isSmartMode())return;
- const generation=translationGeneration,config=await getAiConfig();if(!config.model){if(!automatic)await showAiSettings();return;}
- const source=await translationSource();if(generation!==translationGeneration)return;
- const attempt=JSON.stringify([config.endpoint,config.model,config.language,source.itemId,source.title,source.parts]);
- if(automatic&&attempt===translationAttempt)return;if(translationJob?.attempt===attempt)return;
- await cancelTranslation();if(generation!==translationGeneration)return;translationAttempt=attempt;
- showTranslationPanel();translationResult=null;$('#translation-export').classList.add('hidden');$('#translation-body').textContent='';$('#translation-status').textContent='正在翻译为 '+config.language+'…';$('#translation-cancel').classList.remove('hidden');$('.translation-progress').classList.remove('hidden');$('.translation-progress span').style.width='0%';
- const job={id:uid(),attempt,generation,source};translationJob=job;
- try{
-   const result=await native('translate',{jobId:job.id,parts:source.parts});if(translationJob!==job||generation!==translationGeneration)return;
-   translationResult={...source,parts:result.parts,originalParts:source.parts,language:config.language};
-   $('#translation-status').innerHTML=`<span>${result.cached?'已读取本地译文':'翻译完成'}</span> · <span>${esc(translationLanguageLabels[config.language]||config.language)}</span> · <span ${source.titleIsUi?'':'data-user-content'}>${esc(source.title)}</span>`;
-   renderTranslationResult();applyTranslatedSubtitles();$('#translation-export').classList.remove('hidden');
- }catch(error){if(translationJob===job&&generation===translationGeneration){$('#translation-status').textContent=error.message;$('#translation-body').innerHTML='<p class="translation-empty">可检查 API 设置后重新开始。</p>';}}
- finally{if(translationJob===job){translationJob=null;$('#translation-cancel').classList.add('hidden');$('.translation-progress').classList.add('hidden');}}
+ if(automatic&&translationResult?.complete&&translationResult.itemId===state.viewer?.id)return;
+ if(!isSmartMode()||translationPreparing)return;const generation=translationGeneration,config=await getAiConfig();if(!config.model){if(!automatic)await showAiSettings();return;}
+ const language=$('#translation-language').value||config.language;translationPreparing=true;$('#translation-start').disabled=true;let source;
+ try{source=await translationSource();}finally{if(generation===translationGeneration){translationPreparing=false;$('#translation-start').disabled=false;}}
+ if(generation!==translationGeneration)return;const attempt=JSON.stringify([config.endpoint,config.model,language,source.itemId,source.title,source.parts]);if(automatic&&attempt===translationAttempt||translationJob?.attempt===attempt)return;
+ await cancelTranslation();if(generation!==translationGeneration)return;translationAttempt=attempt;showTranslationPanel();$('#translation-model').textContent=config.model;
+ translationResult={...source,originalParts:source.originalParts||source.parts,parts:Array(source.parts.length).fill(null),language,complete:false};renderTranslationResult();$('#translation-export').classList.add('hidden');$('#translation-status').textContent='正在翻译…';$('#translation-cancel').classList.remove('hidden');$('#translation-start').disabled=true;$('.translation-progress').classList.remove('hidden');$('.translation-progress span').style.width='0%';
+ const job={id:uid(),attempt,generation,source,started:performance.now()};translationJob=job;
+ try{const result=await native('translate',{jobId:job.id,parts:source.parts,language,fast:$('#translation-speed')?.value!=='standard'});if(translationJob!==job||generation!==translationGeneration)return;translationResult.parts=result.parts;translationResult.complete=true;$('#translation-status').innerHTML=`<span>${result.cached?'已读取本地译文':'翻译完成'}</span> · <span>${esc(translationLanguageLabels[language]||language)}</span> · <span data-user-content>${((performance.now()-job.started)/1000).toFixed(1)} s</span>`;renderTranslationResult();applyTranslatedSubtitles();$('#translation-export').classList.remove('hidden');if(typeof persistReadingTranslation==='function')await persistReadingTranslation();}
+ catch(error){if(translationJob===job&&generation===translationGeneration){$('#translation-status').textContent=I18n.text(error.message);renderTranslationResult();}}
+ finally{if(translationJob===job){translationJob=null;$('#translation-cancel').classList.add('hidden');$('.translation-progress').classList.add('hidden');$('#translation-start').disabled=false;}}
 }
 function renderTranslationResult(){
- const result=translationResult;if(!result)return;const bilingual=$('#translation-bilingual').checked;let heading='';
- const limit=result.displayLimit||200;
- $('#translation-body').innerHTML=result.parts.slice(0,limit).map((text,n)=>{let title='';if(result.headings[n]&&result.headings[n]!==heading){heading=result.headings[n];title=`<h3 ${result.headingUi?.[n]?'data-ui-content':''}>${esc(heading)}</h3>`;}return`${title}<section>${bilingual?`<div class="translation-original">${esc(result.originalParts[n])}</div>`:''}<div class="translation-text">${esc(text)}</div></section>`;}).join('')+(result.parts.length>limit?'<button class="button secondary" data-more-translation>显示更多译文</button>':'');
+ const result=translationResult;if(!result)return;const bilingual=$('#translation-bilingual').checked,body=$('#translation-body'),scroll=body.scrollTop,limit=result.displayLimit||160;let heading='',groupOpen=false;
+ let html=result.parts.slice(0,limit).map((value,n)=>{let title='';if(!groupOpen||result.headings[n]&&result.headings[n]!==heading){heading=result.headings[n]||'';const ratio=result.pageRatios?.[result.pages?.[n]]||1.414;title=(groupOpen?'</article>':'')+`<article class="translation-sheet" style="--sheet-ratio:${ratio}" data-source-page="${result.pages?.[n]||0}">${heading?`<h3 ${result.headingUi?.[n]?'data-ui-content':'data-user-content'}>${esc(heading)}</h3>`:''}`;groupOpen=true;}const text=readableTranslation(value,result.marked);return`${title}<section data-translation-part="${n}" ${text===null?'aria-busy="true"':''}>${bilingual&&result.kind==='subtitle'?`<div class="translation-original" data-user-content>${esc(result.originalParts[n])}</div>`:''}<div class="translation-text ${text===null?'translation-pending':''}" data-user-content>${text===null?'<span></span><span></span>':esc(text)}</div></section>`;}).join('');if(groupOpen)html+='</article>';body.innerHTML=html+(result.parts.length>limit?'<button class="button secondary" data-more-translation>显示更多译文</button>':'');body.scrollTop=scroll;
 }
-function applyTranslatedSubtitles(){
- const result=translationResult;if(!result||result.kind!=='subtitle'||result.itemId!==state.viewer?.id||!$('#video'))return;
- const track={name:(translationLanguageLabels[result.language]||result.language)+' · AI '+($('#translation-bilingual').checked?'双语':'译文'),translated:true,language:result.language,sourceIndex:result.sourceIndex,cues:result.cues.map((c,n)=>({start:c.start,end:c.end,text:($('#translation-bilingual').checked?c.text+'\n':'')+result.parts[n]}))};
- let index=subtitleTracks.findIndex(t=>t.translated&&t.sourceIndex===result.sourceIndex);if(index<0){index=subtitleTracks.length;subtitleTracks.push(track);}else subtitleTracks[index]=track;
- renderSubtitleOptions();$('#subtitle-select').value=String(index);setSubtitle(index);
-}
+function applyTranslatedSubtitles(){const result=translationResult;if(!result?.complete||result.kind!=='subtitle'||result.itemId!==state.viewer?.id||!$('#video'))return;const track={name:(translationLanguageLabels[result.language]||result.language)+' · AI '+($('#translation-bilingual').checked?'双语':'译文'),translated:true,language:result.language,sourceIndex:result.sourceIndex,cues:result.cues.map((c,n)=>({start:c.start,end:c.end,text:($('#translation-bilingual').checked?c.text+'\n':'')+result.parts[n]}))};let index=subtitleTracks.findIndex(t=>t.translated&&t.sourceIndex===result.sourceIndex);if(index<0){index=subtitleTracks.length;subtitleTracks.push(track);}else subtitleTracks[index]=track;renderSubtitleOptions();$('#subtitle-select').value=String(index);setSubtitle(index);}
 function subtitleTimestamp(seconds){const ms=Math.round(seconds*1000);return String(Math.floor(ms/3600000)).padStart(2,'0')+':'+String(Math.floor(ms/60000)%60).padStart(2,'0')+':'+String(Math.floor(ms/1000)%60).padStart(2,'0')+','+String(ms%1000).padStart(3,'0');}
+let translationSyncing=false;
+function syncTranslationScroll(event){if(typeof syncReadingComparison==='function'&&syncReadingComparison(event))return;if(translationSyncing||!viewer.classList.contains('document-translation')||!$('#translation-sync')?.checked||!translationResult)return;const original=$('.pdf-scroll')||$('#reader-scroll'),translated=$('#translation-body'),from=event.target;if(!original||![original,translated].includes(from))return;const to=from===original?translated:original;translationSyncing=true;let target;
+ if(translationResult.format==='pdf'){const selector=from===original?'.pdf-page':'.translation-sheet',nodes=[...from.querySelectorAll(selector)],top=from.getBoundingClientRect().top;let node=nodes.find(n=>n.getBoundingClientRect().bottom>top+30)||nodes.at(-1);if(node){const n=from===original?node.dataset.page:node.dataset.sourcePage,other=to.querySelector(from===original?`[data-source-page="${n}"]`:`[data-page="${n}"]`);if(other){const fraction=(top-node.getBoundingClientRect().top)/Math.max(1,node.getBoundingClientRect().height);target=other.getBoundingClientRect().top-to.getBoundingClientRect().top+to.scrollTop+fraction*other.getBoundingClientRect().height;}}}
+ if(target===undefined)target=from.scrollTop/Math.max(1,from.scrollHeight-from.clientHeight)*Math.max(0,to.scrollHeight-to.clientHeight);to.scrollTop=target;requestAnimationFrame(()=>translationSyncing=false);}
 async function exportTranslation(){
- const result=translationResult;if(!result)return;const bilingual=$('#translation-bilingual').checked;
- const text=result.kind==='subtitle'?result.cues.map((c,n)=>`${n+1}\n${subtitleTimestamp(c.start)} --> ${subtitleTimestamp(c.end)}\n${bilingual?c.text+'\n':''}${result.parts[n]}\n`).join('\n'):result.parts.map((p,n)=>(bilingual?result.originalParts[n]+'\n\n':'')+p).join('\n\n');
- if(await native('exportTranslation',{name:result.name,format:result.kind==='subtitle'?'srt':'txt',text}))toast('译文已导出。');
+ const result=translationResult;if(!result?.complete||result.itemId!==state.viewer?.id)return;const bilingual=$('#translation-bilingual').checked,button=$('#translation-export');button.disabled=true;
+ try{let saved;if(result.kind==='subtitle'){const text=result.cues.map((c,n)=>`${n+1}\n${subtitleTimestamp(c.start)} --> ${subtitleTimestamp(c.end)}\n${bilingual?c.text+'\n':''}${result.parts[n]}\n`).join('\n');saved=await native('saveTranslationArtifact',{id:result.itemId,format:'srt',text});}
+ else if(result.marked)saved=await native('exportTranslationDocument',{id:result.itemId,format:result.format,signature:result.signature,indices:result.indices,parts:result.parts,bilingual});
+ else if(result.format==='pdf')saved=await exportTranslationPdf(result,bilingual);
+ else if(result.rebuilt){const text=result.parts.map((p,n)=>(bilingual?result.originalParts[n]+'\n\n':'')+p).join('\n\n');saved=(await native('exportEditedAsset',{id:result.itemId,format:result.format,text})).saved;}
+ else{let text=result.parts.map((p,n)=>(bilingual?result.originalParts[n]+'\n\n':'')+p).join('\n\n'),format=['txt','md','markdown','log'].includes(result.format)?result.format:'html';if(format==='html'){text='<!doctype html><html><meta charset="utf-8"><title>'+esc(result.name)+'</title><style>body{font:16px/1.8 sans-serif;margin:3em;}article{display:grid;grid-template-columns:'+(bilingual?'1fr 1fr':'1fr')+';gap:2em;margin:2em 0;}p{white-space:pre-wrap;overflow-wrap:anywhere;}</style>'+result.parts.map((p,n)=>'<article>'+(bilingual?'<p>'+esc(result.originalParts[n])+'</p>':'')+'<p>'+esc(p)+'</p></article>').join('')+'</html>';}saved=await native('saveTranslationArtifact',{id:result.itemId,format,text});}if(saved)toast('译文已导出。');
+ }finally{button.disabled=false;}
 }
-window.chrome?.webview?.addEventListener('message',e=>{if(e.data.eventName!=='translationProgress'||e.data.data.jobId!==translationJob?.id)return;const progress=e.data.data;$('#translation-status').textContent=`正在翻译 ${progress.completed} / ${progress.total}`;$('.translation-progress span').style.width=(100*progress.completed/progress.total)+'%';});
-document.addEventListener('click',e=>{if(e.target.closest('[data-ai-settings]'))showAiSettings().catch(fail);if(e.target.closest('[data-close-translation]'))hideTranslationPanel();if(e.target.closest('[data-more-translation]')&&translationResult){translationResult.displayLimit=(translationResult.displayLimit||200)+200;renderTranslationResult();}});
+window.chrome?.webview?.addEventListener('message',event=>{const data=event.data.data;if(data?.jobId!==translationJob?.id)return;if(event.data.eventName==='translationProgress'){$('#translation-status').textContent=I18n.text('正在翻译')+' '+data.completed+' / '+data.total;$('.translation-progress span').style.width=100*data.completed/data.total+'%';}else if(event.data.eventName==='translationBatch'&&translationResult){data.parts.forEach((p,n)=>translationResult.parts[data.start+n]=p);clearTimeout(translationRenderTimer);translationRenderTimer=setTimeout(renderTranslationResult,120);}});
+document.addEventListener('click',event=>{if(event.target.closest('[data-ai-settings]'))showAiSettings().catch(fail);if(event.target.closest('[data-close-translation]'))hideTranslationPanel();if(event.target.closest('[data-more-translation]')&&translationResult){translationResult.displayLimit=(translationResult.displayLimit||160)+160;renderTranslationResult();}});
 $('#notes-button').addEventListener('click',()=>{if(!$('#notes-panel').classList.contains('hidden'))hideTranslationPanel();});

@@ -43,13 +43,14 @@ namespace kok {
         }
         public static string OrganizeFingerprint(Entry entry,bool content) {
             var info=new FileInfo(entry.path);if(!info.Exists)throw new FileNotFoundException("找不到待整理文件，请重新扫描。");
-            using(var sha=SHA256.Create())return String.Concat(sha.ComputeHash(Encoding.UTF8.GetBytes(entry.path+"|"+info.Length+"|"+info.LastWriteTimeUtc.Ticks+"|"+content)).Select(b=>b.ToString("x2")));
+            using(var sha=SHA256.Create())return String.Concat(sha.ComputeHash(Encoding.UTF8.GetBytes(entry.path+"|"+info.Length+"|"+info.LastWriteTimeUtc.Ticks+"|"+content+"|"+(entry.kind=="music"?Json.Serialize(new{audio=entry.audio,artist=entry.artist,album=entry.album}):""))).Select(b=>b.ToString("x2")));
         }
         public List<OrganizeInput> OrganizeInputs(List<string> ids,bool content) {
             if(ids==null||ids.Count==0||ids.Count>50||ids.Distinct().Count()!=ids.Count)throw new InvalidDataException("每次请选择 1 至 50 个文件。");
             var result=new List<OrganizeInput>();
             foreach(var id in ids){Entry item=Find(id);if(item==null)throw new FileNotFoundException("找不到待整理文件，请重新扫描。");
                 string excerpt="";
+                if(item.kind=="music")excerpt=Json.Serialize(new{title=item.audio==null?item.name:item.audio.title,artist=item.artist,album=item.album,genre=item.audio==null?"":item.audio.genre,category=item.audio==null?"music":item.audio.category,duration=item.audio==null?0:item.audio.duration,source=item.audio==null?"":item.audio.source});
                 if(content&&new[]{"TXT","MD","MARKDOWN","CSV","LOG","JSON","DOCX","EPUB"}.Contains(item.ext)&&new FileInfo(item.path).Length<=2*1024*1024){try{excerpt=String.Join("\n",ReadBook(item).chapters.Select(x=>x.text));if(excerpt.Length>1200)excerpt=excerpt.Substring(0,1200);if(excerpt.Length>0&&Char.IsHighSurrogate(excerpt[excerpt.Length-1]))excerpt=excerpt.Substring(0,excerpt.Length-1);}catch{}}
                 result.Add(new OrganizeInput{id=id,name=item.name,kind=item.kind,format=item.ext,folder=new DirectoryInfo(Path.GetDirectoryName(item.path)).Name,bytes=new FileInfo(item.path).Length,excerpt=excerpt,fingerprint=OrganizeFingerprint(item,content)});
             }return result;

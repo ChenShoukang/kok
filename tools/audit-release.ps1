@@ -6,7 +6,7 @@ $count=0
 function Inspect-PublicFile([string]$name,[byte[]]$bytes){
     $script:count++
     $relative=$name.Replace('\','/')
-    if($relative -match '(^|/)(data|private-vault|test-output|node_modules|\.git)/|(^|/)(ai-settings|library|vault-info)\.json(?:\.|$)|\.(?:vault|sealed|kokvault|dmp|log)$|(^|/)\.env(?:\.|$)|kok\.Tests\.exe$|ffmpeg(?:\.exe)?$'){$script:issues.Add($relative+' [private or development file]')}
+    if($relative -match '(^|/)(data|private-vault|test-output|node_modules|\.git|speech-components|speech-work)/|(^|/)(ai-settings|speech-settings|library|vault-info)\.json(?:\.|$)|\.(?:vault|sealed|kokvault|dmp|log)$|(^|/)\.env(?:\.|$)|kok\.[^/]*Tests\.exe$|ffmpeg(?:\.exe)?$|(^|/)whisper-cli\.exe$|(^|/)ggml-[^/]+\.bin$'){$script:issues.Add($relative+' [private or development file]')}
     $content=[Text.Encoding]::UTF8.GetString($bytes)
     if($content -match '(?<![A-Za-z0-9])sk-(?:proj-|or-v1-)?[A-Za-z0-9_-]{24,}|gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,}|-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----|"protectedKey"\s*:\s*"[A-Za-z0-9+/=]{40,}"'){$script:issues.Add($relative+' [credential pattern]')}
 }
