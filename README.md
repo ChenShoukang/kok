@@ -2,9 +2,9 @@
 
 **视频、照片、音乐、文档、电子书，一处收藏。** 轻量 Windows 桌面软件，支持离线使用、可选 AI 和密码保护的私密文件夹。
 
-[下载 v0.6.2 预览版](https://github.com/ChenShoukang/kok/releases/tag/v0.6.2) · [English](README.en.md) · [格式兼容性](docs/FORMATS.md) · [更新记录](CHANGELOG.md)
+[下载 v0.6.2-r2 预览版](https://github.com/ChenShoukang/kok/releases/tag/v0.6.2-r2) · [English](README.en.md) · [格式兼容性](docs/FORMATS.md) · [更新记录](CHANGELOG.md)
 
-**v0.6.2 石墨预览版。** 默认得意黑，新增宽侧栏与自适应布局，统一媒体工具栏；包含本地笔记与知识图谱、文档创建和自动保存。[版本说明](docs/GRAPHITE_0.6.2.md)。
+**v0.6.2-r2 石墨预览版。** 默认得意黑，统一配色与动画；修复退出保存失败时的处理，保留笔记、知识图谱、文档创建与自动保存。[版本说明](docs/GRAPHITE_0.6.2.md)。
 
 ## 开始使用
 
@@ -39,7 +39,7 @@
 <details>
 <summary>查看实际界面</summary>
 
-![kok v0.4.1 预览版实际界面](docs/screenshots/overview-041-dark.png)
+![kok v0.6.2 石墨预览版实际界面，使用内置示例](docs/screenshots/overview-062-dark.jpg)
 
 </details>
 

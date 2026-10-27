@@ -1,0 +1,46 @@
+/* Canonical palette and material tokens. Layout files consume these values.
+   Custom colors are the only palette values written inline by appearance.js. */
+body[data-theme][data-app-mode]{
+ --ui-font:var(--user-font);
+ --num-font:'Bahnschrift','Segoe UI Variable Text','Segoe UI',sans-serif;
+ --g-ease:cubic-bezier(.22,1,.36,1);
+
+ --kok-bg-ink:var(--ink);--glass:#F7F9FBe6;--glass-line:#FFFFFFd9;--ambient:none;--kok-blur:28px;
+ /* Frost (light) */
+ --bg:#E9EDF2;--surface:#FFFFFF;--ink:#16202B;--muted:#5D6876;--line:#D9DFE7;
+ --green:#2B57F0;--green-dark:#1F45CF;--green-soft:#2B57F01a;--kok-accent-ink:#FFFFFF;
+ --kok-panel:#F7F9FB;--kok-panel-ink:#16202B;--kok-panel-muted:#5D6876;--kok-hover:#16202B0d;--kok-border:#D3D9E1;--kok-solid:#F4F6F9;
+ --g-chrome:linear-gradient(180deg,#F7F9FB,#EBEFF4);--g-chrome-edge:#D3D9E1;
+ --g-key:linear-gradient(180deg,#FFFFFF,#F2F5F8);--g-well:#E1E6ED;--g-faint:#8D97A4;
+ --g-glint:inset 0 1px 0 #FFFFFFF2;--g-lift:0 1px 1px #16202B0f,0 6px 16px -6px #16202B29;--g-lift-hover:0 2px 3px #16202B12,0 16px 30px -10px #16202B3d;
+ --g-press:inset 0 2px 4px #16202B24;--g-well-shadow:inset 0 1px 3px #16202B2e,0 1px 0 #FFFFFF99;--g-led:#2B57F0;--g-glow:none;
+ --covers-1:#3A57C9;--covers-2:#3F7F78;--covers-3:#A07A2E;--covers-4:#7A5AA6;--covers-5:#55606E;
+ font-family:var(--user-font);background:var(--bg);color:var(--ink);
+}
+body[data-theme=dark][data-app-mode]{
+ --bg:#161A20;--surface:#20262E;--ink:#E7ECF2;--muted:#A3ADBA;--line:#2A313B;
+ --green:#8CCBFF;--green-dark:#B5DDFF;--green-soft:#8CCBFF1f;--kok-accent-ink:#0E1A26;
+ --kok-panel:#1D2229;--kok-panel-ink:#E7ECF2;--kok-panel-muted:#A3ADBA;--kok-hover:#FFFFFF0d;--kok-border:#2C333D;--kok-solid:#1B2027;
+ --glass:#20262Ee6;--glass-line:#FFFFFF12;--ambient:none;
+ --g-chrome:linear-gradient(180deg,#20262E,#1A1F26);--g-chrome-edge:#2C333D;
+ --g-key:linear-gradient(180deg,#2A323C,#232A33);--g-well:#12161B;--g-faint:#717C8A;
+ --g-glint:inset 0 1px 0 #FFFFFF12;--g-lift:0 1px 0 #00000066,0 8px 18px -8px #00000099;--g-lift-hover:0 2px 0 #00000066,0 18px 34px -12px #000000bf,0 0 0 1px #8CCBFF2e;
+ --g-press:inset 0 2px 5px #0000008c;--g-well-shadow:inset 0 2px 4px #00000080,0 1px 0 #FFFFFF0d;--g-led:#8CCBFF;--g-glow:0 0 10px #8CCBFF80;
+ --covers-1:#3E5BC4;--covers-2:#3B766F;--covers-3:#9A742B;--covers-4:#74559F;--covers-5:#4E5866;
+ color-scheme:dark;
+}
+/* Viewer chrome follows the active palette. Explicit paper selections remain
+   owned by the reader; only automatic paper follows the interface. */
+body[data-theme][data-app-mode] .viewer{--view-bg:var(--kok-solid);--view-panel:var(--surface);--view-text:var(--kok-panel-ink);--view-muted:var(--kok-panel-muted);--view-control:var(--kok-hover);--view-line:var(--kok-border)}
+body[data-theme][data-app-mode] .viewer:is([data-reading-paper=auto],:not([data-reading-paper])){--read-paper:var(--kok-solid);--read-ink:var(--kok-panel-ink);--read-surround:var(--bg)}
+body[data-theme][data-app-mode] .viewer:is([data-viewer-kind=video],[data-viewer-kind=photo]){
+ --view-bg:#101318;--view-panel:#1B2027;--view-control:#2A323C;--view-text:#E7ECF2;--view-muted:#A3ADBA;--view-line:#FFFFFF14;
+ --ink:var(--view-text);--muted:var(--view-muted);--line:var(--view-line);--green:#8CCBFF;--green-soft:#8CCBFF1f;--kok-accent-ink:#0E1A26;
+ --g-chrome:linear-gradient(180deg,#20262E,#1A1F26);--g-chrome-edge:#2C333D;--g-key:linear-gradient(180deg,#2A323C,#232A33);--g-well:#12161B;
+ --g-glint:inset 0 1px 0 #FFFFFF12;--g-well-shadow:inset 0 2px 4px #00000080,0 1px 0 #FFFFFF0d;--g-led:#8CCBFF;
+}
+body[data-theme][data-app-mode][data-custom-colors=on]{
+ --g-chrome:linear-gradient(180deg,color-mix(in srgb,var(--kok-solid) 97%,white),var(--kok-solid));--g-chrome-edge:var(--kok-border);
+ --g-key:linear-gradient(180deg,color-mix(in srgb,var(--kok-solid) 95%,var(--ink)),var(--kok-solid));
+ --g-well:color-mix(in srgb,var(--bg) 92%,var(--ink));--g-faint:var(--muted);--g-led:var(--green);
+}

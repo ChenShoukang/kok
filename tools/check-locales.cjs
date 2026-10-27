@@ -5,6 +5,9 @@ const patterns=catalog.patterns.map(row=>new RegExp(row.pattern,'s'));
 assert(Object.keys(catalog.messages).length>250);
 for(const [source,target]of Object.entries(catalog.messages)){assert(source.trim());assert.equal(typeof target,'string');assert(target.trim());}
 const missing=[];
+for(const match of fs.readFileSync('src/SessionPersistence.cs','utf8').matchAll(/throw new \w+\("((?:\\.|[^"\\])*)"\s*[,)]/g)){
+ const value=JSON.parse('"'+match[1]+'"');if(/[\u3400-\u9fff]/.test(value)&&!catalog.messages[value]&&!patterns.some(re=>re.test(value)))missing.push('src/SessionPersistence.cs: '+value);
+}
 const knowledgeSource=fs.readFileSync('src/Knowledge.cs','utf8');
 for(const match of knowledgeSource.matchAll(/throw new \w+\("((?:\\.|[^"\\])*)"\s*[,)]/g)){
  const value=JSON.parse('"'+match[1]+'"');if(/[\u3400-\u9fff]/.test(value)&&!catalog.messages[value]&&!patterns.some(re=>re.test(value)))missing.push('src/Knowledge.cs: '+value);

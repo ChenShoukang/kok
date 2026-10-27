@@ -1572,7 +1572,12 @@
     "我的想法": "My thoughts",
     "关联笔记": "Related notes",
     "得意黑（默认，内置）": "Smiley Sans (default, built-in)",
-    "系统字体": "System font"
+    "系统字体": "System font",
+    "窗口暂时无响应，未完成本次保存。": "The window is not responding. This save did not complete.",
+    "记录加密 · 原文件未加密": "Encrypted records · Originals unencrypted",
+    "索引、笔记与封面已加密，原文件未加密。": "Index, notes and covers are encrypted. Original files are not encrypted.",
+    "原件保留 · 标注页按图像导出": "Original kept · Annotated pages export as images",
+    "原件保留 · 简洁排版导出": "Original kept · Export uses simple formatting"
   },
   "patterns": [
     {

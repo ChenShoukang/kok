@@ -110,25 +110,8 @@ function collection(){
  return `<div class="collection-heading">${heading(title,`${items.length} 个文件`)}${viewOptions(state.settings.sort||(route==='recent'?'opened':'added'))}</div>${showTabs?`<div class="library-toolbar"><div class="filter-tabs">${[['all','全部'],...kinds.map(k=>[k[0],k[1]])].map(([key,label])=>`<button class="filter-tab ${state.filter===key?'active':''}" data-filter="${key}">${label}</button>`).join('')}</div></div>`:''}`+(items.length?fileCollection(items):empty(state.query?'没有找到相关文件':route==='favorites'?'还没有收藏':route==='recent'?'还没有打开记录':'这个分类导入你的第一份文件',state.query?'试试文件名、格式或笔记里的关键词。':route==='favorites'?'点击文件上的爱心即可收藏。':'导入文件，或在文件菜单中更改分类。'));
 }
 let pageAnimation=null,pageTransition=null,renderSequence=0;
-const elementMotions=new WeakMap();
-const reducedMotion=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
-function animateIn(element){
- if(!element||reducedMotion())return;
- const dialog=element.tagName==='DIALOG';
- const previous=elementMotions.get(element),interrupted=previous&&previous.playState==='running';
- const current=interrupted?{opacity:getComputedStyle(element).opacity,transform:getComputedStyle(element).transform}:null;
- if(previous)previous.cancel();
- const animation=element.animate([current||{opacity:0,transform:dialog?'translateY(16px) scale(.985)':'translateY(8px)'},{opacity:1,transform:'translateY(0) scale(1)'}],{duration:dialog?460:380,easing:'cubic-bezier(.16,1,.3,1)'});
- elementMotions.set(element,animation);animation.finished.catch(()=>{}).finally(()=>{if(elementMotions.get(element)===animation)elementMotions.delete(element);});return animation;
-}
 async function dismissElement(element){if(!element)return;element.style.pointerEvents='none';await animateOut(element);element.remove();}
-async function animateOut(element){
- if(!element||reducedMotion())return;
- const style=getComputedStyle(element),from={opacity:style.opacity,transform:style.transform};
- elementMotions.get(element)?.cancel();
- const animation=element.animate([from,{opacity:0,transform:element.tagName==='DIALOG'?'translateY(10px) scale(.99)':'translateY(5px)'}],{duration:220,easing:'cubic-bezier(.4,0,1,1)',fill:'forwards'});
- try{await animation.finished;}catch{}finally{animation.cancel();}
-}
+
 function render(){
  renderNav();
  const html=state.isPrivate?privateFolderView():state.route==='downloads'&&isSmartMode()?downloadWorkspace():state.route==='organize'&&!state.query&&typeof renderOrganizer==='function'?renderOrganizer():state.route==='overview'&&!state.query?overview():state.route==='music'&&!state.query&&typeof renderMusic==='function'?renderMusic():collection();

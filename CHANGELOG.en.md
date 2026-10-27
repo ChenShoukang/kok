@@ -2,6 +2,13 @@
 
 [中文](CHANGELOG.md)
 
+## v0.6.2-r2 · Quality revision preview
+
+- Use one default palette/material source, clear custom colors when disabled, and retain independent reading paper and fonts. Reduce Graphite force overrides from 30 to 4, reserved for interaction and reduced motion.
+- Use one surface-animation entry point; settle active motion when reduced motion is enabled, the page is hidden or native dragging/resizing begins. Prevent delayed loading from replaying a finished entrance.
+- Bound an unresponsive renderer snapshot to five seconds. Failed exit saves default to keeping the window and edits open, allowing a retry after recovery. Clarify private-folder encryption and editor export scope; retain bundled fonts inside the private folder.
+- Pass 132 native checks and seven isolated silent desktop suites, including actual native timeout/default No/text preservation/retry. The application remains v0.6.2 with a separate revision release tag.
+
 ## v0.6.2 · Graphite preview
 
 - Graphite/frost surfaces, labelled/responsive sidebar, typographic covers and records. Restore bundled Smiley Sans as default and fix overrides that prevented font switching.

@@ -86,7 +86,10 @@ namespace kok {
             CancelCreativeJobs();if(musicLookupCancellation!=null)musicLookupCancellation.Cancel();
             try {
                 await SaveCurrentSession();
-            }catch(Exception ex){MessageBox.Show(this,L("退出前保存失败："+ex.Message+"\n此前自动保存的资料仍然保留。"),L("kok · 保存提示"));}
+            }catch(Exception ex){
+                string message=L("退出前保存失败："+ex.Message+"\n此前自动保存的资料仍然保留。")+"\n\n"+L("仍要关闭这个窗口吗？未保存的修改会丢失。");
+                if(MessageBox.Show(this,message,L("kok · 保存提示"),MessageBoxButtons.YesNo,MessageBoxIcon.Warning,MessageBoxDefaultButton.Button2)!=DialogResult.Yes){closingPending=false;folderTimer.Start();return;}
+            }
             ClosePreviewWindows();closeReady=true;Close();
         }
         async Task Init() {

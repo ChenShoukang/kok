@@ -7,6 +7,9 @@ if (-not $env:GITHUB_TOKEN) { throw 'GITHUB_TOKEN is required inside GitHub Acti
 $headers = @{ Authorization = 'Bearer ' + $env:GITHUB_TOKEN; Accept = 'application/vnd.github+json'; 'X-GitHub-Api-Version' = '2022-11-28' }
 $version = $package.version
 $tag = 'v' + $version
+$revision = if($package.release -and $package.release.revision){[int]$package.release.revision}else{1}
+if($revision -lt 1 -or $revision -gt 99){throw 'Release revision must be between 1 and 99.'}
+if($revision -gt 1){$tag += '-r' + $revision}
 $base = 'https://api.github.com/repos/' + $repo
 $existing = $null
 try { $existing = Invoke-RestMethod -Uri ($base + '/releases/tags/' + $tag) -Headers $headers }
@@ -20,7 +23,8 @@ $checksum = (Get-Content -LiteralPath $checksumPath -Raw).Trim() -split '\s+'
 if ($checksum.Count -ne 2 -or $checksum[0] -notmatch '^[0-9a-fA-F]{64}$' -or $checksum[1] -cne $archiveName -or $checksum[0] -ine (Get-FileHash -LiteralPath $archivePath -Algorithm SHA256).Hash) { throw 'Release checksum verification failed.' }
 $notes = Get-Content -LiteralPath (Join-Path $PSScriptRoot '..\docs\RELEASE_NOTES.md') -Raw -Encoding UTF8
 
-$body = @{ tag_name = $tag; target_commitish = $env:GITHUB_SHA; name = 'kok ' + $version + ' Preview'; body = $notes; draft = $true; prerelease = $true } | ConvertTo-Json
+$title = 'kok ' + $version + ' Preview' + $(if($revision -gt 1){' (Revision '+$revision+')'})
+$body = @{ tag_name = $tag; target_commitish = $env:GITHUB_SHA; name = $title; body = $notes; draft = $true; prerelease = $true } | ConvertTo-Json
 $release = Invoke-RestMethod -Method Post -Uri ($base + '/releases') -Headers $headers -ContentType 'application/json; charset=utf-8' -Body ([Text.Encoding]::UTF8.GetBytes($body))
 $upload = $release.upload_url -replace '\{.*$', ''
 foreach ($name in @("kok-$version-win-x64.zip", "kok-$version-win-x64.zip.sha256")) {

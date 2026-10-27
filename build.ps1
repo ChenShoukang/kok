@@ -76,6 +76,7 @@ if ($Test) {
     $testArgs += Join-Path $root 'tests\Preview041Tests.cs'
     $testArgs += Join-Path $root 'tests\DocumentTests.cs'
     $testArgs += Join-Path $root 'tests\KnowledgeTests.cs'
+    $testArgs += Join-Path $root 'tests\SessionPersistenceTests.cs'
     & $compiler $testArgs
     if ($LASTEXITCODE -ne 0) { throw 'Test compilation failed.' }
     & $testExe

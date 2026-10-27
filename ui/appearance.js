@@ -7,13 +7,7 @@ function blendColor(foreground,background,alpha){const a=colorChannels(foregroun
 function colorIsDark(hex){const rgb=colorChannels(hex).map(v=>{v/=255;return v<=.04045?v/12.92:((v+.055)/1.055)**2.4;});return .2126*rgb[0]+.7152*rgb[1]+.0722*rgb[2]<.18;}
 function applyCustomColors(){
  const body=document.body;for(const name of appearanceVariables)body.style.removeProperty(name);
- if(!state.settings.customColorsEnabled){
-   const dark=body.dataset.theme==='dark';
-   // Graphite (dark) and frost (light): the default material palettes.
-   const neutral=dark?{'--bg':'#161A20','--surface':'#20262E','--ink':'#E7ECF2','--muted':'#A3ADBA','--line':'#2A313B','--green':'#8CCBFF','--green-dark':'#B5DDFF','--green-soft':'#8CCBFF1f','--glass':'#20262Ee6','--glass-line':'#FFFFFF12','--kok-panel':'#1D2229','--kok-panel-ink':'#E7ECF2','--kok-panel-muted':'#A3ADBA','--kok-hover':'#FFFFFF0d','--kok-border':'#2C333D','--kok-solid':'#1B2027','--kok-accent-ink':'#0E1A26','--kok-bg-ink':'#E7ECF2'}:{'--bg':'#E9EDF2','--surface':'#FFFFFF','--ink':'#16202B','--muted':'#5D6876','--line':'#D9DFE7','--green':'#2B57F0','--green-dark':'#1F45CF','--green-soft':'#2B57F01a','--glass':'#F7F9FBe6','--glass-line':'#FFFFFFd9','--kok-panel':'#F7F9FB','--kok-panel-ink':'#16202B','--kok-panel-muted':'#5D6876','--kok-hover':'#16202B0d','--kok-border':'#D3D9E1','--kok-solid':'#F4F6F9','--kok-accent-ink':'#FFFFFF','--kok-bg-ink':'#16202B'};
-   for(const [key,value]of Object.entries({...neutral,'--ambient':'none','--kok-blur':'28px'}))body.style.setProperty(key,value);
-   delete body.dataset.customColors;return;
- }
+ if(!state.settings.customColorsEnabled){delete body.dataset.customColors;return;}
  const dark=body.dataset.theme==='dark',prefix=dark?'customDark':'customLight';
  const background=colorHex(state.settings[prefix+'Bg'])||appearanceDefaults[prefix+'Bg'];
  const tint=colorHex(state.settings[prefix+'Glass'])||appearanceDefaults[prefix+'Glass'];

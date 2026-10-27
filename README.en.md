@@ -2,9 +2,9 @@
 
 **Videos, photos, music, documents and books, together.** A lightweight Windows desktop app with offline essentials, optional AI and a password-protected private folder.
 
-[Download v0.6.2 preview](https://github.com/ChenShoukang/kok/releases/tag/v0.6.2) · [中文](README.md) · [Supported formats](docs/FORMATS.en.md) · [Changelog](CHANGELOG.en.md)
+[Download v0.6.2-r2 preview](https://github.com/ChenShoukang/kok/releases/tag/v0.6.2-r2) · [中文](README.md) · [Supported formats](docs/FORMATS.en.md) · [Changelog](CHANGELOG.en.md)
 
-**v0.6.2 Graphite preview.** Default Smiley Sans, labelled/responsive sidebar and coherent media controls; includes local notes, knowledge graphs and new documents with auto-save. [Release details](docs/GRAPHITE_0.6.2.en.md).
+**v0.6.2-r2 Graphite preview.** Default Smiley Sans, unified palettes and motion, and safer handling of failed saves on exit; includes notes, knowledge graphs and new documents with auto-save. [Release details](docs/GRAPHITE_0.6.2.en.md).
 
 ## Get started
 
@@ -39,7 +39,7 @@ Requires **Windows 10 / 11 x64, .NET Framework 4.8 and [WebView2 Runtime](https:
 <details>
 <summary>View the actual interface</summary>
 
-![Actual kok v0.4.1 preview](docs/screenshots/overview-041-light.png)
+![Actual kok v0.6.2 Graphite preview using bundled samples](docs/screenshots/overview-062-en.jpg)
 
 </details>
 
