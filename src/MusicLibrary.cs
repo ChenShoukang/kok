@@ -74,7 +74,7 @@ namespace kok {
             string query="recording:"+Quote(title);if(!String.IsNullOrWhiteSpace(artist)&&artist!="本地音乐")query+=" AND artist:"+Quote(artist);
             await throttle.WaitAsync(token);try{var delay=TimeSpan.FromSeconds(1.1)-(DateTime.UtcNow-lastRequest);if(delay>TimeSpan.Zero)await Task.Delay(delay,token);lastRequest=DateTime.UtcNow;
                 using(var handler=handlerFactory==null?new HttpClientHandler{AllowAutoRedirect=false}:handlerFactory())using(var client=new HttpClient(handler))using(var request=new HttpRequestMessage(HttpMethod.Get,"https://musicbrainz.org/ws/2/recording/?fmt=json&limit=6&query="+Uri.EscapeDataString(query))){
-                    client.Timeout=TimeSpan.FromSeconds(20);request.Headers.TryAddWithoutValidation("User-Agent","kok/0.5.1 (https://github.com/ChenShoukang/kok)");
+                    client.Timeout=TimeSpan.FromSeconds(20);request.Headers.TryAddWithoutValidation("User-Agent","kok/0.6.2 (https://github.com/ChenShoukang/kok)");
                     using(var reply=await client.SendAsync(request,HttpCompletionOption.ResponseHeadersRead,token)){
                         if(!reply.IsSuccessStatusCode)throw new InvalidDataException("音乐目录暂时不可用，请稍后重试。",new HttpRequestException("Catalogue HTTP "+(int)reply.StatusCode));using(var stream=await reply.Content.ReadAsStreamAsync())using(var buffer=new MemoryStream()){
                             byte[] bytes=new byte[8192];int count;while((count=await stream.ReadAsync(bytes,0,bytes.Length,token))>0){if(buffer.Length+count>1024*1024)throw new InvalidDataException("音乐目录返回内容过大。");buffer.Write(bytes,0,count);}return Parse(Encoding.UTF8.GetString(buffer.ToArray()));

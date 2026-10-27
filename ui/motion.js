@@ -1,18 +1,28 @@
 'use strict';
-// Standard critically damped response, sampled for native WAAPI timing.
-// Motion's public spring generator and Fluent 2 informed the timing policy;
-// no animation runtime is bundled.
-const kokSpringEase=(()=>{const settle=1-9*Math.exp(-8),samples=Array.from({length:41},(_,n)=>{const t=n/40;return((1-(1+8*t)*Math.exp(-8*t))/settle).toFixed(5);});const value='linear('+samples.join(',')+')';return CSS.supports('animation-timing-function',value)?value:'cubic-bezier(.2,.8,.2,1)';})();
-const kokMotion={enter:340,panel:260,feedback:200,exit:150,ease:kokSpringEase};
+// Consistent surface timing, continuous interruptions and held exit frames.
+// Dialog text is translated/faded rather than rescaled.
+const kokMotion={enter:230,panel:180,feedback:150,exit:130,ease:'cubic-bezier(.22,1,.36,1)',exitEase:'cubic-bezier(.4,0,1,1)'};
+const dialogBackdrops=new WeakMap();
+function animateDialogBackdrop(element,visible){
+ if(element?.tagName!=='DIALOG'||!element.open)return;
+ const previous=dialogBackdrops.get(element),opacity=previous?getComputedStyle(element,'::backdrop').opacity:visible?0:1;previous?.cancel();
+ if(reducedMotion())return;
+ const animation=element.animate([{opacity},{opacity:visible?1:0}],{pseudoElement:'::backdrop',duration:visible?180:kokMotion.exit,easing:'linear',fill:visible?'backwards':'forwards'});dialogBackdrops.set(element,animation);
+ animation.finished.catch(()=>{}).finally(()=>{if(visible&&dialogBackdrops.get(element)===animation){dialogBackdrops.delete(element);animation.cancel();}});
+}
 animateIn=function(element){
- if(!element||reducedMotion())return;const previous=elementMotions.get(element),interrupted=previous?.playState==='running',computed=interrupted?getComputedStyle(element):null,from=computed?{opacity:computed.opacity,transform:computed.transform}:{opacity:0,transform:element.tagName==='DIALOG'?'translateY(10px) scale(.992)':'translateY(5px)'};previous?.cancel();
- const animation=element.animate([from,{opacity:1,transform:'none'}],{duration:element.tagName==='DIALOG'?kokMotion.enter:kokMotion.panel,easing:kokMotion.ease});elementMotions.set(element,animation);animation.finished.catch(()=>{}).finally(()=>{if(elementMotions.get(element)===animation)elementMotions.delete(element);});return animation;
+ if(!element)return;const previous=elementMotions.get(element),interrupted=previous&&['running','paused'].includes(previous.playState),computed=interrupted?getComputedStyle(element):null,from=computed?{opacity:computed.opacity,transform:computed.transform}:{opacity:0,transform:element.tagName==='DIALOG'?'translateY(10px)':'translateY(5px)'};previous?.cancel();
+ animateDialogBackdrop(element,true);if(reducedMotion())return;
+ const animation=element.animate([from,{opacity:1,transform:'none'}],{duration:element.tagName==='DIALOG'?kokMotion.enter:kokMotion.panel,easing:kokMotion.ease,fill:'both'});elementMotions.set(element,animation);animation.finished.catch(()=>{}).finally(()=>{if(elementMotions.get(element)===animation){elementMotions.delete(element);animation.cancel();}});return animation;
 };
 animateOut=async function(element){
- if(!element||reducedMotion())return;const style=getComputedStyle(element),from={opacity:style.opacity,transform:style.transform};elementMotions.get(element)?.cancel();const animation=element.animate([from,{opacity:0,transform:element.tagName==='DIALOG'?'translateY(6px) scale(.995)':'translateY(3px)'}],{duration:kokMotion.exit,easing:'cubic-bezier(.3,0,.7,1)',fill:'forwards'});elementMotions.set(element,animation);try{await animation.finished;}catch{}finally{if(elementMotions.get(element)===animation)elementMotions.delete(element);animation.cancel();}
+ if(!element)return;const style=getComputedStyle(element),from={opacity:style.opacity,transform:style.transform};elementMotions.get(element)?.cancel();animateDialogBackdrop(element,false);if(reducedMotion())return;
+ const animation=element.animate([from,{opacity:0,transform:element.tagName==='DIALOG'?'translateY(6px)':'translateY(3px)'}],{duration:kokMotion.exit,easing:kokMotion.exitEase,fill:'forwards'});elementMotions.set(element,animation);try{await animation.finished;}catch{}
+ // Hold the invisible exit frame until the caller closes/removes the surface.
+ // An interrupted entrance samples this frame before cancelling it.
 };
-let focusMotionAt=0,previewMoving=false;
-window.chrome?.webview?.addEventListener('message',event=>{if(event.data.eventName!=='workspaceFocus'||reducedMotion()||viewer.classList.contains('opening-preview')||typeof isWindowInteracting==='function'&&isWindowInteracting()||performance.now()-focusMotionAt<250||getSelection()?.toString()||$('#small-dialog').open)return;focusMotionAt=performance.now();const surface=document.body.classList.contains('preview-window')?$('#viewer-content'):$('#main');if(surface?.isConnected){elementMotions.get(surface)?.cancel();const motion=surface.animate([{opacity:.86,transform:'translateY(2px)'},{opacity:1,transform:'none'}],{duration:200,easing:kokMotion.ease});elementMotions.set(surface,motion);motion.finished.catch(()=>{}).finally(()=>{if(elementMotions.get(surface)===motion)elementMotions.delete(surface);});}});
+document.addEventListener('close',event=>{const d=event.target;if(d.tagName!=='DIALOG'||d.open)return;elementMotions.get(d)?.cancel();elementMotions.delete(d);dialogBackdrops.get(d)?.cancel();dialogBackdrops.delete(d);},true);
+let previewMoving=false;
 const nativeBeforeMotion=native;
 native=function(action,args={},objects){
  if(document.body.classList.contains('preview-window')&&['sendPreviewBehind','minimizePreview','closePreview'].includes(action)&&!previewMoving&&!reducedMotion()){

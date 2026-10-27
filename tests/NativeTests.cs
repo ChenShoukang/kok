@@ -101,6 +101,8 @@ class Tests {
             OrganizationTests.Run(Path.Combine(temp,"organization"),Check);
             PrivacyProviderTests.Run(Path.Combine(temp,"privacy-providers"),Check);
             Preview041Tests.Run(Path.Combine(temp,"preview-041"),Check);
+            DocumentTests.Run(Path.Combine(temp,"documents"),Check);
+            KnowledgeTests.Run(Path.Combine(temp,"knowledge"),Check);
             File.WriteAllText(Path.Combine(lib.DataDir,"library.json"),"bad json"); bool rejected=false;try{new Library(lib.DataDir);}catch(InvalidDataException){rejected=true;}
             Check(rejected&&File.ReadAllText(Path.Combine(lib.DataDir,"library.json"))=="bad json","corrupt database preserved and reported");
             Console.WriteLine(count+" tests passed.");return 0;

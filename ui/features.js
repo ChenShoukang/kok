@@ -2,7 +2,7 @@
 // Desktop features share the same local bridge and persistent library as app.js.
 let selectionAnchor=null,pdfState=null,photoEditor=null,subtitleUrl=null,speedTimer=null,videoAudioContext=null;
 let subtitleTracks=[];
-const fontStacks={smiley:"'Smiley Sans','Segoe UI','Microsoft YaHei UI',sans-serif",wenkai:"'LXGW WenKai Lite','KaiTi','SimSun',serif",system:"'Segoe UI','Microsoft YaHei UI',sans-serif",yahei:"'Microsoft YaHei','Segoe UI',sans-serif",song:"'SimSun','Songti SC',serif",kai:"'KaiTi','STKaiti','SimSun',serif"};
+const fontStacks={serif:"'Noto Serif SC','Source Han Serif SC','Source Han Serif','Songti SC','SimSun',serif",smiley:"'Smiley Sans','Segoe UI','Microsoft YaHei UI',sans-serif",wenkai:"'LXGW WenKai Lite','KaiTi','SimSun',serif",system:"'Microsoft YaHei UI','Segoe UI Variable Text','Segoe UI',sans-serif",yahei:"'Microsoft YaHei','Segoe UI',sans-serif",song:"'SimSun','Songti SC',serif",kai:"'KaiTi','STKaiti','SimSun',serif"};
 const bundledFontFamilies={smiley:'Smiley Sans',wenkai:'LXGW WenKai Lite'};
 let fontApplyGeneration=0;
 const uid=()=>crypto.randomUUID().replaceAll('-','');
@@ -18,10 +18,10 @@ async function applyFont(){
  }catch(error){if(generation!==fontApplyGeneration)return;family=fontStacks.system;await setting({fontFamily:'system'});toast('字体无法加载，已恢复系统字体。',true);}
  if(generation!==fontApplyGeneration)return;
  document.documentElement.style.setProperty('--user-font',family||fontStacks.system);
- document.documentElement.style.setProperty('--reading-font',name==='system'?"'Georgia','SimSun',serif":family||fontStacks.system);
+ document.documentElement.style.setProperty('--reading-font',family||fontStacks.system);
 }
 function setupSettings(){
- const row=document.createElement('div');row.className='setting-row';row.innerHTML=`<div>常用字体<small>同时应用于界面与正文阅读</small></div><select id="font-select" aria-label="字体选择">${[['smiley','得意黑（内置默认）'],['wenkai','霞鹜文楷轻便版（内置）'],['system','系统默认'],['yahei','微软雅黑'],['song','宋体'],['kai','楷体'],...(state.fonts||[]).map(f=>[f.id,f.name])].map(([v,l])=>`<option value="${esc(v)}">${esc(l)}</option>`).join('')}</select>`;
+ const row=document.createElement('div');row.className='setting-row';row.innerHTML=`<div>常用字体<small>同时应用于界面与正文阅读</small></div><select id="font-select" aria-label="字体选择">${[['smiley','得意黑（默认，内置）'],['wenkai','霞鹜文楷轻便版（内置）'],['system','系统字体'],['yahei','微软雅黑'],['song','宋体'],['kai','楷体'],...(state.fonts||[]).map(f=>[f.id,f.name])].map(([v,l])=>`<option value="${esc(v)}">${esc(l)}</option>`).join('')}</select>`;
  $('#theme-select').closest('.setting-row').after(row);$('#font-select').value=state.settings.fontFamily||'smiley';
  row.insertAdjacentHTML('afterend',`<div class="setting-row"><div>导入字体<small>本地 TTF / OTF，最多 20 MB</small></div><button class="button secondary" data-import-font>${svg('plus')}导入</button></div>`);
  $('#small-dialog .about-details').insertAdjacentHTML('beforebegin','<div class="setting-row"><div>视频操作<small>快捷键、跳跃距离与双击全屏</small></div><button class="button secondary" data-video-preferences>播放偏好</button></div>');
@@ -127,14 +127,14 @@ async function renderPdf(item){
  const first=await doc.getPage(1),base=first.getViewport({scale:1});if(state.viewer?.id!==token){await task.destroy();return;}
  const scroll=$('.pdf-scroll');scroll.innerHTML='';
  const session=pdfState={doc,itemId:token,rendered:new Set(),inserting:false,observer:null,jobs:new Set(),epoch:0,width:0,aspects:new Map(),resizeTimer:null};
- for(let n=1;n<=doc.numPages;n++){const wrapper=document.createElement('div');wrapper.className='pdf-page';wrapper.dataset.page=n;scroll.append(wrapper);}
+ for(let n=1;n<=doc.numPages;n++){const wrapper=document.createElement('div');wrapper.className='pdf-page';wrapper.dataset.page=n;wrapper.style.setProperty('--pdf-page-ratio',String(base.width/base.height));scroll.append(wrapper);}
  async function draw(wrapper){
-  const n=Number(wrapper.dataset.page),epoch=session.epoch;if(session.rendered.has(n)||pdfState!==session)return;session.rendered.add(n);const job={};session.jobs.add(job);
+  const n=Number(wrapper.dataset.page),epoch=session.epoch;if(session.rendered.has(n)||pdfState!==session||typeof isWindowResizing==='function'&&isWindowResizing())return;session.rendered.add(n);const job={};session.jobs.add(job);
   try{
    const source=await doc.getPage(n);if(pdfState!==session||epoch!==session.epoch)return;
-   const viewport=source.getViewport({scale:session.width/source.getViewport({scale:1}).width});session.aspects.set(n,viewport.height/viewport.width);wrapper.style.height=viewport.height+'px';wrapper.style.setProperty('--total-scale-factor',viewport.scale);wrapper.style.setProperty('--scale-factor',viewport.scale);
-   const canvas=document.createElement('canvas'),density=Math.min(devicePixelRatio,2);canvas.width=Math.floor(viewport.width*density);canvas.height=Math.floor(viewport.height*density);canvas.style.width=viewport.width+'px';canvas.style.height=viewport.height+'px';wrapper.append(canvas);
-   job.render=source.render({canvasContext:canvas.getContext('2d'),viewport,transform:density===1?null:[density,0,0,density,0,0]});await job.render.promise;if(pdfState!==session||epoch!==session.epoch)return;
+   const viewport=source.getViewport({scale:session.width/source.getViewport({scale:1}).width});session.aspects.set(n,viewport.height/viewport.width);wrapper.style.setProperty('--pdf-page-ratio',String(viewport.width/viewport.height));
+   const canvas=document.createElement('canvas'),density=Math.min(devicePixelRatio,2);canvas.width=Math.floor(viewport.width*density);canvas.height=Math.floor(viewport.height*density);canvas.style.width=viewport.width+'px';canvas.style.height=viewport.height+'px';
+   job.render=source.render({canvasContext:canvas.getContext('2d'),viewport,transform:density===1?null:[density,0,0,density,0,0]});await job.render.promise;if(pdfState!==session||epoch!==session.epoch)return;wrapper.replaceChildren(canvas);wrapper.style.setProperty('--pdf-rendered-width',String(viewport.width));wrapper.style.setProperty('--total-scale-factor',viewport.scale);wrapper.style.setProperty('--scale-factor',viewport.scale);
    const content=await source.getTextContent();if(pdfState!==session||epoch!==session.epoch)return;const layer=document.createElement('div');layer.className='textLayer';wrapper.append(layer);
    job.text=new pdfjs.TextLayer({textContentSource:content,container:layer,viewport});await job.text.render();if(pdfState!==session||epoch!==session.epoch)return;
    const marks=document.createElement('div');marks.className='pdf-marks';wrapper.append(marks);layer.addEventListener('mouseup',()=>setTimeout(captureSelection,0));drawPdfMarks(n);
@@ -142,17 +142,18 @@ async function renderPdf(item){
   finally{session.jobs.delete(job);}
  }
  const observer=new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting)draw(entry.target);},{root:scroll,rootMargin:'400px'});session.observer=observer;
+ session.liveResize=()=>{if(pdfState!==session||!scroll.isConnected)return;const css=getComputedStyle(scroll),available=Math.max(120,scroll.clientWidth-parseFloat(css.paddingLeft)-parseFloat(css.paddingRight)),width=Math.min(950,available)*(state.pdfZoom||1);if(scroll.style.getPropertyValue('--pdf-fit-width')!==String(width))scroll.style.setProperty('--pdf-fit-width',String(width));return width;};
  session.relayout=(force=true)=>{
    if(pdfState!==session||!scroll.isConnected)return;
-   const css=getComputedStyle(scroll),available=Math.max(120,scroll.clientWidth-parseFloat(css.paddingLeft)-parseFloat(css.paddingRight));const width=Math.min(950,available)*(state.pdfZoom||1);
+   const width=session.liveResize();if(typeof isWindowResizing==='function'&&isWindowResizing())return;
    if(!force&&Math.abs(width-session.width)<1)return;
    const pages=[...scroll.children],firstPage=pages[0];let anchor=firstPage,offset=0;
    if(session.width){for(const page of pages){if(page.offsetTop-firstPage.offsetTop<=scroll.scrollTop)anchor=page;else break;}offset=(scroll.scrollTop-(anchor.offsetTop-firstPage.offsetTop))/Math.max(1,anchor.offsetHeight);}
    session.epoch++;observer.disconnect();for(const job of session.jobs){job.render?.cancel();job.text?.cancel();}session.rendered.clear();session.width=width;
-   for(const wrapper of pages){const n=Number(wrapper.dataset.page);wrapper.style.width=width+'px';wrapper.style.height=width*(session.aspects.get(n)||base.height/base.width)+'px';wrapper.innerHTML=`<span class="pdf-page-number">${n}</span>`;observer.observe(wrapper);}
+   for(const wrapper of pages){const n=Number(wrapper.dataset.page);wrapper.style.width=width+'px';wrapper.style.height=width*(session.aspects.get(n)||base.height/base.width)+'px';if(!wrapper.querySelector('canvas'))wrapper.innerHTML=`<span class="pdf-page-number">${n}</span>`;observer.observe(wrapper);}
    scroll.scrollTop=session.epoch===1?(item.position||0)*Math.max(0,scroll.scrollHeight-scroll.clientHeight):anchor.offsetTop-firstPage.offsetTop+offset*anchor.offsetHeight;
  };
- const resize=new ResizeObserver(()=>{clearTimeout(session.resizeTimer);session.resizeTimer=setTimeout(()=>session.relayout(false),80);});resize.observe(scroll);
+ const resize=new ResizeObserver(()=>{session.liveResize();clearTimeout(session.resizeTimer);if(typeof isWindowResizing==='function'&&isWindowResizing())return;session.resizeTimer=setTimeout(()=>session.relayout(false),100);});resize.observe(scroll);
  session.dispose=()=>{clearTimeout(session.resizeTimer);resize.disconnect();observer.disconnect();session.epoch++;for(const job of session.jobs){job.render?.cancel();job.text?.cancel();}};
  session.relayout();if(typeof initDocumentTranslation==='function')initDocumentTranslation();
  scroll.addEventListener('scroll',()=>{hideSelectionTools();clearTimeout(readerTimer);readerTimer=setTimeout(()=>savePdf().catch(fail),700);if(typeof scheduleAutoTranslation==='function')scheduleAutoTranslation();});

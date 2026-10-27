@@ -1,25 +1,27 @@
-# kok v0.5.1 · 预览版 / Preview
+# kok v0.6.2 · Graphite Preview
 
-视频、照片、音乐、文档与读书，一处管理。
+- **石墨界面**：深色石墨 / 浅色霜面、冰蓝反馈、宽侧栏与小窗口图标栏、标题封面与唱片。
+- **默认得意黑**：内置字体无需下载，保留手动字体、阅读纸色和独立正文设置；修复界面样式覆盖字体的问题。
+- **媒体与动画**：统一视频、照片和音乐播放条；可见提示灯、阅读滑动指示、单套可中断弹窗动画，优化快速移动、缩放和反向操作。
+- **笔记与文档**：本地知识图谱、双向链接、反向链接、标签、大纲、待办和模板；新建 Markdown / Word（DOCX）/ TXT、自动保存与冲突恢复。
+- 保留影音编辑、字幕与双语翻译、AI 问答与整理、纯净 / 智能模式及私密文件夹。
 
-- **阅读重做**：真实 EPUB NAV / NCX 与 Word 标题目录、默认收起次要栏、单页 / 自适应双页 / 上下滚动、滚轮翻页、独立正文排版与护眼配色、书签选中反馈、精准标记与选词翻译 / AI 解释。
-- **窗口与界面**：独立多窗口、双击空白退到后面、无边框全屏；统一媒体工具栏、固定收藏及窗口按钮、窄窗命令菜单、同步开窗与快速缩放重排优化。
-- **翻译与字幕**：快速并发、分段缓存、对齐双语和双向滚动，本机保存译文与标记，原格式副本导出；可选本地 Whisper / 独立语音 API 生成字幕及 SRT 导出。
-- **编辑与音乐**：照片调色、自由裁剪和标注；音视频片段与时间线；正文 / PDF 编辑；专辑、歌手和个人音频整理，联网候选匹配与 AI 元数据预览。
-- 保留纯净 / 智能模式、中英文、可选 AI、分类拖入及需密码确认的私密文件夹；内置得意黑和霞鹜文楷轻便版。
+本地通过 127 项原生检查和六组隔离静音桌面检查，并完成脚本、依赖、源码、Git 历史和打包隐私检查。云端 Windows 2022 / 2025 构建结果见 [Actions](https://github.com/ChenShoukang/kok/actions)。
 
-**运行**：下载 kok-0.5.1-win-x64.zip，核对随附 SHA-256，完整解压并运行 kok.exe。需要 Windows 10 / 11 x64、.NET Framework 4.8 与 WebView2。升级前备份旧版 data。软件包未签名，不包含个人资料库、API 配置、私密数据或语音模型。
+**安装**：下载 ZIP 与 SHA-256，完整解压后运行 kok.exe。需要 Windows 10 / 11 x64、.NET Framework 4.8 与 WebView2。升级前备份原 data，软件包未签名，不包含个人资料库、模型配置、密钥或语音模型。
 
-**范围**：媒体解码仍取决于 WebView2；扫描 PDF 需先 OCR。AI 使用所选服务，长内容可能节选；语音识别需额外组件或独立服务。译文批注主要保存在本机，不会自动嵌入所有导出格式。私密文件夹加密索引 / 笔记 / 封面，原文件和既有导出、共享缓存不加密。网站解析受网络、验证、登录与权限影响。
+**范围**：播放受实际编码支持限制；DOCX 编辑重建简洁正文，扫描 PDF 需外部 OCR。语音识别和媒体导出需要按需组件或所选服务；AI 费用由服务商收取。私密文件夹加密索引 / 笔记 / 封面，原文件和既有导出不加密。
 
-[阅读与窗口](https://github.com/ChenShoukang/kok/blob/main/docs/READING_FLOW_0.5.1.md) · [翻译与字幕](https://github.com/ChenShoukang/kok/blob/main/docs/TRANSLATION_CAPTIONS_0.5.1.md) · [编辑与音乐](https://github.com/ChenShoukang/kok/blob/main/docs/EDITING_MUSIC_0.5.1.md)
+[版本说明](https://github.com/ChenShoukang/kok/blob/main/docs/GRAPHITE_0.6.2.md) · [格式](https://github.com/ChenShoukang/kok/blob/main/docs/FORMATS.md)
 
 ## English
 
-This preview adds quiet single/two-page/scroll reading, real contents, wheel paging, eye comfort, independent text fonts, precise marks and selected-text AI actions. Independent native viewers gain coordinated opening, resize scheduling, fixed favorites/window buttons and compact command menus.
+Graphite/frost surfaces with ice-blue feedback, a responsive labelled sidebar and typographic/record covers. Bundled Smiley Sans is the default, with saved font/paper preferences retained. Video/photo/audio chrome, notification indicators, moving reading selection and interruptible motion are unified.
 
-Translation offers fast bounded concurrency, segment caches, aligned paired text, two-way scrolling, saved local results/marks and matching-format copies. Optional local Whisper or a separate timestamped speech API generates captions. Photo/media/document editors, organized music views, matching candidates and AI metadata previews are included.
+Includes local knowledge graphs, note-link completion/backlinks, tags, outline, tasks, templates and managed Markdown/DOCX/TXT creation with auto-save and conflict recovery. Existing editors, bilingual translation, captions, optional AI and the private folder remain available.
 
-Download kok-0.5.1-win-x64.zip, verify SHA-256, extract completely and run kok.exe. Windows 10/11 x64, .NET Framework 4.8 and WebView2 are required. Back up existing data before upgrading. The unsigned package excludes personal libraries, API configuration, private data and speech models.
+Validated locally with 127 native checks and six isolated silent desktop suites, plus script, dependency, source/history and package privacy checks. See Actions for the two Windows runner builds.
 
-Playback depends on WebView2 codecs; scanned PDFs need OCR. AI may use excerpts. Speech needs optional components or a separate provider. Comparison marks remain local rather than being embedded in every exported format. The private folder encrypts indexes/notes/covers, not originals, prior exports or shared caches. Website availability depends on network, verification, sign-in and permissions.
+Extract the full ZIP and run kok.exe. Requires Windows 10/11 x64, .NET Framework 4.8 and WebView2. Verify SHA-256 and back up your existing data before upgrading. The unsigned package excludes personal libraries, model configuration, credentials and speech models.
+
+Playback depends on codecs; DOCX editing rebuilds simple body text and scanned PDFs need OCR. Speech/media export needs optional components or a selected provider; provider charges may apply. Private indexes/notes/covers are encrypted, while originals and existing exports are not.

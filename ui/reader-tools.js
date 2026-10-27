@@ -25,14 +25,19 @@ function paragraphSpacing(root){
  const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT),nodes=[];let node;while(node=walker.nextNode())if(/\n{2,}/.test(node.nodeValue))nodes.push(node);
  for(const node of nodes){const fragment=document.createDocumentFragment();for(const part of node.nodeValue.split(/(\n{2,})/)){if(!part)continue;if(/^\n{2,}$/.test(part)){const span=document.createElement('span');span.className='reader-paragraph-gap';span.textContent=part;fragment.append(span);}else fragment.append(document.createTextNode(part));}node.replaceWith(fragment);}
 }
+function setReadingColumnGeometry(el){
+ const count=typeof readingSpreadCount==='function'?readingSpreadCount():1,column=Math.max(160,Math.min(el.clientWidth/count-64,Number(state.settings.readerWidth)||760));
+ for(const [key,value]of [['--reading-column',column+'px'],['--reading-gutter',Math.max(24,(el.clientWidth/count-column)/2)+'px'],['--reading-visible-columns',String(count)]])if(el.style.getPropertyValue(key)!==value)el.style.setProperty(key,value);
+ if(el.dataset.visiblePages!==String(count))el.dataset.visiblePages=String(count);
+}
 function restoreReaderPosition(fraction){
  const el=$('#reader-scroll');if(!el)return;
  if(readerPaged()){
-   const count=typeof readingSpreadCount==='function'?readingSpreadCount():1,column=Math.max(160,Math.min(el.clientWidth/count-64,Number(state.settings.readerWidth)||760));el.style.setProperty('--reading-column',column+'px');el.style.setProperty('--reading-gutter',Math.max(24,(el.clientWidth/count-column)/2)+'px');el.style.setProperty('--reading-visible-columns',String(count));el.dataset.visiblePages=String(count);
+   setReadingColumnGeometry(el);
    let end=el.querySelector(':scope>.reader-page-end');if(!end){end=document.createElement('i');end.className='reader-page-end';end.setAttribute('aria-hidden','true');el.append(end);}end.hidden=true;
    const stride=Math.max(1,el.clientWidth),pages=Math.max(1,Math.ceil((el.scrollWidth-2)/stride));end.style.left=(pages*stride-1)+'px';end.hidden=false;
    const page=Math.max(0,Math.min(pages-1,Math.round((pages-1)*fraction)));el.scrollTo({left:page*stride,top:0,behavior:'instant'});
- }else el.scrollTo({top:Math.max(0,el.scrollHeight-el.clientHeight)*fraction,left:0,behavior:'instant'});el.style.setProperty('--reader-layout-width',el.clientWidth+'px');el.style.setProperty('--reader-layout-height',el.clientHeight+'px');updateReadingPosition();
+ }else{const end=el.querySelector(':scope>.reader-page-end');if(end)end.hidden=true;el.scrollTo({top:Math.max(0,el.scrollHeight-el.clientHeight)*fraction,left:0,behavior:'instant'});}el.style.setProperty('--reader-layout-width',el.clientWidth+'px');el.style.setProperty('--reader-layout-height',el.clientHeight+'px');updateReadingPosition();
 }
 function advanceReadingPage(direction){
  const el=$('#reader-scroll');if(!el)return;

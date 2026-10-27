@@ -1,14 +1,14 @@
-# kok · Your media & reading library
+# kok · Media, reading & linked notes
 
 **Videos, photos, music, documents and books, together.** A lightweight Windows desktop app with offline essentials, optional AI and a password-protected private folder.
 
-[Download v0.5.1 preview](https://github.com/ChenShoukang/kok/releases/tag/v0.5.1) · [中文](README.md) · [Supported formats](docs/FORMATS.en.md) · [Changelog](CHANGELOG.en.md)
+[Download v0.6.2 preview](https://github.com/ChenShoukang/kok/releases/tag/v0.6.2) · [中文](README.md) · [Supported formats](docs/FORMATS.en.md) · [Changelog](CHANGELOG.en.md)
 
-**v0.5.1 preview.** Quiet single/two-page/scroll reading, wheel paging, native windows, saved bilingual translation, captions, editing and music organization. See [reading and windows](docs/READING_FLOW_0.5.1.md), [editing and music](docs/EDITING_MUSIC_0.5.1.md), and [translation and captions](docs/TRANSLATION_CAPTIONS_0.5.1.md).
+**v0.6.2 Graphite preview.** Default Smiley Sans, labelled/responsive sidebar and coherent media controls; includes local notes, knowledge graphs and new documents with auto-save. [Release details](docs/GRAPHITE_0.6.2.en.md).
 
 ## Get started
 
-1. Download `kok-0.5.1-win-x64.zip` from Releases, extract and run `kok.exe`. Keep the accompanying files.
+1. Download `kok-0.6.2-win-x64.zip` from Releases, extract and run `kok.exe`. Keep the accompanying files.
 2. Choose **Pure** or **Smart**; switch later in Settings.
 3. Drop files or folders, choose **Import files**, or explore the original samples.
 
@@ -26,7 +26,8 @@ Requires **Windows 10 / 11 x64, .NET Framework 4.8 and [WebView2 Runtime](https:
 | Video | Borderless fullscreen, resume, 0.5×–3× speed and silence acceleration; matching or manually loaded sidecar subtitles, covers, right-click properties, configurable shortcuts and orientation-aware previews; picture-in-picture when supported by the runtime |
 | Photos | Wheel zoom, drag-to-pan, rotation and slideshows; filters, color adjustments, vignette, freehand crop with eight resize handles, fixed ratios, flip, original comparison, undo / redo and PNG / JPEG copies |
 | Music | Album, artist and personal-audio views; local tags and embedded artwork, manual corrections, online match candidates and bulk AI organization; queues, resume, shuffle and repeat |
-| Documents | PDF zoom, selection, navigation, outline and full-text search; DOCX / text reading, bookmarks and typography; annotations, inserted text and HTML / Markdown exports |
+| Documents | Create Markdown / Word (DOCX) / TXT, source and editing views, preview, auto-save and Ctrl+S; PDF zoom, dark/easy text, outline/search; reading, bookmarks, underlines, highlights and inserted text. See [new documents](docs/DOCUMENTS_0.6.1.md) |
+| Notes | `[[Note links]]` with completion, backlinks, tags, heading outline, checkable tasks and templates; local global/neighborhood graphs with dragging, zoom and filters. See [usage](docs/KNOWLEDGE_0.6.1.en.md) |
 | Books | EPUB contents, TXT sections, chapter filtering, full-text search, bookmarks, scroll / paged layouts, font / line / letter / paragraph spacing, width, focus and resume; existing highlights and thoughts remain available |
 | Editing | Photo text, drawing, arrows, masks and layers; audio/video trimming, splitting, multiple-source timelines and clip captions; visual text editing and DOCX / EPUB copies; PDF merge, reorder, rotation and page annotation. Drafts and exported copies preserve originals |
 | Library | File / folder drops, type detection and duplicate skipping; collections, favorites, recents, search, grid / list and sorting |

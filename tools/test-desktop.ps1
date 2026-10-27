@@ -1,4 +1,4 @@
-﻿param([string[]]$Suites=@('ui','features','translation','i18n','minimal','drop','workspaces','video-layout','refinements','menus-covers','compatibility','organizer','companion','private-space','app-modes','recovery'),[string]$LargeMediaFile,[string]$Executable)
+﻿param([string[]]$Suites=@('ui','features','translation','i18n','minimal','drop','workspaces','video-layout','refinements','menus-covers','compatibility','organizer','companion','private-space','app-modes','recovery'),[string]$LargeMediaFile,[string]$RealFilesFolder,[string]$Executable)
 $ErrorActionPreference='Stop'
 $projectRoot=Split-Path $PSScriptRoot -Parent
 $executable=if($Executable){(Resolve-Path -LiteralPath $Executable).Path}else{Join-Path $projectRoot 'dist\kok\kok.exe'}
@@ -39,6 +39,12 @@ foreach($suite in $Suites){
     if($suite -eq 'selection-motion'){& node (Join-Path $projectRoot 'tests\selection-motion.cjs') --prepare $profile;if($LASTEXITCODE -ne 0){throw 'Selection motion fixture preparation failed.'}}
     if($suite -eq 'reading-renewal'){& node (Join-Path $projectRoot 'tests\reading-renewal.cjs') --prepare $profile;if($LASTEXITCODE -ne 0){throw 'Reading renewal fixture preparation failed.'}}
     if($suite -eq 'reading-flow'){& node (Join-Path $projectRoot 'tests\reading-flow.cjs') --prepare $profile;if($LASTEXITCODE -ne 0){throw 'Reading flow fixture preparation failed.'}}
+    if($suite -eq 'window-drag'){& node (Join-Path $projectRoot 'tests\window-drag.cjs') --prepare $profile;if($LASTEXITCODE -ne 0){throw 'Window drag fixture preparation failed.'}}
+    if($suite -eq 'calm-motion'){& node (Join-Path $projectRoot 'tests\calm-motion.cjs') --prepare $profile;if($LASTEXITCODE -ne 0){throw 'Calm motion fixture preparation failed.'}}
+    if($suite -eq 'workspace-clarity'){& node (Join-Path $projectRoot 'tests\workspace-clarity.cjs') --prepare $profile;if($LASTEXITCODE -ne 0){throw 'Workspace clarity fixture preparation failed.'}}
+    if($suite -eq 'documents'){& node (Join-Path $projectRoot 'tests\documents.cjs') --prepare $profile;if($LASTEXITCODE -ne 0){throw 'Document fixture preparation failed.'}}
+    if($suite -eq 'knowledge'){& node (Join-Path $projectRoot 'tests\knowledge.cjs') --prepare $profile;if($LASTEXITCODE -ne 0){throw 'Knowledge fixture preparation failed.'}}
+    if($suite -eq 'graphite'){& node (Join-Path $projectRoot 'tests\graphite.cjs') --prepare $profile;if($LASTEXITCODE -ne 0){throw 'Graphite fixture preparation failed.'}}
     $process=Start-Process -FilePath $executable -ArgumentList @('--debug','--test-silent','--data-dir',('"'+$profile+'"')) -PassThru -WindowStyle Hidden
     $env:KOK_TEST_NATIVE_PID=[string]$process.Id
     $env:KOK_TEST_EXECUTABLE=$executable
@@ -48,7 +54,7 @@ foreach($suite in $Suites){
         for($attempt=0;$attempt -lt 80;$attempt++){try{Invoke-RestMethod -Uri 'http://127.0.0.1:9225/json/version' -TimeoutSec 1 | Out-Null;$ready=$true;break}catch{Start-Sleep -Milliseconds 250}}
         if(-not $ready){throw 'Silent test window did not start'}
         Push-Location $projectRoot
-        try{if($suite -eq 'large-media'){if(-not $LargeMediaFile){throw 'Large-media checks require -LargeMediaFile.'};& node ('tests/'+$suite+'.cjs') $LargeMediaFile}else{& node ('tests/'+$suite+'.cjs')};$code=$LASTEXITCODE}finally{Pop-Location}
+        try{if($suite -eq 'large-media'){if(-not $LargeMediaFile){throw 'Large-media checks require -LargeMediaFile.'};& node ('tests/'+$suite+'.cjs') $LargeMediaFile}elseif($suite -eq 'real-files'){if(-not $RealFilesFolder){throw 'Real-file checks require -RealFilesFolder.'};& node ('tests/'+$suite+'.cjs') $RealFilesFolder}else{& node ('tests/'+$suite+'.cjs')};$code=$LASTEXITCODE}finally{Pop-Location}
         $results+=@{suite=$suite;passed=($code -eq 0)}
         $results|ConvertTo-Json | Set-Content -LiteralPath (Join-Path $auditRoot 'results.json') -Encoding utf8
         if($code -ne 0){throw ('Desktop test failed: '+$suite)}

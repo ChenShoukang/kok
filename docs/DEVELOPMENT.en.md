@@ -47,11 +47,15 @@ npm run test:i18n
 
 `test:large-media` accepts a local video path for byte-range and seeking checks without uploading it. Translation tests use a local mock service.
 
+## Targeted notes and graph check
+
+`powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-desktop.ps1 -Suites knowledge` uses isolated ordinary/private libraries to verify actual saves, completion/backlinks, tasks, templates, graph filters, dragging/zooming, empty/compact views, native resize bursts, reduced motion, a 500-node Worker and idle shutdown. External requests are blocked and real API configuration is never used. `-Suites documents` covers saves, close flushing and conflict recovery.
+
 ## Packaging and publishing
 
 `package.ps1` creates `dist/kok-<version>-win-x64.zip` and its SHA-256 file from an explicit allowlist and current resource folders, excluding profiles, credentials, test binaries and temporary data.
 
-v0.4.1 is distributed as a preview with release.publish enabled in package.json. Uploading main runs both Windows build jobs; successful checks publish the ZIP and checksum through GitHub Actions. For local-only development, disable this flag. After native checks have passed for the same source, package.ps1 -SkipTests rebuilds resources without repeating them; staging and ZIP privacy audits still run.
+v0.6.2 enables `release.publish: true`. A push to main builds and audits on both Windows runners; the release job publishes only after both succeed. `package.ps1 -SkipTests` may repackage already-tested native sources; staging/ZIP privacy audits still run.
 
 Pushes to `main` trigger the [Windows workflow](https://github.com/ChenShoukang/kok/blob/main/.github/workflows/build.yml) on Windows Server 2022 / 2025. Script, dependency, source and complete Git-history checks run before native tests and packaging. Build jobs have read-only repository access; a separate publishing job waits for both environments before using `contents: write` and the built-in `GITHUB_TOKEN`. Future versions default to Preview; existing versions are not silently replaced. Server checks do not replace fresh Windows 10 / 11 desktop verification; see [release verification](TESTING.en.md).
 

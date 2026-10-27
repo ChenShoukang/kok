@@ -43,7 +43,7 @@ window.chrome?.webview?.addEventListener('message',e=>{
   const p=pending.get(m.requestId);if(!p)return;pending.delete(m.requestId);m.error?p.reject(new Error(m.error)):p.resolve(m.result);
 });
 const state={items:[],settings:{},route:'overview',filter:'all',query:'',limit:60,viewer:null,book:null,chapter:0,photoIndex:0,photoList:[],rotation:0,zoom:1,slide:null,queue:[],track:null,shuffle:false,loop:false};
-function toast(message,error=false){const el=document.createElement('div');el.className='toast'+(error?' error':'');el.textContent=message;const stack=$('#toasts');stack.append(el);if(!stack.matches(':popover-open'))stack.showPopover();setTimeout(async()=>{await dismissElement(el);if(!stack.children.length&&stack.matches(':popover-open'))stack.hidePopover();},error?8000:4500);}
+function toast(message,error=false){const el=document.createElement('div');el.className='toast'+(error?' error':'');el.textContent=message;const stack=$('#toasts');stack.append(el);if(typeof CalmMotion!=='undefined')CalmMotion.play(el,[{opacity:0,transform:'translateY(5px)'},{opacity:1,transform:'none'}],{duration:170});if(!stack.matches(':popover-open'))stack.showPopover();setTimeout(async()=>{await dismissElement(el);if(!stack.children.length&&stack.matches(':popover-open'))stack.hidePopover();},error?8000:4500);}
 function fail(error){toast(error.message||String(error),true);}
 const size=n=>n>=1073741824?(n/1073741824).toFixed(1)+' GB':n>=1048576?(n/1048576).toFixed(1)+' MB':Math.max(1,Math.round(n/1024))+' KB';
 const time=s=>{s=Number.isFinite(s)?Math.floor(s):0;return (s>=3600?Math.floor(s/3600)+':':'')+String(Math.floor(s/60)%60).padStart(s>=3600?2:1,'0')+':'+String(s%60).padStart(2,'0');};
@@ -52,7 +52,7 @@ const byId=id=>state.items.find(i=>i.id===id);
 async function refresh(){const db=await native('library');state.items=db.items;state.navigation=db.navigation||null;state.settings=db.settings;state.collections=db.collections||[];state.fonts=db.fonts||[];state.isPrivate=!!db.isPrivate;renderPrivateState();applyAppMode();applyTheme();I18n.applyLanguage(state.settings.uiLanguage||'zh');if(typeof applyFont==='function')await applyFont();renderNav();render();if(typeof scheduleVideoCovers==='function')scheduleVideoCovers();}
 async function patch(item,values){Object.assign(item,values);await native('update',{id:item.id,patch:values});}
 async function setting(values){Object.assign(state.settings,values);await native('settings',values);}
-function applyTheme(){let theme=state.settings.theme||'light';if(theme==='system')theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.body.dataset.theme=theme;}
+function applyTheme(){let theme=state.settings.theme||'dark';if(theme==='system')theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.body.dataset.theme=theme;}
 function renderNav(){
   const navItems=state.navigation?.items||state.items,navCollections=state.navigation?.collections||state.collections||[];
   $('#main-nav').innerHTML=[['overview','全部文件','grid'],...kinds.map(k=>[k[0],k[1],k[0]])].map(([r,l,i])=>`<button class="nav-item ${state.route===r?'active':''}" data-route="${r}" aria-label="${l}">${navigationIcon(i)}<span class="nav-label">${l}</span>${r==='overview'?'':`<span class="count">${navItems.filter(x=>x.kind===r).length||''}</span>`}</button>`).join('');
@@ -152,18 +152,18 @@ async function importItems(action,additionalObjects){
 }
 async function favorite(id){const item=byId(id);if(!item)return;await patch(item,{favorite:!item.favorite});render();if(state.viewer?.id===id)$('#viewer-favorite').classList.toggle('selected',item.favorite);if(state.track?.id===id)$('#track-favorite').classList.toggle('selected',item.favorite);}
 let smallClose=null;
-function showSmall(content){const d=$('#small-dialog');smallClose=null;closeSmall.token=null;elementMotions.get(d)?.cancel();d.classList.remove('is-closing','settings-dialog','appearance-dialog','reading-settings-dialog','music-info-dialog','music-ai-dialog');if(d.open)d.close();d.innerHTML=`<div class="dialog-top"><div></div><button class="icon-button dialog-close" data-close-dialog aria-label="关闭">${svg('close')}</button></div>${content}`;d.showModal();d.scrollTop=0;animateIn(d);}
+function showSmall(content){const d=$('#small-dialog'),wasOpen=d.open,interrupted=elementMotions.get(d)?.playState==='running';smallClose=null;closeSmall.token=null;d.inert=false;d.classList.remove('is-closing','settings-dialog','appearance-dialog','reading-settings-dialog','music-info-dialog','music-ai-dialog');d.innerHTML=`<div class="dialog-top"><div></div><button class="icon-button dialog-close" data-close-dialog aria-label="关闭">${svg('close')}</button></div>${content}`;if(!wasOpen)d.showModal();d.scrollTop=0;if(!wasOpen||interrupted)animateIn(d);else if(typeof CalmMotion!=='undefined')CalmMotion.play(d,[{opacity:.9},{opacity:1}],{duration:120});}
 function closeSmall(){
  const d=$('#small-dialog');if(!d.open)return Promise.resolve();if(smallClose)return smallClose;
- const token={};closeSmall.token=token;d.classList.add('is-closing');
- smallClose=animateOut(d).then(()=>{if(closeSmall.token!==token)return;d.close();d.classList.remove('is-closing');smallClose=null;});return smallClose;
+ const token={};closeSmall.token=token;d.inert=true;d.classList.add('is-closing');
+ smallClose=animateOut(d).then(()=>{if(closeSmall.token!==token)return;d.close();d.inert=false;d.classList.remove('is-closing');smallClose=null;});return smallClose;
 }
 $('#small-dialog').addEventListener('cancel',e=>{e.preventDefault();closeSmall();});
 function fileMenu(id){const i=byId(id);if(!i)return;showSmall(`<h2 data-user-content>${esc(i.name)}</h2><p class="dialog-description">${labels[i.kind]} · ${esc(i.ext)} · ${size(i.size)}</p>${i.tags?.length||i.aiSummary?`<div class="organizer-metadata" data-user-content><div class="organizer-tags">${(i.tags||[]).map(t=>`<span>${esc(t)}</span>`).join('')}</div>${esc(i.aiSummary||'')}</div>`:''}<div class="menu-actions"><button data-edit-organization="${id}">${svg('layers')}编辑分类与标签</button><button data-open="${id}">${svg('external')}在 kok 中打开</button><button data-favorite="${id}">${svg('heart')}${i.favorite?'取消收藏':'加入收藏'}</button><button data-classify="${id}">${svg('layers')}<span>分类归纳</span>${i.collection?`<span data-user-content> · ${esc(i.collection)}</span>`:''}</button>${i.kind==='music'?`<button data-album-edit="${id}">${svg('edit')}编辑专辑和歌手</button>`:''}<button data-native="reveal" data-id="${id}">${svg('folder')}在文件夹中显示</button><button data-native="openExternal" data-id="${id}">${svg('external')}使用系统应用打开</button><button class="danger" data-remove="${id}">${svg('trash')}从资料库移除</button></div><div class="dialog-footnote">移除仅删除资料库记录，原文件会保留。<br>${esc(i.path)}</div>`);}
 async function settings(){
  const diag=await native('diagnostics');
  showSmall(`<h2>设置</h2><div class="setting-row"><div>界面外观</div><select id="theme-select" aria-label="界面外观"><option value="light">浅色</option><option value="dark">深色</option><option value="system">跟随系统</option></select></div><div class="setting-row"><div>资料库备份<small>${state.isPrivate?'导出加密索引与笔记，不包含原文件':'导出索引、进度与笔记，不包含原文件'}</small></div><button class="button secondary" data-action="export">${svg('download')}导出</button></div><div class="setting-row"><div>体验示例<small>加入五类本地示例文件</small></div><button class="button secondary" data-action="importSamples">添加示例</button></div><details class="about-details"><summary>关于 kok</summary><div class="dialog-footnote"><b>kok</b><br>v${esc(diag.version)} · Windows x64 · WebView2 ${esc(diag.engine)}<br>本地保存 · AI 翻译需联网<br><br>资料库位置：<br><code>${esc(diag.dataDir)}</code><br><br>快捷键：Ctrl K 搜索 · Esc 关闭预览<br>照片：← → 切换 · 阅读：← → 切换章节<br>音乐：空格播放 / 暂停 · 视频：可在播放偏好中设置<br><br>兼容性：加密电子书、OCR、Office 原始排版和部分媒体编码需使用相应系统应用。</div></details>`);
- $('#theme-select').value=state.settings.theme||'light';
+ $('#theme-select').value=state.settings.theme||'dark';
  setupCompatibility();
  if(typeof setupSettings==='function')setupSettings();setupAppModeSettings();I18n.setupSettings();animateSettings();
 }
@@ -173,7 +173,7 @@ async function openItem(id,{play=true,keepQueue=false}={}){
  const item=byId(id);if(!item)return;
  if($('#small-dialog').open)await closeSmall();
  await patch(item,{opened:new Date().toISOString()});
- if(viewer.open){await saveViewer();clearViewer();}else {viewer.showModal();animateIn(viewer);}
+ if(viewer.open){await saveViewer();clearViewer();}else {viewer.showModal();$('#viewer-content').tabIndex=-1;$('#viewer-content').focus({preventScroll:true});animateIn(viewer);}
  viewer.dataset.kind=item.kind;state.viewer=item;beginMediaLayout(item);beginFileAssistant(item);if(typeof beginTranslationView==='function')beginTranslationView(item);viewer.classList.remove('notes-open');$('#notes-panel').classList.add('hidden');$('#notes').value=item.notes||'';
  $('#viewer-title').textContent=item.name;$('#viewer-subtitle').textContent=`${labels[item.kind]} · ${item.ext} · ${size(item.size)}`;$('#viewer-icon').innerHTML=svg(item.kind);$('#viewer-favorite').classList.toggle('selected',item.favorite);
  $('#viewer-content').innerHTML='<div class="loading-view"><span class="spinner"></span>正在打开…</div>';
@@ -187,6 +187,7 @@ async function openItem(id,{play=true,keepQueue=false}={}){
 function renderVideo(item){renderVideoWorkspace(item);}
 async function saveVideo(){if(video&&state.viewer&&Number.isFinite(video.duration)&&video.duration>0)await patch(state.viewer,{position:video.currentTime,progress:video.currentTime/video.duration});}
 function renderPhoto(){
+ viewer.classList.remove('photo-editing');
  cleanupWorkspace();const i=state.photoList[state.photoIndex];if(!i)return;state.viewer=i;state.photoPanX=0;state.photoPanY=0;beginMediaLayout(i);
  $('#viewer-title').textContent=i.name;$('#viewer-subtitle').textContent=`照片 · ${i.ext} · ${size(i.size)}`;$('#viewer-favorite').classList.toggle('selected',i.favorite);$('#notes').value=i.notes||'';
  $('#viewer-content').innerHTML=`<div class="media-stage"><div class="photo-image-wrap"><img id="photo-image" src="${media(i)}" alt="${esc(i.name)}"></div><div class="photo-tools"><button class="icon-button" data-photo="prev" title="上一张" aria-label="上一张">${svg('skipBack')}</button><span>${state.photoIndex+1} / ${state.photoList.length}</span><button class="icon-button" data-photo="next" title="下一张" aria-label="下一张">${svg('skipForward')}</button><button class="icon-button" data-photo="out" title="缩小" aria-label="缩小">${svg('zoomOut')}</button><span id="zoom-label">100%</span><button class="icon-button" data-photo="in" title="放大" aria-label="放大">${svg('zoomIn')}</button><button class="icon-button" data-photo="rotate" title="旋转" aria-label="旋转">${svg('rotate')}</button><button class="icon-button" data-photo="slideshow" title="幻灯片播放或暂停" aria-label="幻灯片播放或暂停">${svg(state.slide?'pause':'play')}</button></div></div>`;
@@ -253,7 +254,7 @@ $('#import-top').addEventListener('click',()=>importItems('importFiles').catch(f
 $('#close-viewer').addEventListener('click',()=>closeViewer().catch(fail));viewer.addEventListener('cancel',e=>{e.preventDefault();if(document.fullscreenElement){document.exitFullscreen().catch(fail);return;}if(Date.now()-Number(viewer.dataset.fullscreenExited||0)<300)return;closeViewer().catch(fail);});
 $('#viewer-favorite').addEventListener('click',()=>{if(state.viewer)favorite(state.viewer.id).catch(fail);});
 $('#external-button').addEventListener('click',()=>{if(state.viewer)native('openExternal',{id:state.viewer.id}).catch(fail);});
-$('#notes-button').addEventListener('click',()=>{$('#notes-panel').classList.toggle('hidden');viewer.classList.toggle('notes-open',!$('#notes-panel').classList.contains('hidden'));if(typeof renderAnnotationIndex==='function')renderAnnotationIndex();});$('#save-notes').addEventListener('click',async()=>{try{await saveNotes();toast('笔记已保存。');}catch(e){fail(e);}});
+$('#notes-button').addEventListener('click',()=>{if(typeof CalmMotion!=='undefined'){CalmMotion.toggleNotes();return;}$('#notes-panel').classList.toggle('hidden');viewer.classList.toggle('notes-open',!$('#notes-panel').classList.contains('hidden'));if(typeof renderAnnotationIndex==='function')renderAnnotationIndex();});$('#save-notes').addEventListener('click',async()=>{try{await saveNotes();toast('笔记已保存。');}catch(e){fail(e);}});
 document.addEventListener('click',async e=>{
  const el=e.target.closest('button,[data-route]');if(!el)return;
  try{

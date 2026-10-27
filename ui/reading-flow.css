@@ -20,8 +20,12 @@ body[data-theme] .viewer.book-quiet .viewer-header{height:44px!important;min-hei
 .viewer.book-quiet .viewer-title small,.viewer.book-quiet .viewer-title>span,.viewer.book-quiet .viewer-extra-actions,.viewer.book-quiet .reading-kicker,.viewer.book-quiet .reading-end,.viewer.book-quiet .reading-progress-control,.viewer.book-quiet .reader-tools :is(.paper-options,.font-control,.tool-separator){display:none!important}
 .viewer.book-quiet .reader-body{position:relative}.viewer.book-quiet .reader-tools{justify-content:flex-start;padding:6px 12px!important;min-height:44px!important;backdrop-filter:none!important}.viewer.book-quiet .reader-tools .reading-flow-choices{order:2;margin-right:0;margin-left:8px}.viewer.book-quiet .reader-tools [data-toggle-toc]{order:0}.viewer.book-quiet .reader-tools [data-reader-search-toggle]{order:1}.viewer.book-quiet .reader-tools>*:not([data-toggle-toc]):not([data-reader-search-toggle]):not(.reading-flow-choices){order:3}
 .viewer.book-quiet .reader-tools .toolbar-spacer{flex:1}.viewer.book-quiet .reader-bottom{min-height:42px;padding:6px 20px}
-body.window-interacting .viewer,body.window-interacting .viewer::backdrop,body.window-interacting .viewer :is(.viewer-header,.reader-tools,.reader-toc,.photo-tools,.video-controls,.reading-sheet){transition:none!important;animation:none!important;backdrop-filter:none!important}
-body.window-interacting .viewer.media-fit{transition:none!important}body.window-interacting .viewer .reading-workspace.reader-paged .reading-sheet{width:var(--reader-layout-width,100%)!important;height:var(--reader-layout-height,100%)!important;min-height:0!important}
+body.window-resizing .viewer,body.window-resizing .viewer :is(.reader-toc,.reading-sheet){transition:none!important}
+body.window-resizing .viewer.media-fit{transition:none!important}
+.pdf-page{width:calc(var(--pdf-fit-width,700) * 1px)!important;height:auto!important;aspect-ratio:var(--pdf-page-ratio,.7071)}
+.pdf-page canvas{width:100%!important;height:auto!important}.pdf-page>.textLayer{transform-origin:0 0;transform:scale(calc(var(--pdf-fit-width,700) / var(--pdf-rendered-width,700)))}
+body[data-theme] .viewer :is(.photo-tools,.pdf-toolbar){flex-wrap:nowrap!important;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;justify-content:flex-start;gap:6px;padding:6px 10px;height:auto;min-height:52px}
+.viewer :is(.photo-tools,.pdf-toolbar)>*{flex-shrink:0}.viewer :is(.photo-tools,.pdf-toolbar) .toolbar-spacer{flex:1;min-width:0}#viewer-content:focus{outline:none}
 body.preview-window .viewer{will-change:auto}.viewer.opening-preview{will-change:transform,opacity;transform-origin:var(--opening-origin,50% 50%)}
 @media(max-width:1100px){.viewer .viewer-extra-actions{display:none!important}.viewer #viewer-more-actions{display:grid!important}}
 @media(min-width:1101px){.viewer:not(.book-quiet) #viewer-more-actions{display:none!important}}

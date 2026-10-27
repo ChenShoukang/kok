@@ -59,7 +59,7 @@ namespace kok {
             int dataIndex=Array.IndexOf(args,"--data-dir");
             if(dataIndex>=0 && dataIndex+1<args.Length) dataDir=Path.GetFullPath(args[dataIndex+1]);
             Directory.CreateDirectory(dataDir);
-            RuntimeLog.Configure(dataDir);RuntimeLog.Write("startup","version=0.5.1 process="+Process.GetCurrentProcess().Id);
+            RuntimeLog.Configure(dataDir);RuntimeLog.Write("startup","version=0.6.2 process="+Process.GetCurrentProcess().Id);
             try { databaseLock=new FileStream(Path.Combine(dataDir,".kok.lock"),FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None); }
             catch(IOException) { throw new InvalidOperationException("这个资料库已经在另一个 kok 窗口中打开，请使用原窗口。\n如需独立窗口，请通过 --data-dir 指定其他资料库。"); }
             library=new Library(dataDir);
@@ -121,7 +121,7 @@ namespace kok {
                 web.CoreWebView2.NewWindowRequested+=delegate(object sender,CoreWebView2NewWindowRequestedEventArgs e){ e.Handled=true; };
                 web.CoreWebView2.NavigationStarting+=delegate(object sender,CoreWebView2NavigationStartingEventArgs e){ if(!e.Uri.StartsWith("https://app.kok.local/",StringComparison.OrdinalIgnoreCase)) e.Cancel=true; };
                 web.CoreWebView2.PermissionRequested+=delegate(object sender,CoreWebView2PermissionRequestedEventArgs e){ e.State=CoreWebView2PermissionState.Deny; };
-                web.CoreWebView2.Navigate("https://app.kok.local/index.html?v=0.5.1-refined");
+                web.CoreWebView2.Navigate("https://app.kok.local/index.html?v=0.6.2-refined");
             } catch(Exception ex) { RuntimeLog.Write("engine-init-error",ex);MessageBox.Show(this,L(ex.Message),L("kok · 初始化失败"),MessageBoxButtons.OK,MessageBoxIcon.Error); Close(); }
         }
         void HandleProcessFailed(object sender,CoreWebView2ProcessFailedEventArgs e) {
@@ -222,6 +222,7 @@ namespace kok {
                         result=library.ModeState();break;
                     }
                     case "library": {var snapshot=Library.Json.Deserialize<Dictionary<string,object>>(library.Snapshot());snapshot["isPrivate"]=library.IsPrivate;if(library.IsPrivate)snapshot["navigation"]=new{items=normalLibrary.Db.items.Select(item=>new{kind=item.kind,collection=item.collection}).ToArray(),collections=normalLibrary.Db.collections};result=snapshot;break;}
+                    case "knowledgeIndex": result=await ReadKnowledgeIndex();break;
                     case "vaultStatus": result=new{exists=File.Exists(Path.Combine(VaultDirectory,"vault-info.json")),unlocked=library.IsPrivate,autoLockMinutes=5};break;
                     case "createPrivate": result=await OpenPrivateVault(StringArg(a,"password"),true);break;
                     case "unlockPrivate": result=await OpenPrivateVault(StringArg(a,"password"),false);break;
@@ -374,9 +375,9 @@ namespace kok {
                             if(dialog.ShowDialog(dialogOwner)==DialogResult.OK) { EnsureExportDestination(dialog.FileName);File.WriteAllText(dialog.FileName,library.Snapshot(),new UTF8Encoding(false)); result=true; }
                         } break;
                     }
-                    case "diagnostics": result=new { engine=web.CoreWebView2.Environment.BrowserVersionString, count=library.Db.items.Count, dataDir=library.DataDir, version="0.5.1", mediaResponseLimit=MediaResponseLimit, logFile=RuntimeLog.FilePath, silentTest=silentTest, window=new { handle=Handle.ToInt64(),fullScreen=mediaFullScreen, border=FormBorderStyle.ToString(), state=WindowState.ToString(), bounds=new { x=Left,y=Top,width=Width,height=Height }, screen=Screen.FromControl(this).Bounds,workArea=Screen.FromControl(this).WorkingArea,clientScreen=RectangleToScreen(ClientRectangle), chrome=new { custom=customChrome,color=ColorTranslator.ToHtml(chromeColor),height=ChromeHeight,edge=ChromeEdge,handle=windowChrome.Handle.ToInt64(),content=web.Bounds,buttons=new[]{new {name="minimize",handle=minimizeWindow.Handle.ToInt64(),bounds=minimizeWindow.Bounds},new {name="maximize",handle=maximizeWindow.Handle.ToInt64(),bounds=maximizeWindow.Bounds},new {name="close",handle=closeWindow.Handle.ToInt64(),bounds=closeWindow.Bounds}}} } }; break;
+                    case "diagnostics": result=new { engine=web.CoreWebView2.Environment.BrowserVersionString, count=library.Db.items.Count, dataDir=library.DataDir, version="0.6.2", mediaResponseLimit=MediaResponseLimit, logFile=RuntimeLog.FilePath, silentTest=silentTest, window=new { handle=Handle.ToInt64(),fullScreen=mediaFullScreen, border=FormBorderStyle.ToString(), state=WindowState.ToString(), bounds=new { x=Left,y=Top,width=Width,height=Height }, screen=Screen.FromControl(this).Bounds,workArea=Screen.FromControl(this).WorkingArea,clientScreen=RectangleToScreen(ClientRectangle), chrome=new { custom=customChrome,color=ColorTranslator.ToHtml(chromeColor),height=ChromeHeight,edge=ChromeEdge,handle=windowChrome.Handle.ToInt64(),content=web.Bounds,buttons=new[]{new {name="minimize",handle=minimizeWindow.Handle.ToInt64(),bounds=minimizeWindow.Bounds},new {name="maximize",handle=maximizeWindow.Handle.ToInt64(),bounds=maximizeWindow.Bounds},new {name="close",handle=closeWindow.Handle.ToInt64(),bounds=closeWindow.Bounds}}} } }; break;
                     case "formats": result=Compatibility.Groups; break;
-                    default: if(ReadingSessionActions.Contains(action))result=await HandleReadingSessionAction(action,a);else if(SpeechActions.Contains(action))result=await HandleSpeechAction(action,a,dialogOwner);else if(DocumentTranslationActions.Contains(action))result=await HandleDocumentTranslationAction(action,a,dialogOwner);else if(MusicActions.Contains(action))result=await HandleMusicAction(action,a);else if(CreativeActions.Contains(action))result=await HandleCreativeAction(action,a,dialogOwner);else if(DownloadActions.Contains(action))result=await HandleDownloadAction(action,a);else throw new InvalidOperationException("未知操作。");break;
+                    default: if(DocumentActions.Contains(action))result=await HandleDocumentAction(action,a);else if(ReadingSessionActions.Contains(action))result=await HandleReadingSessionAction(action,a);else if(SpeechActions.Contains(action))result=await HandleSpeechAction(action,a,dialogOwner);else if(DocumentTranslationActions.Contains(action))result=await HandleDocumentTranslationAction(action,a,dialogOwner);else if(MusicActions.Contains(action))result=await HandleMusicAction(action,a);else if(CreativeActions.Contains(action))result=await HandleCreativeAction(action,a,dialogOwner);else if(DownloadActions.Contains(action))result=await HandleDownloadAction(action,a);else throw new InvalidOperationException("未知操作。");break;
                 }
                 SendTo(replyCore,new { requestId=requestId, result=result });
                 if(preview!=null&&new[]{"update","remove","savePhoto","importFont"}.Contains(action))Send(new{eventName="libraryChanged",data=(object)null});

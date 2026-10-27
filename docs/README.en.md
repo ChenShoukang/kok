@@ -4,6 +4,11 @@
 
 | Document | Contents |
 | --- | --- |
+| [v0.6.2 Graphite interface](GRAPHITE_0.6.2.en.md) | Default Smiley Sans, graphite/frost, labelled sidebar, media and compact layouts |
+| [v0.6.1 notes and knowledge graph](KNOWLEDGE_0.6.1.en.md) | Note links, backlinks, tags, outline, tasks, templates and local graphs |
+| [v0.6.1 new documents](DOCUMENTS_0.6.1.md) | Markdown/DOCX/TXT, auto-save, source/preview, duplicates and conflict recovery |
+| [v0.6.1 reading and photo clarity](WORKSPACE_CLARITY_0.6.1.md) | Quiet controls, edge/keyboard recovery, photo palette/type and compact editing |
+| [v0.6.1 motion and windows](MOTION_0.6.1.en.md) | Scoped transitions, rapid reversals, reduced motion and native window fixes |
 | [Reading flow and window motion](READING_FLOW_0.5.1.md) | Quiet reading, spreads, wheel paging, resize scheduling, opening and complete favorites |
 | [Reading and window fixes](READING_RENEWAL_0.5.1.en.md) | Real contents, paged reading, eye comfort, saved comparison and compact/fullscreen viewers |
 | [Translation, captions and precise marks](TRANSLATION_CAPTIONS_0.5.1.md) | Matching-format export, side-by-side reading, local/API captions, selection adjustments and motion |

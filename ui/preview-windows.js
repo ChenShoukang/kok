@@ -14,7 +14,7 @@
   window.openPreviewWindow=async(id,{play=true}={})=>{if($('#small-dialog').open)await closeSmall();const item=byId(id);if(item?.kind==='video')audio.pause();return native('openPreview',{id,play});};
   document.addEventListener('click',event=>{
    const button=event.target.closest('[data-open]');if(!button||!['photo','video','document','book'].includes(byId(button.dataset.open)?.kind))return;
-   event.preventDefault();event.stopImmediatePropagation();openPreviewWindow(button.dataset.open).catch(fail);
+   event.preventDefault();event.stopImmediatePropagation();const item=byId(button.dataset.open);(item.ownedDocument&&!state.isPrivate?openCreativeEditor(item.id):openPreviewWindow(item.id)).catch(fail);
   },true);
   const detach=document.createElement('button');detach.id='detach-viewer';detach.className='icon-button';detach.title='在独立窗口打开';detach.setAttribute('aria-label','在独立窗口打开');detach.innerHTML=svg('pip');
   $('.viewer-actions').prepend(detach);detach.onclick=async()=>{try{const id=state.viewer?.id;if(!id)return;await closeViewer();await openPreviewWindow(id,{play:false});}catch(error){fail(error);}};

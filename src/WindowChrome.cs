@@ -11,6 +11,7 @@ namespace kok {
         ChromeButton minimizeWindow,maximizeWindow,closeWindow;
         ToolTip chromeHints;
         bool customChrome;
+        WindowInteraction windowInteraction;
         Color chromeColor=Color.FromArgb(248,249,251);
         int ChromeHeight {get{return mediaFullScreen?0:(int)Math.Round(30*DeviceDpi/96.0);}}
         int ChromeEdge {get{return mediaFullScreen||WindowState==FormWindowState.Maximized?0:Math.Max(4,(int)Math.Round(5*DeviceDpi/96.0));}}
@@ -26,15 +27,16 @@ namespace kok {
         [DllImport("dwmapi.dll")] static extern int DwmExtendFrameIntoClientArea(IntPtr window,ref ChromeMargins margins);
         [DllImport("dwmapi.dll")] static extern int DwmSetWindowAttribute(IntPtr window,int attribute,ref int value,int size);
         void InitializeWindowChrome(){
-            customChrome=true;string theme=Convert.ToString(library.Db.settings.ContainsKey("theme")?library.Db.settings["theme"]:"light");bool dark=theme=="dark";
+            windowInteraction=new WindowInteraction(this,(active,resizing)=>SendTo(web.CoreWebView2,new{eventName="windowInteraction",data=new{active=active,resizing=resizing}}));
+            customChrome=true;string theme=Convert.ToString(library.Db.settings.ContainsKey("theme")?library.Db.settings["theme"]:"dark");bool dark=theme=="dark";
             if(theme=="system")try{using(var key=Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"))dark=key!=null&&Convert.ToInt32(key.GetValue("AppsUseLightTheme",1))==0;}catch{}
-            Color initial=dark?Color.FromArgb(33,33,33):Color.White;object enabled,color;if(library.Db.settings.TryGetValue("customColorsEnabled",out enabled)&&enabled is bool&&(bool)enabled&&library.Db.settings.TryGetValue(dark?"customDarkBg":"customLightBg",out color)){Color parsed;if(TryChromeColor(Convert.ToString(color),out parsed))initial=parsed;}
+            Color initial=dark?Color.FromArgb(22,26,32):Color.FromArgb(233,237,242);object enabled,color;if(library.Db.settings.TryGetValue("customColorsEnabled",out enabled)&&enabled is bool&&(bool)enabled&&library.Db.settings.TryGetValue(dark?"customDarkBg":"customLightBg",out color)){Color parsed;if(TryChromeColor(Convert.ToString(color),out parsed))initial=parsed;}
             windowChrome=new Panel{BackColor=initial,TabStop=false};chromeHints=new ToolTip();
             minimizeWindow=new ChromeButton("minimize");maximizeWindow=new ChromeButton("maximize");closeWindow=new ChromeButton("close");
             minimizeWindow.Click+=delegate{WindowState=FormWindowState.Minimized;};maximizeWindow.Click+=delegate{ToggleChromeMaximize();};closeWindow.Click+=delegate{Close();};
             windowChrome.Controls.AddRange(new Control[]{minimizeWindow,maximizeWindow,closeWindow});windowChrome.MouseDown+=DragChrome;
             web.Dock=DockStyle.None;Controls.Add(windowChrome);windowChrome.BringToFront();
-            ApplyWindowAppearance(initial,false);Resize+=delegate{LayoutWindowChrome();};DpiChanged+=delegate{LayoutWindowChrome();};
+            ApplyWindowAppearance(initial,false);Resize+=delegate{windowInteraction.SizeChanged();LayoutWindowChrome();};DpiChanged+=delegate{LayoutWindowChrome();};Deactivate+=delegate{windowInteraction.End();};
             FormClosed+=delegate{chromeHints.Dispose();};LayoutWindowChrome();if(IsHandleCreated)SetWindowPos(Handle,IntPtr.Zero,0,0,0,0,0x0027);
         }
         static bool TryChromeColor(string value,out Color color){color=Color.White;if(!Regex.IsMatch(value??"","^#[0-9a-fA-F]{6}$"))return false;color=ColorTranslator.FromHtml(value);return true;}
@@ -56,13 +58,12 @@ namespace kok {
             if(windowChrome==null||IsDisposed)return;windowChrome.Visible=!mediaFullScreen;int height=ChromeHeight,edge=ChromeEdge,width=(int)Math.Round(46*DeviceDpi/96.0);
             windowChrome.SetBounds(0,0,ClientSize.Width,height);closeWindow.SetBounds(Math.Max(0,ClientSize.Width-width),0,width,height);maximizeWindow.SetBounds(Math.Max(0,ClientSize.Width-width*2),0,width,height);minimizeWindow.SetBounds(Math.Max(0,ClientSize.Width-width*3),0,width,height);
             bool restored=WindowState==FormWindowState.Maximized;if(maximizeWindow.Restored!=restored){maximizeWindow.Restored=restored;maximizeWindow.Invalidate();maximizeWindow.AccessibleName=L(restored?"还原窗口":"最大化");chromeHints.SetToolTip(maximizeWindow,maximizeWindow.AccessibleName);}
-            var content=new Rectangle(edge,height,Math.Max(0,ClientSize.Width-edge*2),Math.Max(0,ClientSize.Height-height-edge));web.Bounds=content;
+            var content=new Rectangle(edge,height,Math.Max(0,ClientSize.Width-edge*2),Math.Max(0,ClientSize.Height-height-edge));if(web.Bounds!=content)web.Bounds=content;
             if(engineErrorPanel!=null){engineErrorPanel.Dock=DockStyle.None;engineErrorPanel.Bounds=content;}windowChrome.BringToFront();
         }
         protected override void OnHandleCreated(EventArgs e){base.OnHandleCreated(e);if(customChrome&&!mediaFullScreen)try{var margins=new ChromeMargins{left=1,right=1,top=1,bottom=1};DwmExtendFrameIntoClientArea(Handle,ref margins);}catch(DllNotFoundException){}catch(EntryPointNotFoundException){} }
         protected override void WndProc(ref Message message){
-            if(message.Msg==0x231)SendTo(web.CoreWebView2,new{eventName="windowInteraction",data=new{active=true}});
-            else if(message.Msg==0x232)SendTo(web.CoreWebView2,new{eventName="windowInteraction",data=new{active=false}});
+            if(windowInteraction!=null)windowInteraction.Process(message.Msg);
             if(customChrome&&!mediaFullScreen){
                 if(message.Msg==0x83&&message.WParam!=IntPtr.Zero){
                     if(IsZoomed(Handle)){var rect=(ChromeRect)Marshal.PtrToStructure(message.LParam,typeof(ChromeRect));var info=new ChromeMonitor{size=Marshal.SizeOf(typeof(ChromeMonitor))};if(GetMonitorInfo(MonitorFromRect(ref rect,2),ref info))Marshal.StructureToPtr(info.work,message.LParam,false);}

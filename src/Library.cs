@@ -15,6 +15,7 @@ namespace kok {
         public string collection = "", album = "", artist = "本地音乐";
         public long size;
         public bool favorite;
+        public bool ownedDocument;
         public double progress, position;
         public int chapter;
         public string notes = "";

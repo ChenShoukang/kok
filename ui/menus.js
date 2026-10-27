@@ -7,7 +7,7 @@ const GlassMenu=(()=>{
   const current=active;if(!current)return;active=null;cancelAnimationFrame(frame);
   if(current.select){current.select.setAttribute('aria-expanded','false');current.select.removeAttribute('aria-controls');current.select.removeAttribute('aria-activedescendant');}
   const remove=()=>{try{current.menu.hidePopover();}catch{}current.menu.remove();};
-  if(immediate||reducedMotion())remove();else{current.menu.style.pointerEvents='none';current.menu.classList.add('is-closing');current.menu.setAttribute('aria-hidden','true');current.menu.inert=true;const animation=current.menu.animate([{opacity:1,transform:'translateY(0) scale(1)'},{opacity:0,transform:`translateY(${current.above?3:-3}px) scale(.985)`}],{duration:115,easing:'ease-out',fill:'forwards'});animation.finished.catch(()=>{}).finally(remove);}
+  if(immediate||reducedMotion())remove();else if(typeof CalmMotion!=='undefined'){current.menu.style.pointerEvents='none';current.menu.classList.add('is-closing');current.menu.setAttribute('aria-hidden','true');current.menu.inert=true;CalmMotion.exit(current.menu).finally(remove);}else{current.menu.style.pointerEvents='none';current.menu.classList.add('is-closing');current.menu.setAttribute('aria-hidden','true');current.menu.inert=true;const animation=current.menu.animate([{opacity:1,transform:'translateY(0) scale(1)'},{opacity:0,transform:`translateY(${current.above?3:-3}px) scale(.985)`}],{duration:115,easing:'ease-out',fill:'forwards'});animation.finished.catch(()=>{}).finally(remove);}
   if(restore&&current.anchor.isConnected)current.anchor.focus({preventScroll:true});
  }
  function position(){
@@ -37,6 +37,7 @@ const GlassMenu=(()=>{
  function show(anchor,items,select=null,rect=null){
   close(false,true);if(!items.length)return;
   const menu=document.createElement('div');menu.className='glass-menu';menu.id='kok-menu-'+(++sequence);menu.setAttribute('popover','manual');menu.setAttribute('role',select?'listbox':'menu');
+  if(anchor.closest('.photo-editor')){menu.classList.add('photo-editor-menu');const palette=getComputedStyle(anchor);for(const key of ['--view-panel','--view-text','--view-muted','--view-control','--view-line'])menu.style.setProperty(key,palette.getPropertyValue(key));}
   const label=select?.getAttribute('aria-label')||select?.labels?.[0]?.textContent?.trim()||'视频菜单';menu.setAttribute('aria-label',label);
   items.forEach((item,index)=>{const button=document.createElement('button');button.type='button';button.tabIndex=-1;button.id=menu.id+'-'+index;button.dataset.menuIndex=index;button.setAttribute('role',select?'option':'menuitem');if(select)button.setAttribute('aria-selected',String(!!item.selected));button.disabled=!!item.disabled;
    const text=document.createElement('span');text.textContent=item.label;if(item.protected)text.setAttribute('data-user-content','');button.append(text);const check=document.createElement('span');check.className='menu-check';check.setAttribute('aria-hidden','true');check.innerHTML=item.selected?'<svg viewBox="0 0 24 24" fill="none"><path d="m5 12 4 4 10-10"/></svg>':'';button.append(check);menu.append(button);
@@ -46,7 +47,7 @@ const GlassMenu=(()=>{
   if(select){select.setAttribute('aria-expanded','true');select.setAttribute('aria-controls',menu.id);}
   menu.showPopover();position();highlight(active.index,false);
   highlight(active.index,true);
-  if(!reducedMotion())menu.animate([{opacity:0,transform:`translateY(${active.above?5:-5}px) scale(.975)`},{opacity:1,transform:'translateY(0) scale(1)'}],{duration:190,easing:'cubic-bezier(.16,1,.3,1)'});
+  if(typeof CalmMotion!=='undefined')CalmMotion.enter(menu);else if(!reducedMotion())menu.animate([{opacity:0,transform:`translateY(${active.above?5:-5}px) scale(.975)`},{opacity:1,transform:'translateY(0) scale(1)'}],{duration:190,easing:'cubic-bezier(.16,1,.3,1)'});
   menu.addEventListener('pointermove',event=>{const button=event.target.closest('[data-menu-index]');if(button&&!button.disabled)highlight(Number(button.dataset.menuIndex),false);});
   menu.addEventListener('pointerdown',event=>event.preventDefault());menu.addEventListener('click',event=>{const button=event.target.closest('[data-menu-index]');if(button)choose(Number(button.dataset.menuIndex));});
   I18n.localize(menu);

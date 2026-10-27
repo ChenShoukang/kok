@@ -67,7 +67,7 @@ namespace kok {
             if(action=="chooseCreativeEncoder"){nativeFileDialogOpen=true;try{using(var dialog=new FolderBrowserDialog{Description=L("选择包含 ffmpeg.exe 的文件夹"),ShowNewFolderButton=false}){if(dialog.ShowDialog(owner)!=DialogResult.OK)return new{cancelled=true};downloads.SetFfmpeg(dialog.SelectedPath);return new{available=true};}}finally{nativeFileDialogOpen=false;}}
             var entry=RequireEntry(args);var target=library;
             if(action=="probeCreativeMedia"){using(var timeout=new CancellationTokenSource(TimeSpan.FromSeconds(20)))return await MediaSequence.Probe(downloads.LocalProbe,entry.path,timeout.Token);}
-            if(action=="creativeSource"){var info=new FileInfo(entry.path);return new{signature=info.Length+"|"+info.LastWriteTimeUtc.Ticks};}
+            if(action=="creativeSource"){if(entry.ownedDocument&&!target.IsPrivate)return new{signature=target.DocumentSource(entry.id).signature};var info=new FileInfo(entry.path);return new{signature=info.Length+"|"+info.LastWriteTimeUtc.Ticks};}
             if(action=="saveCreativeDraft"){
                 var draft=Library.Json.Deserialize<Dictionary<string,object>>(Library.Json.Serialize(args["draft"]));if(draft==null||Library.Json.Serialize(draft).Length>2*1024*1024)throw new InvalidDataException("编辑草稿过大。");entry.editDraft=draft;target.Save();return true;
             }

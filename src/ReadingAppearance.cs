@@ -25,7 +25,7 @@ namespace kok {
                 }else if(new[]{"bookTextSize","documentTextSize"}.Contains(key)){
                     double number;try{number=Convert.ToDouble(value);}catch{throw new InvalidDataException("阅读或外观设置数值无效。");}if(Double.IsNaN(number)||Double.IsInfinity(number)||number<14||number>48)throw new InvalidDataException("阅读或外观设置数值无效。");result[key]=number;
                 }else if(new[]{"bookFont","documentFont"}.Contains(key)){
-                    string font=Convert.ToString(value);if(!new[]{"system","smiley","wenkai","yahei","song","kai"}.Contains(font)&&!Regex.IsMatch(font??"","^[a-f0-9]{32}$"))throw new InvalidDataException("阅读字体无效。");result[key]=font;
+                    string font=Convert.ToString(value);if(!new[]{"system","smiley","wenkai","yahei","song","kai","serif"}.Contains(font)&&!Regex.IsMatch(font??"","^[a-f0-9]{32}$"))throw new InvalidDataException("阅读字体无效。");result[key]=font;
                 }else if(new[]{"bookPaper","documentPaper"}.Contains(key)){
                     if(!new[]{"auto","cream","sage","dark","white"}.Contains(Convert.ToString(value)))throw new InvalidDataException("阅读配色无效。");result[key]=Convert.ToString(value);
                 }else if(new[]{"readerLayout","bookLayout","documentLayout"}.Contains(key)){

@@ -2,6 +2,25 @@
 
 [中文](CHANGELOG.md)
 
+## v0.6.2 · Graphite preview
+
+- Graphite/frost surfaces, labelled/responsive sidebar, typographic covers and records. Restore bundled Smiley Sans as default and fix overrides that prevented font switching.
+- Match video/photo/audio chrome; fix light-theme media contrast, missing notification indicators and hidden reading-selection motion. Retain actual music artwork and custom palettes.
+- Remove duplicate dialog entrances and include previously local graph/note/document/template/auto-save and native-window fixes, with interruption-safe motion and stable reading positions.
+- Isolated silent regression and source/package privacy checks. See [release details](docs/GRAPHITE_0.6.2.en.md).
+
+## v0.6.1 · Local preview, unpublished
+
+- Rework graph/note motion: reveal settled layouts, retain camera position/velocity on zoom retargets, pointer-anchored wheel input, stable filtering and drag release. Fix settings bounds, competing sidebar transitions, repeated completion entrances, dialog reversals and document opening. See [motion](docs/MOTION_0.6.1.en.md).
+- Add local global/neighborhood graphs with drag, zoom and filters; note-link completion, unresolved-note creation, backlinks, tags, outline, checkable tasks and daily/meeting/reading templates. Worker layout/rendering become idle when settled and release on close. Available in Pure mode; private content is excluded. See [notes](docs/KNOWLEDGE_0.6.1.en.md).
+- Add New / Ctrl+N for Markdown, Word (DOCX) and TXT, collections, source/editing views and preview, auto-save, Ctrl+S, close flushing and reopen-in-editor. Direct saves are limited to managed documents; duplicates receive suffixes and external conflicts retain recovery drafts. See the [guide](docs/DOCUMENTS_0.6.1.md).
+- Reading chrome and progress fade without repagination, with matching paper edges and edge/keyboard recovery. Photo editing gains a coherent media palette, clear UI type, visible states and matching popups; fix header-obscured editing buttons and stack compact layouts. See [workspace clarity](docs/WORKSPACE_CLARITY_0.6.1.md).
+- Sliding settings underline and reading selections, favorite/bookmark icon feedback, menu exits, subtle sidebar/notification entrances, and smooth photo zoom/rotation with immediate dragging.
+- Interrupted transitions honor the latest request; exiting menus become inert. New effects are skipped during window gestures and reduced motion. See [motion scope and references](docs/MOTION_0.6.1.en.md).
+- Fix move-only repagination, focus flashes, stale reading width, blank PDF resize frames and redundant rendering; preserve text anchors, toolbar materials and fixed window controls.
+- Clear stale pagination spacers on returning to vertical reading; cover closing a file and enabling reduced motion during an animation, plus immediate photo dragging.
+- Application, resource-cache and Windows file versions are aligned at v0.6.1. Portable packages exclude personal libraries, API configuration and private data.
+
 ## v0.5.1 · Preview
 
 - Quiet reading adds single/adaptive two-page/vertical modes and wheel paging, fixed favorite/window controls and compact menus; coordinated opening, deferred resize work and batched bilingual measurements. See the [guide](docs/READING_FLOW_0.5.1.md).

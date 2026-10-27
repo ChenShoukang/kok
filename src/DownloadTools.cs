@@ -41,7 +41,7 @@ namespace kok {
         public async Task Install(Action<ComponentProgress> progress,CancellationToken token,string bundle="ffmpeg"){
             if(bundle!="ffmpeg")throw new InvalidDataException("请选择有效的下载组件。");
             Directory.CreateDirectory(root);
-            using(var deadline=CancellationTokenSource.CreateLinkedTokenSource(token))using(var client=new HttpClient()){deadline.CancelAfter(TimeSpan.FromMinutes(8));token=deadline.Token;client.Timeout=TimeSpan.FromMinutes(8);client.DefaultRequestHeaders.UserAgent.ParseAdd("kok/0.5.1");
+            using(var deadline=CancellationTokenSource.CreateLinkedTokenSource(token))using(var client=new HttpClient()){deadline.CancelAfter(TimeSpan.FromMinutes(8));token=deadline.Token;client.Timeout=TimeSpan.FromMinutes(8);client.DefaultRequestHeaders.UserAgent.ParseAdd("kok/0.6.2");
                 foreach(var component in new[]{components.ffmpeg}){
                     token.ThrowIfCancellationRequested();if(Trusted(component)!=null&&Ffprobe!=null)continue;
                     progress(new ComponentProgress{component="FFmpeg / FFprobe",status="downloading",total=component.size});

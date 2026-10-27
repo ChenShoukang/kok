@@ -30,9 +30,9 @@ namespace kok {
         async Task SaveWebSession(WebView2 browser,Library target){
             if(browser.IsDisposed||browser.CoreWebView2==null)return;
             string encoded=await browser.CoreWebView2.ExecuteScriptAsync("window.kokSession ? JSON.stringify(window.kokSession()) : '[]'");
-            string json=Library.Json.Deserialize<string>(encoded);if(json==null)return;
+            string json=Library.Json.Deserialize<string>(encoded);if(json==null)throw new InvalidDataException("窗口内容尚未准备好，请稍后重试关闭。");
             foreach(var edit in Library.Json.Deserialize<List<Dictionary<string,object>>>(json)){
-                string id=StringArg(edit,"id");if(target.Find(id)!=null)target.Update(id,(Dictionary<string,object>)edit["patch"]);
+                string id=StringArg(edit,"id");var entry=target.Find(id);var patch=(Dictionary<string,object>)edit["patch"];if(entry!=null){if(entry.ownedDocument&&!target.IsPrivate&&patch.ContainsKey("editDraft")){var draft=Library.Json.Deserialize<Dictionary<string,object>>(Library.Json.Serialize(patch["editDraft"]));target.SaveDocumentSession(id,draft);patch.Remove("editDraft");}if(patch.Count>0)target.Update(id,patch);}
                 if(target==normalLibrary&&target.Find(id)!=null&&edit.ContainsKey("translationView"))await HandleReadingSessionAction("saveTranslationView",new Dictionary<string,object>{{"id",id},{"view",edit["translationView"]}});
             }
         }
@@ -53,6 +53,7 @@ namespace kok {
             internal string ItemId;
             internal bool SentBehind,Ready;
             internal Rectangle LaunchOrigin;
+            readonly WindowInteraction interaction;
             System.Windows.Forms.Timer presentationTimer;
             internal bool Presenting {get{return presentationTimer!=null;}}
             bool closeReady,closing,fullScreen;
@@ -60,16 +61,21 @@ namespace kok {
             Rectangle restoreBounds;FormWindowState restoreState;
             internal PreviewWindow(MainWindow host,Entry item,Library session){
                 this.host=host;SessionLibrary=session;ItemId=item.id;Text=item.name;Icon=host.Icon;Opacity=0;
+                interaction=new WindowInteraction(this,(active,resizing)=>host.SendTo(Browser.CoreWebView2,new{eventName="windowInteraction",data=new{active=active,resizing=resizing}}));
                 BackColor=host.chromeColor;Browser.DefaultBackgroundColor=BackColor;
                 MinimumSize=new Size(520,380);Size=new Size(item.kind=="photo"&&item.height>item.width?660:1050,item.kind=="photo"&&item.height>item.width?820:740);
                 StartPosition=FormStartPosition.Manual;var area=Screen.FromControl(host).WorkingArea;int offset=28*(host.previewWindows.Count%6);
                 Width=Math.Min(Width,area.Width);Height=Math.Min(Height,area.Height);Location=new Point(Math.Max(area.Left,Math.Min(area.Right-Width,host.Left+80+offset)),Math.Max(area.Top,Math.Min(area.Bottom-Height,host.Top+60+offset)));
-                ShowInTaskbar=true;Browser.AllowExternalDrop=true;Controls.Add(Browser);Resize+=delegate{LayoutBrowser();};DpiChanged+=delegate{LayoutBrowser();};
-                Activated+=delegate{SentBehind=false;host.PreviewListChanged();};Deactivate+=delegate{host.CheckPrivateDeparture();};
+                ShowInTaskbar=true;Browser.AllowExternalDrop=true;Controls.Add(Browser);Resize+=delegate{interaction.SizeChanged();LayoutBrowser();};DpiChanged+=delegate{LayoutBrowser();};
+                Activated+=delegate{SentBehind=false;host.PreviewListChanged();};Deactivate+=delegate{interaction.End();host.CheckPrivateDeparture();};
                 FormClosing+=async delegate(object sender,FormClosingEventArgs e){
                     if(closeReady)return;e.Cancel=true;if(closing)return;closing=true;
                     try{if(SessionLibrary==host.library){await host.SaveWebSession(Browser,SessionLibrary);host.Send(new{eventName="libraryChanged",data=(object)null});}closeReady=true;Close();}
-                    catch(Exception ex){closing=false;MessageBox.Show(this,host.L(ex.Message),"kok",MessageBoxButtons.OK,MessageBoxIcon.Error);}
+                    catch(Exception ex){
+                        // A crashed or unresponsive page must not keep the window open forever; let the user choose.
+                        RuntimeLog.Write("preview-session-save-error",ex);closing=false;
+                        if(MessageBox.Show(this,host.L(ex.Message)+"\n\n"+host.L("仍要关闭这个窗口吗？未保存的修改会丢失。"),"kok",MessageBoxButtons.YesNo,MessageBoxIcon.Warning,MessageBoxDefaultButton.Button2)==DialogResult.Yes){closeReady=true;Close();}
+                    }
                 };
                 FormClosed+=delegate{FinishPresentation();Browser.Dispose();};LayoutBrowser();
             }
@@ -104,8 +110,7 @@ namespace kok {
             void LayoutBrowser(){int edge=fullScreen||WindowState==FormWindowState.Maximized?0:5;var bounds=new Rectangle(edge,edge,Math.Max(0,ClientSize.Width-edge*2),Math.Max(0,ClientSize.Height-edge*2));if(Browser.Bounds!=bounds)Browser.Bounds=bounds;}
             protected override void OnHandleCreated(EventArgs e){base.OnHandleCreated(e);try{var margins=new ChromeMargins{left=1,right=1,top=1,bottom=1};DwmExtendFrameIntoClientArea(Handle,ref margins);}catch(DllNotFoundException){}catch(EntryPointNotFoundException){} }
             protected override void WndProc(ref Message message){
-                if(message.Msg==0x231){if(Ready)FinishPresentation();host.SendTo(Browser.CoreWebView2,new{eventName="windowInteraction",data=new{active=true}});}
-                else if(message.Msg==0x232)host.SendTo(Browser.CoreWebView2,new{eventName="windowInteraction",data=new{active=false}});
+                if(interaction!=null)interaction.Process(message.Msg);
                 if(!fullScreen){
                     if(message.Msg==0x83&&message.WParam!=IntPtr.Zero){if(IsZoomed(Handle)){var rect=(ChromeRect)Marshal.PtrToStructure(message.LParam,typeof(ChromeRect));var info=new ChromeMonitor{size=Marshal.SizeOf(typeof(ChromeMonitor))};if(GetMonitorInfo(MonitorFromRect(ref rect,2),ref info))Marshal.StructureToPtr(info.work,message.LParam,false);}message.Result=IntPtr.Zero;return;}
                     if(message.Msg==0x84&&WindowState==FormWindowState.Normal){long packed=message.LParam.ToInt64();var p=PointToClient(new Point((short)(packed&0xffff),(short)((packed>>16)&0xffff)));bool l=p.X<5,r=p.X>=ClientSize.Width-5,t=p.Y<5,b=p.Y>=ClientSize.Height-5;int hit=t?(l?13:r?14:12):b?(l?16:r?17:15):l?10:r?11:0;if(hit!=0){message.Result=new IntPtr(hit);return;}}

@@ -158,3 +158,38 @@ No component code or additional runtime from these projects is bundled.
 https://github.com/johnfactotum/foliate-js/blob/main/paginator.js
 https://github.com/motiondivision/motion
 https://github.com/radix-ui/primitives
+
+v0.6.1 interaction motion also references AutoAnimate (MIT) and Radix Presence
+(MIT) for scoped transitions, interruption handling and exit completion.
+No source code or runtime from these implementations is copied or bundled.
+https://github.com/formkit/auto-animate/blob/master/src/index.ts
+https://github.com/radix-ui/primitives/blob/main/packages/react/presence/src/presence.tsx
+
+Reading chrome visibility references the Foliate application (GPL-3.0) design;
+photo-editing control hierarchy references TOAST UI Image Editor (MIT) themes.
+Only interaction/design ideas are used; no application code, artwork or runtime
+from these implementations is copied or bundled.
+https://github.com/johnfactotum/foliate/blob/gtk4/src/book-viewer.js
+https://github.com/nhn/tui.image-editor/blob/master/apps/image-editor/examples/js/theme/black-theme.js
+
+Managed-document creation and the source/reading layout reference MarkText (MIT)
+interaction and layout ideas. No MarkText source code, assets or runtime is bundled.
+https://github.com/marktext/marktext
+https://github.com/marktext/marktext/blob/develop/packages/desktop/src/renderer/src/components/editorWithTabs/index.vue
+
+Knowledge graph and note interaction ideas reference Logseq and SiYuan public
+documentation/implementations, d3-force's cooling model and Radix Presence's
+interruptible state transitions. Only design and algorithm concepts are used;
+their source code, artwork and runtimes are not copied or bundled. The graph
+uses kok's own Canvas renderer and geometry-only Worker with no new dependency.
+https://github.com/logseq/logseq/blob/master/src/main/frontend/components/graph.cljs
+https://github.com/siyuan-note/siyuan
+https://github.com/d3/d3-force/blob/main/src/simulation.js
+https://github.com/radix-ui/primitives/blob/main/packages/react/presence/src/presence.tsx
+
+The v0.6.1 motion revision references Sigma.js camera cancellation/retargeting
+and Svelte opacity/translation transition ideas. No source code, assets or
+runtime from either project is copied or bundled. The camera spring equations
+and scoped browser animation orchestration are implemented locally.
+https://github.com/jacomyal/sigma.js/blob/main/packages/sigma/src/core/camera.ts
+https://github.com/sveltejs/svelte/blob/main/packages/svelte/src/transition/index.js

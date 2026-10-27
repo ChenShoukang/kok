@@ -47,11 +47,15 @@ npm run test:i18n
 
 `test:large-media` 可接一个本地视频路径，验证大文件范围读取与跳转；它不上传原片。翻译测试使用本地模拟服务。
 
+## 笔记与图谱定向检查
+
+`powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-desktop.ps1 -Suites knowledge` 使用隔离普通 / 私密资料库，验证真实文件保存、补全与反向链接、任务、模板、图谱筛选、拖动缩放、空图、小窗、原生快速缩放、减少动态效果、500 节点后台布局与稳定后停算。禁止外部请求，不使用真实 API 配置。`-Suites documents` 检查文档保存、关闭与冲突恢复。
+
 ## 打包与发布
 
 `package.ps1` 从明确的文件清单和当前资源目录生成 `dist/kok-<版本>-win-x64.zip` 及 SHA-256 文件，排除资料库、密钥、调试二进制和临时测试内容。
 
-v0.5.1 以预览版发布，`package.json` 设置 `release.publish: true`。main 上传触发两个 Windows 构建与检查，成功后上传 ZIP 和 SHA-256 文件到 GitHub 预览 Release。若仅本地开发，可将此开关设为 false。已对相同原生源码完成检查后，可运行 `.\package.ps1 -SkipTests` 重新打包；暂存目录与 ZIP 隐私审计仍执行。新增功能见 [v0.4.1 说明](PREVIEW_0.4.1.md)。
+v0.6.2 已启用 `release.publish: true`。推送 main 后，两个 Windows 环境通过构建、测试与审计才发布预览包。已对相同原生源码完成检查后，可用 `package.ps1 -SkipTests` 重新打包；暂存目录与 ZIP 隐私审计仍执行。
 
 推送 `main` 后，[Windows 构建工作流](https://github.com/ChenShoukang/kok/blob/main/.github/workflows/build.yml) 在 Windows Server 2022 / 2025 上执行脚本、依赖、源码及完整 Git 历史检查，再运行原生测试与打包。构建只读仓库；独立发布任务等待两个环境通过后，才使用 `contents: write` 和内置 `GITHUB_TOKEN`。后续版本默认发布为 Preview；已有版本不会被静默替换。服务器检查不能替代 Windows 10 / 11 新电脑验证，范围见[发布验证](TESTING.md)。
 

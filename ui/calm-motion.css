@@ -1,0 +1,23 @@
+/* Indicator motion changes transforms only; content and hit targets stay in place. */
+.motion-choice-ready{position:relative;isolation:isolate}
+.motion-choice-ready::before{content:"";position:absolute;left:0;top:0;width:var(--motion-choice-w,0px);height:var(--motion-choice-h,0px);transform:translate(var(--motion-choice-x,0px),var(--motion-choice-y,0px));transform-origin:0 0;border-radius:4px;background:var(--view-control,var(--kok-hover));pointer-events:none;z-index:0}
+.motion-choice-ready>button{position:relative;z-index:1}
+.settings-tabs.motion-choice-ready::before{background:var(--ink);border-radius:1px}body[data-app-mode] .settings-tabs.motion-choice-ready [aria-selected=true]{border-bottom-color:transparent!important}
+body[data-theme][data-app-mode] .reading-flow-choices.motion-choice-ready [aria-pressed=true],body[data-app-mode] .settings-tabs.motion-choice-ready [aria-selected=true],body[data-app-mode] .reading-layout-choices.motion-choice-ready [aria-pressed=true],body[data-app-mode] .reading-side-tabs.motion-choice-ready [aria-selected=true]{background:transparent!important}
+.viewer-overflow-menu[data-motion-closing]{pointer-events:none!important}.viewer :is(#viewer-favorite,[data-add-bookmark]) svg{transform-origin:50% 50%;transition:color 140ms ease,fill-opacity 140ms ease}
+.photo-image-wrap:not(.photo-panning) img{transition:transform 160ms cubic-bezier(.2,.8,.2,1)}.photo-image-wrap.photo-panning img{transition:none!important}
+body.window-interacting .photo-image-wrap img,body.window-interacting .viewer :is(#viewer-favorite,[data-add-bookmark]) svg{transition:none!important}
+.toast{animation:none!important}.viewer-overflow-menu,.import-menu{transform-origin:top right}
+/* Stable chrome, translated content only: avoid rescaling text and live blur. */
+body[data-app-mode] .settings-dialog[open]{display:flex;flex-direction:column;height:min(560px,calc(100dvh - 36px));min-height:0;max-height:calc(100dvh - 36px);overflow:hidden}
+.settings-dialog :is(.settings-topline,.settings-tabs){flex-shrink:0}.settings-dialog .settings-section{flex:1;min-height:0;overflow:auto;scrollbar-width:thin}.settings-dialog .settings-section[hidden]{display:none}
+body[data-app-mode] :is(.viewer,.small-dialog,.creative-dialog,.knowledge-dialog)::backdrop{animation:none!important}
+body[data-app-mode] :is(.notes-panel,.translation-panel,.file-assistant,.note-context){transition:none!important;animation:none!important}
+body[data-app-mode] :is(.notes-panel,.translation-panel,.file-assistant,.note-context):not(.hidden){opacity:1;transform:none}
+::view-transition-old(library){animation:kok-library-out 100ms linear both}
+::view-transition-new(library){animation:kok-library-in 190ms cubic-bezier(.22,1,.36,1) both}
+@keyframes kok-library-out{to{opacity:0}}
+@keyframes kok-library-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.motion-content-ghost{contain:layout paint;user-select:none}.motion-content-ghost :is(input,button,textarea,select){pointer-events:none}
+body[data-theme][data-app-mode] .note-context-tabs.motion-choice-ready [aria-selected=true]{background:transparent!important}
+@media(prefers-reduced-motion:reduce){.photo-image-wrap img,.viewer :is(#viewer-favorite,[data-add-bookmark]) svg{transition:none!important}::view-transition-old(library),::view-transition-new(library){animation:none!important}}

@@ -6,6 +6,10 @@ This page retains v0.3.1 verification records. See the [local preview guide](PRE
 
 kok v0.3.1 is a preview. Passing checks confirm the paths covered by those checks, rather than every Windows machine, codec or AI service.
 
+## v0.6.2 release checks
+
+2026-10-27: 127 native checks, six isolated silent desktop suites, PowerShell 5, dependency and privacy audits. Synthetic fixtures; no real AI configuration.
+
 ## Evidence and limits
 
 | Area | Evidence and limits |
@@ -30,6 +34,8 @@ Fresh Windows 10 x64 and Windows 11 x64 user environments still need independent
 5. Create a test private folder with redistributable samples. Verify passwords, deactivation locking and unlocking after restart. Do not treat it as source-file encryption.
 6. In Smart mode, use a local test service for configuration, translation and cancellation, including incorrect endpoint / model feedback. Real-provider tests require your authorization and may incur charges.
 
+Developers can run a real-file regression on their own files with `tools/test-desktop.ps1 -Suites real-files -RealFilesFolder <folder>`. It imports, opens and checks each file in an isolated library, removes the entries afterwards and verifies the originals are unchanged. The report and screenshots are written only to `test-output/real-files/` and are never uploaded.
+
 Report app / Windows / WebView2 versions, display scaling, steps and redacted evidence using the [issue templates](https://github.com/ChenShoukang/kok/issues/new/choose). See [Security](../SECURITY.en.md) for sensitive reports.
 
 ## Common first-use problems
@@ -42,6 +48,6 @@ Report app / Windows / WebView2 versions, display scaling, steps and redacted ev
 
 ## Versions and historical downloads
 
-[v0.4.1](https://github.com/ChenShoukang/kok/releases/tag/v0.4.1) is the current preview download. The historical `v1.0.0` tag was an initial prototype build number, rather than a 1.0 stable release. Its tag and assets are retained to preserve existing links.
+The current preview is [v0.6.2](https://github.com/ChenShoukang/kok/releases/tag/v0.6.2). Older development numbers do not imply stable 1.0 support.
 
 Documentation and build procedures may be revised after the app version is published. Existing Release ZIPs are not silently replaced; use the matching commit's Actions artifacts for current source builds. Source, history and package pattern scanning is not a complete security audit.
