@@ -29,7 +29,7 @@ class Tests {
             lib.Update(i.id,new Dictionary<string,object>{{"notes","笔记 <script>"},{"favorite",true},{"progress",2.0},{"position",15.5},{"chapter",2}});
             var reopened=new Library(lib.DataDir); var saved=reopened.Find(i.id);
             Check(saved.favorite&&saved.notes=="笔记 <script>"&&saved.progress==1&&saved.position==15.5&&saved.chapter==2,"atomic persistence and bounded progress");
-            Check(File.Exists(Path.Combine(lib.DataDir,"library.json.bak")),"previous database kept as backup");
+            Check(File.Exists(lib.StoragePath+".bak"),"previous database kept as backup");
             lib.Remove(i.id); Check(File.Exists(text)&&lib.Db.items.Count==0,"removing library entry preserves original file");
             string docx=Path.Combine(temp,"test.docx");
             using(var zip=ZipFile.Open(docx,ZipArchiveMode.Create)) Entry(zip,"word/document.xml","<w:document xmlns:w='http://schemas.openxmlformats.org/wordprocessingml/2006/main'><w:body><w:p><w:r><w:t>Hello 文档</w:t></w:r></w:p></w:body></w:document>");
@@ -104,8 +104,14 @@ class Tests {
             DocumentTests.Run(Path.Combine(temp,"documents"),Check);
             KnowledgeTests.Run(Path.Combine(temp,"knowledge"),Check);
             SessionPersistenceTests.Run(Check);
-            File.WriteAllText(Path.Combine(lib.DataDir,"library.json"),"bad json"); bool rejected=false;try{new Library(lib.DataDir);}catch(InvalidDataException){rejected=true;}
-            Check(rejected&&File.ReadAllText(Path.Combine(lib.DataDir,"library.json"))=="bad json","corrupt database preserved and reported");
+            KnowledgeWorkspaceTests.Run(Path.Combine(temp,"knowledge-workspace"),Check);
+            PresentationRulesTests.Run(Path.Combine(temp,"presentation-rules"),Check);
+            AgentTests.Run(Path.Combine(temp,"agent-rules"),Check);
+            AgentTaskTests.Run(Path.Combine(temp,"agent-tasks"),Check);
+            ModuleTests.Run(Path.Combine(temp,"modules"),Check);
+            WarehouseTests.Run(Path.Combine(temp,"warehouse"),Check);
+            File.WriteAllText(lib.StoragePath,"bad sqlite"); bool rejected=false;try{new Library(lib.DataDir);}catch(InvalidDataException){rejected=true;}
+            Check(rejected&&File.ReadAllText(lib.StoragePath)=="bad sqlite","corrupt database preserved and reported");
             Console.WriteLine(count+" tests passed.");return 0;
         } catch(Exception ex) { Console.Error.WriteLine(ex);return 1; }
         finally { Directory.Delete(temp,true); }

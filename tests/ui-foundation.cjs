@@ -64,7 +64,7 @@ const {execFileSync}=require('node:child_process'),{chromium}=require('./browser
   control('request-close');assert.match(control('decline-failed-close'),/Default No verified/);
   await page.evaluate(()=>{window.kokSession=window.foundationSnapshot;delete window.foundationSnapshot;});
   assert.equal(await page.locator('#creative-text').inputValue(),text);
-  await page.waitForFunction(()=>managedTextSession(creative.session)&&!creative.session.documentDirty&&!creative.session.documentSaving);
+  await page.waitForFunction(()=>DocumentUi.isManaged(creative.session)&&!creative.session.documentDirty&&!creative.session.documentSaving);
   assert.equal(fs.readFileSync(item.path,'utf8'),text);
   assert.match(control('close-and-wait'),/Healthy close completed/);closed=true;
   report.failedCloseKeepsWindowAndText=true;report.retryCloses=true;

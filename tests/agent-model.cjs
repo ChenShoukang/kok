@@ -1,0 +1,16 @@
+'use strict';
+const assert=require('node:assert/strict'),m=require('../ui/agent-model.js');
+assert.equal(m.partialReply('{"reply":"Hello \\u4e16\\u754c'),'Hello 世界');
+assert.equal(m.partialReply('{"reply":"partial \\u4e'),'partial ');
+assert.equal(m.partialReply('{"actions":[]}'),'');
+assert.equal(m.skill('auto','帮我整理文件').name,'organize');
+assert.equal(m.skill('','帮我整理文件'),undefined);
+assert.equal(m.skill('compare','整理文件').name,'compare');
+const excerpt=m.context([{tool:'read_items',args:{ids:['a']},text:'A'.repeat(500)},{tool:'search_library',args:{},text:'NEWEST'}],180);
+assert(excerpt.length<=180);assert(excerpt.includes('NEWEST'));assert(excerpt.includes('locally shortened'));
+const history=m.history([{role:'user',content:'older'.repeat(40)},{role:'assistant',content:'new'}],10);
+assert.deepEqual(history,[{role:'assistant',content:'new'}]);
+assert.equal(m.storedMessages([{role:'thinking'},{role:'tool',status:'pending',args:{},undo:()=>{}}])[0].status,'skipped');
+const grouped=m.groups([{id:'a',role:'tool',tool:'read_items'},{id:'b',role:'tool',tool:'search_library'},{id:'c',role:'tool',tool:'write_note'},{id:'d',role:'agent',text:'Result'},{id:'e',role:'tool',tool:'read_items'}]);
+assert.deepEqual(grouped.map(g=>[g.kind,g.items.map(m=>m.id)]),[['reads',['a','b']],['message',['c']],['message',['d']],['reads',['e']]]);
+console.log('PASS: bounded whole-observation context, recent history, partial JSON streaming, skill routing and safe restored proposals.');

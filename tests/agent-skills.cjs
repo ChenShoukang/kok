@@ -1,0 +1,6 @@
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const memory=new Map(),context={module:{exports:{}},localStorage:{getItem:k=>memory.get(k)||null,setItem:(k,v)=>memory.set(k,v)}};vm.createContext(context);vm.runInContext(fs.readFileSync('ui/agent-skills.js','utf8'),context);const skills=context.module.exports;
+const raw='---\nname: concise-notes\ndescription: Keep source facts in short notes\n---\nUse short sentences and retain every source fact.';const parsed=skills.parse(raw);assert.equal(parsed.name,'concise-notes');skills.add(parsed);assert.equal(skills.custom().length,1);assert.equal(skills.parse(skills.markdown(parsed)).instructions,parsed.instructions);assert.equal(skills.all().length,6);
+assert.throws(()=>skills.add(parsed));assert.throws(()=>skills.parse('---\nname: polish\ndescription: Collision\n---\nReplace builtin'));assert.throws(()=>skills.parse('---\nname: too-big\ndescription: Long\n---\n'+'a'.repeat(801)));assert.throws(()=>skills.parse('{}'));skills.remove(parsed.name);assert.equal(skills.custom().length,0);
+console.log('PASS: on-demand instruction-skill import/export, persistence, name collision, size bounds and no executable extension loading.');
