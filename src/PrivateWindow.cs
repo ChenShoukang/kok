@@ -33,15 +33,20 @@ namespace kok {
             FormClosed+=delegate{privateTimer.Dispose();if(privateSession!=null)privateSession.Dispose();};
         }
         async Task SaveCurrentSession(){
+            if(web.CoreWebView2!=null&&!engineUnavailable&&!library.IsPrivate){
+                string encoded=await SessionPersistence.ReadSnapshot(web.CoreWebView2.ExecuteScriptAsync("window.kokAgentSession ? window.kokAgentSession() : null"),5000);
+                string agentText=Library.Json.Deserialize<string>(encoded);if(agentText!=null)library.SaveAgentSessions(agentText);
+            }
             await SavePreviewSessions();
             if(web.CoreWebView2!=null&&!engineUnavailable)await SaveWebSession(web,library);
         }
         async Task StopAiForPrivate(){
+            CancelAgentRun();
             CancelCreativeJobs();CancelSpeechJobs();if(musicLookupCancellation!=null)musicLookupCancellation.Cancel();
             PauseNetworkDownloads();
             foreach(var job in translationJobs.Values.ToArray())job.Cancel();if(fileChatCancellation!=null)fileChatCancellation.Cancel();if(organizationCancellation!=null)organizationCancellation.Cancel();if(modelListCancellation!=null)modelListCancellation.Cancel();organizationPreview=null;
-            for(int n=0;n<200&&(translationJobs.Count>0||fileChatCancellation!=null||organizationCancellation!=null||modelListCancellation!=null||backgroundLibraryWrites>0);n++)await Task.Delay(25);
-            if(translationJobs.Count>0||fileChatCancellation!=null||organizationCancellation!=null||modelListCancellation!=null||backgroundLibraryWrites>0)throw new InvalidOperationException("后台任务正在停止，请稍后重试。");
+            for(int n=0;n<200&&(translationJobs.Count>0||agentCancellation!=null||fileChatCancellation!=null||organizationCancellation!=null||modelListCancellation!=null||backgroundLibraryWrites>0);n++)await Task.Delay(25);
+            if(translationJobs.Count>0||agentCancellation!=null||fileChatCancellation!=null||organizationCancellation!=null||modelListCancellation!=null||backgroundLibraryWrites>0)throw new InvalidOperationException("后台任务正在停止，请稍后重试。");
         }
         async Task<object> OpenPrivateVault(string password,bool create){
             if(DateTime.UtcNow<nextVaultAttempt)throw new InvalidOperationException("密码尝试过于频繁，请稍后重试。");

@@ -16,6 +16,7 @@ namespace kok {
         static readonly string[] DownloadActions={"downloadState","installDownloadTools","cancelDownloadTools","chooseDownloadFolder","chooseFfmpeg","probeDownload","cancelDownloadProbe","startDownloads","pauseDownload","resumeDownload","cancelDownload","importDownload","revealDownload","clearDownloadHistory","loginDownloadSite","clearDownloadLogin","importDownloadLogin","browserProbeDownload"};
         void InitializeDownloads(){
             downloads=new DownloadManager(normalLibrary.DataDir,appDir);
+            downloads.Changed=()=>{if(IsDisposed||Disposing||!IsHandleCreated)return;try{BeginInvoke((Action)(()=>{if(jobs!=null&&!library.IsPrivate)jobs.Changed();}));}catch(InvalidOperationException){}};
             downloads.Completed=delegate(VideoDownload job){
                 if(IsDisposed||Disposing||!IsHandleCreated)return;
                 try{BeginInvoke((Action)(()=>{
@@ -28,6 +29,7 @@ namespace kok {
         void PauseNetworkDownloads(){if(downloads!=null)downloads.PauseAll();if(componentInstall!=null)componentInstall.Cancel();if(downloadProbe!=null)downloadProbe.Cancel();}
         void RequireDownloadAccess(){if(library.IsPrivate)throw new InvalidOperationException("私密文件夹不提供联网下载。");if(!library.AiEnabled)throw new InvalidOperationException("请先切换至智能模式，再使用联网下载。");}
         async Task<object> HandleDownloadAction(string action,Dictionary<string,object> args){
+            if(action=="pauseDownload"||action=="cancelDownload"){if(library.IsPrivate)throw new InvalidOperationException("私密文件夹不提供联网下载。");downloads.Stop(StringArg(args,"id"),action=="pauseDownload");return true;}
             if(action=="cancelDownloadTools"){if(componentInstall!=null)componentInstall.Cancel();return true;}
             if(action=="cancelDownloadProbe"){if(downloadProbe!=null)downloadProbe.Cancel();return true;}
             RequireDownloadAccess();

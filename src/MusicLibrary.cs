@@ -74,7 +74,7 @@ namespace kok {
             string query="recording:"+Quote(title);if(!String.IsNullOrWhiteSpace(artist)&&artist!="本地音乐")query+=" AND artist:"+Quote(artist);
             await throttle.WaitAsync(token);try{var delay=TimeSpan.FromSeconds(1.1)-(DateTime.UtcNow-lastRequest);if(delay>TimeSpan.Zero)await Task.Delay(delay,token);lastRequest=DateTime.UtcNow;
                 using(var handler=handlerFactory==null?new HttpClientHandler{AllowAutoRedirect=false}:handlerFactory())using(var client=new HttpClient(handler))using(var request=new HttpRequestMessage(HttpMethod.Get,"https://musicbrainz.org/ws/2/recording/?fmt=json&limit=6&query="+Uri.EscapeDataString(query))){
-                    client.Timeout=TimeSpan.FromSeconds(20);request.Headers.TryAddWithoutValidation("User-Agent","kok/0.6.2 (https://github.com/ChenShoukang/kok)");
+                    client.Timeout=TimeSpan.FromSeconds(20);request.Headers.TryAddWithoutValidation("User-Agent","kok/0.7.2 (https://github.com/ChenShoukang/kok)");
                     using(var reply=await client.SendAsync(request,HttpCompletionOption.ResponseHeadersRead,token)){
                         if(!reply.IsSuccessStatusCode)throw new InvalidDataException("音乐目录暂时不可用，请稍后重试。",new HttpRequestException("Catalogue HTTP "+(int)reply.StatusCode));using(var stream=await reply.Content.ReadAsStreamAsync())using(var buffer=new MemoryStream()){
                             byte[] bytes=new byte[8192];int count;while((count=await stream.ReadAsync(bytes,0,bytes.Length,token))>0){if(buffer.Length+count>1024*1024)throw new InvalidDataException("音乐目录返回内容过大。");buffer.Write(bytes,0,count);}return Parse(Encoding.UTF8.GetString(buffer.ToArray()));
@@ -100,7 +100,7 @@ namespace kok {
         CancellationTokenSource musicLookupCancellation;
         async Task<object> HandleMusicAction(string action,Dictionary<string,object> args){
             if(action=="cancelMusicLookup"){if(musicLookupCancellation!=null)musicLookupCancellation.Cancel();return true;}
-            if(action=="lookupMusic"){library.RequireAiMode();if(musicLookupCancellation!=null)throw new InvalidOperationException("音乐信息正在匹配，请稍候。");using(var cancel=new CancellationTokenSource()){musicLookupCancellation=cancel;try{return await musicDirectory.Search(StringArg(args,"title"),StringArg(args,"artist"),cancel.Token);}finally{musicLookupCancellation=null;}}}
+            if(action=="lookupMusic"){library.RequireAiMode();if(musicLookupCancellation!=null)throw new InvalidOperationException("音乐信息正在匹配，请稍候。");using(var cancel=ModuleCancellation()){musicLookupCancellation=cancel;try{return await musicDirectory.Search(StringArg(args,"title"),StringArg(args,"artist"),cancel.Token);}finally{musicLookupCancellation=null;}}}
             if(action=="saveMusicInfo"){var item=RequireEntry(args);if(item.kind!="music")throw new InvalidDataException("请选择音频文件。");library.UpdateAudio(item,args);Notify("libraryChanged",null);return item;}
             var ids=Library.Json.Deserialize<List<string>>(Library.Json.Serialize(args["ids"]));if(ids==null||ids.Count<1||ids.Count>50||ids.Distinct().Count()!=ids.Count||ids.Any(id=>library.Find(id)==null||library.Find(id).kind!="music"))throw new InvalidDataException("每次请选择 1 至 50 个音频文件。");
             if(action=="musicOrganizationInput")return library.OrganizeInputs(ids,false);

@@ -92,7 +92,7 @@ namespace kok {
                 core.ContainsFullScreenElementChanged+=delegate{SetFullScreen(core.ContainsFullScreenElement);};
                 core.ProcessFailed+=delegate(object sender,CoreWebView2ProcessFailedEventArgs e){if(e.ProcessFailedKind==CoreWebView2ProcessFailedKind.RenderProcessExited){Ready=false;try{core.Reload();}catch{CloseWithoutSaving();}}};
                 string origin="";if(LaunchOrigin.Width>0){var point=Browser.PointToScreen(Point.Empty);Func<double,string> number=value=>value.ToString("0.######",System.Globalization.CultureInfo.InvariantCulture);origin="&ox="+number((LaunchOrigin.Left+LaunchOrigin.Width/2.0-point.X)/Math.Max(1,Browser.ClientSize.Width))+"&oy="+number((LaunchOrigin.Top+LaunchOrigin.Height/2.0-point.Y)/Math.Max(1,Browser.ClientSize.Height))+"&ow="+number(LaunchOrigin.Width/(double)Math.Max(1,Browser.ClientSize.Width))+"&oh="+number(LaunchOrigin.Height/(double)Math.Max(1,Browser.ClientSize.Height));}
-                core.Navigate("https://app.kok.local/index.html?preview="+Uri.EscapeDataString(ItemId)+"&play="+(play?"1":"0")+origin);
+                core.Navigate("https://app.kok.local/index.html?preview="+Uri.EscapeDataString(ItemId)+"&play="+(play?"1":"0")+origin+"&v=0.8.1-modules");
             }
             internal void Appearance(Color color){BackColor=color;Browser.DefaultBackgroundColor=color;try{int dark=color.R*.2126+color.G*.7152+color.B*.0722<145?1:0;DwmSetWindowAttribute(Handle,20,ref dark,4);}catch(DllNotFoundException){}catch(EntryPointNotFoundException){} }
             internal void Present(bool reduceMotion){

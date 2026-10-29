@@ -1,0 +1,4 @@
+using System.Collections.Generic;
+namespace kok {internal static class PresentationToolDefinitions {internal static AgentToolSpec[] Tools(){return new[]{
+new AgentToolSpec{Requires=Need.NormalLibrary,CapabilityId="presentations.newPresentation",Name="create_presentation",Write=true,Signature="create_presentation{title,slides:[{title,bullets[<=8]}](<=20)}",Description="PROPOSE creating a PPTX presentation. The user approves it.",Properties=AgentRules.Props("title",AgentRules.Str("Presentation title",100),"slides",AgentRules.Arr("Slides",20,new Dictionary<string,object>{{"type","object"},{"properties",AgentRules.Props("title",AgentRules.Str("Slide title",120),"bullets",AgentRules.Arr("Bullet points",8,AgentRules.Str("Bullet",200)))},{"required",new[]{"title"}}})),Required=new[]{"title","slides"}}
+};}}}

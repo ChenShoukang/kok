@@ -16,6 +16,7 @@ namespace kok {
         public long size;
         public bool favorite;
         public bool ownedDocument;
+        public string agentOperationId="";
         public double progress, position;
         public int chapter;
         public string notes = "";
@@ -40,6 +41,8 @@ namespace kok {
     public class MarkRect { public double x,y,w,h; }
     public class FontAsset { public string id,name,path; }
     public class Database {
+        public WorkspaceState workspace = new WorkspaceState();
+        public List<Operation> operations = new List<Operation>();
         public int version = 1;
         public List<Entry> items = new List<Entry>();
         public Dictionary<string, object> settings = new Dictionary<string, object>();
@@ -56,6 +59,8 @@ namespace kok {
     public partial class Library {
         public readonly string DataDir;
         readonly VaultSession vault;
+        readonly LibraryStore store;
+        public string StoragePath {get{return store.FilePath;}}
         public bool IsPrivate {get{return vault!=null;}}
         public Database Db;
         private readonly object gate = new object();
@@ -71,29 +76,36 @@ namespace kok {
             DataDir = dataDir;
             Directory.CreateDirectory(DataDir);
             Directory.CreateDirectory(Path.Combine(DataDir, "thumbs"));
+            store=new LibraryStore(DataDir,vault);
             string file = Path.Combine(DataDir, vault==null?"library.json":"library.vault");
+            bool migrate=false;
+            if(store.Exists&&vault==null) {try{Db=store.Load();}catch(Exception ex){throw new InvalidDataException("资料库校验失败，原数据已保留。",ex);}}
+            else {
             if (File.Exists(file)) {
-                try { Db = Json.Deserialize<Database>(vault==null?File.ReadAllText(file, Encoding.UTF8):Encoding.UTF8.GetString(vault.Unseal(File.ReadAllBytes(file),"library"))); if (Db == null || Db.items == null || Db.settings == null) throw new InvalidDataException(); }
+                try { var image=vault==null?null:vault.Unseal(File.ReadAllBytes(file),"library");if(image!=null&&image.Length>16&&Encoding.ASCII.GetString(image,0,15)=="SQLite format 3")Db=store.Load();else {Db=Json.Deserialize<Database>(image==null?File.ReadAllText(file,Encoding.UTF8):Encoding.UTF8.GetString(image));migrate=true;} if (Db == null || Db.items == null || Db.settings == null) throw new InvalidDataException(); }
                 catch (Exception ex) { throw new InvalidDataException(vault==null?"资料库无法读取。原文件已保留，请检查 data/library.json 或 library.json.bak 备份。":"私密资料库校验失败，原数据已保留。", ex); }
             } else {if(vault!=null&&File.Exists(file+".bak"))throw new InvalidDataException("私密资料库索引缺失，请保留备份并恢复后再试。");Db = new Database();}
+            }
+            if(Db.workspace==null)Db.workspace=new WorkspaceState();
+            if(migrate){string backup=file+".pre-0.8.1";if(!File.Exists(backup))File.Copy(file,backup,false);}
+            if(migrate||!store.Exists)store.Initialize(Db,migrate);
             if(vault!=null)Db.settings["appMode"]="pure";
-            foreach(var item in Db.items.Where(x=>x.kind=="video"))item.hasCover=File.Exists(ThumbnailPath(item));
+            FinishPrivateMove();foreach(var item in Db.items.Where(x=>x.kind=="video"))item.hasCover=File.Exists(ThumbnailPath(item));RememberItems();
         }
-        public string Snapshot() { lock(gate) return Json.Serialize(Db); }
+        public string Snapshot(bool includeOperations=true) { lock(gate) return includeOperations?Json.Serialize(new{Db.version,Db.items,Db.workspace,operations=store.AllOperations(),Db.settings,Db.collections,Db.fonts,Db.watchFolders,Db.ignoredAutoPaths}):Json.Serialize(new{Db.version,Db.items,Db.settings,Db.collections,Db.fonts,Db.watchFolders,Db.ignoredAutoPaths}); }
         public Entry Find(string id) { lock(gate) return Db.items.FirstOrDefault(x => x.id == id); }
-        public void Save() {
+        public void Save(bool recordChanges=true,IEnumerable<string> itemIds=null,IEnumerable<string> operationIds=null,bool workspaceChanges=false) {
             lock(gate) {
-                string file = Path.Combine(DataDir, vault==null?"library.json":"library.vault"), temp = file + ".tmp";
-                if(vault==null)File.WriteAllText(temp, Json.Serialize(Db), new UTF8Encoding(false));else File.WriteAllBytes(temp,vault.Seal(Encoding.UTF8.GetBytes(Json.Serialize(Db)),"library"));
-                if (File.Exists(file)) File.Replace(temp, file, file + ".bak"); else File.Move(temp, file);
+                HashSet<string> dirty=new HashSet<string>();var captured=recordChanges?CaptureChanges(out dirty):new List<Operation>();if(recordChanges&&itemIds==null)itemIds=dirty;if(operationIds==null)operationIds=captured.Select(o=>o.id).Concat(OperationRows.Where(o=>!committedOperations.Contains(o.id)).Select(o=>o.id)).Distinct().ToArray();foreach(var op in captured)CheckOpCapacity(op);OperationRows.AddRange(captured);try{store.Save(Db,false,itemIds,operationIds,workspaceChanges);RememberItems(itemIds);}catch{foreach(var op in captured)OperationRows.Remove(op);throw;}
             }
         }
-        public ImportResult Import(IEnumerable<string> paths, Action<int> progress) {
+        public ImportResult Import(IEnumerable<string> paths, Action<int> progress, System.Threading.CancellationToken token=default(System.Threading.CancellationToken)) {
             var result = new ImportResult();
             HashSet<string> known;
             lock(gate) known = new HashSet<string>(Db.items.Select(x => x.path), StringComparer.OrdinalIgnoreCase);
             int seen = 0;
-            foreach (string input in paths) {
+            try{foreach (string input in paths) {
+                token.ThrowIfCancellationRequested();
                 try {
                     string path = Path.GetFullPath(input);
                     string kind = Classify(path);
@@ -108,11 +120,11 @@ namespace kok {
                 } catch (Exception ex) { if (result.errors.Count < 20) result.errors.Add(Path.GetFileName(input) + ": " + ex.Message); }
                 if (++seen % 25 == 0 && progress != null) progress(seen);
             }
-            Save(); return result;
+            }finally{Save();}return result;
         }
-        public ImportResult ImportDropped(IEnumerable<string> paths, Action<int> progress) {
+        public ImportResult ImportDropped(IEnumerable<string> paths, Action<int> progress, System.Threading.CancellationToken token=default(System.Threading.CancellationToken)) {
             var errors = new List<string>();
-            var result = Import(ExpandDropped(paths, errors), progress);
+            var result = Import(ExpandDropped(paths, errors), progress,token);
             result.errors.AddRange(errors.Take(Math.Max(0,20-result.errors.Count)));
             return result;
         }
@@ -135,9 +147,8 @@ namespace kok {
                 }
             }
         }
-        public void Update(string id, Dictionary<string,object> patch) {
-            lock(gate) {
-                Entry e = Find(id); if(e == null) throw new FileNotFoundException("资料已移除。");
+        internal void ValidateAndAssign(Entry e,Dictionary<string,object> patch) {
+                if(patch==null||patch.Keys.Any(k=>ModuleRegistry.Builtins.FieldOwner(k)==null))throw new InvalidDataException("字段未声明所属模块，未修改资料。");
                 if(patch.ContainsKey("favorite")) e.favorite = Convert.ToBoolean(patch["favorite"]);
                 if(patch.ContainsKey("progress")) e.progress = Clamp(Convert.ToDouble(patch["progress"]),0,1);
                 if(patch.ContainsKey("position")) e.position = Clamp(Convert.ToDouble(patch["position"]),0,1e10);
@@ -145,6 +156,7 @@ namespace kok {
                 if(patch.ContainsKey("notes")) { string text = Convert.ToString(patch["notes"]); if(text.Length > 200000) throw new InvalidDataException("笔记过长。"); e.notes = text; }
                 if(patch.ContainsKey("editDraft")){string json=Json.Serialize(patch["editDraft"]);if(json.Length>2*1024*1024)throw new InvalidDataException("编辑草稿过大。");e.editDraft=Json.Deserialize<Dictionary<string,object>>(json);}
                 if(patch.ContainsKey("collection")) { e.collection = Limit(Convert.ToString(patch["collection"]),100); if(e.collection!=""&&!Db.collections.Contains(e.collection))Db.collections.Add(e.collection); }
+                if(patch.ContainsKey("tags")){var tags=Json.Deserialize<List<string>>(Json.Serialize(patch["tags"]));if(tags==null||tags.Count>40||tags.Any(t=>String.IsNullOrWhiteSpace(t)||t.Length>40||t.Any(Char.IsControl)))throw new InvalidDataException("标签格式无效。");e.tags=tags.Select(t=>t.Trim()).Distinct().ToList();}
                 if(patch.ContainsKey("album")) {e.album=Limit(Convert.ToString(patch["album"]),200);if(e.audio!=null)e.audio.manual=true;}
                 if(patch.ContainsKey("artist")) {e.artist=Limit(Convert.ToString(patch["artist"]),200);if(e.audio!=null)e.audio.manual=true;}
                 if(patch.ContainsKey("width")&&patch.ContainsKey("height")){int width=Convert.ToInt32(patch["width"]),height=Convert.ToInt32(patch["height"]);if(width<1||height<1||width>100000||height>100000)throw new InvalidDataException("媒体尺寸无效。");e.width=width;e.height=height;}
@@ -162,7 +174,25 @@ namespace kok {
                     e.bookmarks=bookmarks;
                 }
                 if(patch.ContainsKey("opened")) e.opened = DateTime.UtcNow.ToString("o");
-                Save();
+        }
+        public void Update(string id,Dictionary<string,object> patch) {
+            lock(gate) {
+                var original=Find(id);if(original==null)throw new FileNotFoundException("资料已移除。");
+                var candidate=Json.Deserialize<Entry>(Json.Serialize(original));var collections=Db.collections.ToList();
+                Operation op=null;Operation previous=null;bool added=false;
+                try {
+                    ValidateAndAssign(candidate,patch);
+                    var before=new Dictionary<string,object>();var after=new Dictionary<string,object>();
+                    foreach(var key in patch.Keys){var field=typeof(Entry).GetField(key);var a=field.GetValue(original);var b=field.GetValue(candidate);if(Json.Serialize(a)!=Json.Serialize(b)){before[key]=a;after[key]=b;}}
+                    if(after.Count==0){Db.collections=collections;return;}before=Json.Deserialize<Dictionary<string,object>>(Json.Serialize(before));after=Json.Deserialize<Dictionary<string,object>>(Json.Serialize(after));
+                    bool progress=after.Keys.All(k=>new[]{"opened","chapter","position","progress","width","height"}.Contains(k));
+                    op=progress?OperationRows.LastOrDefault(o=>o.title=="阅读与播放进度"&&o.state=="applied"&&o.patches.Count==1&&o.patches[0].id==id&&String.CompareOrdinal(o.created,DateTime.UtcNow.AddMinutes(-5).ToString("o"))>=0):null;
+                    if(op!=null){previous=Json.Deserialize<Operation>(Json.Serialize(op));foreach(var pair in before)if(!op.patches[0].before.ContainsKey(pair.Key))op.patches[0].before[pair.Key]=pair.Value;foreach(var pair in after)op.patches[0].after[pair.Key]=pair.Value;}
+                    else {op=new Operation{id=Guid.NewGuid().ToString("N"),module="library",source="user",title=progress?"阅读与播放进度":"编辑资料",created=DateTime.UtcNow.ToString("o"),state="applied",patches=new List<AgentChange>{new AgentChange{id=id,before=before,after=after}}};CheckOpCapacity(op);OperationRows.Add(op);added=true;}
+                    int index=Db.items.IndexOf(original);Db.items[index]=candidate;try{Save(false,new[]{id},new[]{op.id});}catch{Db.items[index]=original;throw;}
+                    // Callers holding this item retain a live view after the transaction commits.
+                    foreach(var field in typeof(Entry).GetFields())field.SetValue(original,field.GetValue(candidate));Db.items[index]=original;
+                } catch {Db.collections=collections;if(added)OperationRows.Remove(op);else if(previous!=null){int at=OperationRows.IndexOf(op);OperationRows[at]=previous;}throw;}
             }
         }
         static string Limit(string value,int max) { if(value.Length>max)throw new InvalidDataException("内容过长。");return value; }
@@ -170,7 +200,7 @@ namespace kok {
         public void DeleteCollection(string name) { lock(gate){Db.collections.Remove(name);foreach(var item in Db.items)if(item.collection==name)item.collection="";Save();} }
         static double Clamp(double n,double a,double b) { return double.IsNaN(n) || double.IsInfinity(n) ? a : Math.Max(a,Math.Min(b,n)); }
         public void Remove(string id) { lock(gate) { var item=Find(id); if(item!=null&&!Db.ignoredAutoPaths.Contains(item.path))Db.ignoredAutoPaths.Add(item.path); Db.items.RemoveAll(x=>x.id==id); Save(); } }
-        public void Settings(Dictionary<string,object> value) { lock(gate) { var clean=ValidateReadingAppearance(value);foreach(var pair in value) if(new[]{"theme","readerSize","readerTheme","volume","view","sort","loop","shuffle","fontFamily","videoRate","smartSpeed","uiLanguage","readerToc","videoVolume","readerFollowTheme","videoShortcutsEnabled","videoPlayKey","videoSeekKeys","videoSeekSeconds","videoVolumeKeys","videoDoubleClick","organizeMode"}.Contains(pair.Key)) Db.settings[pair.Key] = pair.Value;foreach(var pair in clean)Db.settings[pair.Key]=pair.Value;Save(); } }
+        public void Settings(Dictionary<string,object> value) { lock(gate) { var previousSettings=Db.settings;Db.settings=new Dictionary<string,object>(previousSettings);try{var clean=ValidateReadingAppearance(value);foreach(var pair in value) if(new[]{"theme","readerSize","readerTheme","volume","view","sort","loop","shuffle","fontFamily","videoRate","smartSpeed","uiLanguage","readerToc","videoVolume","readerFollowTheme","videoShortcutsEnabled","videoPlayKey","videoSeekKeys","videoSeekSeconds","videoVolumeKeys","videoDoubleClick","organizeMode"}.Contains(pair.Key)) Db.settings[pair.Key] = pair.Value;foreach(var pair in clean)Db.settings[pair.Key]=pair.Value;object skin;if(value.TryGetValue("skin",out skin)){string look=Convert.ToString(skin);if(look!="classic"&&look!="graphite")throw new InvalidDataException("界面风格无效。");Db.settings["skin"]=look;}object start;if(value.TryGetValue("startPage",out start)){string page=Convert.ToString(start);if(page!="agent"&&page!="overview"&&page!="today")throw new InvalidDataException("启动页无效。");Db.settings["startPage"]=page;}object density;if(value.TryGetValue("viewerDensity",out density)){var modes=Json.Deserialize<Dictionary<string,string>>(Json.Serialize(density));if(modes==null||modes.Count>5||modes.Any(p=>!new[]{"video","photo","music","document","book"}.Contains(p.Key)||!new[]{"work","immersion"}.Contains(p.Value)))throw new InvalidDataException("查看器模式无效。");Db.settings["viewerDensity"]=modes;}Save(false,new string[0],new string[0]);}catch{Db.settings=previousSettings;throw;} } }
         public FontAsset ImportFont(string source) {
             var info=new FileInfo(source);if(info.Length>20*1024*1024)throw new InvalidDataException("字体文件不可超过 20 MB。");
             using(var stream=File.OpenRead(source)){byte[] head=new byte[4];if(stream.Read(head,0,4)!=4||!((head[0]==0&&head[1]==1&&head[2]==0&&head[3]==0)||Encoding.ASCII.GetString(head)=="OTTO"))throw new InvalidDataException("请选择有效的 TTF 或 OTF 字体。");}

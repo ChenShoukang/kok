@@ -20,6 +20,8 @@ namespace kok {
                     double min=0,max=0;
                     switch(key){case "glassOpacity":min=15;max=95;break;case "glassBlur":min=0;max=48;break;case "readerLineHeight":min=1.2;max=2.8;break;case "readerLetterSpacing":min=0;max=3;break;case "readerParagraphSpace":min=0;max=2;break;case "readerWidth":min=420;max=1100;break;}
                     if(Double.IsNaN(number)||Double.IsInfinity(number)||number<min||number>max)throw new InvalidDataException("阅读或外观设置数值无效。");result[key]=number;
+                }else if(key=="knowledgeViews"){
+                    result[key]=ValidateKnowledgeScopes(value);
                 }else if(key=="studySelectionLimit"){
                     int count;try{count=Convert.ToInt32(value);}catch{throw new InvalidDataException("阅读或外观设置数值无效。");}if(count<2||count>50)throw new InvalidDataException("阅读或外观设置数值无效。");result[key]=count;
                 }else if(new[]{"bookTextSize","documentTextSize"}.Contains(key)){

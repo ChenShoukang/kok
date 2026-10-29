@@ -19,7 +19,7 @@ namespace kok {
         internal bool pauseRequested;
     }
     public class DownloadStore {public string folder,ffmpegFolder="";public List<VideoDownload> jobs=new List<VideoDownload>();}
-    public sealed class DownloadManager : IDisposable {
+    public sealed partial class DownloadManager : IDisposable {
         readonly object gate=new object();
         readonly string stateFile;
         readonly SemaphoreSlim serial=new SemaphoreSlim(1,1);
@@ -29,6 +29,7 @@ namespace kok {
         DownloadStore store;
         bool disposed;
         public Action<VideoDownload> Completed;
+        public Action Changed;
         public DownloadManager(string dataDir,string appDir){
             sessions=new DownloadSessions(dataDir);tools=new DownloadTools(dataDir,appDir);stateFile=Path.Combine(dataDir,"downloads.json");
             if(File.Exists(stateFile))try{store=Library.Json.Deserialize<DownloadStore>(File.ReadAllText(stateFile,Encoding.UTF8));}catch{File.Copy(stateFile,stateFile+".broken-"+DateTime.UtcNow.ToString("yyyyMMddHHmmss"),true);}
@@ -49,7 +50,7 @@ namespace kok {
         public string LocalEncoder {get{return Ffmpeg();}}
         public string LocalProbe {get{return Ffprobe();}}
         void Save(){
-            string temp=stateFile+".tmp";File.WriteAllText(temp,Library.Json.Serialize(store),new UTF8Encoding(false));if(File.Exists(stateFile))File.Replace(temp,stateFile,stateFile+".bak");else File.Move(temp,stateFile);
+            string temp=stateFile+".tmp";File.WriteAllText(temp,Library.Json.Serialize(store),new UTF8Encoding(false));if(File.Exists(stateFile))File.Replace(temp,stateFile,stateFile+".bak");else File.Move(temp,stateFile);if(Changed!=null)Changed();
         }
         public object Snapshot(){lock(gate){return new{sites=sessions.Status(),tools=tools.Status(),folder=store.folder,ffmpegAvailable=Ffmpeg()!=null,ffprobeAvailable=Ffprobe()!=null,jobs=store.jobs.Select(j=>new{id=j.id,title=j.title,source=Source(j.url),quality=j.quality,backend=j.backend,notice=j.notice,streamKind=j.streamKind,duration=j.duration,position=j.position,sourceIsAudio=j.sourceIsAudio,status=j.status,error=j.error,progress=j.progress,speed=j.speed,received=j.received,total=j.total,imported=j.imported,hasFile=j.files.Any(File.Exists),created=j.created}).ToArray()};}}
         static string Source(string value){Uri uri;return Uri.TryCreate(value,UriKind.Absolute,out uri)?uri.Host:"";}

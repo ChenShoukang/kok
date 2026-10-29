@@ -15,9 +15,10 @@ namespace kok {
             new FormatGroup("music","codec","mp3 wav ogg oga flac m4a aac opus","MP3、PCM WAV、FLAC、Vorbis / Opus 和 AAC 等取决于实际编码与 WebView2；WAV 等容器也可能包含不支持的编码。"),
             new FormatGroup("music","external","wma aiff ape","可以收录到专辑，建议使用系统播放器。"),
             new FormatGroup("document","builtin","pdf","内置 PDF 预览、文字层、标记与位置插入；扫描件不提供 OCR。批注保存在 kok，不能写回原 PDF。"),
+            new FormatGroup("document","builtin","pptx","内置幻灯片预览、备注与基础编辑，可另存 PPTX；复杂母版、图表、动画和嵌入对象不能完整还原。"),
             new FormatGroup("document","builtin","docx","提取正文阅读、插入与批注，不保留 Office 原始排版、图片、表格布局或宏。"),
             new FormatGroup("document","builtin","csv md markdown log json html htm","按纯文本阅读，Markdown / HTML 不渲染排版，CSV 不显示电子表格。支持 UTF-8、UTF-16 和 GB18030。"),
-            new FormatGroup("document","external","doc rtf xlsx xls pptx ppt","可以收录和分类，使用已安装的 Office、WPS 或其他系统应用打开。"),
+            new FormatGroup("document","external","doc rtf xlsx xls ppt","可以收录和分类，使用已安装的 Office、WPS 或其他系统应用打开。"),
             new FormatGroup("book","builtin","epub txt","无 DRM 的 EPUB 正文与 TXT 分节阅读；EPUB 不还原图片、复杂排版与脚注交互。TXT 支持 UTF-8、UTF-16 和 GB18030。"),
             new FormatGroup("book","external","mobi azw azw3 fb2","可以收录和分类，使用系统阅读器；不解密 DRM。")
         };

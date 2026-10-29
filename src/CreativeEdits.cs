@@ -89,7 +89,7 @@ namespace kok {
             string encoder=downloads.LocalEncoder;if(encoder==null)throw new InvalidOperationException("请先配置本地媒体组件。");
             // Validate before opening a dialog or starting a process.
             string output=ChooseEditDestination(owner,entry,extension,extension.TrimStart('.').ToUpperInvariant()+"|*"+extension);if(output==null)return new{cancelled=true};
-            using(var cancel=new CancellationTokenSource()){creativeJobs.Add(job,cancel);backgroundLibraryWrites++;try{
+            using(var cancel=ModuleCancellation()){creativeJobs.Add(job,cancel);backgroundLibraryWrites++;try{
                 await MediaSequence.Export(encoder,downloads.LocalProbe,clips,output,entry.kind,cancel.Token,p=>Notify("creativeExportProgress",new{jobId=job,progress=p}));cancel.Token.ThrowIfCancellationRequested();if(library!=target)throw new OperationCanceledException();target.Import(new[]{output},null);Notify("libraryChanged",null);return new{saved=true,name=Path.GetFileName(output)};
             }catch(OperationCanceledException){return new{cancelled=true};}finally{creativeJobs.Remove(job);backgroundLibraryWrites--;}}
         }
