@@ -10,6 +10,7 @@ test-output/
 *.user
 *.log
 .vs/
+.claude/
 .env
 .env.*
 ai-settings.json
@@ -25,3 +26,9 @@ private-vault/
 *.vault
 *.sealed
 vault-info.json
+/WORK_NOTES_LOCAL.md
+tools/roslyn/
+tools/roslyn.zip
+tools/sqlite/
+
+/ui/bundle-*.css

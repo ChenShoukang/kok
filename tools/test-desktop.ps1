@@ -9,7 +9,7 @@ foreach($suite in $Suites){
     if($suite -notmatch '^[a-z0-9-]+$' -or -not (Test-Path -LiteralPath (Join-Path $projectRoot ('tests\'+$suite+'.cjs')))){throw 'Unknown desktop test suite'}
     $profile=Join-Path $auditRoot $suite
     New-Item -ItemType Directory -Path $profile -Force | Out-Null
-    $preferences=@{appMode='smart';smartModeNoticeSeen=$true;theme='light';uiLanguage='zh'}
+    $preferences=@{appMode='smart';smartModeNoticeSeen=$true;theme='light';uiLanguage='zh';startPage='overview';skin='graphite'}
     if($suite -eq 'app-modes'){$preferences=@{}}
     $sources=@()
     if($suite -eq 'organizer'){
@@ -28,6 +28,7 @@ foreach($suite in $Suites){
     [IO.File]::WriteAllText((Join-Path $profile 'library.json'),($database|ConvertTo-Json -Depth 8),[Text.UTF8Encoding]::new($false))
     if($suite -eq 'preview-041'){& node (Join-Path $projectRoot 'tests\preview-041.cjs') --prepare $profile;if($LASTEXITCODE -ne 0){throw 'Preview fixture preparation failed.'}}
     if($suite -eq 'photo-tools'){& node (Join-Path $projectRoot 'tests\photo-tools.cjs') --prepare $profile;if($LASTEXITCODE -ne 0){throw 'Photo fixture preparation failed.'}}
+    if($suite -eq 'warehouse-interactions'){& node (Join-Path $projectRoot 'tests\photo-tools.cjs') --prepare $profile;if($LASTEXITCODE -ne 0){throw 'Warehouse interaction fixture preparation failed.'}}
     if($suite -eq 'native-downloads'){& node (Join-Path $projectRoot 'tests\native-downloads.cjs') --prepare $profile;if($LASTEXITCODE -ne 0){throw 'Native download fixture preparation failed.'}}
     if($suite -eq 'media-downloads'){& node (Join-Path $projectRoot 'tests\media-downloads.cjs') --prepare $profile;if($LASTEXITCODE -ne 0){throw 'Media download fixture preparation failed.'}}
     if($suite -eq 'kok-downloads'){& node (Join-Path $projectRoot 'tests\kok-downloads.cjs') --prepare $profile;if($LASTEXITCODE -ne 0){throw 'kok download fixture preparation failed.'}}
@@ -45,6 +46,7 @@ foreach($suite in $Suites){
     if($suite -eq 'documents'){& node (Join-Path $projectRoot 'tests\documents.cjs') --prepare $profile;if($LASTEXITCODE -ne 0){throw 'Document fixture preparation failed.'}}
     if($suite -eq 'knowledge'){& node (Join-Path $projectRoot 'tests\knowledge.cjs') --prepare $profile;if($LASTEXITCODE -ne 0){throw 'Knowledge fixture preparation failed.'}}
     if($suite -eq 'graphite'){& node (Join-Path $projectRoot 'tests\graphite.cjs') --prepare $profile;if($LASTEXITCODE -ne 0){throw 'Graphite fixture preparation failed.'}}
+    if($suite -eq 'presentations-agent'){& node (Join-Path $projectRoot 'tests\presentations-agent.cjs') --prepare $profile;if($LASTEXITCODE -ne 0){throw 'Presentation fixture preparation failed.'}}
     $process=Start-Process -FilePath $executable -ArgumentList @('--debug','--test-silent','--data-dir',('"'+$profile+'"')) -PassThru -WindowStyle Hidden
     $env:KOK_TEST_NATIVE_PID=[string]$process.Id
     $env:KOK_TEST_EXECUTABLE=$executable

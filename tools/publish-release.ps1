@@ -22,6 +22,11 @@ if (-not (Test-Path -LiteralPath $archivePath) -or -not (Test-Path -LiteralPath 
 $checksum = (Get-Content -LiteralPath $checksumPath -Raw).Trim() -split '\s+'
 if ($checksum.Count -ne 2 -or $checksum[0] -notmatch '^[0-9a-fA-F]{64}$' -or $checksum[1] -cne $archiveName -or $checksum[0] -ine (Get-FileHash -LiteralPath $archivePath -Algorithm SHA256).Hash) { throw 'Release checksum verification failed.' }
 $notes = Get-Content -LiteralPath (Join-Path $PSScriptRoot '..\docs\RELEASE_NOTES.md') -Raw -Encoding UTF8
+# Package docs keep relative links; the GitHub release body links to this exact source commit.
+$notes = [regex]::Replace($notes, '(?<=\]\()(?!(?:[a-z]+:|#|/))[^\s)]+(?=\))', {
+    param($match)
+    ([Uri]::new([Uri]("https://github.com/$repo/blob/$env:GITHUB_SHA/docs/"), $match.Value)).AbsoluteUri
+})
 
 $title = 'kok ' + $version + ' Preview' + $(if($revision -gt 1){' (Revision '+$revision+')'})
 $body = @{ tag_name = $tag; target_commitish = $env:GITHUB_SHA; name = $title; body = $notes; draft = $true; prerelease = $true } | ConvertTo-Json

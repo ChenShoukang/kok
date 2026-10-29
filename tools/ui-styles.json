@@ -1,0 +1,62 @@
+{
+  "bundle-01-foundation.css": [
+    "tokens.css",
+    "styles.css",
+    "fonts.css",
+    "organizer.css",
+    "features.css",
+    "translation.css"
+  ],
+  "bundle-02-layout.css": [
+    "workspaces.css",
+    "adaptive.css",
+    "menus.css",
+    "companion.css",
+    "app-modes.css",
+    "appearance.css"
+  ],
+  "bundle-03-media.css": [
+    "reader-tools.css",
+    "downloads.css",
+    "photo-tools.css",
+    "flat-controls.css"
+  ],
+  "bundle-04-components.css": [
+    "surface-design.css",
+    "icons/fluent/layout.css",
+    "refined-design.css",
+    "study-tools.css",
+    "preview-windows.css"
+  ],
+  "bundle-05-editors.css": [
+    "music-library.css",
+    "creative-editor.css",
+    "speech.css",
+    "finesse-workspace.css",
+    "selection-precision.css"
+  ],
+  "bundle-06-reading.css": [
+    "reading-renewal.css",
+    "reading-comparison.css",
+    "library-drag.css",
+    "reading-flow.css",
+    "documents.css"
+  ],
+  "bundle-07-graphite.css": [
+    "knowledge.css",
+    "graphite.css",
+    "theme.css"
+  ],
+  "bundle-08-agents.css": [
+    "presentations.css",
+    "visual-agent.css",
+    "workspace-shell.css",
+    "agent.css"
+  ],
+  "bundle-09-finishes.css": [
+    "classic.css",
+    "calm-motion.css",
+    "viewer-shell.css",
+    "warehouse.css"
+  ]
+}
