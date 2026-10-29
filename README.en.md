@@ -1,75 +1,69 @@
 # kok · A local media and knowledge warehouse
 
-**Videos, photos, music, documents and books, together.** A lightweight Windows desktop app with offline essentials, optional AI and a password-protected private folder.
+**Watch, listen, read and take notes. Turn your collection into something of your own.**
 
-[Download v0.8.1 preview](https://github.com/ChenShoukang/kok/releases/tag/v0.8.1) · [中文](README.md) · [Supported formats](docs/FORMATS.en.md) · [Changelog](CHANGELOG.en.md)
+Keep videos, photos, music, documents and books in one local library. Organize topics with Spaces, connect sources to notes with Clips, and bring in AI when you want help translating, organizing or writing.
 
-**v0.8.1 Preview.** SQLite, Spaces, source-linked Clips, Inspector, editable Recipes and unified Jobs/Operations connect media and knowledge work. Includes targeted private-transfer cleanup, synchronized notes and bilingual interaction fixes. [Scope and remaining work](docs/WAREHOUSE_0.8.1.en.md) · [Validation](docs/VALIDATION_0.8.1.md#english).
+[Download v0.8.1 Preview](https://github.com/ChenShoukang/kok/releases/tag/v0.8.1) · [User guide](docs/GUIDE.en.md) · [中文](README.md) · [Supported formats](docs/FORMATS.en.md)
 
+![kok v0.8.1 library using bundled original samples](docs/screenshots/library-081-en.png)
+
+## From collecting to creating
+
+- **Collect and organize**: drop files or folders, browse by type, classify, favorite and search. Gather a topic's sources in a Space.
+- **Read and capture**: resume where you left off. Highlight text, write thoughts and save passages, time ranges or photo regions as source-linked Clips.
+- **Connect and create**: link notes, inspect relationships in a graph and bring files or Clips into notes, Spaces or presentations. Continue editing and export your work.
+- **Ask AI when useful**: discuss, translate or compare selected sources. Give Agent a task, inspect its evidence and proposed changes, then choose what to apply.
+
+## What you can do
+
+| Area | Practical features |
+| --- | --- |
+| Library and Spaces | Type detection, collections, favorites and full-text search; mixed files and Clips in grid, canvas, timeline or graph views; saved filters become automatically updated smart collections |
+| Video and music | Resume, playback speed, borderless fullscreen, sidecar subtitles and configurable shortcuts; albums, artists and personal audio, local tags/artwork, online metadata candidates and queues |
+| Photos | Wheel zoom, free crop, color adjustments, filters, text, drawing, arrows, masks, layers, undo/redo and PNG/JPEG copies |
+| Documents and books | Create Markdown, DOCX, TXT and PPTX; document auto-save, PDF search/annotations and basic slide editing; contents, bookmarks, single/spread/scroll layouts, reading colors and typography |
+| Notes, Clips and graphs | Underlines, highlights, thoughts, `[[note links]]`, backlinks, tags, outlines, tasks and templates; Clips return to passages, timestamps or photo regions |
+| AI translation and file chat | Selected-text explanations, side-by-side or translation-only documents, matching-format copies, multi-file comparison and note review; subtitle translation/outlines and separately configured speech recognition |
+| Agent and Recipes | Scoped search/read, organization, notes and new documents/presentations, with review before changes; instruction skills and usage limits; Recipes connect reading, summaries, notes and slides, with activity and operation history |
+| Video downloads | Bilibili/YouTube/Douyin adapters, generic pages and direct links, source selection, queues, resume, sign-in sessions and import; optional components merge split tracks and streams |
+
+See the [user guide](docs/GUIDE.en.md) for workflows, editing/export scope and practical examples.
 
 ## Get started
 
-1. Download `kok-0.8.1-win-x64.zip` from Releases, extract and run `kok.exe`. Keep the accompanying files.
-2. Choose **Pure** or **Smart**; switch later in Settings.
-3. Drop files or folders, choose **Import files**, or explore the original samples.
+1. Download `kok-0.8.1-win-x64.zip`, check the accompanying SHA-256, extract the full ZIP and run `kok.exe`.
+2. Choose **Pure** or **Smart**. Local essentials work without configuring AI.
+3. Explore the original samples or drop in your own files, then create a Space or save a Clip.
 
-Requires **Windows 10 / 11 x64, .NET Framework 4.8 and [WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/)**. Node.js and the .NET SDK are not runtime requirements. The unsigned portable ZIP includes a SHA-256 checksum.
+Requires **Windows 10/11 x64, .NET Framework 4.8 and [WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/)**. Node.js and the .NET SDK are not required to run the app. This is an unsigned **Preview**.
 
-<picture>
-  <source media="(max-width: 600px)" srcset="docs/assets/features-en-mobile.png">
-  <img src="docs/assets/features-en.png" alt="kok features: videos, photos, music, documents and books; Pure and Smart modes, optional AI and a private folder.">
-</picture>
+## Local by default, AI by choice
 
-## Features
-
-| Area | What you can do |
+| Experience | Behavior |
 | --- | --- |
-| Video | Borderless fullscreen, resume, 0.5×–3× speed and silence acceleration; matching or manually loaded sidecar subtitles, covers, right-click properties, configurable shortcuts and orientation-aware previews; picture-in-picture when supported by the runtime |
-| Photos | Wheel zoom, drag-to-pan, rotation and slideshows; filters, color adjustments, vignette, freehand crop with eight resize handles, fixed ratios, flip, original comparison, undo / redo and PNG / JPEG copies |
-| Music | Album, artist and personal-audio views; local tags and embedded artwork, manual corrections, online match candidates and bulk AI organization; queues, resume, shuffle and repeat |
-| Documents | Create Markdown / Word (DOCX) / TXT / PPTX; source/editing views, preview, auto-save and Ctrl+S; PDF search, outline, zoom, dark/easy text and annotations; PPTX slides, notes, basic text/page editing and exported copies |
-| Notes | `[[Note links]]` with completion, backlinks, tags, heading outline, checkable tasks and templates; local global/neighborhood graphs with dragging, zoom and filters. See [usage](docs/KNOWLEDGE_0.6.1.en.md) |
-| Books | EPUB contents, TXT sections, chapter filtering, full-text search, bookmarks, scroll / paged layouts, font / line / letter / paragraph spacing, width, focus and resume; existing highlights and thoughts remain available |
-| Editing | Photo text, drawing, arrows, masks and layers; audio/video trimming, splitting, multiple-source timelines and clip captions; visual text editing and DOCX / EPUB copies; PDF merge, reorder, rotation and page annotation. Drafts and exported copies preserve originals |
-| Library | File / folder drops, type detection and duplicate skipping; collections, favorites, recents, search, grid / list and sorting |
-| Local organization in Smart | Timeline / type / custom groups and bulk classification; selected-folder scans with pause / resume. Scanning and local groups need no AI calls |
-| Appearance | Flat pages, subtle corners and contextual actions; neutral white / graphite, custom backgrounds and glass; bundled Smiley Sans and LXGW WenKai Lite, Chinese / English; independent movable previews that go behind the main window when blank content is double-clicked |
-| Video downloads | Bilibili / YouTube / Douyin adapters, generic pages / file links, source / quality choices, audio and subtitles; site sign-in, encrypted sessions and cookies.txt import, browser assistance for Bilibili / Douyin; queues, resume, retry and import. Optional FFmpeg / FFprobe merges split tracks and M3U8 / DASH |
-| Optional AI | Side-by-side or translation-only documents, concurrent requests and segment caches, matching DOCX / EPUB / PDF / TXT / Markdown exports; local Whisper or a separate speech API for timed captions, SRT and bilingual translation; file chat, multi-file comparison, note review and organization |
+| Pure | Local playback, reading, editing and notes, with AI requests blocked; essentials work offline |
+| Smart | Adds file chat, Agent, translation and AI organization; entering the mode makes no model request and auto-translation defaults off |
+| Private folder | A password-protected folder inside the library, available in either mode; encrypted index, notes, covers and related records, with AI disabled and automatic locking |
 
-<details>
-<summary>View the actual interface</summary>
+Configure a compatible endpoint in **Settings → Tools → AI service**. Use remote providers such as DeepSeek, or an Ollama/LM Studio service you run yourself. See [setup and compatibility](docs/AI_PROVIDERS.en.md). Selected context goes to that service; long content may be sampled and answers need source checks. Credentials are encrypted locally.
 
-![Actual kok v0.7.1 local preview using bundled samples](docs/screenshots/overview-071-dark.jpg)
+Choose light/dark themes, background and glass colors, bundled Smiley Sans/LXGW WenKai Lite, Chinese/English, independent preview windows and enabled modules.
 
-</details>
+## Files and limits
 
-## Choose your experience
-
-- **Pure**: offline playback, editing, reading and notes, with AI requests blocked.
-- **Smart**: local features plus optional AI translation, chat and organization. Entering makes no model request; automatic translation defaults off.
-- **Private folder**: available inside either mode. Encrypts only its index, notes and covers, with AI disabled; locks on returning to the library, leaving the window, minimizing or five minutes idle. **Original files are not encrypted, existing ordinary entries for the same file are not hidden automatically, and lost passwords cannot be recovered.**
-
-In Smart mode, open **Settings → AI service** to enter an endpoint, model and credential, or load model IDs. Presets cover DeepSeek, OpenAI, Qwen, SiliconFlow, BigModel, Z.ai, Gemini, Groq, OpenRouter, Ollama and LM Studio, plus custom compatible endpoints.
-
-Chat uses video subtitles and an optional current frame, or document / book text, selections and notes. Long content is sampled; **this does not analyze an entire movie**. Organization previews changes before applying them to library records. Selected context goes to your configured service under its billing rules. Credentials are encrypted locally; source and packages exclude personal configuration and data.
-
-## Formats and data
-
-- Common formats include MP4 / WebM / MKV, JPG / PNG / WebP, MP3 / WAV / FLAC, PDF / DOCX and EPUB / TXT. Playback uses WebView2 without a separate decoder engine; **support depends on the actual codec**. Unsupported files can open in installed system apps. See the [format and subtitle matrix](docs/FORMATS.en.md).
-- DOCX / EPUB reading focuses on text. Scanned PDFs need external OCR; DRM is not decrypted. Annotations and inserted text belong to kok reading copies; photo edits save copies and preserve originals.
-- Canvas-edited PDF pages export as images; untouched pages retain their source content. DOCX / EPUB editing rebuilds simple body text. Audio/video export needs optional local FFmpeg / FFprobe. See [editing scope](docs/EDITING_MUSIC_0.5.1.md).
-- Importing references originals without moving them; removing entries does not delete files. Export ordinary index / notes as JSON or the private folder as encrypted `.kokvault`. Neither includes originals. See [modes, backups and restoration](docs/MODES.en.md).
-
-Shortcuts: `Ctrl K` search · `Esc` close · video `Space` play / pause, arrows seek, `F` fullscreen · `Ctrl Shift L` lock the private folder. Video shortcuts are customizable.
+- **Importing references originals; removing an entry does not delete its file.** The ordinary index, notes and history use local SQLite. An index backup is not a backup of source files.
+- The private folder protects application records; **original files are not encrypted**. Earlier independent AI history, exports and external backups are not retroactively encrypted. Lost passwords cannot be recovered. See [privacy and backups](docs/MODES.en.md).
+- Playback depends on codecs supported by WebView2/the system; no separate decoder engine is bundled. Scanned PDFs need external OCR and DRM is not decrypted. See [formats](docs/FORMATS.en.md).
+- PPTX/imported-document editing is basic. DOCX/EPUB editing rebuilds simple body text; canvas-edited PDF pages export as images. Media export/merging and local speech recognition need extra components; website download coverage has limits. See [editing and components](docs/GUIDE.en.md#editing-exports-and-optional-components).
 
 ## Documentation and development
 
-[AI setup](docs/AI_PROVIDERS.en.md) · [Smart organization and file chat](docs/SMART_LIBRARY.en.md) · [Build and tests](docs/DEVELOPMENT.en.md) · [Roadmap](ROADMAP.en.md) · [Report a bug](https://github.com/ChenShoukang/kok/issues/new/choose) · [Security](SECURITY.en.md)
+[User guide](docs/GUIDE.en.md) · [Documentation](docs/README.en.md) · [Validation](docs/VALIDATION_0.8.1.md#english) · [Implementation scope](docs/WAREHOUSE_0.8.1.en.md) · [Issues](https://github.com/ChenShoukang/kok/issues/new/choose) · [Security](SECURITY.en.md)
 
 ```powershell
 npm ci --omit=optional
 .\build.ps1 -Test
 ```
 
-Development uses Node.js 24; output is in `dist/kok/`. Run `.\package.ps1` to package. Original code and samples use [MIT](LICENSE); see [third-party licenses](THIRD_PARTY_NOTICES.md).
+Development uses Node.js 24; output is in `dist/kok/`. Run `.\package.ps1` to package. Read the [development guide](docs/DEVELOPMENT.en.md) and [roadmap](ROADMAP.en.md). Original code and samples use [MIT](LICENSE); see [third-party licenses](THIRD_PARTY_NOTICES.md).

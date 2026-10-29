@@ -2,7 +2,7 @@
 
 [中文](AGENT_0.7.2.md) · [Back](../README.en.md)
 
-Local preview, unpublished.
+These Agent features were introduced in v0.7.2 and are included in v0.8.1 Preview. This page adds task mechanics and limits; start with the [current guide](GUIDE.en.md#where-ai-helps) for practical usage.
 
 [Discussion, sources, change review and saving answers](AGENT_INTERACTIONS.en.md)
 
@@ -30,7 +30,7 @@ Design references: [Pi events and task steering](https://github.com/earendil-wor
 
 ## Agent home
 
-Smart mode opens on Agent by default; switch back to the library in Settings → Start page. Pure mode and the private folder show no composer and send no AI requests.
+New users start on Today; choose Agent or the library as your start page in Settings. Pure mode and the private folder show no composer and send no AI requests.
 
 1. Describe what you want; use Add files to set the scope. The library Agent button, the viewer's Hand to Agent and the graph's Continue in Agent bring the related files along.
 2. Agent first uses read-only tools; their results appear as muted cards.

@@ -1,14 +1,46 @@
 # kok 文档
 
-[使用与安装](../README.md) · [English](README.en.md)
+[项目首页](../README.md) · [English](README.en.md)
+
+第一次使用先读[使用指南](GUIDE.md)。这里按你想完成的事找说明；版本记录和开发实现放在后面。
+
+## 按功能查找
+
+| 想做什么 | 从这里开始 |
+| --- | --- |
+| 导入文件，认识资料库、空间、摘录与智能集合 | [当前使用指南](GUIDE.md) |
+| 离线使用、切换模式、建立私密文件夹和备份 | [模式、私密与数据边界](MODES.md) |
+| 配置 DeepSeek 等服务或本机模型 | [AI 服务配置](AI_PROVIDERS.md) |
+| 给 Agent 任务，限定范围并审核修改 | [Agent 功能](AGENT_0.7.2.md) · [来源与修改审核](AGENT_INTERACTIONS.md) · [任务与交接边界](AGENT_BOUNDARIES.md) |
+| 查文件、媒体编码、字幕和导出支持 | [格式兼容性](FORMATS.md) |
+| 写笔记、双向链接和查看知识图谱 | [笔记与图谱](KNOWLEDGE_0.6.1.md) |
+| 对照翻译文档、翻译字幕或生成语音字幕 | [翻译与字幕](TRANSLATION_CAPTIONS_0.5.1.md) |
+| 多份资料对比、笔记回顾、字幕目录 | [资料分析工具](STUDY_TOOLS_0.5.1.md) |
+| 照片、音视频、PDF 与正文编辑 | [编辑与音乐整理](EDITING_MUSIC_0.5.1.md) |
+| 扫描指定文件夹，归类或询问资料内容 | [智能整理与内容问答](SMART_LIBRARY.md) |
+| 安装或使用遇到问题 | [支持说明](../SUPPORT.md) · [问题反馈](https://github.com/ChenShoukang/kok/issues/new/choose) |
+
+## 版本、验证与开发
 
 | 文档 | 内容 |
 | --- | --- |
-| [v0.8.1 验证记录](VALIDATION_0.8.1.md) | 当前原生 / 桌面检查、复现方式与未验证边界 |
-| [v0.8.1 公开预览准备](PUBLIC_PREVIEW_0.8.1.md) | 已修复项目、私密边界、提交 / 可见性 / CI 与发布前待办 |
-| [v0.8.1 仓库改造进度](WAREHOUSE_0.8.1.md) | 已落地内容与尚未完成的验收项 |
-| [v0.8.1 动作入口与工作记录](MODULES_0.8.1.md) | 模块上下文、策略、能力、操作历史、活动与覆盖边界 |
-| [v0.8.1 模块与任务恢复](ARCHITECTURE_0.8.1.md) | 模块注册、原生 Agent、加密工具事件、恢复、交接与后续边界 |
+| [v0.8.1 实现范围](WAREHOUSE_0.8.1.md) | 当前覆盖与未完成的整体验收，区分功能、规划与兼容层 |
+| [验证记录](VALIDATION_0.8.1.md) | 原生 / 桌面证据、复现方式与未验证边界 |
+| [开发与测试](DEVELOPMENT.md) | 构建、隔离测试、代码目录 |
+| [模块契约](MODULES_0.8.1.md) | 统一入口、权限、能力、历史和后台任务 |
+| [架构与任务恢复](ARCHITECTURE_0.8.1.md) | 注册表、Agent 事件、恢复和交接 |
+| [发布准备记录](PUBLIC_PREVIEW_0.8.1.md) | 隐私修复与公开预览门槛 |
+| [更新记录](../CHANGELOG.md) · [当前发布说明](RELEASE_NOTES.md) | 版本变化与 Preview 范围 |
+| [路线图](../ROADMAP.md) | 后续目标，未实现部分不等于现有功能 |
+| [安全报告](../SECURITY.md) · [贡献说明](../CONTRIBUTING.md) | 漏洞反馈、参与开发和社区约定 |
+
+<details>
+<summary>历史版本与设计记录</summary>
+
+这些文档保留功能演变、实现和设计参考；旧文中的版本状态以对应时期为准，日常使用以当前指南为入口。
+
+| 文档 | 内容 |
+| --- | --- |
 | [v0.7.1 图谱与拟物资料库](WORKSPACE_0.7.1.md) | 范围、内置 AI 任务、用量、格式图标、动画与开源参考 |
 | [v0.6.2 石墨界面](GRAPHITE_0.6.2.md) | 得意黑默认字体、深浅色、宽侧栏、媒体与小窗口适配 |
 | [v0.6.1 笔记与知识图谱](KNOWLEDGE_0.6.1.md) | 双向链接、反向链接、标签、大纲、待办、模板与本地图谱 |
@@ -23,18 +55,9 @@
 | [内置中文字体](FONT_CANDIDATES.md) | 得意黑与霞鹜文楷轻便版 |
 | [v0.5.1 设计与 AI](DESIGN_0.5.1.md) | 预览版、开源参考与验证范围 |
 | [v0.4.1 预览版](PREVIEW_0.4.1.md) | 统一配色、阅读工具与视频下载 |
-| [格式兼容性](FORMATS.md) | 内置阅读、媒体编码与系统应用范围 |
-| [开发与测试](DEVELOPMENT.md) | 本地构建、隔离静音测试与代码目录 |
-| [版本记录](../CHANGELOG.md) | 当前版本及历史版本的变化 |
-| [当前发布说明](RELEASE_NOTES.md) | GitHub Actions 使用的中英文发布说明 |
-| [路线图](../ROADMAP.md) | 后续解码器与内嵌字幕目标 |
-| [发布验证](TESTING.md) | 已验证范围、首次使用与独立电脑检查 |
-| [安全报告](../SECURITY.md) | 私密报告方式及数据保护边界 |
 
-`screenshots/` 存放原创示例界面截图，`assets/` 存放品牌预览。`compatibility-results.json` 保存格式实测证据；它记录测试时的版本与内核，不代表所有编码均可播放。
+[历史发布验证与通用排查](TESTING.md)
 
-- [智能整理：文件夹扫描与 AI 分类](SMART_LIBRARY.md)
+</details>
 
-- [纯净 / 智能与私密文件夹](MODES.md)
-
-- [AI 服务配置与模型列表](AI_PROVIDERS.md)
+`screenshots/` 使用原创示例或隔离合成资料；`assets/` 保存品牌与功能图片。`compatibility-results.json` 是特定版本 / 内核的格式实测记录，不代表所有编码均可播放。

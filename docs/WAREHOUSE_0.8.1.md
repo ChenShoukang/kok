@@ -2,7 +2,7 @@
 
 [English](WAREHOUSE_0.8.1.en.md) · [架构](ARCHITECTURE_0.8.1.md) · [模块契约](MODULES_0.8.1.md)
 
-当前为本地开发预览，未向 GitHub 发布。以下按代码与测试列出实际覆盖，兼容层清理不算完成。
+v0.8.1 已作为 [Preview 发布](https://github.com/ChenShoukang/kok/releases/tag/v0.8.1)。本页按代码与测试列出实际实现范围，兼容层清理仍未完成。日常功能与操作请从[使用指南](GUIDE.md)开始。
 
 | 部分 | 已实现 |
 | --- | --- |

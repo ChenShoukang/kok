@@ -1,14 +1,46 @@
 # kok documentation
 
-[Installation and usage](../README.en.md) · [中文](README.md)
+[Project home](../README.en.md) · [中文](README.md)
+
+Start with the [user guide](GUIDE.en.md). Find help by the task you want to complete; version history and implementation details come afterward.
+
+## Find a feature
+
+| Goal | Read |
+| --- | --- |
+| Import sources and understand Library, Spaces, Clips and smart collections | [Current user guide](GUIDE.en.md) |
+| Use kok offline, switch modes, protect records or back up a vault | [Modes, privacy and data boundaries](MODES.en.md) |
+| Configure a remote provider or a local model service | [AI setup](AI_PROVIDERS.en.md) |
+| Give Agent a scoped task and review changes | [Agent](AGENT_0.7.2.en.md) · [Evidence and review](AGENT_INTERACTIONS.en.md) · [Task/handoff boundaries](AGENT_BOUNDARIES.en.md) |
+| Check files, codecs, subtitles and export support | [Formats](FORMATS.en.md) |
+| Write linked notes and explore a knowledge graph | [Notes and graphs](KNOWLEDGE_0.6.1.en.md) |
+| Translate documents/subtitles or configure speech captions | [Translation and captions](TRANSLATION_CAPTIONS_0.5.1.md) |
+| Compare sources, review notes or build subtitle outlines | [Study tools](STUDY_TOOLS_0.5.1.md) |
+| Edit photos, media, PDFs or document text | [Editing and music](EDITING_MUSIC_0.5.1.md) |
+| Scan selected folders, organize files or ask about their content | [Smart library and file chat](SMART_LIBRARY.en.md) |
+| Resolve installation or usage problems | [Support](../SUPPORT.md) · [Issues](https://github.com/ChenShoukang/kok/issues/new/choose) |
+
+## Versions, validation and development
 
 | Document | Contents |
 | --- | --- |
-| [v0.8.1 validation](VALIDATION_0.8.1.md#english) | Current native/desktop checks, reproduction and unverified limits |
-| [v0.8.1 public preview readiness](PUBLIC_PREVIEW_0.8.1.md) | Local fixes, privacy scope and remaining commit/visibility/CI steps |
-| [v0.8.1 warehouse status](WAREHOUSE_0.8.1.en.md) | Implemented foundations and incomplete acceptance items |
-| [v0.8.1 dispatch and work records](MODULES_0.8.1.en.md) | Module context, policy, capabilities, Operations, Jobs and remaining coverage |
-| [v0.8.1 modules and task recovery](ARCHITECTURE_0.8.1.en.md) | Module registration, native Agent, encrypted events, recovery, handoff and remaining stages |
+| [v0.8.1 implementation scope](WAREHOUSE_0.8.1.en.md) | Current coverage, unfinished acceptance and compatibility boundaries |
+| [Validation](VALIDATION_0.8.1.md#english) | Native/desktop evidence, reproduction and limits |
+| [Development and tests](DEVELOPMENT.en.md) | Builds, isolated testing and code layout |
+| [Module contracts](MODULES_0.8.1.en.md) | Dispatch, policy, capabilities, history and background jobs |
+| [Architecture and recovery](ARCHITECTURE_0.8.1.en.md) | Registration, Agent events, recovery and handoff |
+| [Preview readiness](PUBLIC_PREVIEW_0.8.1.md) | Privacy fixes and public-preview requirements |
+| [Changelog](../CHANGELOG.en.md) · [Release notes](RELEASE_NOTES.md) | Version changes and Preview scope |
+| [Roadmap](../ROADMAP.en.md) | Future goals, distinguished from implemented features |
+| [Security](../SECURITY.en.md) · [Contributing](../CONTRIBUTING.md) | Reporting, development and community conduct |
+
+<details>
+<summary>Earlier versions and design records</summary>
+
+These records describe feature evolution and implementation/design references. Their version-status statements describe that period; start with the current guide for everyday use. Some historical specialist pages are Chinese-only.
+
+| Document | Contents |
+| --- | --- |
 | [v0.7.1 scoped graphs and tactile files](WORKSPACE_0.7.1.en.md) | Scopes, built-in AI tasks, budgets, format artwork, motion and references |
 | [v0.6.2 Graphite interface](GRAPHITE_0.6.2.en.md) | Default Smiley Sans, graphite/frost, labelled sidebar, media and compact layouts |
 | [v0.6.1 notes and knowledge graph](KNOWLEDGE_0.6.1.en.md) | Note links, backlinks, tags, outline, tasks, templates and local graphs |
@@ -23,18 +55,9 @@
 | [Bundled fonts](FONT_CANDIDATES.md) | Smiley Sans and LXGW WenKai Lite |
 | [v0.5.1 design and AI](DESIGN_0.5.1.md) | Preview, references and focused checks |
 | [v0.4.1 preview](PREVIEW_0.4.1.en.md) | Coherent colors, reading tools and video downloads |
-| [Format compatibility](FORMATS.en.md) | Built-in reading, codecs and external-app boundaries |
-| [Development and tests](DEVELOPMENT.en.md) | Builds, isolated silent tests and source layout |
-| [Changelog](../CHANGELOG.en.md) | Current and earlier versions |
-| [Current release notes](RELEASE_NOTES.md) | Bilingual notes consumed by GitHub Actions |
-| [Roadmap](../ROADMAP.en.md) | Future decoding and embedded-subtitle work |
-| [Release verification](TESTING.en.md) | Verified scope, first use and independent-machine checks |
-| [Security](../SECURITY.en.md) | Private reporting and data-protection boundaries |
 
-`screenshots/` contains interface captures using original samples. `assets/` contains brand previews. `compatibility-results.json` records the tested version and runtime, rather than promising support for every codec.
+[Historical verification and general troubleshooting](TESTING.en.md)
 
-- [Smart library: watched folders and AI organization](SMART_LIBRARY.en.md)
+</details>
 
-- [Pure / Smart and a private folder](MODES.en.md)
-
-- [AI provider configuration](AI_PROVIDERS.en.md)
+`screenshots/` uses original samples or isolated synthetic fixtures. `assets/` contains brand/feature images. `compatibility-results.json` records specific tested versions/runtimes, rather than promising every codec works.

@@ -1,34 +1,43 @@
 # kok v0.8.1 Preview
 
-把媒体资料与知识工作放进同一个仓库：今天、空间、摘录、检查器、智能集合、配方和回顾。
+视频、照片、音乐、文档、电子书放进一个本地仓库，从日常观看与阅读，继续到笔记、摘录和 AI 协作。
 
-便携包未签名。调试参数 `--debug` 会开放本机 9225 端口；密码失败限速在重启后重置；交互桌面回归尚未进入 CI。私密移动不会追溯加密此前独立 AI 历史或导出，参见[私密数据边界](MODES.md)和[验证范围](VALIDATION_0.8.1.md)。
+## 这版可以怎样用
 
-- 文档和 PPT 实现迁入 ES modules，草稿串行保存，新建入口 / 格式 / 快捷键跟随模块状态。
-- 修复移入私密文件夹后的旧封面、普通撤销字段、索引和迁移快照残留；加密副本先保存，再按目标记录清理，保留其他资料，支持中断后启动重试。
-- 检查器保存笔记后同步查看器与关闭快照，避免锁定时回写旧内容；原生错误提示经过界面语言翻译。
-- 共用工具栏保留按钮与焦点，侧栏定位和照片布局由同一组件样式负责；修复工具栏空格误翻页和窄窗口断行。
-- Agent 的三个全局脚本迁入单一 ES module；草稿在停用前保存，会话串行写入，同内容不重复落盘。
-- 后台检索保留超过 5,000 个匹配项，避免限定范围时遗漏资料；重复请求合并，资料库切换后丢弃旧结果。
-- 所有业务动作统一经过模块注册表、参数校验和模式策略；同一能力清单用于界面、Agent 和配方。
-- SQLite 分开保存核心资料、模块分面、关系和操作历史，支持中文全文搜索。迁移保留原 JSON 与备份；私密数据库在内存中处理后加密保存。
-- 全局操作审核与冲突安全撤销、托管文档字节版本；统一活动展示后台进度和取消，可续跑任务才提供暂停 / 继续。
-- 四种空间视图、带来源的摘录、上下文 AI、四种可编辑配方模板；摘要有输入 / 输出上限和本地缓存，字幕模块提供可取消的 Agent 工具。
-- 修复独立窗口切换编辑、返回旧正文、页签反馈、真实鼠标拖放和编辑菜单范围。集合分页限制渲染量；保留默认得意黑、中英文与大小窗口支持。
-- 工作区与查看器实现迁入 ES modules；42 份样式源生成 9 个有序运行时资源。既有功能通过显式兼容层继续工作，旧组件和样式的语义清理仍在进行。
+- **收集与整理**：拖入文件，按类型浏览、分类、收藏和检索；用空间混放同一主题的资料与摘录，切换网格、画布、时间线和图谱；智能集合保存常用筛选条件。
+- **看、听、读和编辑**：视频续播、倍速、全屏与外挂字幕；音乐专辑 / 歌手 / 个人音频；照片自由裁剪、调色与图层；文档自动保存、PDF 批注、电子书分页与护眼、PPTX 基础编辑。
+- **把内容留下来**：划线、高亮、记想法；保存带来源的文字、时间段和照片区域摘录，加入空间、笔记或演示；双向链接、反向链接与图谱帮助回看关系。
+- **按需使用 AI**：文档双语对照、选文解释、多文件对比、笔记回顾和字幕工具。Agent 在指定范围内检索、阅读和提出修改，展示来源与审核卡片；内置指令技能与用量限制。
+- **把步骤接起来**：可编辑配方串联读取、摘要、笔记和演示；“今天”帮助续读续播，“活动”显示后台任务，“历史”查看可审核、可撤销的修改。
+- **选择自己的体验**：纯净 / 智能模式、资料库内的私密文件夹、中英文、主题与玻璃配色、内置字体、模块开关和独立预览窗口。
 
-本版本按 Preview 发布，GitHub 工作流在两组 Windows 构建、测试与审计通过后创建预览版，附 ZIP 和 SHA-256。打包会检查目录和最终 ZIP，排除密钥、数据库、私密内容和测试资料。AI 检查使用本机模拟服务；字幕引擎没有执行真实语音识别。完整范围见[进度与验收边界](WAREHOUSE_0.8.1.md)。
+本版还修复了私密移动的可追踪记录残留、检查器笔记保存同步、长列表检索范围、工具栏焦点与大小窗口交互。模块、SQLite 和任务机制的实际覆盖见[实现范围](WAREHOUSE_0.8.1.md)。
+
+## 安装与范围
+
+下载 `kok-0.8.1-win-x64.zip` 和随附 SHA-256，核对后完整解压并运行 `kok.exe`。需要 Windows 10 / 11 x64、.NET Framework 4.8 和 WebView2；运行不需要 Node.js。升级前备份自己的 `data` 与原文件。
+
+便携包未签名。播放依赖实际编码；扫描 PDF 需外部 OCR，导入文档与 PPTX 的基础编辑不保证复杂版式完整还原。音视频导出和本地语音识别需额外组件，AI 服务及网站下载有各自兼容范围。私密文件夹加密应用记录，**原文件、此前独立 AI 历史和导出不追溯加密**。
+
+本地原生 277 项通过，已完成相关隔离桌面验证；发布前两组 Windows 云端构建、测试和包审计通过。桌面测试尚未进入 CI，真实语音识别未在本轮运行。`--debug` 开启本机 9225 调试端口，密码失败限速在重启后重置。详细范围见[验证记录](VALIDATION_0.8.1.md)。
+
+[从使用指南开始](GUIDE.md) · [格式支持](FORMATS.md) · [AI 配置](AI_PROVIDERS.md) · [私密与备份](MODES.md)
 
 ## English
 
-Preview: Today, Spaces, source-linked Clips, Inspector, smart collections, editable Recipes and Review connect media and knowledge work.
+A local home for videos, photos, music, documents and books, connecting everyday playback and reading to notes, Clips and optional AI.
 
-Document/PPT implementations also use real ES modules with serial draft saves and module-aware creation. The common toolbar preserves nodes/focus and owns viewer/photo geometry; keyboard activation no longer triggers media shortcuts.
+- **Collect and organize**: drop sources, browse/classify/search, gather files and Clips in Spaces, and reuse filters as smart collections.
+- **Watch, listen, read and edit**: video controls/subtitles, albums and personal audio, crop/color/layer photo editing, document auto-save, PDF annotations, comfortable book layouts and basic PPTX editing.
+- **Keep useful content**: source-linked passages, time ranges and photo regions; thoughts, note links, backlinks and graphs; references in notes and slides.
+- **Use AI by choice**: bilingual translation, selected-text help, source comparison, note review and subtitle tools. Agent uses scoped sources and reviewable proposals, with instruction skills and usage limits.
+- **Connect steps**: editable Recipes join reading, summaries, notes and slides; Today, Activity and History bring resume, progress and reviewable changes together.
+- **Choose your experience**: Pure/Smart, an in-library private folder, Chinese/English, themes/glass, bundled fonts, module switches and independent previews.
 
-Agent session, rendering and task interactions moved from three global scripts into one real ES module; saves serialize and coalesce, and disable/re-enable protects drafts without replay. Background search preserves matches beyond 5,000 before filtering, merges duplicate requests and drops stale library-scope results.
+Includes targeted private-transfer cleanup, synchronized notes, complete search candidates and viewer/focus/layout fixes. See [implementation scope](WAREHOUSE_0.8.1.en.md).
 
-All business actions use the module registry, schemas and policy. SQLite separates core items, facets, common links and history, with full-text search and preserved migration backups. Private stores are sealed from memory. Operations provide review/conflict-safe undo; managed documents retain byte versions. Jobs centralize activity and expose only supported controls. AI summaries have bounded input/output and caching; the subtitle module contributes a cancellable Agent tool.
+Extract the full ZIP and run `kok.exe`, checking the accompanying SHA-256. Requires Windows 10/11 x64, .NET Framework 4.8 and WebView2; Node.js is not a runtime dependency. Back up your data and originals before upgrading. The portable package is unsigned. Codec, OCR, complex document/slide layouts, optional components and provider/site compatibility have limits. The private folder does not retroactively encrypt originals, independent AI history or exports.
 
-Native preview editing, refreshed reading content, tab feedback, real drag/drop and editor-menu scope are repaired. Collection pages bound rendering. Workspace/viewer implementations use ES modules, and 42 stylesheet sources generate nine runtime bundles. Legacy component consolidation remains incremental.
+Passed 277 local native checks, relevant isolated desktop suites and both release Windows build/test/audit jobs. Interactive desktop suites are outside CI; real speech recognition was not run. `--debug` opens local port 9225 and password backoff resets on restart. See [validation](VALIDATION_0.8.1.md#english).
 
-GitHub publishes this as a prerelease after both Windows build/test/audit jobs pass, with a portable ZIP and SHA-256. Package audits exclude credentials, databases, private content and test inputs. AI tests use loopback mocks; real speech recognition was not run. Private transfers now preserve encrypted covers and clean targeted ordinary records, undo fields, indexes and snapshots without clearing unrelated data. Packages remain unsigned; `--debug` opens local port 9225, password backoff resets on restart and desktop suites run outside CI. Private transfers do not retroactively protect independent AI history or exports. See [data boundaries](MODES.en.md), [validation](VALIDATION_0.8.1.md#english) and [scope and acceptance limits](WAREHOUSE_0.8.1.en.md).
+[User guide](GUIDE.en.md) · [Formats](FORMATS.en.md) · [AI setup](AI_PROVIDERS.en.md) · [Privacy and backups](MODES.en.md)

@@ -2,7 +2,7 @@
 
 [中文](WAREHOUSE_0.8.1.md) · [Architecture](ARCHITECTURE_0.8.1.en.md) · [Module contract](MODULES_0.8.1.en.md)
 
-This is an unpublished local development preview. Compatibility cleanup is not complete.
+v0.8.1 is available as a [Preview](https://github.com/ChenShoukang/kok/releases/tag/v0.8.1). This page describes implementation coverage; compatibility cleanup is not complete. Start with the [user guide](GUIDE.en.md) for everyday features and workflows.
 
 All business actions use native dispatch, declared policy and argument schemas, module switches and field ownership. Domain services use narrow ports. Declarative navigation, commands, contextual actions, events and close snapshots share the module shell.
 
