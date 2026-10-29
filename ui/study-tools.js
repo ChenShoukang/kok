@@ -2,8 +2,8 @@
 const studySession={generation:0,kind:'compare',anchor:null,ids:new Set(),limit:5,query:'',scope:'all',report:null,job:null,reply:'',error:'',status:'',preview:null};
 const outlineSession={generation:0,job:null,error:'',busy:false};
 let studyPaintFrame=null;
-const studyViewOptions=viewOptions;
-viewOptions=function(...args){return (isSmartMode()?`<button class="button secondary study-launch" data-study-open="compare" title="多文件对比与笔记回顾">${svg('spark')}AI 工具</button>`:'')+studyViewOptions(...args);};
+
+Kok.extend('ai','study-tools.js:studyViewOptions','viewOptions',studyViewOptions=>function(...args){return (isSmartMode()?`<button class="button secondary study-launch" data-study-open="compare" title="多文件对比与笔记回顾">${svg('spark')}AI 工具</button>`:'')+studyViewOptions(...args);});
 function noteText(item){return state.viewer?.id===item.id?$('#notes')?.value??item.notes??'':item.notes||'';}
 function hasStudyNotes(item){return !!noteText(item).trim()||(item.annotations||[]).some(a=>a.text?.trim()||a.note?.trim());}
 function studyCandidates(){return state.items.filter(item=>studySession.kind==='compare'?['video','document','book'].includes(item.kind):hasStudyNotes(item));}
@@ -69,14 +69,14 @@ async function generateVideoOutline(){if(!isSmartMode())return;if(outlineSession
  catch(error){if(generation===outlineSession.generation)outlineSession.error=error.message;}
  finally{if(generation===outlineSession.generation){outlineSession.busy=false;outlineSession.job=null;renderVideoOutline();}}
 }
-const beginAssistantStudy=beginFileAssistant;
-beginFileAssistant=function(item){beginAssistantStudy(item);ensureOutlinePanel();showChatView();$('#outline-tab').classList.toggle('hidden',item.kind!=='video');ensureStudyReturn();};
-const resetAssistantStudy=resetFileAssistant;
-resetFileAssistant=function(){const job=outlineSession.job;outlineSession.generation++;outlineSession.job=null;outlineSession.busy=false;outlineSession.error='';if(job)native('cancelFileChat',{jobId:job}).catch(()=>{});resetAssistantStudy();};
-const renderStudyVideoWorkspace=renderVideoWorkspace;
-renderVideoWorkspace=function(item){renderStudyVideoWorkspace(item);if(isSmartMode())$('.video-right').insertAdjacentHTML('afterbegin',workspaceButton('list','字幕目录','data-open-outline'));$('#video').addEventListener('timeupdate',updateOutlinePosition);};
-const applyStudyAppMode=applyAppMode;
-applyAppMode=function(){applyStudyAppMode();if(!isSmartMode()){if($('#study-dialog')?.open)closeStudy().catch(()=>{});$('#study-return')?.classList.add('hidden');}};
+
+Kok.extend('ai','study-tools.js:beginAssistantStudy','beginFileAssistant',beginAssistantStudy=>function(item){beginAssistantStudy(item);ensureOutlinePanel();showChatView();$('#outline-tab').classList.toggle('hidden',item.kind!=='video');ensureStudyReturn();});
+
+Kok.extend('ai','study-tools.js:resetAssistantStudy','resetFileAssistant',resetAssistantStudy=>function(){const job=outlineSession.job;outlineSession.generation++;outlineSession.job=null;outlineSession.busy=false;outlineSession.error='';if(job)native('cancelFileChat',{jobId:job}).catch(()=>{});resetAssistantStudy();});
+
+Kok.extend('ai','study-tools.js:renderStudyVideoWorkspace','renderVideoWorkspace',renderStudyVideoWorkspace=>function(item){renderStudyVideoWorkspace(item);if(isSmartMode())$('.video-right').insertAdjacentHTML('afterbegin',workspaceButton('list','字幕目录','data-open-outline'));$('#video').addEventListener('timeupdate',updateOutlinePosition);});
+
+Kok.extend('ai','study-tools.js:applyStudyAppMode','applyAppMode',applyStudyAppMode=>function(){applyStudyAppMode();if(!isSmartMode()){if($('#study-dialog')?.open)closeStudy().catch(()=>{});$('#study-return')?.classList.add('hidden');}});
 document.addEventListener('input',event=>{const input=event.target;if(input.id==='study-search'){studySession.query=input.value;const list=$('#study-picker .study-file-list');list.innerHTML=new DOMParser().parseFromString(studyPickerMarkup(),'text/html').querySelector('.study-file-list').innerHTML;I18n.localize(list);}});
 document.addEventListener('change',event=>{const input=event.target,s=studySession;if(input.dataset.studyFile){if(input.checked&&s.ids.size>=s.limit){input.checked=false;toast('已达到选择上限，可调整数量。',true);return;}input.checked?s.ids.add(input.dataset.studyFile):s.ids.delete(input.dataset.studyFile);invalidateStudy();repaintStudyPicker();}if(input.id==='study-limit'){const limit=Math.max(2,Math.min(50,Math.floor(Number(input.value)||5)));s.limit=Math.max(limit,s.ids.size);setting({studySelectionLimit:s.limit}).catch(fail);invalidateStudy();repaintStudyPicker();}if(input.id==='study-scope'){s.scope=input.value;invalidateStudy();repaintStudyPicker();}if(input.id==='study-history'){const report=studyHistory().find(r=>r.id===input.value);if(report){s.report=report;s.preview=null;s.ids=new Set(report.fileIds.filter(id=>byId(id)));s.limit=Math.max(s.limit,s.ids.size);s.error='';renderStudy();}}});
 document.addEventListener('click',async event=>{const b=event.target.closest('button');if(!b)return;try{
@@ -91,4 +91,4 @@ document.addEventListener('click',async event=>{const b=event.target.closest('bu
  }catch(error){if($('#study-dialog')?.open){studySession.error=error.message;renderStudy();}else fail(error);}});
 // Capture study citations before the single-file companion handlers see them.
 document.addEventListener('click',event=>{const b=event.target.closest('[data-chat-citation][data-chat-turn="-2"]');if(!b)return;event.stopImmediatePropagation();const refs=studySession.job?studySession.preview?.references:studySession.report?.references;followStudyReference(refs?.find(r=>r.id===b.dataset.chatCitation)).catch(fail);},true);
-window.chrome?.webview?.addEventListener('message',event=>{const m=event.data;if(m.eventName!=='fileChatDelta'||m.data.jobId!==studySession.job)return;studySession.reply+=m.data.text;if(studyPaintFrame)return;studyPaintFrame=requestAnimationFrame(()=>{studyPaintFrame=null;if(m.data.jobId!==studySession.job)return;const body=$('#study-answer-body'),scroll=$('#study-result');if(!body||!scroll)return;const follow=scroll.scrollHeight-scroll.scrollTop-scroll.clientHeight<90;body.innerHTML=chatText(studySession.reply,studySession.preview?.references||[],-2);if(follow)scroll.scrollTop=scroll.scrollHeight;});});
+Kok.onMessage(event=>{const m=event.data;if(m.eventName!=='fileChatDelta'||m.data.jobId!==studySession.job)return;studySession.reply+=m.data.text;if(studyPaintFrame)return;studyPaintFrame=requestAnimationFrame(()=>{studyPaintFrame=null;if(m.data.jobId!==studySession.job)return;const body=$('#study-answer-body'),scroll=$('#study-result');if(!body||!scroll)return;const follow=scroll.scrollHeight-scroll.scrollTop-scroll.clientHeight<90;body.innerHTML=chatText(studySession.reply,studySession.preview?.references||[],-2);if(follow)scroll.scrollTop=scroll.scrollHeight;});});

@@ -1,0 +1,2 @@
+import {DocumentUi} from './document-runtime.mjs';
+Kok.register({id:'documents',nav:[{id:'document',route:'document',label:'文档',icon:'document',order:4,allowPrivate:true,mediaIcon:true,count:()=>(state.navigation?.items||state.items).filter(i=>i.kind==='document').length}],flush:async()=>{if(DocumentUi.isManaged(creative.session))await closeCreative();if(viewer.open&&state.viewer?.kind==='document')await closeViewer();},nativeActions:['createDocument','documentSource','saveDocument','read','commandDocument'],handlers:{'documents.new':()=>DocumentUi.open()}});

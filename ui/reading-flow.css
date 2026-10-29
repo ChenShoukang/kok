@@ -9,9 +9,9 @@ body[data-theme] .viewer #viewer-favorite.selected{color:#d49aaa!important;backg
 body[data-theme] :is(.card-favorite,.track-row [data-favorite],#track-favorite){box-sizing:border-box;display:grid;place-items:center;padding:5px!important;line-height:1;flex-shrink:0;overflow:visible}
 body[data-theme] :is(.card-favorite,.track-row [data-favorite],#track-favorite,#viewer-favorite) svg{display:block;width:18px!important;height:18px!important;min-width:18px;flex-shrink:0;overflow:visible;transform:none!important;fill:none}
 body[data-theme] :is(.card-favorite,.track-row [data-favorite],#track-favorite,#viewer-favorite)[aria-pressed=true] svg{fill:currentColor}
-.viewer-overflow-menu{position:absolute;right:12px;top:calc(var(--viewer-head-height,56px) + 4px);width:230px;max-width:calc(100% - 24px);max-height:calc(100% - 80px);overflow:auto;z-index:40;padding:5px;border:1px solid var(--view-line);border-radius:6px;background:var(--view-panel);color:var(--view-text);box-shadow:0 8px 28px #0003}
-.viewer-overflow-menu button{display:flex;align-items:center;gap:10px;width:100%;padding:10px 9px;border-radius:4px;background:transparent;color:inherit;text-align:left;font:12px/1.5 var(--user-font);white-space:normal}
-.viewer-overflow-menu button:hover,.viewer-overflow-menu button:focus-visible{background:var(--view-control)}.viewer-overflow-menu button:disabled{opacity:.4}.viewer-overflow-menu svg{width:16px;height:16px;flex-shrink:0}
+:is(.viewer-overflow-menu,.viewer-overflow-ghost){position:absolute;right:12px;top:calc(var(--viewer-head-height,56px) + 4px);width:230px;max-width:calc(100% - 24px);max-height:calc(100% - 80px);overflow:auto;z-index:40;padding:5px;border:1px solid var(--view-line);border-radius:6px;background:var(--view-panel);color:var(--view-text);box-shadow:0 8px 28px #0003}
+:is(.viewer-overflow-menu,.viewer-overflow-ghost) button{display:flex;align-items:center;gap:10px;width:100%;padding:10px 9px;border-radius:4px;background:transparent;color:inherit;text-align:left;font:12px/1.5 var(--user-font);white-space:normal}
+:is(.viewer-overflow-menu,.viewer-overflow-ghost) button:hover,:is(.viewer-overflow-menu,.viewer-overflow-ghost) button:focus-visible{background:var(--view-control)}:is(.viewer-overflow-menu,.viewer-overflow-ghost) button:disabled{opacity:.4}:is(.viewer-overflow-menu,.viewer-overflow-ghost) svg{width:16px;height:16px;flex-shrink:0}
 .reading-flow-choices{display:flex;gap:2px;align-items:center;padding:2px;border:1px solid var(--view-line);border-radius:5px;margin-right:6px;flex-shrink:0}
 body[data-theme] .viewer .reading-flow-choices .icon-button{display:grid;place-items:center;width:29px;height:28px;min-width:29px;min-height:28px;padding:5px;border-radius:3px;background:transparent;border:0;color:var(--view-muted)}
 body[data-theme] .viewer .reading-flow-choices [aria-pressed=true]{background:var(--view-control)!important;color:var(--view-text)!important}
@@ -31,3 +31,5 @@ body.preview-window .viewer{will-change:auto}.viewer.opening-preview{will-change
 @media(min-width:1101px){.viewer:not(.book-quiet) #viewer-more-actions{display:none!important}}
 @media(max-width:650px){body[data-theme] .viewer .viewer-actions{gap:3px}.viewer-system-actions{gap:1px}.viewer-extra-actions,.viewer-pinned-actions{gap:2px}.viewer.book-quiet .reader-tools{gap:3px;padding-inline:8px!important}.viewer.book-quiet .reader-tools .reading-flow-choices{margin-left:3px}.viewer.book-quiet .reader-tools .workspace-text-button{font-size:0!important;width:30px;min-width:30px;gap:0}.viewer.book-quiet .reader-tools .workspace-text-button span{display:none}}
 @media(prefers-reduced-motion:reduce){.viewer.opening-preview{will-change:auto}}
+
+.viewer-overflow-ghost{pointer-events:none!important}

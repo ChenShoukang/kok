@@ -8,11 +8,17 @@ const GlassMenu=(()=>{
   if(current.select){current.select.setAttribute('aria-expanded','false');current.select.removeAttribute('aria-controls');current.select.removeAttribute('aria-activedescendant');}
   const remove=()=>{try{current.menu.hidePopover();}catch{}current.menu.remove();};
   if(immediate||reducedMotion())remove();else if(typeof CalmMotion!=='undefined'){current.menu.style.pointerEvents='none';current.menu.classList.add('is-closing');current.menu.setAttribute('aria-hidden','true');current.menu.inert=true;CalmMotion.exit(current.menu).finally(remove);}else{current.menu.style.pointerEvents='none';current.menu.classList.add('is-closing');current.menu.setAttribute('aria-hidden','true');current.menu.inert=true;const animation=current.menu.animate([{opacity:1,transform:'translateY(0) scale(1)'},{opacity:0,transform:`translateY(${current.above?3:-3}px) scale(.985)`}],{duration:115,easing:'ease-out',fill:'forwards'});animation.finished.catch(()=>{}).finally(remove);}
-  if(restore&&current.anchor.isConnected)current.anchor.focus({preventScroll:true});
+  if(restore&&current.anchor.isConnected){if(current.restoreFocus)current.restoreFocus();else current.anchor.focus({preventScroll:true});}
+  current.onClose?.();
  }
  function position(){
   frame=0;const current=active;if(!current)return;
-  if(!current.anchor.isConnected||!current.anchor.getClientRects().length){close(false,true);return;}
+  // Rebind a replaced select only within the same workspace/dialog, with identical options and value.
+  if(!current.anchor.isConnected&&current.select?.id&&current.route===JSON.stringify([state.route,state.collection,state.query,!!state.isPrivate,state.viewer?.id])){
+   const next=document.getElementById(current.select.id);
+   if(eligible(next)&&next.closest('dialog')===current.owner&&next.value===current.select.value&&JSON.stringify([...next.options].map(option=>[option.value,option.disabled]))===current.optionValues){current.anchor=current.select=next;next.setAttribute('aria-expanded','true');next.setAttribute('aria-controls',current.menu.id);next.setAttribute('aria-activedescendant',current.menu.id+'-'+current.index);}
+  }
+  if(!current.anchor.isConnected||!current.anchor.getClientRects().length||current.select&&!eligible(current.select)){close(false,true);return;}
   const r=current.rect||current.anchor.getBoundingClientRect(),menu=current.menu,padding=9,viewport=window.visualViewport;
   const vw=Math.min(innerWidth,viewport?.width||innerWidth),vh=Math.min(innerHeight,viewport?.height||innerHeight);
   const width=Math.min(vw-padding*2,Math.max(current.select?r.width:190,Math.min(current.desiredWidth,360)));
@@ -30,23 +36,32 @@ const GlassMenu=(()=>{
   index=Math.max(0,Math.min(length-1,index));if(current.items[index]?.disabled)return;
   current.index=index;current.menu.querySelectorAll('[data-menu-index]').forEach(button=>button.classList.toggle('is-active',Number(button.dataset.menuIndex)===index));
   const button=current.menu.querySelector(`[data-menu-index="${index}"]`);if(current.select&&button)current.select.setAttribute('aria-activedescendant',button.id);
+  if(!current.select&&button){current.menu.querySelectorAll('[data-menu-index]').forEach(row=>row.tabIndex=row===button?0:-1);if(scroll)button.focus({preventScroll:true});}
   if(scroll&&button){const top=button.offsetTop,bottom=top+button.offsetHeight;if(top<current.menu.scrollTop)current.menu.scrollTop=top;else if(bottom>current.menu.scrollTop+current.menu.clientHeight)current.menu.scrollTop=bottom-current.menu.clientHeight;}
  }
  function move(delta){const current=active;if(!current)return;let n=current.index;for(let count=0;count<current.items.length;count++){n=(n+delta+current.items.length)%current.items.length;if(!current.items[n].disabled){highlight(n);break;}}}
- function choose(index){const current=active,item=current?.items[index];if(!item||item.disabled)return;close(true);item.action();}
- function show(anchor,items,select=null,rect=null){
+ function choose(index){const current=active,item=current?.items[index];if(!item||item.disabled)return;close(true,true);item.action();}
+ function show(anchor,items,select=null,rect=null,options={}){
+  // A text editor owns its selection/menu. Only a library/media context opts in
+  // to item capabilities; stale library selections must not pollute editor menus.
+  if(!select&&options.capabilities&&typeof Warehouse!=='undefined'&&Warehouse.selected.length){const selection={count:Warehouse.selected.length,kind:byId(Warehouse.selected[0])?.kind};items=[...items,...Kok.applicable('context-menu',selection).filter(c=>c.uiCommand).map((c,n)=>({label:I18n.text(c.title),separatorBefore:n===0,action:()=>Kok.run(c.uiCommand).catch(fail)}))];}
   close(false,true);if(!items.length)return;
   const menu=document.createElement('div');menu.className='glass-menu';menu.id='kok-menu-'+(++sequence);menu.setAttribute('popover','manual');menu.setAttribute('role',select?'listbox':'menu');
   if(anchor.closest('.photo-editor')){menu.classList.add('photo-editor-menu');const palette=getComputedStyle(anchor);for(const key of ['--view-panel','--view-text','--view-muted','--view-control','--view-line'])menu.style.setProperty(key,palette.getPropertyValue(key));}
-  const label=select?.getAttribute('aria-label')||select?.labels?.[0]?.textContent?.trim()||'视频菜单';menu.setAttribute('aria-label',label);
+  const label=options.label||select?.getAttribute('aria-label')||select?.labels?.[0]?.textContent?.trim()||'视频菜单';menu.setAttribute('aria-label',label);if(options.className)menu.classList.add(options.className);
+  if(options.heading){const heading=document.createElement('div');heading.className='context-heading';heading.textContent=options.heading;heading.setAttribute('data-user-content','');menu.append(heading);}
   items.forEach((item,index)=>{const button=document.createElement('button');button.type='button';button.tabIndex=-1;button.id=menu.id+'-'+index;button.dataset.menuIndex=index;button.setAttribute('role',select?'option':'menuitem');if(select)button.setAttribute('aria-selected',String(!!item.selected));button.disabled=!!item.disabled;
-   const text=document.createElement('span');text.textContent=item.label;if(item.protected)text.setAttribute('data-user-content','');button.append(text);const check=document.createElement('span');check.className='menu-check';check.setAttribute('aria-hidden','true');check.innerHTML=item.selected?'<svg viewBox="0 0 24 24" fill="none"><path d="m5 12 4 4 10-10"/></svg>':'';button.append(check);menu.append(button);
+   if(item.separatorBefore){const separator=document.createElement('div');separator.setAttribute('role','separator');separator.className='context-separator';menu.append(separator);}if(item.key)button.dataset.contextAction=item.key;
+   const text=document.createElement('span');text.textContent=item.label;if(item.protected)text.setAttribute('data-user-content','');button.append(text);const check=document.createElement('span');check.className='menu-check';check.setAttribute('aria-hidden','true');check.innerHTML=item.selected?'<svg viewBox="0 0 24 24" fill="none"><path d="m5 12 4 4 10-10"/></svg>':'';if(item.shortcut){check.classList.add('context-shortcut');check.textContent=item.shortcut;}button.append(check);menu.append(button);
   });
   (document.fullscreenElement||anchor.closest('dialog[open]')||document.body).append(menu);
-  active={anchor,select,rect,items,menu,index:Math.max(0,items.findIndex(item=>item.selected&&!item.disabled)),desiredWidth:Math.max(190,...items.map(item=>Math.min(330,Array.from(item.label).length*8+64))),above:false};
+  active={anchor,select,rect,items,menu,index:Math.max(0,items.findIndex(item=>item.selected&&!item.disabled)),desiredWidth:Math.max(190,...items.map(item=>Math.min(330,Array.from(item.label).length*8+64))),above:false,restoreFocus:options.restoreFocus,onClose:options.onClose};
+  if(select){active.optionValues=JSON.stringify([...select.options].map(option=>[option.value,option.disabled]));active.route=JSON.stringify([state.route,state.collection,state.query,!!state.isPrivate,state.viewer?.id]);active.owner=select.closest('dialog');}
+  if(items[active.index]?.disabled)active.index=Math.max(0,items.findIndex(item=>!item.disabled));
   if(select){select.setAttribute('aria-expanded','true');select.setAttribute('aria-controls',menu.id);}
   menu.showPopover();position();highlight(active.index,false);
-  highlight(active.index,true);
+  highlight(active.index,!!select);
+  if(options.focus)menu.querySelector(`[data-menu-index="${active.index}"]`)?.focus({preventScroll:true});
   if(typeof CalmMotion!=='undefined')CalmMotion.enter(menu);else if(!reducedMotion())menu.animate([{opacity:0,transform:`translateY(${active.above?5:-5}px) scale(.975)`},{opacity:1,transform:'translateY(0) scale(1)'}],{duration:190,easing:'cubic-bezier(.16,1,.3,1)'});
   menu.addEventListener('pointermove',event=>{const button=event.target.closest('[data-menu-index]');if(button&&!button.disabled)highlight(Number(button.dataset.menuIndex),false);});
   menu.addEventListener('pointerdown',event=>event.preventDefault());menu.addEventListener('click',event=>{const button=event.target.closest('[data-menu-index]');if(button)choose(Number(button.dataset.menuIndex));});
@@ -54,7 +69,7 @@ const GlassMenu=(()=>{
  }
  function selectMenu(select){
   if(active?.select===select){close(true);return;}select.focus({preventScroll:true});
-  const options=[...select.options];show(select,options.map((option,index)=>({label:option.textContent,selected:option.selected,disabled:option.disabled||option.parentElement.tagName==='OPTGROUP'&&option.parentElement.disabled,protected:I18n.isProtected(option),action:()=>{if(!select.isConnected)return;select.selectedIndex=index;select.dispatchEvent(new Event('input',{bubbles:true}));select.dispatchEvent(new Event('change',{bubbles:true}));}})),select);
+  const options=[...select.options];show(select,options.map((option,index)=>({label:option.textContent,selected:option.selected,disabled:option.disabled||option.parentElement.tagName==='OPTGROUP'&&option.parentElement.disabled,protected:I18n.isProtected(option),action:()=>{const live=select.isConnected?select:select.id?document.getElementById(select.id):null;if(!eligible(live)||live.options[index]?.value!==option.value)return;live.selectedIndex=index;live.dispatchEvent(new Event('input',{bubbles:true}));live.dispatchEvent(new Event('change',{bubbles:true}));}})),select);
  }
  document.addEventListener('pointerdown',event=>{
   if(eligible(event.target)&&HTMLElement.prototype.showPopover){event.preventDefault();lastPointer=event.target;selectMenu(event.target);return;}
@@ -66,7 +81,8 @@ const GlassMenu=(()=>{
   const select=eligible(event.target)?event.target:null;
   if(!active&&select&&HTMLElement.prototype.showPopover&&['ArrowDown','ArrowUp','Enter',' ','F4'].includes(event.key)){event.preventDefault();event.stopImmediatePropagation();selectMenu(select);return;}
   if(!active)return;
-  if(event.key==='Tab'){close();return;}
+  if(event.key==='Tab'){close(!active.select);return;}
+  if(!active.select&&(event.ctrlKey||event.metaKey)){const key={c:'copy',x:'cut',v:'paste',a:'select-all'}[event.key.toLowerCase()],index=key?active.items.findIndex(item=>item.key===key):-1;if(index>=0){event.preventDefault();event.stopImmediatePropagation();choose(index);return;}}
   if(event.key==='Escape'){event.preventDefault();event.stopImmediatePropagation();close(true);return;}
   if(['ArrowDown','ArrowUp','Home','End','PageDown','PageUp','Enter',' '].includes(event.key)){
    event.preventDefault();event.stopImmediatePropagation();if(event.key==='Enter'||event.key===' ')choose(active.index);else if(event.key==='Home')highlight(0);else if(event.key==='End')highlight(active.items.length-1);else{const direction=['ArrowUp','PageUp'].includes(event.key)?-1:1;for(let n=0;n<(event.key.startsWith('Page')?5:1);n++)move(direction);}return;
@@ -76,6 +92,7 @@ const GlassMenu=(()=>{
  const reposition=event=>{if(active&&(!(event?.target instanceof Node)||!active.menu.contains(event.target))&&!frame)frame=requestAnimationFrame(position);};
  window.addEventListener('resize',reposition);window.addEventListener('scroll',reposition,true);window.visualViewport?.addEventListener('resize',reposition);window.visualViewport?.addEventListener('scroll',reposition);
  new MutationObserver(()=>{if(active&&!frame)frame=requestAnimationFrame(position);}).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['open']});
- new MutationObserver(()=>close(false,true)).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});
- return{close,context(event,items){event.preventDefault();const anchor=event.currentTarget;anchor.focus?.({preventScroll:true});show(anchor,items,null,{left:event.clientX,right:event.clientX,top:event.clientY,bottom:event.clientY,width:0,height:0});},get isOpen(){return!!active;}};
+ let menuLanguage=document.documentElement.lang;
+ new MutationObserver(()=>{const next=document.documentElement.lang;if(next!==menuLanguage){menuLanguage=next;close(false,true);}}).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});
+ return{close,openAt(anchor,point,items,options={}){show(anchor,items,null,{left:point.x,right:point.x,top:point.y,bottom:point.y,width:0,height:0},options);},context(event,items){event.preventDefault();const anchor=event.currentTarget;anchor.focus?.({preventScroll:true});show(anchor,items,null,{left:event.clientX,right:event.clientX,top:event.clientY,bottom:event.clientY,width:0,height:0},{capabilities:true});},get isOpen(){return!!active;}};
 })();

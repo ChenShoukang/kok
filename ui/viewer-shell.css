@@ -1,0 +1,77 @@
+/* Viewer components own their geometry here. Skins provide material tokens. */
+.photo-editor .canvas-tool span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.unified-viewer{--viewer-tools-height:40px;--viewer-side-width:0px}
+.viewer-mode-bar{display:flex;align-items:center;gap:4px;min-height:var(--viewer-tools-height);height:var(--viewer-tools-height);box-sizing:border-box;padding:4px 12px;border-bottom:1px solid var(--view-line,var(--line));background:var(--view-panel,var(--chrome-bg,var(--surface)));color:var(--view-text,var(--ink));flex:none}
+.viewer-mode-spacer{flex:1}
+.viewer-mode-bar button{display:flex;align-items:center;justify-content:center;min-height:28px;min-width:32px;padding:5px 12px;background:transparent;color:var(--view-muted,var(--muted));border:0;border-radius:var(--radius-sm);font:inherit;font-size:var(--type-small);white-space:nowrap;transition:background-color var(--motion-fast) var(--ease,ease),color var(--motion-fast) var(--ease,ease)}
+.viewer-mode-bar button[aria-pressed=true],.viewer-mode-bar button:hover:not(:disabled){background:var(--view-control,var(--hover));color:var(--view-text,var(--ink))}
+.viewer-mode-bar button:focus-visible{outline:2px solid var(--focus-color);outline-offset:1px}
+.viewer-mode-bar button:disabled{opacity:.4;cursor:default}
+.viewer-mode-bar svg{width:17px;height:17px}
+.unified-viewer>.workspace-inspector{position:absolute;top:calc(var(--viewer-head-height,56px) + var(--viewer-tools-height));bottom:0;width:310px}
+.unified-viewer:has(>.workspace-inspector:not([hidden])){--viewer-side-width:310px}
+.unified-viewer:has(>.workspace-inspector:not([hidden]))>#viewer-content,.unified-viewer:has(>.workspace-inspector:not([hidden]))>.creative-body{margin-right:var(--viewer-side-width)}
+.viewer-immersive>.viewer-mode-bar{opacity:0;transition:opacity 180ms ease}
+.viewer-immersive:hover>.viewer-mode-bar,.viewer-immersive:focus-within>.viewer-mode-bar{opacity:1}
+.unified-viewer:is([data-viewer-kind=photo],[data-viewer-kind=video])>.viewer-mode-bar{position:absolute;inset:var(--viewer-head-height,56px) 0 auto;z-index:10}
+.unified-viewer:is([data-viewer-kind=photo],[data-viewer-kind=video])>#viewer-content{right:var(--viewer-side-width)!important;width:auto!important}
+.unified-viewer[data-viewer-kind=photo] .media-stage{padding-top:calc(var(--viewer-head-height,56px) + var(--viewer-tools-height))}
+body[data-theme] #viewer.unified-viewer.photo-editing>.viewer-header{position:relative;inset:auto;flex-shrink:0;background:var(--view-panel)!important}
+body[data-theme] #viewer.unified-viewer.photo-editing>#viewer-content{position:absolute!important;inset:calc(var(--viewer-head-height,56px) + var(--viewer-tools-height)) var(--viewer-side-width) 0 0!important;height:auto!important}
+.unified-viewer.chrome-hidden>.viewer-mode-bar{opacity:0!important;pointer-events:none}
+body[data-theme] #viewer.unified-viewer .viewer-title b{color:var(--view-text,var(--ink))}
+@media(max-width:800px){.unified-viewer:has(>.workspace-inspector:not([hidden])){--viewer-side-width:0px}.unified-viewer>.workspace-inspector{width:min(330px,100%)}.viewer-mode-bar button{padding:5px 9px}}
+@media(prefers-reduced-motion:reduce){.viewer-mode-bar,.viewer-mode-bar button{transition:none}}
+/* Photo editing uses the same media palette and readable control type. */
+body[data-theme][data-app-mode] #viewer .photo-editor{
+ --ink:var(--view-text);--muted:var(--view-muted);--line:var(--view-line);
+ --panel-bg:var(--view-panel);--panel-ink:var(--view-text);--panel-muted:var(--view-muted);--panel-line:var(--view-line);
+ --kok-panel:var(--view-panel);--kok-panel-ink:var(--view-text);--kok-panel-muted:var(--view-muted);--kok-solid:var(--view-bg);--kok-hover:var(--view-control);--kok-border:var(--view-line);
+ --edit-font:'Segoe UI','Microsoft YaHei UI','Microsoft YaHei',sans-serif;
+ display:grid;grid-template-columns:minmax(0,1fr) clamp(280px,28vw,320px);background:var(--view-bg);color:var(--view-text);font:400 13px/1.5 var(--edit-font);
+}
+body[data-theme][data-app-mode] #viewer .photo-editor :is(button,input,select,summary,label,output){font-family:var(--edit-font);font-style:normal;letter-spacing:normal}
+body[data-theme][data-app-mode] #viewer .photo-editor .edit-canvas-wrap{background-color:var(--view-bg);background-image:repeating-conic-gradient(var(--view-bg) 0% 25%,color-mix(in srgb,var(--view-text) 6%,var(--view-bg)) 0% 50%);background-size:16px 16px}
+body[data-theme][data-app-mode] #viewer .photo-editor :is(.edit-controls,.edit-heading,.edit-actions){background:var(--view-panel)!important;color:var(--view-text);border-color:var(--view-line);backdrop-filter:none}
+body[data-theme][data-app-mode] #viewer .photo-editor .edit-controls{width:auto;gap:0;padding:0;overflow:hidden;border-left:1px solid var(--view-line)}
+.photo-editor .edit-heading{padding:14px 18px;flex-wrap:nowrap}.photo-editor .edit-heading h2{font:600 15px/1.5 var(--edit-font)}
+.photo-editor .edit-scroll{padding:18px;overflow-x:hidden;scrollbar-color:color-mix(in srgb,var(--view-text) 30%,var(--view-panel)) var(--view-panel);scrollbar-width:thin}
+.photo-editor .edit-group{padding:16px 0;border-color:var(--view-line)}.photo-editor .edit-group summary{font-size:13px;font-weight:600;color:var(--view-text)}
+.photo-editor .edit-group-body{gap:18px;padding-top:18px}
+body[data-theme] #viewer .photo-editor :is(.edit-slider,.form-label,.photo-output-size,.canvas-size,.canvas-layer-details){font-size:12px;line-height:1.5;color:var(--view-muted)}
+.photo-editor .edit-slider{gap:8px}.photo-editor .edit-slider b{font:500 12px/1.5 var(--edit-font);color:var(--view-text);font-variant-numeric:tabular-nums}
+.photo-editor .canvas-tools{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:12px 0 0}
+body[data-theme] #viewer .photo-editor .canvas-tool{display:flex;align-items:center;justify-content:center;gap:6px;min-width:0;min-height:34px;padding:6px 4px;font:400 12px/1.5 var(--edit-font);color:var(--view-muted);background:transparent;border:1px solid transparent;border-radius:4px}
+body[data-theme] #viewer .photo-editor .canvas-tool.active{color:var(--view-text)!important;background:var(--view-control)!important;border-color:color-mix(in srgb,var(--view-text) 35%,var(--view-panel))}
+.photo-editor .canvas-tool svg{width:16px;height:16px;flex-shrink:0}.photo-editor .canvas-size{grid-column:1 / 3;grid-row:3;display:flex;align-items:center;gap:12px;margin:6px 0 4px}.photo-editor .canvas-size input{min-width:0;width:100%}.photo-editor .canvas-color{grid-column:3;grid-row:3;justify-self:end;margin-top:4px}
+.photo-editor .canvas-size span{white-space:nowrap;flex-shrink:0}.photo-editor .canvas-size input{flex:1;width:0}.photo-editor .free-crop-help{font:400 12px/1.6 var(--edit-font);color:var(--view-muted)}
+.photo-editor .canvas-color input{width:32px;height:28px;padding:3px;border:1px solid color-mix(in srgb,var(--view-text) 40%,var(--view-panel));border-radius:4px;background:var(--view-control);cursor:pointer}
+.photo-editor .canvas-layer-details{margin-top:12px}.photo-editor .canvas-layer-details summary{font-weight:400;font-size:12px}.photo-editor .canvas-layer>button:first-child{font-size:12px;color:var(--view-text)}
+.photo-editor .photo-presets{grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;margin:16px 0 22px}
+body[data-theme] #viewer .photo-editor .photo-preset{min-width:0;padding:3px 0;background:transparent!important;color:var(--view-muted);font:400 12px/1.5 var(--edit-font);gap:8px}
+body[data-theme] #viewer .photo-editor .photo-preset[aria-pressed=true]{color:var(--view-text)!important;font-weight:600}
+.photo-editor .preset-swatch{width:100%;max-width:44px;height:auto;aspect-ratio:1;border-radius:4px;border:1px solid var(--view-line)}
+.photo-editor .photo-preset[aria-pressed=true] .preset-swatch{outline:2px solid var(--view-text);outline-offset:2px}
+body[data-theme][data-app-mode] #viewer .photo-editor :is(.form-label select,#photo-export-size){color-scheme:dark;appearance:auto;background:var(--view-control);color:var(--view-text);border:1px solid color-mix(in srgb,var(--view-text) 25%,var(--view-panel));border-radius:4px;padding:7px 9px;font:400 12px/1.5 var(--edit-font);min-width:0;max-width:100%}
+.photo-editor input[type=range]{appearance:none;height:20px;margin:0;background:transparent;cursor:pointer;accent-color:var(--view-text)}
+.photo-editor input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:2px;background:color-mix(in srgb,var(--view-text) 40%,var(--view-panel))}
+.photo-editor input[type=range]::-webkit-slider-thumb{appearance:none;width:12px;height:12px;margin-top:-4px;border:0;border-radius:50%;background:var(--view-text)}
+.photo-editor input[type=range]:disabled{cursor:default}.photo-editor input[type=range]:disabled::-webkit-slider-thumb{background:var(--view-muted)}
+body[data-theme] #viewer .photo-editor :is(.text-button,.edit-buttons .button){font-size:12px;line-height:1.5;color:var(--view-text);font-weight:400}
+.photo-editor .edit-actions{padding:14px 18px;gap:10px}.photo-editor .edit-actions>div{gap:12px}.photo-editor .edit-actions .text-button{padding:3px 0;min-height:24px}
+.photo-editor .photo-output-size{display:flex;align-items:center;justify-content:space-between;gap:14px}.photo-editor #photo-export-size{width:134px}
+body[data-theme][data-app-mode] #viewer .photo-editor [data-save-photo]{min-height:38px;padding:8px 10px;border-radius:4px;border:1px solid color-mix(in srgb,var(--view-text) 35%,var(--view-panel));background:var(--view-control);color:var(--view-text);box-shadow:none;font:500 13px/1.5 var(--edit-font)}
+body[data-theme] #viewer .photo-editor button:hover:not(:disabled){background:color-mix(in srgb,var(--view-control) 82%,var(--view-text))!important;color:var(--view-text)!important}
+body[data-theme] #viewer .photo-editor :is(button,input,select):focus-visible{outline:2px solid var(--view-text);outline-offset:3px}.photo-editor button:disabled{opacity:.4}
+body[data-theme][data-app-mode] .glass-menu.photo-editor-menu{background:var(--view-panel)!important;color:var(--view-text)!important;border-color:var(--view-line);font:400 13px/1.5 'Segoe UI','Microsoft YaHei UI','Microsoft YaHei',sans-serif;backdrop-filter:none;color-scheme:dark}
+body[data-theme][data-app-mode] .glass-menu.photo-editor-menu>button{font:inherit;color:var(--view-text);border-radius:4px}.glass-menu.photo-editor-menu>button.is-active{background:var(--view-control)}.glass-menu.photo-editor-menu>button[aria-selected=true]{font-weight:600}
+/* Fading the chrome must not leave contrasting strips or pagination changes. */
+body[data-theme] .viewer.reader-immersive{--read-surround:var(--read-paper);background:var(--read-paper)!important}
+body[data-theme] #viewer.reader-immersive :is(.viewer-header,.reader-tools,.reader-bottom){border-color:transparent!important;background:var(--read-paper)!important}
+.viewer.reader-immersive :is(.viewer-header,.reader-tools,.reader-bottom,.reading-progress-control){transition:opacity 180ms ease,transform 220ms cubic-bezier(.2,.8,.2,1)}
+.viewer.reader-immersive.chrome-hidden{border-color:transparent!important;box-shadow:none!important}
+.viewer.reader-immersive.chrome-hidden :is(.viewer-header,.reader-tools){opacity:0!important;transform:translateY(-10px);pointer-events:none}
+.viewer.reader-immersive.chrome-hidden :is(.reader-bottom,.reading-progress-control){opacity:0!important;transform:translateY(10px);pointer-events:none}
+@media(max-width:620px){body[data-theme][data-app-mode] #viewer .photo-editor{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(140px,1fr) minmax(0,1.2fr)}body[data-theme][data-app-mode] #viewer .photo-editor .edit-controls{border-left:0;border-top:1px solid var(--view-line);display:grid;grid-template-columns:minmax(0,1fr) minmax(156px,.8fr);grid-template-rows:auto minmax(0,1fr)}.photo-editor .edit-heading{grid-column:1/-1;padding:8px 12px}.photo-editor .edit-scroll{padding:12px}.photo-editor .edit-actions{padding:12px;gap:7px;border-top:0;border-left:1px solid var(--view-line);overflow:auto}.photo-editor .photo-output-size{flex-direction:column;align-items:flex-start;gap:5px}.photo-editor #photo-export-size{width:100%}.photo-editor .canvas-tools{grid-template-columns:repeat(2,minmax(0,1fr))}.photo-editor .canvas-size{grid-column:1/-1;grid-row:5}.photo-editor .canvas-color{grid-column:2;grid-row:4}.photo-editor .photo-presets{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(prefers-reduced-motion:reduce){.viewer.reader-immersive :is(.viewer-header,.reader-tools,.reader-bottom,.reading-progress-control){transition:none!important}}
+body.window-interacting #viewer.reader-immersive :is(.viewer-header,.reader-tools,.reader-bottom,.reading-progress-control){transition:none!important}

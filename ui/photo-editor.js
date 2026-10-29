@@ -19,7 +19,8 @@ function syncPhotoControls(){
  $('[data-photo-compare]').disabled=!!e.cropMode;$('[data-save-photo]').disabled=!!e.cropMode;
  document.querySelectorAll('[data-edit-rotate],[data-edit-flip],[data-edit-flip-y]').forEach(button=>button.disabled=!!e.cropMode);
 }
-async function startPhotoEditor(){
+async function startPhotoEditor(...args){return Kok.invoke('startPhotoEditor',this,args);}
+Kok.define('startPhotoEditor',async function(){
  if(!state.viewer||state.viewer.kind!=='photo')return;if(state.slide){clearInterval(state.slide);state.slide=null;}
  const item=state.viewer,image=new Image();image.crossOrigin='anonymous';image.src=media(item);await image.decode();if(state.viewer?.id!==item.id)return;
  cleanupWorkspace();viewer.classList.add('photo-editing');photoEditor={image,item,...photoDefaults,compare:false,history:[{...photoDefaults}],historyAt:0,frame:0,viewZoom:1,viewPanX:0,viewPanY:0,cropMode:false};
@@ -27,7 +28,7 @@ async function startPhotoEditor(){
  $('#viewer-content').innerHTML=`<section class="photo-editor"><div class="edit-canvas-wrap"><canvas id="edit-canvas" aria-label="照片编辑预览"></canvas></div><aside class="edit-controls"><header class="edit-heading"><h2>编辑照片</h2><div>${workspaceButton('skipBack','撤销','data-photo-undo')}${workspaceButton('skipForward','重做','data-photo-redo')}</div></header><div class="edit-scroll"><div class="photo-presets">${[['original','原图'],['soft','柔和'],['vivid','鲜明'],['mono','黑白'],['vintage','复古']].map(([key,label])=>`<button class="photo-preset" data-photo-preset="${key}" aria-pressed="${key==='original'}"><span class="preset-swatch preset-${key}" aria-hidden="true"></span>${label}</button>`).join('')}</div><details class="edit-group" open><summary>光线与色彩</summary><div class="edit-group-body">${slider('brightness','亮度',-50,50)}${slider('contrast','对比度',-50,50)}${slider('saturation','饱和度',-100,100)}${slider('temperature','色温',-50,50)}${slider('grayscale','黑白程度',0,100)}${slider('sepia','复古程度',0,100)}${slider('vignette','暗角',0,100)}</div></details><details class="edit-group" open><summary>裁剪与方向</summary><div class="edit-group-body"><label class="form-label">裁剪比例<select id="crop-ratio"><option value="original">原始比例</option><option value="1">正方形 · 1:1</option><option value="1.333333">照片 · 4:3</option><option value="1.5" data-user-content>3:2</option><option value="1.777778">宽屏 · 16:9</option><option value="0.75">竖幅 · 3:4</option><option value="0.5625" data-user-content>9:16</option></select></label>${slider('cropX','裁剪水平位置',0,100,50)}${slider('cropY','裁剪垂直位置',0,100,50)}<div class="edit-buttons"><button class="button secondary" data-edit-rotate>${svg('rotate')}旋转</button><button class="button secondary" data-edit-flip>水平翻转</button><button class="button secondary" data-edit-flip-y>垂直翻转</button></div></div></details></div><footer class="edit-actions"><div><button class="text-button" data-photo-compare aria-pressed="false">对比原图</button><button class="text-button" data-photo-reset>重置调整</button></div><button class="button primary" data-save-photo>${svg('download')}另存为新照片</button><button class="text-button" data-cancel-photo>返回原片预览</button><label class="photo-output-size"><span>导出尺寸</span><select id="photo-export-size"><option value="2048">2048 px</option><option value="4096" selected>4096 px</option><option value="original">原始尺寸（最多 8192 px）</option></select></label></footer></aside></section>`;
  setupPhotoEditorInteraction();const wrap=$('.edit-canvas-wrap'),e=photoEditor;const resize=new ResizeObserver(()=>fitPhotoCanvas());resize.observe(wrap);
  workspaceDisposers.push(()=>{resize.disconnect();cancelAnimationFrame(e.frame);});drawPhotoEdit();syncPhotoControls();animateIn($('.edit-controls'));
-}
+});
 function renderPhotoCanvas(canvas,full=false,compare=false){
  const e=photoEditor;if(!e)return;const image=e.image,values=compare?photoDefaults:!full&&e.cropMode?{...e,ratio:'original',freeCrop:null}:e;
  const rectangle=photoSourceCrop(values,image);let sx=rectangle.x*image.naturalWidth,sy=rectangle.y*image.naturalHeight,sw=rectangle.w*image.naturalWidth,sh=rectangle.h*image.naturalHeight;
@@ -42,7 +43,8 @@ function renderPhotoCanvas(canvas,full=false,compare=false){
 function fitPhotoCanvas(){
  fitPhotoEditorViewport();
 }
-function drawPhotoEdit(){const canvas=$('#edit-canvas');if(!photoEditor||!canvas)return;renderPhotoCanvas(canvas,false,photoEditor.compare);fitPhotoCanvas();syncFreeCropOverlay();}
+function drawPhotoEdit(...args){return Kok.invoke('drawPhotoEdit',this,args);}
+Kok.define('drawPhotoEdit',function(){const canvas=$('#edit-canvas');if(!photoEditor||!canvas)return;renderPhotoCanvas(canvas,false,photoEditor.compare);fitPhotoCanvas();syncFreeCropOverlay();});
 document.addEventListener('input',event=>{
  const input=event.target;if(!photoEditor||!input.dataset.edit)return;
  photoEditor[input.dataset.edit]=Number(input.value);photoEditor.preset='custom';photoEditor.compare=false;const value=$('#'+input.dataset.edit+'-value');if(value)value.textContent=input.value;

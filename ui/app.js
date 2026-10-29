@@ -24,7 +24,8 @@ function hydrate(root=document){root.querySelectorAll('[data-icon]').forEach(el=
 const kinds=[['video','视频','光影与故事'],['photo','照片','定格的小美好'],['music','音乐','生活的背景音'],['document','文档','灵感与思考'],['book','读书','字里行间的世界']];
 const labels=Object.fromEntries(kinds.map(k=>[k[0],k[1]]));
 const pending=new Map();let requestSequence=0;const requestPrefix=crypto.randomUUID()+'-';
-function native(action,args={},additionalObjects){
+function native(...args){return Kok.invoke('native',this,args);}
+Kok.define('native',function(action,args={},additionalObjects){
   return new Promise((resolve,reject)=>{
     if(!window.chrome?.webview){reject(new Error('请从 kok.exe 打开应用，以使用本地文件功能。'));return;}
     const requestId=requestPrefix+String(++requestSequence);
@@ -33,8 +34,8 @@ function native(action,args={},additionalObjects){
       if(additionalObjects)window.chrome.webview.postMessageWithAdditionalObjects({requestId,action,args},additionalObjects);
       else window.chrome.webview.postMessage({requestId,action,args});
     }catch(error){pending.delete(requestId);reject(error);}
-  });
-}
+  }).then(result=>result?.reviewOperation&&result.state==='proposed'?OperationUI.review(result):result);
+});
 window.chrome?.webview?.addEventListener('message',e=>{
   const m=e.data;
   if(m.eventName==='engineRecovered'){toast('播放界面发生异常，已恢复资料库。可使用系统播放器打开该文件。',true);return;}
@@ -43,24 +44,31 @@ window.chrome?.webview?.addEventListener('message',e=>{
   const p=pending.get(m.requestId);if(!p)return;pending.delete(m.requestId);m.error?p.reject(new Error(m.error)):p.resolve(m.result);
 });
 const state={items:[],settings:{},route:'overview',filter:'all',query:'',limit:60,viewer:null,book:null,chapter:0,photoIndex:0,photoList:[],rotation:0,zoom:1,slide:null,queue:[],track:null,shuffle:false,loop:false};
-function toast(message,error=false){const el=document.createElement('div');el.className='toast'+(error?' error':'');el.textContent=message;const stack=$('#toasts');stack.append(el);if(typeof CalmMotion!=='undefined')CalmMotion.play(el,[{opacity:0,transform:'translateY(5px)'},{opacity:1,transform:'none'}],{duration:170});if(!stack.matches(':popover-open'))stack.showPopover();setTimeout(async()=>{await dismissElement(el);if(!stack.children.length&&stack.matches(':popover-open'))stack.hidePopover();},error?8000:4500);}
-function fail(error){toast(error.message||String(error),true);}
+function toast(message,error=false){
+ const stack=$('#toasts');let el=[...stack.children].find(e=>e.dataset.message===message&&e.classList.contains('error')===error);
+ if(el){clearTimeout(el.dismissTimer);}else{while(stack.children.length>=3)stack.firstElementChild.remove();el=document.createElement('div');el.className='toast'+(error?' error':'');el.dataset.message=message;el.textContent=message;stack.append(el);if(typeof CalmMotion!=='undefined')CalmMotion.play(el,[{opacity:0,transform:'translateY(5px)'},{opacity:1,transform:'none'}],{duration:170});}
+ if(!stack.matches(':popover-open'))stack.showPopover();el.dismissTimer=setTimeout(async()=>{if(el.isConnected)await dismissElement(el);if(!stack.children.length&&stack.matches(':popover-open'))stack.hidePopover();},error?8000:3500);return el;
+}
+document.addEventListener('submit',event=>event.preventDefault(),true);
+
+function fail(error){toast(I18n.text(error?.message||String(error)),true);}
 const size=n=>n>=1073741824?(n/1073741824).toFixed(1)+' GB':n>=1048576?(n/1048576).toFixed(1)+' MB':Math.max(1,Math.round(n/1024))+' KB';
 const time=s=>{s=Number.isFinite(s)?Math.floor(s):0;return (s>=3600?Math.floor(s/3600)+':':'')+String(Math.floor(s/60)%60).padStart(s>=3600?2:1,'0')+':'+String(s%60).padStart(2,'0');};
 const media=(item,type='file')=>`https://media.kok.local/${type}/${item.id}`;
 const byId=id=>state.items.find(i=>i.id===id);
 async function refresh(){const db=await native('library');state.items=db.items;state.navigation=db.navigation||null;state.settings=db.settings;state.collections=db.collections||[];state.fonts=db.fonts||[];state.isPrivate=!!db.isPrivate;renderPrivateState();applyAppMode();applyTheme();I18n.applyLanguage(state.settings.uiLanguage||'zh');if(typeof applyFont==='function')await applyFont();renderNav();render();if(typeof scheduleVideoCovers==='function')scheduleVideoCovers();}
-async function patch(item,values){Object.assign(item,values);await native('update',{id:item.id,patch:values});}
-async function setting(values){Object.assign(state.settings,values);await native('settings',values);}
-function applyTheme(){let theme=state.settings.theme||'dark';if(theme==='system')theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.body.dataset.theme=theme;}
-function renderNav(){
+async function patch(item,values){const sent=structuredClone(values),before=Object.fromEntries(Object.keys(values).map(key=>[key,{present:Object.hasOwn(item,key),value:structuredClone(item[key])}]));Object.assign(item,values);try{await native('update',{id:item.id,patch:values});}catch(error){for(const [key,old]of Object.entries(before))if(JSON.stringify(item[key])===JSON.stringify(sent[key])){if(old.present)item[key]=old.value;else delete item[key];}throw error;}}
+async function setting(values){const target=state.settings,sent=structuredClone(values),before=Object.fromEntries(Object.keys(values).map(key=>[key,{present:Object.hasOwn(target,key),value:structuredClone(target[key])}]));Object.assign(target,values);try{await native('settings',values);}catch(error){if(state.settings===target)for(const [key,old]of Object.entries(before))if(JSON.stringify(target[key])===JSON.stringify(sent[key])){if(old.present)target[key]=old.value;else delete target[key];}throw error;}}
+function applyTheme(...args){return Kok.invoke('applyTheme',this,args);}
+Kok.define('applyTheme',function(){let theme=state.settings.theme||'dark';if(theme==='system')theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.body.dataset.theme=theme;});
+function renderNav(...args){return Kok.invoke('renderNav',this,args);}
+Kok.define('renderNav',function(){
   const navItems=state.navigation?.items||state.items,navCollections=state.navigation?.collections||state.collections||[];
-  $('#main-nav').innerHTML=[['overview','全部文件','grid'],...kinds.map(k=>[k[0],k[1],k[0]])].map(([r,l,i])=>`<button class="nav-item ${state.route===r?'active':''}" data-route="${r}" aria-label="${l}">${navigationIcon(i)}<span class="nav-label">${l}</span>${r==='overview'?'':`<span class="count">${navItems.filter(x=>x.kind===r).length||''}</span>`}</button>`).join('');
-  $('#extra-nav').innerHTML=[['favorites','收藏','heart'],['recent','最近打开','clock'],['organize','智能整理','layers']].map(([r,l,i])=>`<button class="nav-item ${state.route===r?'active':''}" data-route="${r}" aria-label="${l}">${svg(i)}<span class="nav-label">${l}</span></button>`).join('');
   $('#collections-nav').innerHTML=navCollections.map(name=>`<button class="nav-item ${state.route==='collection'&&state.collection===name?'active':''}" data-collection="${esc(name)}" aria-label="${esc(name)}" data-user-content>${svg('folder')}<span class="nav-label">${esc(name)}</span><span class="count">${navItems.filter(i=>i.collection===name).length}</span></button>`).join('');
-  if(isSmartMode()&&!state.isPrivate)$('#extra-nav').insertAdjacentHTML('beforeend',`<button class="nav-item ${state.route==='downloads'?'active':''}" data-route="downloads" aria-label="视频下载">${svg('download')}<span class="nav-label">视频下载</span></button>`);
+
+  Kok.nav();
   updateNavIndicator();
-}
+});
 function updateNavIndicator(){
  const indicator=$('.nav-indicator'),active=$('.sidebar .nav-item.active');if(!indicator)return;
  if(!active){indicator.style.opacity='0';return;}
@@ -72,21 +80,33 @@ function updateNavIndicator(){
 window.addEventListener('resize',updateNavIndicator);
 $('#collections-nav').addEventListener('scroll',updateNavIndicator);
 function heading(title,subtitle=''){return `<div class="page-heading"><h1 ${state.route==='collection'&&!state.query?'data-user-content':''}>${esc(title)}</h1>${subtitle?`<span>${esc(subtitle)}</span>`:''}</div>`;}
-function viewOptions(sort=state.settings.sort||'added'){
+function viewOptions(...args){return Kok.invoke('viewOptions',this,args);}
+Kok.define('viewOptions',function(sort=state.settings.sort||'added'){
  return `<div class="view-options"><select class="sort-select" id="sort" aria-label="排序方式">${[['added','最近加入'],['opened','最近打开'],['name','名称'],['size','文件大小']].map(([key,label])=>`<option value="${key}" ${sort===key?'selected':''}>${label}</option>`).join('')}</select><div class="view-toggle"><button class="${state.settings.view!=='list'?'active':''}" data-view="grid" title="网格视图" aria-label="网格视图">${svg('grid')}</button><button class="${state.settings.view==='list'?'active':''}" data-view="list" title="列表视图" aria-label="列表视图">${svg('list')}</button></div></div>`;
+});
+function fileCollection(items,includePrivate=false){
+ const visible=items.slice(0,state.limit),more=items.length>state.limit?'<button class="button secondary load-more" data-action="loadMore">显示更多</button>':'';
+ if(state.settings.view==='list')return items.length||includePrivate?'<div class="file-list">'+(includePrivate?privateFolderCard():'')+visible.map(card).join('')+'</div>'+more:'';
+ const kindsPresent=[...new Set(visible.map(i=>i.kind))],shortcuts=includePrivate?'<div class="library-shortcuts">'+privateFolderCard()+'</div>':'';
+ if(kindsPresent.length<=1)return shortcuts+(visible.length?'<div class="file-grid shelf-grid" data-shelf-kind="'+kindsPresent[0]+'">'+visible.map(card).join('')+'</div>':'')+more;
+ const shelves=kinds.map(([kind,label])=>{const rows=visible.filter(i=>i.kind===kind);if(!rows.length)return '';return '<section class="library-shelf" data-library-kind="'+kind+'" data-count="'+Math.min(rows.length,4)+'"><header><h2>'+svg(kind)+'<span>'+label+'</span></h2><small data-user-content>'+rows.length+'</small>'+(rows.length>3?'<button class="text-button" data-route="'+kind+'">查看全部</button>':'')+'</header><div class="file-grid shelf-grid" data-shelf-kind="'+kind+'">'+rows.map(card).join('')+'</div></section>';}).join('');
+ return shortcuts+'<div class="library-shelves">'+shelves+'</div>'+more;
 }
-function fileCollection(items,includePrivate=false){return items.length||includePrivate?`<div class="${state.settings.view==='list'?'file-list':'file-grid'}">${includePrivate?privateFolderCard():''}${items.slice(0,state.limit).map(card).join('')}</div>${items.length>state.limit?`<button class="button secondary load-more" data-action="loadMore">显示更多</button>`:''}`:'';}
+
 function overview(){
  const items=filtered();
- return `<div class="collection-heading">${heading('资料库',`${items.length} 个文件`)}${viewOptions()}</div>`+(fileCollection(items,true)+(items.length?'':empty('导入你的第一份文件','拖入文件，或点击导入。',true)));
+ return `<div class="collection-heading">${heading('资料库',`${items.length} 个文件`)}${viewOptions()}${Kok.toolbar('library')}</div>`+(fileCollection(items,true)+(items.length?'':empty('导入你的第一份文件','拖入文件，或点击导入。',true)));
 }
-function cover(i){
+function cover(...args){return Kok.invoke('cover',this,args);}
+Kok.define('cover',function(i){
  if(i.kind==='photo')return `<img src="${media(i,'thumb')}" alt="" loading="lazy" data-fallback="photo">${svg('photo')}`;
  if(i.kind==='book'||i.kind==='music')return `<div class="object-cover object-cover-${i.kind}">${libraryObject(i.kind)}</div>`;
  if(i.kind==='video')return `<div class="video-art ${i.hasCover?'has-cover':'object-cover'}">${i.hasCover?`<img src="${media(i,'thumb')}?v=${encodeURIComponent(i.coverVersion||'1')}" alt="" loading="lazy" data-fallback="video">`:libraryObject('video')}<span class="video-cover-play">${svg('play')}</span></div>`;
  return `<div class="object-cover object-cover-document">${libraryObject('document')}</div>`;
-}
-function card(i){const action=['video','music'].includes(i.kind)?'播放':i.kind==='photo'?'预览':i.kind==='book'?'阅读':'打开';return `<article class="file-card ${i.kind}" data-id="${i.id}"><button class="file-open" data-open="${i.id}" title="打开 ${esc(i.name)}"><div class="file-cover">${cover(i)}<span class="ext">${esc(i.ext)}</span><span class="card-open-hint" aria-hidden="true">${svg(['video','music'].includes(i.kind)?'play':i.kind==='book'?'book':'external')}<span>${action}</span></span></div><div class="file-info"><b>${esc(i.name)}</b><p>${labels[i.kind]}<i></i>${size(i.size)}${i.progress>0?`<i></i>${Math.round(i.progress*100)}%`:''}</p></div></button><button class="card-favorite ${i.favorite?'selected':''}" data-favorite="${i.id}" title="${i.favorite?'取消收藏':'收藏'}" aria-label="${i.favorite?'取消收藏':'收藏'} ${esc(i.name)}">${svg('heart')}</button><button class="card-menu" data-menu="${i.id}" aria-label="${esc(i.name)} 的更多操作" title="更多操作">${svg('more')}</button>${i.progress>0?`<div class="file-progress"><span style="width:${Math.round(i.progress*100)}%"></span></div>`:''}</article>`;}
+});
+function card(...args){return Kok.invoke('card',this,args);}
+Kok.define('card',function(i){const html=baseCard(i);return Kok.decorateCard(i,html);});
+function baseCard(i){const action=['video','music'].includes(i.kind)?'播放':i.kind==='photo'?'预览':i.kind==='book'?'阅读':'打开';return `<article class="file-card ${i.kind}" data-id="${i.id}" data-format="${esc(i.ext)}"><button class="file-open" data-open="${i.id}" title="打开 ${esc(i.name)}"><div class="file-cover">${cover(i)}<span class="ext">${FileTypes.icon(i.ext,i.kind)}<span>${esc(i.ext)}</span></span><span class="card-open-hint" aria-hidden="true">${svg(['video','music'].includes(i.kind)?'play':i.kind==='book'?'book':'external')}<span>${action}</span></span></div><div class="file-info"><b>${esc(i.name)}</b><p>${labels[i.kind]}<i></i>${size(i.size)}${i.progress>0?`<i></i>${Math.round(i.progress*100)}%`:''}</p></div></button><button class="card-favorite ${i.favorite?'selected':''}" data-favorite="${i.id}" title="${i.favorite?'取消收藏':'收藏'}" aria-label="${i.favorite?'取消收藏':'收藏'} ${esc(i.name)}">${svg('heart')}</button><button class="card-menu" data-menu="${i.id}" aria-label="${esc(i.name)} 的更多操作" title="更多操作">${svg('more')}</button>${i.progress>0?`<div class="file-progress"><span style="width:${Math.round(i.progress*100)}%"></span></div>`:''}</article>`;}
 function empty(title,description,samples=false){return `<div class="empty-state">${svg(state.query?'search':'folder')}<h3>${esc(title)}</h3><p>${esc(description)}</p><div class="empty-actions">${state.query?'':`<button class="button secondary" data-action="importFiles">${svg('plus')}导入文件</button>${samples?'<button class="sample-button" data-action="importSamples">体验示例资料</button>':''}`}</div></div>`;}
 function filtered(){
  let items=state.items.filter(i=>{
@@ -97,7 +117,7 @@ function filtered(){
    if(r==='collection'&&i.collection!==state.collection)return false;
    if(state.filter!=='all'&&i.kind!==state.filter)return false;
    const q=state.query.toLocaleLowerCase();
-   return !q||[i.name,i.ext,i.notes,i.collection,i.aiSummary,...(i.tags||[])].some(s=>String(s||'').toLocaleLowerCase().includes(q));
+   return !q||(typeof SearchIndex!=='undefined'&&SearchIndex.has(i.id,q))||[i.name,i.ext,i.notes,i.collection,i.aiSummary,...(i.tags||[])].some(s=>String(s||'').toLocaleLowerCase().includes(q));
  });
  const sort=state.settings.sort||(state.route==='recent'?'opened':'added');
  items.sort((a,b)=>sort==='name'?String(a.name||'').localeCompare(String(b.name||''),'zh-CN'):sort==='size'?(Number(b.size)||0)-(Number(a.size)||0):sort==='opened'?String(b.opened||'').localeCompare(String(a.opened||'')):String(b.added||'').localeCompare(String(a.added||'')));
@@ -107,13 +127,14 @@ function collection(){
  const route=state.route,items=filtered();
  const title=state.query?`搜索结果`:labels[route]||({favorites:'收藏',recent:'最近打开',all:'全部文件',collection:state.collection})[route]||'资料库';
  const showTabs=!labels[route]&&route!=='recent';
- return `<div class="collection-heading">${heading(title,`${items.length} 个文件`)}${viewOptions(state.settings.sort||(route==='recent'?'opened':'added'))}</div>${showTabs?`<div class="library-toolbar"><div class="filter-tabs">${[['all','全部'],...kinds.map(k=>[k[0],k[1]])].map(([key,label])=>`<button class="filter-tab ${state.filter===key?'active':''}" data-filter="${key}">${label}</button>`).join('')}</div></div>`:''}`+(items.length?fileCollection(items):empty(state.query?'没有找到相关文件':route==='favorites'?'还没有收藏':route==='recent'?'还没有打开记录':'这个分类导入你的第一份文件',state.query?'试试文件名、格式或笔记里的关键词。':route==='favorites'?'点击文件上的爱心即可收藏。':'导入文件，或在文件菜单中更改分类。'));
+ return `<div class="collection-heading">${heading(title,`${items.length} 个文件`)}${viewOptions(state.settings.sort||(route==='recent'?'opened':'added'))}${Kok.toolbar('library')}</div>${showTabs?`<div class="library-toolbar"><div class="filter-tabs">${[['all','全部'],...kinds.map(k=>[k[0],k[1]])].map(([key,label])=>`<button class="filter-tab ${state.filter===key?'active':''}" data-filter="${key}">${label}</button>`).join('')}</div></div>`:''}`+(items.length?fileCollection(items):empty(state.query?'没有找到相关文件':route==='favorites'?'还没有收藏':route==='recent'?'还没有打开记录':'这个分类导入你的第一份文件',state.query?'试试文件名、格式或笔记里的关键词。':route==='favorites'?'点击文件上的爱心即可收藏。':'导入文件，或在文件菜单中更改分类。'));
 }
 let pageAnimation=null,pageTransition=null,renderSequence=0;
 async function dismissElement(element){if(!element)return;element.style.pointerEvents='none';await animateOut(element);element.remove();}
 
-function render(){
- renderNav();
+function render(...args){return Kok.invoke('render',this,args);}
+Kok.define('render',function(){
+ renderNav();if(!state.isPrivate&&!state.query&&Kok.renderRoute(state.route))return;
  const html=state.isPrivate?privateFolderView():state.route==='downloads'&&isSmartMode()?downloadWorkspace():state.route==='organize'&&!state.query&&typeof renderOrganizer==='function'?renderOrganizer():state.route==='overview'&&!state.query?overview():state.route==='music'&&!state.query&&typeof renderMusic==='function'?renderMusic():collection();
  const key=state.route+'|'+(state.musicAlbum||'')+'|'+(state.musicMode||'');
  const changed=render.previousKey!==key&&!state.query;render.previousKey=key;
@@ -121,35 +142,40 @@ function render(){
  if(pageAnimation)pageAnimation.cancel();
  if(pageTransition){pageTransition.skipTransition();pageTransition=null;}
  const update=()=>{if(sequence===renderSequence)$('#main').innerHTML=html;};
- if(changed&&!document.body.classList.contains('booting')&&!reducedMotion()&&document.startViewTransition&&!viewer?.open){
-   const transition=document.startViewTransition(update);pageTransition=transition;transition.ready.catch(()=>{});
-   transition.finished.catch(()=>{}).finally(()=>{if(pageTransition===transition)pageTransition=null;});
- }else {update();if(changed&&!document.body.classList.contains('booting')&&!reducedMotion())pageAnimation=animateIn($('#main'));}
-}
-function navigate(route){if(state.isPrivate)return lockPrivateSpace().then(()=>navigate(route));if(route==='organize'&&!isSmartMode())route='overview';state.route=route;state.filter='all';state.limit=60;state.query='';state.musicAlbum=null;$('#search').value='';render();if(route==='organize')loadOrganizer().catch(fail);window.scrollTo(0,0);}
+ // Commit state and its live click targets together. An async view-transition callback can otherwise
+ // replace a newer Agent route after the user has already clicked into it.
+ update();
+ if(changed&&!document.body.classList.contains('booting')&&!reducedMotion())pageAnimation=typeof CalmMotion!=='undefined'?CalmMotion.play($('#main'),[{opacity:.75},{opacity:1}],{duration:kokMotion.panel,channel:'route'}):animateIn($('#main'));
+});
+function navigate(route){const navigation=Kok.beforeNavigate(route);if(navigation.handled)return;route=navigation.route;if(state.isPrivate)return lockPrivateSpace().then(()=>navigate(route));if(route==='organize'&&!isSmartMode())route='overview';state.route=route;state.filter='all';state.limit=60;state.query='';state.musicAlbum=null;$('#search').value='';render();if(route==='organize')loadOrganizer().catch(fail);window.scrollTo(0,0);}
 async function importItems(action,additionalObjects){
  const result=await native(action,{},additionalObjects);if(!result||result.cancelled)return;
  await refresh();toast(`已加入 ${result.added} 个文件${result.skipped?`，跳过 ${result.skipped} 个重复或不支持的文件`:''}。`);
  if(result.errors?.length)toast('部分文件未能导入：\n'+result.errors.slice(0,4).join('\n'),true);
  return result;
 }
-async function favorite(id){const item=byId(id);if(!item)return;await patch(item,{favorite:!item.favorite});render();if(state.viewer?.id===id)$('#viewer-favorite').classList.toggle('selected',item.favorite);if(state.track?.id===id)$('#track-favorite').classList.toggle('selected',item.favorite);}
+async function favorite(...args){return Kok.invoke('favorite',this,args);}
+Kok.define('favorite',async function(id){const item=byId(id);if(!item)return;await patch(item,{favorite:!item.favorite});render();if(state.viewer?.id===id)$('#viewer-favorite').classList.toggle('selected',item.favorite);if(state.track?.id===id)$('#track-favorite').classList.toggle('selected',item.favorite);});
 let smallClose=null;
-function showSmall(content){const d=$('#small-dialog'),wasOpen=d.open,interrupted=elementMotions.get(d)?.playState==='running';smallClose=null;closeSmall.token=null;d.inert=false;d.classList.remove('is-closing','settings-dialog','appearance-dialog','reading-settings-dialog','music-info-dialog','music-ai-dialog');d.innerHTML=`<div class="dialog-top"><div></div><button class="icon-button dialog-close" data-close-dialog aria-label="关闭">${svg('close')}</button></div>${content}`;if(!wasOpen)d.showModal();d.scrollTop=0;if(!wasOpen||interrupted)animateIn(d);else if(typeof CalmMotion!=='undefined')CalmMotion.play(d,[{opacity:.9},{opacity:1}],{duration:120});}
-function closeSmall(){
+function showSmall(...args){return Kok.invoke('showSmall',this,args);}
+Kok.define('showSmall',function(content){const d=$('#small-dialog'),wasOpen=d.open,interrupted=elementMotions.get(d)?.playState==='running';smallClose=null;closeSmall.token=null;d.inert=false;d.classList.remove('is-closing','settings-dialog','appearance-dialog','reading-settings-dialog','music-info-dialog','music-ai-dialog');d.innerHTML=`<div class="dialog-top"><div></div><button class="icon-button dialog-close" data-close-dialog aria-label="关闭">${svg('close')}</button></div>${content}`;if(!wasOpen)d.showModal();d.scrollTop=0;if(!wasOpen||interrupted)animateIn(d);else if(typeof CalmMotion!=='undefined')CalmMotion.play(d,[{opacity:.9},{opacity:1}],{duration:120});});
+function closeSmall(...args){return Kok.invoke('closeSmall',this,args);}
+Kok.define('closeSmall',function(){
  const d=$('#small-dialog');if(!d.open)return Promise.resolve();if(smallClose)return smallClose;
  const token={};closeSmall.token=token;d.inert=true;d.classList.add('is-closing');
  smallClose=animateOut(d).then(()=>{if(closeSmall.token!==token)return;d.close();d.inert=false;d.classList.remove('is-closing');smallClose=null;});return smallClose;
-}
+});
 $('#small-dialog').addEventListener('cancel',e=>{e.preventDefault();closeSmall();});
-function fileMenu(id){const i=byId(id);if(!i)return;showSmall(`<h2 data-user-content>${esc(i.name)}</h2><p class="dialog-description">${labels[i.kind]} · ${esc(i.ext)} · ${size(i.size)}</p>${i.tags?.length||i.aiSummary?`<div class="organizer-metadata" data-user-content><div class="organizer-tags">${(i.tags||[]).map(t=>`<span>${esc(t)}</span>`).join('')}</div>${esc(i.aiSummary||'')}</div>`:''}<div class="menu-actions"><button data-edit-organization="${id}">${svg('layers')}编辑分类与标签</button><button data-open="${id}">${svg('external')}在 kok 中打开</button><button data-favorite="${id}">${svg('heart')}${i.favorite?'取消收藏':'加入收藏'}</button><button data-classify="${id}">${svg('layers')}<span>分类归纳</span>${i.collection?`<span data-user-content> · ${esc(i.collection)}</span>`:''}</button>${i.kind==='music'?`<button data-album-edit="${id}">${svg('edit')}编辑专辑和歌手</button>`:''}<button data-native="reveal" data-id="${id}">${svg('folder')}在文件夹中显示</button><button data-native="openExternal" data-id="${id}">${svg('external')}使用系统应用打开</button><button class="danger" data-remove="${id}">${svg('trash')}从资料库移除</button></div><div class="dialog-footnote">移除仅删除资料库记录，原文件会保留。<br>${esc(i.path)}</div>`);}
-async function settings(){
+function fileMenu(...args){return Kok.invoke('fileMenu',this,args);}
+Kok.define('fileMenu',function(id){const i=byId(id);if(!i)return;showSmall(`<h2 data-user-content>${esc(i.name)}</h2><p class="dialog-description">${labels[i.kind]} · ${esc(i.ext)} · ${size(i.size)}</p>${i.tags?.length||i.aiSummary?`<div class="organizer-metadata" data-user-content><div class="organizer-tags">${(i.tags||[]).map(t=>`<span>${esc(t)}</span>`).join('')}</div>${esc(i.aiSummary||'')}</div>`:''}<div class="menu-actions"><button data-edit-organization="${id}">${svg('layers')}编辑分类与标签</button><button data-open="${id}">${svg('external')}在 kok 中打开</button><button data-favorite="${id}">${svg('heart')}${i.favorite?'取消收藏':'加入收藏'}</button><button data-classify="${id}">${svg('layers')}<span>分类归纳</span>${i.collection?`<span data-user-content> · ${esc(i.collection)}</span>`:''}</button>${i.kind==='music'?`<button data-album-edit="${id}">${svg('edit')}编辑专辑和歌手</button>`:''}<button data-native="reveal" data-id="${id}">${svg('folder')}在文件夹中显示</button><button data-native="openExternal" data-id="${id}">${svg('external')}使用系统应用打开</button><button class="danger" data-remove="${id}">${svg('trash')}从资料库移除</button></div><div class="dialog-footnote">移除仅删除资料库记录，原文件会保留。<br>${esc(i.path)}</div>`);});
+async function settings(...args){return Kok.invoke('settings',this,args);}
+Kok.define('settings',async function(){
  const diag=await native('diagnostics');
  showSmall(`<h2>设置</h2><div class="setting-row"><div>界面外观</div><select id="theme-select" aria-label="界面外观"><option value="light">浅色</option><option value="dark">深色</option><option value="system">跟随系统</option></select></div><div class="setting-row"><div>资料库备份<small>${state.isPrivate?'导出加密索引与笔记，不包含原文件':'导出索引、进度与笔记，不包含原文件'}</small></div><button class="button secondary" data-action="export">${svg('download')}导出</button></div><div class="setting-row"><div>体验示例<small>加入五类本地示例文件</small></div><button class="button secondary" data-action="importSamples">添加示例</button></div><details class="about-details"><summary>关于 kok</summary><div class="dialog-footnote"><b>kok</b><br>v${esc(diag.version)} · Windows x64 · WebView2 ${esc(diag.engine)}<br>本地保存 · AI 翻译需联网<br><br>资料库位置：<br><code>${esc(diag.dataDir)}</code><br><br>快捷键：Ctrl K 搜索 · Esc 关闭预览<br>照片：← → 切换 · 阅读：← → 切换章节<br>音乐：空格播放 / 暂停 · 视频：可在播放偏好中设置<br><br>兼容性：加密电子书、OCR、Office 原始排版和部分媒体编码需使用相应系统应用。</div></details>`);
  $('#theme-select').value=state.settings.theme||'dark';
  setupCompatibility();
- if(typeof setupSettings==='function')setupSettings();setupAppModeSettings();I18n.setupSettings();animateSettings();
-}
+ if(typeof setupSettings==='function')setupSettings();setupAppModeSettings();Kok.settings();I18n.setupSettings();animateSettings();
+});
 const viewer=$('#viewer');let readerTimer=null,video=null,mediaSaveTime=0,closingViewer=null;
 async function openItem(id,{play=true,keepQueue=false}={}){
  if(closingViewer)await closingViewer;
@@ -158,12 +184,13 @@ async function openItem(id,{play=true,keepQueue=false}={}){
  await patch(item,{opened:new Date().toISOString()});
  if(viewer.open){await saveViewer();clearViewer();}else {viewer.showModal();$('#viewer-content').tabIndex=-1;$('#viewer-content').focus({preventScroll:true});animateIn(viewer);}
  viewer.dataset.kind=item.kind;state.viewer=item;beginMediaLayout(item);beginFileAssistant(item);if(typeof beginTranslationView==='function')beginTranslationView(item);viewer.classList.remove('notes-open');$('#notes-panel').classList.add('hidden');$('#notes').value=item.notes||'';
- $('#viewer-title').textContent=item.name;$('#viewer-subtitle').textContent=`${labels[item.kind]} · ${item.ext} · ${size(item.size)}`;$('#viewer-icon').innerHTML=svg(item.kind);$('#viewer-favorite').classList.toggle('selected',item.favorite);
+ $('#viewer-title').textContent=item.name;$('#viewer-subtitle').textContent=`${labels[item.kind]} · ${item.ext} · ${size(item.size)}`;$('#viewer-icon').innerHTML=FileTypes.icon(item.ext,item.kind);$('#viewer-favorite').classList.toggle('selected',item.favorite);
  $('#viewer-content').innerHTML='<div class="loading-view"><span class="spinner"></span>正在打开…</div>';
  const token=item.id;
  if(item.kind==='music'){if(!keepQueue)state.queue=state.items.filter(i=>i.kind==='music'&&(!state.musicAlbum||albumName(i)===state.musicAlbum));await playTrack(item,{autoplay:play});renderMusicWorkspace();render();return;}
  if(item.kind==='video'){renderVideo(item);return;}
  if(item.kind==='photo'){state.photoList=filtered().filter(i=>i.kind==='photo');if(!state.photoList.some(i=>i.id===id))state.photoList=state.items.filter(i=>i.kind==='photo');state.photoIndex=state.photoList.findIndex(i=>i.id===id);state.rotation=0;state.zoom=1;renderPhoto();return;}
+ if(await Kok.openViewer(item,{play,keepQueue}))return;
  if(item.ext==='PDF'){try{await renderPdf(item);}catch(e){if(state.viewer?.id===item.id){$('#viewer-content').innerHTML=empty('PDF 暂时无法预览',e.message);fail(e);}}return;}
  try{const book=await native('read',{id});if(state.viewer?.id!==token)return;state.book=book;state.chapter=Math.min(item.chapter||0,book.chapters.length-1);renderReader(item.position||0);}catch(e){if(state.viewer?.id!==token)return;$('#viewer-content').innerHTML=`<div class="empty-state" style="height:100%;border:0">${svg('document')}<h3>用熟悉的应用，继续打开</h3><p>${esc(e.message)}</p><button class="button primary" data-native="openExternal" data-id="${item.id}">${svg('external')}使用系统应用打开</button></div>`;}
 }
@@ -192,13 +219,18 @@ async function photoAction(action){
  else if(action==='slideshow'){if(state.slide){clearInterval(state.slide);state.slide=null;}else{state.slide=setInterval(()=>photoAction('next').catch(fail),4000);}const button=$('[data-photo="slideshow"]');button.innerHTML=svg(state.slide?'pause':'play');}
 }
 function renderReader(scroll=0){renderReadingWorkspace(scroll);}
-function readerPosition(){const el=$('#reader-scroll');return el?Math.max(0,Math.min(1,el.scrollTop/Math.max(1,el.scrollHeight-el.clientHeight))):0;}
-async function saveReader(){if(!state.book||!state.viewer||!$('#reader-scroll'))return;const el=$('#reader-scroll');const ratio=el.scrollHeight<=el.clientHeight?1:readerPosition();await patch(state.viewer,{chapter:state.chapter,position:readerPosition(),progress:(state.chapter+ratio)/state.book.chapters.length});}
+function readerPosition(...args){return Kok.invoke('readerPosition',this,args);}
+Kok.define('readerPosition',function(){const el=$('#reader-scroll');return el?Math.max(0,Math.min(1,el.scrollTop/Math.max(1,el.scrollHeight-el.clientHeight))):0;});
+async function saveReader(...args){return Kok.invoke('saveReader',this,args);}
+Kok.define('saveReader',async function(){if(!state.book||!state.viewer||!$('#reader-scroll'))return;const el=$('#reader-scroll');const ratio=el.scrollHeight<=el.clientHeight?1:readerPosition();await patch(state.viewer,{chapter:state.chapter,position:readerPosition(),progress:(state.chapter+ratio)/state.book.chapters.length});});
 async function changeChapter(n){if(!state.book||n<0||n>=state.book.chapters.length)return;await saveReader();state.chapter=n;renderReader(0);animateIn($('#reader-scroll'));await patch(state.viewer,{chapter:n,position:0,progress:n/state.book.chapters.length});}
 async function saveNotes(){if(state.viewer&&$('#notes').value!==(state.viewer.notes||''))await patch(state.viewer,{notes:$('#notes').value});}
-async function saveViewer(){clearTimeout(readerTimer);if(state.viewer?.kind==='music')await saveAudio();await saveVideo();await saveReader();await saveNotes();if(typeof savePdf==='function')await savePdf();}
-function clearViewer(){resetFileAssistant();cleanupWorkspace();if(typeof cleanupFeatures==='function')cleanupFeatures();if(video){video.pause();video.removeAttribute('src');video.load();video=null;}if(state.slide)clearInterval(state.slide);state.slide=null;state.book=null;state.viewer=null;$('#viewer-content').innerHTML='';}
-async function closeViewer(){if(closingViewer)return closingViewer;closingViewer=(async()=>{if(document.fullscreenElement)await document.exitFullscreen();await saveViewer();viewer.classList.add('is-closing');await animateOut(viewer);clearViewer();viewer.close();viewer.classList.remove('is-closing');render();})();try{await closingViewer;}finally{closingViewer=null;}}
+async function saveViewer(...args){return Kok.invoke('saveViewer',this,args);}
+Kok.define('saveViewer',async function(){clearTimeout(readerTimer);if(state.viewer?.kind==='music')await saveAudio();await saveVideo();await saveReader();await saveNotes();if(typeof savePdf==='function')await savePdf();});
+function clearViewer(...args){return Kok.invoke('clearViewer',this,args);}
+Kok.define('clearViewer',function(){resetFileAssistant();cleanupWorkspace();if(typeof cleanupFeatures==='function')cleanupFeatures();if(video){video.pause();video.removeAttribute('src');video.load();video=null;}if(state.slide)clearInterval(state.slide);state.slide=null;state.book=null;state.viewer=null;$('#viewer-content').innerHTML='';});
+async function closeViewer(...args){return Kok.invoke('closeViewer',this,args);}
+Kok.define('closeViewer',async function(){if(closingViewer)return closingViewer;closingViewer=(async()=>{if(document.fullscreenElement)await document.exitFullscreen();await saveViewer();viewer.classList.add('is-closing');await animateOut(viewer);clearViewer();viewer.close();viewer.classList.remove('is-closing');render();})();try{await closingViewer;}finally{closingViewer=null;}});
 // The audio element survives navigation, so a collection can be browsed while music plays.
 const audio=$('#audio');let audioSaveAt=0;
 async function playTrack(item,{autoplay=true}={}){
@@ -270,7 +302,17 @@ document.addEventListener('keydown',e=>{
  if(e.code==='Space'&&!video&&state.track&&(!viewer.open||state.viewer?.kind==='music')){e.preventDefault();const player=audio;if(player.paused)player.play().catch(fail);else player.pause();}
 });
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(state.settings.theme==='system')applyTheme();});
-async function init(){await I18n.ready;hydrate();try{await refresh();audio.volume=Math.max(0,Math.min(1,Number(state.settings.volume??.7)));$('#volume').value=audio.volume;state.shuffle=!!state.settings.shuffle;state.loop=!!state.settings.loop;updateTransport();await initializeAppMode();}catch(e){$('#main').innerHTML=heading('欢迎来到 kok','给喜欢的一切，留一点空间。')+empty('无法打开资料库',e.message);}finally{finishStartup();}}
+function startupFailed(error){
+ const message=error&&error.message?String(error.message):String(error||'未知错误');
+ try{console.error('kok startup failed',error);}catch{}
+ try{if($('#main'))$('#main').innerHTML=heading('界面未能完成启动','部分界面组件加载失败，可以重试或查看日志。')+empty('启动失败',message);}catch{}
+}
+async function init(){
+ try{await I18n.ready;hydrate();}catch(error){startupFailed(error);finishStartup();return;}
+ try{await refresh();audio.volume=Math.max(0,Math.min(1,Number(state.settings.volume??.7)));$('#volume').value=audio.volume;state.shuffle=!!state.settings.shuffle;state.loop=!!state.settings.loop;updateTransport();await initializeAppMode();}catch(e){$('#main').innerHTML=heading('欢迎来到 kok','给喜欢的一切，留一点空间。')+empty('无法打开资料库',e.message);}
+ try{await Kok.start();}catch(error){startupFailed(error);}
+ finally{finishStartup();}
+}
 async function finishStartup(){
  const screen=$('#startup');if(!screen)return;
  try{await screen.querySelector('img').decode();}catch{}
@@ -291,5 +333,12 @@ $('#import-more').addEventListener('click',()=>{const menu=$('#import-menu');con
 document.addEventListener('click',e=>{if(!e.target.closest('.import-control')){$('#import-menu').classList.add('hidden');$('#import-more').setAttribute('aria-expanded','false');}else if(e.target.closest('[data-action]')){$('#import-menu').classList.add('hidden');$('#import-more').setAttribute('aria-expanded','false');}});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){$('#import-menu').classList.add('hidden');$('#import-more').setAttribute('aria-expanded','false');}});
 document.addEventListener('DOMContentLoaded',init,{once:true});
+// Last-resort fallback: a rejection during startup must show an error instead of leaving the boot screen forever.
+function reportUnexpected(error){
+ try{console.error('kok unexpected error',error);}catch{}
+ if(document.body.classList.contains('booting')){startupFailed(error);try{finishStartup();}catch{}}
+}
+window.addEventListener('unhandledrejection',event=>reportUnexpected(event.reason));
+window.addEventListener('error',event=>{if(event.error)reportUnexpected(event.error);});
 
 $('.sidebar-scroll')?.addEventListener('scroll',updateNavIndicator,{passive:true});

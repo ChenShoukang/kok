@@ -1,6 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
-  <!-- A folded K: three solid planes, one silhouette, no tile or lighting effects. -->
-  <path d="M9 14a2 2 0 0 1 1.2-1.83L21 7.4v49.2l-10.8-4.77A2 2 0 0 1 9 50V14Z" fill="#405AC8"/>
-  <path d="M21 28 42.95 8.4a2 2 0 0 1 2.24-.29L55 13.4 33 34H21v-6Z" fill="#617CF0"/>
-  <path d="M21 30h12l22 20.6-9.81 5.29a2 2 0 0 1-2.24-.29L21 36v-6Z" fill="#4C65D8"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none"><title>kok</title><defs><linearGradient id="blue" x1="10" y1="10" x2="54" y2="54" gradientUnits="userSpaceOnUse"><stop stop-color="#77BFFF"/><stop offset=".5" stop-color="#3983EE"/><stop offset="1" stop-color="#2453BF"/></linearGradient></defs><g fill="url(#blue)"><path d="M30.4 6.9C43.8 5.4 54.7 14.2 56 26.7c.4 3.7-2.3 5.7-5.5 3.7L32.6 19.7c-4.9-2.9-7.2-8.1-2.2-12.8Z"/><path d="M30.4 6.9C43.8 5.4 54.7 14.2 56 26.7c.4 3.7-2.3 5.7-5.5 3.7L32.6 19.7c-4.9-2.9-7.2-8.1-2.2-12.8Z" transform="rotate(120 32 32)"/><path d="M30.4 6.9C43.8 5.4 54.7 14.2 56 26.7c.4 3.7-2.3 5.7-5.5 3.7L32.6 19.7c-4.9-2.9-7.2-8.1-2.2-12.8Z" transform="rotate(240 32 32)"/></g></svg>

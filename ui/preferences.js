@@ -23,11 +23,12 @@ function showVideoPreferences(){
  showSmall(`<h2>视频操作</h2><p class="dialog-description">按你的习惯调整播放快捷键与跳跃距离。</p>${videoPreferencesMarkup()}<button class="button secondary" data-video-pref-reset>恢复默认</button>`);
  syncVideoPreferences($('#small-dialog'));I18n.localize($('#small-dialog'));
 }
-function animateSettings(){
+function animateSettings(...args){return Kok.invoke('animateSettings',this,args);}
+Kok.define('animateSettings',function(){
  const dialog=$('#small-dialog');dialog.classList.add('settings-dialog');
  if(reducedMotion())return;
  dialog.querySelectorAll(':scope>h2,:scope>.setting-row,:scope>.about-details').forEach((row,n)=>row.animate([{opacity:0,transform:'translateY(7px)'},{opacity:1,transform:'translateY(0)'}],{duration:320,delay:Math.min(n,7)*25,easing:'cubic-bezier(.16,1,.3,1)',fill:'backwards'}));
-}
+});
 document.addEventListener('change',async event=>{
  const input=event.target;if(!input.dataset.videoPref)return;
  try{await setting({[input.dataset.videoPref]:input.type==='checkbox'?input.checked:input.dataset.videoPref==='videoSeekSeconds'?Number(input.value):input.value});syncVideoPreferences();}catch(error){fail(error);}

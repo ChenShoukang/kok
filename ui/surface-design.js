@@ -2,7 +2,8 @@
 // Unmodified local Microsoft Fluent Emoji Flat assets, MIT licensed.
 const libraryObjectFiles={grid:'card_file_box_flat.svg',video:'clapper_board_flat.svg',photo:'framed_picture_flat.svg',music:'musical_note_flat.svg',document:'page_facing_up_flat.svg',book:'blue_book_flat.svg'};
 function libraryObject(kind){const file=libraryObjectFiles[kind];return file?`<img class="object-icon" data-object="${kind}" src="icons/fluent/${file}" width="96" height="96" alt="" draggable="false">`:svg(kind);}
-function navigationIcon(kind){return libraryObjectFiles[kind]?`<span class="nav-art nav-art-${kind}" aria-hidden="true">${libraryObject(kind)}</span>`:svg(kind);}
+function navigationIcon(...args){return Kok.invoke('navigationIcon',this,args);}
+Kok.define('navigationIcon',function(kind){return libraryObjectFiles[kind]?`<span class="nav-art nav-art-${kind}" aria-hidden="true">${libraryObject(kind)}</span>`:svg(kind);});
 (() => {
  const hint=document.createElement('div');hint.id='navigation-hint';hint.className='navigation-hint';hint.setAttribute('role','tooltip');hint.setAttribute('popover','manual');hint.setAttribute('data-user-content','');document.body.append(hint);
  let target=null,focusHint=false,pointer=null;

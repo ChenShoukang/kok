@@ -15,7 +15,8 @@ function cleanupWorkspace(){
  CSS.highlights?.delete('kok-find');CSS.highlights?.delete('kok-find-current');
 }
 function setRangeProgress(input,ratio){if(input)input.style.setProperty('--filled',(Math.max(0,Math.min(1,ratio||0))*100)+'%');}
-function renderVideoWorkspace(item){
+function renderVideoWorkspace(...args){return Kok.invoke('renderVideoWorkspace',this,args);}
+Kok.define('renderVideoWorkspace',function(item){
  $('#viewer-content').innerHTML=`<section class="video-workspace">
  <div class="video-canvas"><video id="video" crossorigin="anonymous" preload="metadata" src="${media(item)}"></video><button id="video-center-play" class="video-center-play" aria-label="播放或暂停">${svg('play')}</button><div class="video-error hidden"><span>${svg('video')}</span><h2>此视频暂时无法内置播放</h2><p>请使用系统播放器打开，原文件保持不变。</p><button class="button secondary" data-native="openExternal" data-id="${item.id}">系统播放器打开</button></div></div>
  <div class="video-controls"><div class="video-control-row">
@@ -82,7 +83,7 @@ function renderVideoWorkspace(item){
  player.addEventListener('error',()=>{if(root.isConnected){$('.video-error').classList.remove('hidden');$('#video-center-play').classList.add('hidden');$('#video-hint').textContent='当前内核无法解码此视频，请使用系统播放器。';reveal();}});
  player.addEventListener('waiting',()=>root.classList.add('is-buffering'));player.addEventListener('playing',()=>root.classList.remove('is-buffering'));
  syncVideoPreferences(root);initVideoFeatures(item,player).catch(fail);update();animateIn(controls);
-}
+});
 function renderMusicWorkspace(){
  const item=state.track;if(!item||state.viewer?.kind!=='music')return;
  state.viewer=item;viewer.dataset.kind='music';$('#viewer-title').textContent=item.name;$('#viewer-subtitle').textContent=`${labels.music} · ${item.ext} · ${size(item.size)}`;$('#notes').value=item.notes||'';$('#viewer-favorite').classList.toggle('selected',item.favorite);
@@ -101,7 +102,8 @@ function syncMusicWorkspace(trackChanged=false){
  const ratio=Number.isFinite(audio.duration)&&audio.duration>0?audio.currentTime/audio.duration:0;$('#listening-seek').value=Math.round(ratio*1000);$('#listening-seek').disabled=!Number.isFinite(audio.duration);
  setRangeProgress($('#listening-seek'),ratio);$('#listening-volume').value=audio.volume;setRangeProgress($('#listening-volume'),audio.volume);
 }
-function renderReadingWorkspace(scroll=0){
+function renderReadingWorkspace(...args){return Kok.invoke('renderReadingWorkspace',this,args);}
+Kok.define('renderReadingWorkspace',function(scroll=0){
  cleanupWorkspace();
  CSS.highlights?.delete('kok-find');CSS.highlights?.delete('kok-find-current');
  const book=state.book,chapter=book.chapters[state.chapter],documentMode=state.viewer.kind==='document';
@@ -110,12 +112,13 @@ function renderReadingWorkspace(scroll=0){
  initReadingFeatures();setupReaderSearch();updateTocAccessibility();
  let compact;const readingRoot=$('.reading-workspace');const readingResize=new ResizeObserver(()=>{const height=readingRoot.querySelector('.reader-tools').offsetHeight+'px';if(readingRoot.style.getPropertyValue('--reader-tools-height')!==height)readingRoot.style.setProperty('--reader-tools-height',height);const next=readingRoot.clientWidth<760;if(next!==compact){compact=next;if(state.viewer?.kind==='book'&&typeof readingFlow!=='undefined')readingRoot.classList.toggle('toc-collapsed',!readingFlow.sidebarOpen);else readingRoot.classList.toggle('toc-collapsed',next||state.settings.readerToc===false);const button=readingRoot.querySelector('[data-toggle-toc]');button.setAttribute('aria-expanded',String(!readingRoot.classList.contains('toc-collapsed')));updateTocAccessibility();}});readingResize.observe(readingRoot);readingResize.observe(readingRoot.querySelector('.reader-tools'));workspaceDisposers.push(()=>readingResize.disconnect());
  container.addEventListener('scroll',()=>{hideSelectionTools();updateReadingPosition();clearTimeout(readerTimer);readerTimer=setTimeout(()=>saveReader().catch(fail),700);});
-}
-function updateReadingPosition(){
+});
+function updateReadingPosition(...args){return Kok.invoke('updateReadingPosition',this,args);}
+Kok.define('updateReadingPosition',function(){
  const el=$('#reader-scroll');if(!el||!state.book)return;
  const fraction=el.scrollHeight<=el.clientHeight?1:readerPosition(),progress=(state.chapter+fraction)/state.book.chapters.length;
  $('#reading-percent').textContent=Math.round(progress*100)+'%';$('.reading-meter i').style.width=(progress*100)+'%';
-}
+});
 function updateTocAccessibility(){const toc=$('.reader-toc');if(toc){toc.inert=$('.reading-workspace').classList.contains('toc-collapsed');toc.setAttribute('aria-hidden',String(toc.inert));}}
 function setupReaderSearch(){
  const input=$('#reader-find');let ranges=[],current=0;

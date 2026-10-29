@@ -11,10 +11,10 @@ const CalmMotion=(()=>{
  }
  function finishAll(){for(const channels of [...active.values()])for(const animation of [...channels.values()])try{animation.finish();}catch{animation.cancel();}}
  function enter(element,kind='menu'){
-  if(!element)return;const side=kind==='drawer',running=active.get(element)?.has('surface'),style=running?getComputedStyle(element):null;return play(element,[{opacity:style?.opacity??0,transform:style?.transform??(side?'translateX(16px)':'translateY(-4px)')},{opacity:1,transform:'none'}],{duration:side?220:160});
+  if(!element)return;const side=kind==='drawer',running=active.get(element)?.has('surface'),style=running?getComputedStyle(element):null;return play(element,[{opacity:style?.opacity??.35,transform:'none'},{opacity:1,transform:'none'}],{duration:side?220:160});
  }
  function exit(element,remove=false){
-  if(!element)return Promise.resolve();const style=getComputedStyle(element),animation=play(element,[{opacity:style.opacity,transform:style.transform},{opacity:0,transform:'translateY(-3px)'}],{duration:100,persist:true});
+  if(!element)return Promise.resolve();const style=getComputedStyle(element),animation=play(element,[{opacity:style.opacity,transform:'none'},{opacity:0,transform:'none'}],{duration:100,persist:true});
   return(animation?.finished.catch(()=>{})||Promise.resolve()).then(()=>{if(remove)element.remove();animation?.cancel();});
  }
  function visibility(element,visible){
@@ -22,7 +22,7 @@ const CalmMotion=(()=>{
   if(presence.get(element)?.visible===visible&&element.inert===!visible&&(visible?!element.classList.contains('hidden'):element.classList.contains('hidden')||running))return running?.finished.catch(()=>{})||Promise.resolve();
   const revision=(presence.get(element)?.revision||0)+1;presence.set(element,{revision,visible});element.inert=!visible;element.setAttribute('aria-hidden',String(!visible));
   if(visible){element.classList.remove('hidden');const animation=enter(element,'drawer');return animation?.finished.catch(()=>{})||Promise.resolve();}
-  const style=getComputedStyle(element),animation=play(element,[{opacity:style.opacity,transform:style.transform},{opacity:0,transform:'translateX(12px)'}],{duration:130,persist:true});return(animation?.finished.catch(()=>{})||Promise.resolve()).then(()=>{if(presence.get(element)?.revision===revision)element.classList.add('hidden');animation?.cancel();});
+  const style=getComputedStyle(element),animation=play(element,[{opacity:style.opacity,transform:'none'},{opacity:0,transform:'none'}],{duration:130,persist:true});return(animation?.finished.catch(()=>{})||Promise.resolve()).then(()=>{if(presence.get(element)?.revision===revision)element.classList.add('hidden');animation?.cancel();});
  }
  function snapshot(element){
   const host=element.parentElement;contentGhosts.get(host)?.remove();const ghost=element.cloneNode(true),style=getComputedStyle(element);ghost.removeAttribute('id');ghost.querySelectorAll('[id]').forEach(n=>n.removeAttribute('id'));ghost.classList.add('motion-content-ghost');ghost.inert=true;ghost.setAttribute('aria-hidden','true');
@@ -36,12 +36,12 @@ const CalmMotion=(()=>{
  function switchPanels(previous,next,change,direction=1){
   if(previous===next)return;
   if(!previous||!allowed()){change();return;}
-  const ghost=snapshot(previous);change();dismissSnapshot(ghost,direction);play(next,[{opacity:0,transform:`translateX(${direction*7}px)`},{opacity:1,transform:'none'}],{duration:180,channel:'content'});
+  const ghost=snapshot(previous);change();dismissSnapshot(ghost,direction);play(next,[{opacity:.65,transform:'none'},{opacity:1,transform:'none'}],{duration:180,channel:'content'});
  }
  function replaceContent(element,html,{direction=1,animate=true}={}){
   if(!animate||!allowed()||!element.children.length){contentGhosts.get(element.parentElement)?.remove();element.innerHTML=html;return;}
   const ghost=snapshot(element);element.innerHTML=html;element.scrollTop=0;dismissSnapshot(ghost,direction);
-  play(element,[{opacity:0,transform:`translateX(${direction*7}px)`},{opacity:1,transform:'none'}],{duration:180,channel:'content'});
+  play(element,[{opacity:.65,transform:'none'},{opacity:1,transform:'none'}],{duration:180,channel:'content'});
  }
  function toggleNotes(){
   const panel=$('#notes-panel'),visible=!viewer.classList.contains('notes-open');viewer.classList.toggle('notes-open',visible);$('#notes-button').setAttribute('aria-expanded',String(visible));visibility(panel,visible);if(typeof renderAnnotationIndex==='function')renderAnnotationIndex();
@@ -65,17 +65,17 @@ const CalmMotion=(()=>{
  const query=matchMedia('(prefers-reduced-motion: reduce)');query.addEventListener('change',()=>{finishAll();refresh();});document.addEventListener('visibilitychange',()=>{if(document.hidden)finishAll();});
  return{allowed,play,enter,exit,visibility,replaceContent,switchPanels,toggleNotes,feedback,prepare,refresh,finishAll,get activeCount(){return[...active.values()].reduce((sum,channels)=>sum+channels.size,0);}};
 })();
-const animateBeforeCalm=animateIn;
-animateIn=function(element){
+
+Kok.extend('core','calm-motion.js:animateBeforeCalm','animateIn',animateBeforeCalm=>function(element){
  if(element===viewer||element?.tagName==='DIALOG')return animateBeforeCalm(element);
  if(element?.matches('.glass-menu,.viewer-overflow-menu,.import-menu'))return CalmMotion.enter(element);
  if(element?.matches('.file-assistant,.translation-panel,#notes-panel'))return CalmMotion.enter(element,'drawer');
  if(element?.matches('.settings-section,.reading-side-pane'))return CalmMotion.play(element,[{opacity:.8},{opacity:1}],{duration:150});
  if(!CalmMotion.allowed())return;return animateBeforeCalm(element);
-};
-const showSmallBeforeCalm=showSmall;showSmall=function(content){showSmallBeforeCalm(content);requestAnimationFrame(()=>CalmMotion.prepare($('#small-dialog')));};
-const renderReadingBeforeCalm=renderReadingWorkspace;renderReadingWorkspace=function(position=0){renderReadingBeforeCalm(position);CalmMotion.prepare(viewer);};
-const readingTabBeforeCalm=setReadingTab;setReadingTab=function(tab,open=true){const previous=ensureReadingToolState().tab;readingTabBeforeCalm(tab,open);CalmMotion.prepare(viewer);if(open&&tab!==previous){const pane=viewer.querySelector(`[data-reading-pane="${tab}"]`);CalmMotion.play(pane,[{opacity:.82},{opacity:1}],{duration:140});}};
-const favoriteBeforeCalm=favorite;favorite=async function(id){await favoriteBeforeCalm(id);const button=state.viewer?.id===id?$('#viewer-favorite'):document.querySelector(`[data-favorite="${CSS.escape(id)}"]`);CalmMotion.feedback(button);};
-const translationBeforeCalm=showTranslationPanel;showTranslationPanel=function(){const wasOpen=viewer.classList.contains('translation-open');translationBeforeCalm();if(!wasOpen)CalmMotion.enter($('#translation-panel'),'drawer');};
+});
+Kok.extend('core','calm-motion.js:showSmallBeforeCalm','showSmall',showSmallBeforeCalm=>function(content){showSmallBeforeCalm(content);requestAnimationFrame(()=>CalmMotion.prepare($('#small-dialog')));});
+Kok.extend('core','calm-motion.js:renderReadingBeforeCalm','renderReadingWorkspace',renderReadingBeforeCalm=>function(position=0){renderReadingBeforeCalm(position);CalmMotion.prepare(viewer);});
+Kok.extend('core','calm-motion.js:readingTabBeforeCalm','setReadingTab',readingTabBeforeCalm=>function(tab,open=true){const previous=ensureReadingToolState().tab;readingTabBeforeCalm(tab,open);CalmMotion.prepare(viewer);if(open&&tab!==previous){const pane=viewer.querySelector(`[data-reading-pane="${tab}"]`);CalmMotion.play(pane,[{opacity:.82},{opacity:1}],{duration:140});}});
+Kok.extend('core','calm-motion.js:favoriteBeforeCalm','favorite',favoriteBeforeCalm=>async function(id){await favoriteBeforeCalm(id);const button=state.viewer?.id===id?$('#viewer-favorite'):document.querySelector(`[data-favorite="${CSS.escape(id)}"]`);CalmMotion.feedback(button);});
+Kok.extend('core','calm-motion.js:translationBeforeCalm','showTranslationPanel',translationBeforeCalm=>function(){const wasOpen=viewer.classList.contains('translation-open');translationBeforeCalm();if(!wasOpen)CalmMotion.enter($('#translation-panel'),'drawer');});
 CalmMotion.prepare();

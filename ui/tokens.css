@@ -1,0 +1,5 @@
+/* Shared semantic contract. Skins supply material values; component dimensions
+   and typography consume the same scale. User colors remain in appearance.js. */
+:root{--radius-xs:3px;--radius-sm:4px;--radius-md:6px;--radius-lg:8px;--radius-xl:12px;--space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--type-small:12px;--type-body:14px;--type-title:20px}
+body[data-theme][data-app-mode]{--control-bg:var(--g-key);--control-ink:var(--ink);--control-border:var(--line);--chrome-bg:var(--g-chrome);--well-bg:var(--g-well);--focus-color:var(--green);--motion-fast:160ms;--motion-normal:220ms}
+body[data-skin=classic][data-theme][data-app-mode]{--control-bg:var(--cl-grey);--control-ink:var(--cl-ink);--control-border:var(--cl-grey-edge);--chrome-bg:var(--cl-bar);--well-bg:var(--cl-paper)}

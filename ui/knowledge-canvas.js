@@ -2,30 +2,32 @@
 // One render loop owns camera, opacity and focus. Retargets retain the current
 // position and velocity. Pointer dragging never waits for physics.
 class KnowledgeCanvas {
- constructor(canvas){
+ constructor(canvas,options={}){
+  this.positions=options.positions||knowledgeView.positions;this.onSelect=options.onSelect||(id=>{knowledgeView.selected=id;renderKnowledgeSelection();for(const b of document.querySelectorAll('[data-knowledge-select]'))b.classList.toggle('selected',b.dataset.knowledgeSelect===id);});this.onOpen=options.onOpen||(()=>openSelectedKnowledge());
   Object.assign(this,{canvas,context:canvas.getContext('2d'),nodes:[],edges:[],leaving:[],retiredEdges:[],byId:new Map(),camera:{x:0,y:0,zoom:1},velocity:{x:0,y:0,z:0},frame:0,generation:0,ticks:0,draws:0,settled:false,destroyed:false,ready:false,hover:null,selected:null,events:[],query:matchMedia('(prefers-reduced-motion: reduce)')});
-  this.worker=new Worker(new URL('knowledge-worker.js?v=0.6.2-motion',location.href));this.worker.onmessage=event=>this.receive(event.data);
+  this.worker=new Worker(new URL('knowledge-worker.js?v=0.7.1-motion',location.href));this.worker.onmessage=event=>this.receive(event.data);
   this.worker.onerror=()=>{this.settled=true;this.ready=true;this.nodes.forEach(n=>n.opacity=1);this.fit(false);this.requestDraw();};
   this.resizeObserver=new ResizeObserver(()=>this.resize());this.resizeObserver.observe(canvas.parentElement);
   this.listen(canvas,'pointerdown',e=>this.down(e));this.listen(canvas,'pointermove',e=>this.move(e));this.listen(canvas,'pointerup',e=>this.up(e));this.listen(canvas,'pointercancel',e=>this.up(e,true));this.listen(canvas,'lostpointercapture',e=>this.up(e,true));
   this.listen(canvas,'pointerleave',()=>{if(!this.drag){this.hover=null;this.updateFocus();}});
-  this.listen(canvas,'dblclick',event=>{const index=this.hit(this.point(event));if(index!==null){knowledgeView.selected=this.nodes[index].id;openSelectedKnowledge().catch(fail);}});
+  this.listen(canvas,'dblclick',event=>{const index=this.hit(this.point(event));if(index!==null){this.choose(this.nodes[index].id);Promise.resolve(this.onOpen(this.selected)).catch(fail);}});
   this.listen(canvas,'wheel',e=>this.wheel(e),{passive:false});
-  this.listen(canvas,'keydown',e=>{if(e.key==='Enter'&&this.selected){e.preventDefault();openSelectedKnowledge().catch(fail);}else if(['+','=','-','0'].includes(e.key)){e.preventDefault();if(e.key==='0')this.fit();else this.zoomBy(e.key==='-' ? .8 : 1.25);}});
+  this.listen(canvas,'keydown',e=>{if(e.key==='Enter'&&this.selected){e.preventDefault();Promise.resolve(this.onOpen(this.selected)).catch(fail);}else if(['+','=','-','0'].includes(e.key)){e.preventDefault();if(e.key==='0')this.fit();else this.zoomBy(e.key==='-' ? .8 : 1.25);}});
   this.listen(document,'visibilitychange',()=>{this.pause(document.hidden);if(document.hidden)this.finishVisuals();});
   this.listen(this.query,'change',()=>{this.worker.postMessage({type:'reduce',value:reducedMotion()});if(reducedMotion())this.finishVisuals();});
   this.themeObserver=new MutationObserver(()=>{this.palette=null;this.requestDraw();});this.themeObserver.observe(document.body,{attributes:true,attributeFilter:['data-theme','data-custom-colors','style']});
-  if(window.chrome?.webview)this.listen(window.chrome.webview,'message',e=>{if(e.data.eventName==='windowInteraction'){this.pause(!!e.data.data.active||document.hidden);if(e.data.data.active)this.finishVisuals(false);}});this.resize();
+  this.events.push(Kok.on('windowInteraction',data=>{this.pause(!!data.active||document.hidden);if(data.active)this.finishVisuals(false);},{module:options.module||'knowledge',normalOnly:true}));this.resize();
  }
  listen(target,name,handler,options){target.addEventListener(name,handler,options);this.events.push(()=>target.removeEventListener(name,handler,options));}
  motionAllowed(){return !reducedMotion()&&!document.hidden&&!(typeof isWindowInteracting==='function'&&isWindowInteracting());}
  setData(rows,links){
   const signature=rows.map(n=>n.id).sort().join('|')+'~'+links.map(e=>e.source+'>'+e.target+e.kind).sort().join('|');
   if(signature===this.signature){for(const row of rows){const node=this.nodes[this.byId.get(row.id)];if(node){Object.assign(node,row);node.label=this.label(row.name);}}this.requestDraw();return;}
+  if(this.drag){const pointer=this.drag.pointer;this.drag=null;if(this.canvas.hasPointerCapture(pointer))this.canvas.releasePointerCapture(pointer);this.canvas.style.cursor='grab';}
   const previous=new Map(this.nodes.map(n=>[n.id,n])),ids=new Set(rows.map(n=>n.id)),wasReady=this.ready;this.signature=signature;this.finishCamera();
   this.leaving=this.nodes.filter(n=>!ids.has(n.id));this.retiredEdges=this.edges.filter(e=>!ids.has(e.source)||!ids.has(e.target)).map(e=>({a:this.nodes[e.a],b:this.nodes[e.b],kind:e.kind}));
   let uncached=0;
-  this.nodes=rows.map((row,i)=>{const old=previous.get(row.id),cached=knowledgeView.positions.get(row.id),angle=i*2.39996,known=old||cached;if(!known)uncached++;return{...row,x:known?.x??Math.cos(angle)*Math.sqrt(i+1)*28,y:known?.y??Math.sin(angle)*Math.sqrt(i+1)*28,degree:0,opacity:old?.opacity??0,visibility:old?.visibility??1,known:!!known,label:this.label(row.name)};});
+  this.nodes=rows.map((row,i)=>{const old=previous.get(row.id),cached=this.positions.get(row.id),angle=i*2.39996,known=old||cached;if(!known)uncached++;return{...row,x:known?.x??Math.cos(angle)*Math.sqrt(i+1)*28,y:known?.y??Math.sin(angle)*Math.sqrt(i+1)*28,degree:0,opacity:old?.opacity??0,visibility:old?.visibility??1,known:!!known,label:this.label(row.name)};});
   this.byId=new Map(this.nodes.map((n,i)=>[n.id,i]));this.edges=links.map(e=>({...e,a:this.byId.get(e.source),b:this.byId.get(e.target)})).filter(e=>e.a!==undefined&&e.b!==undefined);for(const e of this.edges){this.nodes[e.a].degree++;this.nodes[e.b].degree++;}
   if(!ids.has(this.hover))this.hover=null;this.generation++;this.ticks=0;this.fade=null;this.initialFit=!wasReady;this.ready=wasReady;this.settled=uncached===0;
   if(uncached)this.worker.postMessage({type:'init',generation:this.generation,nodes:this.nodes.map(n=>({x:n.x,y:n.y,pin:n.known?{x:n.x,y:n.y}:null})),links:this.edges.map(e=>[e.a,e.b]),batch:true,reduced:reducedMotion()});
@@ -33,9 +35,10 @@ class KnowledgeCanvas {
   this.updateFocus(true);this.requestDraw();
  }
  label(name){const text=Array.from(name);return text.length>24?text.slice(0,23).join('')+'…':name;}
- cache(node){knowledgeView.positions.set(node.id,{x:node.x,y:node.y});while(knowledgeView.positions.size>2000)knowledgeView.positions.delete(knowledgeView.positions.keys().next().value);}
+ cache(node){this.positions.set(node.id,{x:node.x,y:node.y});while(this.positions.size>2000)this.positions.delete(this.positions.keys().next().value);}
  receive(data){
-  if(this.destroyed||data.generation!==this.generation)return;
+  if(this.destroyed||data.generation!==this.generation||!data.positions||data.positions.length!==this.nodes.length*2)return;
+  if(!Array.from(data.positions).every(Number.isFinite))return;
   for(let i=0;i<this.nodes.length;i++){const n=this.nodes[i];if(!n.manual){n.x=data.positions[i*2];n.y=data.positions[i*2+1];}this.cache(n);}
   this.ticks=data.ticks;this.settled=data.settled;if(data.settled){this.ready=true;if(this.initialFit){this.fit(false);this.initialFit=false;}this.reveal();}this.requestDraw();
  }
@@ -56,8 +59,8 @@ class KnowledgeCanvas {
  requestDraw(){if(!this.frame&&!this.destroyed)this.frame=requestAnimationFrame(now=>this.tick(now));}
  tick(now){
   this.frame=0;if(this.destroyed)return;if(this.cameraTarget)this.stepCamera(now);
-  if(this.fade){const f=this.fade,t=Math.min(1,(now-f.started)/180),ease=1-Math.pow(1-t,3);for(const[n,from]of f.incoming)n.opacity=from+(1-from)*ease;for(const[n,from]of f.outgoing)n.opacity=from*(1-ease);if(t===1){this.fade=null;this.leaving=[];this.retiredEdges=[];}}
-  if(this.focusTween){const f=this.focusTween,t=Math.min(1,(now-f.started)/140),ease=1-Math.pow(1-t,3);for(const[n,from,to]of f.rows)n.visibility=from+(to-from)*ease;if(t===1)this.focusTween=null;}
+  if(this.fade){const f=this.fade,t=MotionClock.progress(now,f.started,180),ease=MotionClock.ease(t);for(const[n,from]of f.incoming)n.opacity=from+(1-from)*ease;for(const[n,from]of f.outgoing)n.opacity=from*(1-ease);if(t===1){this.fade=null;this.leaving=[];this.retiredEdges=[];}}
+  if(this.focusTween){const f=this.focusTween,t=MotionClock.progress(now,f.started,140),ease=MotionClock.ease(t);for(const[n,from,to]of f.rows)n.visibility=from+(to-from)*ease;if(t===1)this.focusTween=null;}
   this.draw();if(this.cameraTarget||this.fade||this.focusTween)this.requestDraw();
  }
  screen(node){return{x:node.x*this.camera.zoom+this.camera.x,y:node.y*this.camera.zoom+this.camera.y};}
@@ -65,7 +68,7 @@ class KnowledgeCanvas {
   if(this.destroyed||!this.width)return;this.draws++;
   if(!this.palette){const css=getComputedStyle(this.canvas);this.palette={ink:css.getPropertyValue('--ink').trim()||'#ddd',muted:css.getPropertyValue('--muted').trim()||'#999',accent:css.getPropertyValue('--knowledge-accent').trim()||'#75a69d'};}
   const ctx=this.context,{ink,muted,accent}=this.palette,active=this.activeId;ctx.setTransform(this.ratio,0,0,this.ratio,0,0);ctx.clearRect(0,0,this.width,this.height);
-  const line=(a,b,kind)=>{const opacity=Math.min(a.opacity,b.opacity);if(opacity<.002)return;const p=this.screen(a),q=this.screen(b),highlight=active&&(a.id===active||b.id===active);ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.strokeStyle=highlight?accent:muted;ctx.globalAlpha=opacity*Math.min(a.visibility,b.visibility)*(highlight ? .68 : kind==='tag' ? .18 : .28);ctx.lineWidth=highlight?1.4:1;if(kind==='tag')ctx.setLineDash([3,5]);ctx.stroke();ctx.setLineDash([]);};
+  const line=(a,b,kind)=>{const opacity=Math.min(a.opacity,b.opacity);if(opacity<.002)return;const p=this.screen(a),q=this.screen(b),highlight=active&&(a.id===active||b.id===active);ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.strokeStyle=highlight||kind==='ai'?accent:muted;ctx.globalAlpha=opacity*Math.min(a.visibility,b.visibility)*(highlight ? .68 : kind==='tag' ? .18 : kind==='ai'?.5:.28);ctx.lineWidth=highlight?1.4:1;if(kind==='tag'||kind==='ai')ctx.setLineDash(kind==='ai'?[6,4]:[3,5]);ctx.stroke();ctx.setLineDash([]);};
   for(const e of this.retiredEdges)line(e.a,e.b,e.kind);for(const e of this.edges)line(this.nodes[e.a],this.nodes[e.b],e.kind);
   ctx.textBaseline='middle';ctx.font='12px "Segoe UI","Microsoft YaHei UI",sans-serif';
   for(const n of [...this.leaving,...this.nodes]){
@@ -90,7 +93,7 @@ class KnowledgeCanvas {
  }
  up(event,cancelled=false){
   if(!this.drag||this.drag.pointer!==event.pointerId)return;const drag=this.drag;this.drag=null;
-  if(!drag.moved&&!cancelled){knowledgeView.selected=drag.node===null?null:this.nodes[drag.node].id;renderKnowledgeSelection();for(const b of document.querySelectorAll('[data-knowledge-select]'))b.classList.toggle('selected',b.dataset.knowledgeSelect===knowledgeView.selected);}
+  if(!drag.moved&&!cancelled){this.choose(drag.node===null?null:this.nodes[drag.node].id);}
   if(this.canvas.hasPointerCapture(event.pointerId))this.canvas.releasePointerCapture(event.pointerId);this.canvas.style.cursor='grab';this.requestDraw();
  }
  wheel(event){
@@ -103,7 +106,7 @@ class KnowledgeCanvas {
  }
  stepCamera(now){
   const dt=Math.max(.001,Math.min(.064,(now-this.cameraTime)/1000)),goal=this.cameraTarget;this.cameraTime=now;
-  const spring=(value,to,velocity)=>{const omega=28,d=value-to,term=velocity+omega*d,decay=Math.exp(-omega*dt);return[to+(d+term*dt)*decay,(velocity-omega*term*dt)*decay];};
+  const spring=(value,to,velocity)=>MotionClock.spring(value,to,velocity,dt);
   let result=spring(Math.log(this.camera.zoom),Math.log(goal.zoom),this.velocity.z);this.camera.zoom=Math.exp(result[0]);this.velocity.z=result[1];
   if(this.zoomAnchor){const{point,world}=this.zoomAnchor;this.camera.x=point.x-world.x*this.camera.zoom;this.camera.y=point.y-world.y*this.camera.zoom;this.velocity.x=this.velocity.y=0;}
   else{for(const key of ['x','y']){result=spring(this.camera[key],goal[key],this.velocity[key]);this.camera[key]=result[0];this.velocity[key]=result[1];}}
@@ -114,6 +117,7 @@ class KnowledgeCanvas {
  fit(animate=true){if(!this.nodes.length||!this.width)return;const xs=this.nodes.map(n=>n.x),ys=this.nodes.map(n=>n.y),left=Math.min(...xs)-55,right=Math.max(...xs)+110,top=Math.min(...ys)-45,bottom=Math.max(...ys)+45,zoom=Math.max(.12,Math.min(2,(this.width-80)/Math.max(180,right-left),(this.height-70)/Math.max(160,bottom-top)));this.animateCamera({x:this.width/2-(left+right)/2*zoom,y:this.height/2-(top+bottom)/2*zoom,zoom},animate);}
  centerOn(id){const n=this.nodes[this.byId.get(id)];if(n)this.animateCamera({x:this.width/2-n.x*this.camera.zoom,y:this.height/2-n.y*this.camera.zoom,zoom:this.camera.zoom});}
  zoomBy(factor){const point={x:this.width/2,y:this.height/2},world={x:(point.x-this.camera.x)/this.camera.zoom,y:(point.y-this.camera.y)/this.camera.zoom},zoom=Math.max(.12,Math.min(5,(this.cameraTarget?.zoom||this.camera.zoom)*factor));this.animateCamera({x:point.x-world.x*zoom,y:point.y-world.y*zoom,zoom},true,{point,world});}
+ choose(id){this.select(id);this.onSelect(id);}
  select(id){if(this.selected===id)return;this.selected=id;this.updateFocus();}
  pause(value){this.worker.postMessage({type:value?'pause':'resume'});}
  destroy(){if(this.destroyed)return;this.destroyed=true;cancelAnimationFrame(this.frame);this.frame=0;this.worker.terminate();this.resizeObserver.disconnect();this.themeObserver.disconnect();this.events.forEach(remove=>remove());this.events=[];this.leaving=[];this.retiredEdges=[];this.fade=this.focusTween=null;this.finishCamera();}

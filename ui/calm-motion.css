@@ -21,3 +21,16 @@ body[data-app-mode] :is(.notes-panel,.translation-panel,.file-assistant,.note-co
 .motion-content-ghost{contain:layout paint;user-select:none}.motion-content-ghost :is(input,button,textarea,select){pointer-events:none}
 body[data-theme][data-app-mode] .note-context-tabs.motion-choice-ready [aria-selected=true]{background:transparent!important}
 @media(prefers-reduced-motion:reduce){.photo-image-wrap img,.viewer :is(#viewer-favorite,[data-add-bookmark]) svg{transition:none!important}::view-transition-old(library),::view-transition-new(library){animation:none!important}}
+
+/* Animate materials and decorative children; interactive rectangles stay under the pointer. */
+body[data-theme][data-app-mode] :is(.button,.icon-button,.workspace-button,.workspace-text-button,.text-button,.nav-item,.mode-card,.view-toggle button,.glass-menu>button,.agent-chip button,.agent-source,.card-favorite,.card-menu,.canvas-tool,.photo-preset){transform:none!important}
+body[data-theme][data-app-mode] :is(.icon-button,.workspace-button,.workspace-text-button){min-width:32px;min-height:32px}
+body[data-theme][data-app-mode] .file-grid :is(.card-favorite,.card-menu){width:32px;height:32px;box-sizing:border-box}
+body[data-theme][data-app-mode] .file-grid .card-menu{top:46px;right:7px;bottom:auto}
+body[data-theme][data-app-mode] .glass-menu>button{min-height:34px}
+body[data-theme][data-app-mode] :is(.agent-answer-actions button,.agent-chip button){min-height:28px;min-width:28px}
+body[data-theme][data-app-mode] .agent-chip{height:30px}
+body[data-theme][data-app-mode] :is(button,a,input,select,textarea):focus-visible{outline:2px solid var(--green);outline-offset:2px}
+.glass-menu::backdrop,.motion-content-ghost,.motion-content-ghost *,.toast-stack,.toast-stack *{pointer-events:none!important}
+body[data-theme][data-app-mode] #main{view-transition-name:none}
+@media(hover:none){body[data-theme][data-app-mode] .file-grid :is(.card-menu,.card-favorite){opacity:1}}

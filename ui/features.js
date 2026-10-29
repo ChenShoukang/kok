@@ -8,7 +8,8 @@ let fontApplyGeneration=0;
 const uid=()=>crypto.randomUUID().replaceAll('-','');
 function albumName(item){return item.album||'未命名专辑';}
 function hashHue(value){let n=0;for(const c of value)n=(n*31+c.charCodeAt(0))%360;return n;}
-async function applyFont(){
+async function applyFont(...args){return Kok.invoke('applyFont',this,args);}
+Kok.define('applyFont',async function(){
  const generation=++fontApplyGeneration;let name=state.settings.fontFamily||'smiley';
  if(name==='chill'){name='smiley';await setting({fontFamily:name});if(generation!==fontApplyGeneration)return;}
  let family=fontStacks[name];
@@ -19,7 +20,7 @@ async function applyFont(){
  if(generation!==fontApplyGeneration)return;
  document.documentElement.style.setProperty('--user-font',family||fontStacks.system);
  document.documentElement.style.setProperty('--reading-font',family||fontStacks.system);
-}
+});
 function setupSettings(){
  const row=document.createElement('div');row.className='setting-row';row.innerHTML=`<div>常用字体<small>同时应用于界面与正文阅读</small></div><select id="font-select" aria-label="字体选择">${[['smiley','得意黑（默认，内置）'],['wenkai','霞鹜文楷轻便版（内置）'],['system','系统字体'],['yahei','微软雅黑'],['song','宋体'],['kai','楷体'],...(state.fonts||[]).map(f=>[f.id,f.name])].map(([v,l])=>`<option value="${esc(v)}">${esc(l)}</option>`).join('')}</select>`;
  $('#theme-select').closest('.setting-row').after(row);$('#font-select').value=state.settings.fontFamily||'smiley';
@@ -29,12 +30,14 @@ function setupSettings(){
  $('#small-dialog .about-details').insertAdjacentHTML('beforebegin','<div class="setting-row smart-settings-row"><div>智能整理<small>文件夹扫描、AI 分类与标签</small></div><button class="button secondary" data-organizer="open">打开</button></div>');
 }
 function newCollection(itemId){showSmall(`<h2>${itemId?'更改分类':'新建分类'}</h2><p class="dialog-description">按项目或主题归类。</p>${itemId?`<label class="form-label">已有分类<select id="collection-existing"><option value="">不归类</option>${(state.collections||[]).map(n=>`<option data-user-content value="${esc(n)}">${esc(n)}</option>`).join('')}</select></label>`:''}<label class="form-label">${itemId?'或者新建分类':'分类名称'}<input id="collection-name" maxlength="100" placeholder="例如：今年的旅行"></label><button class="button primary dialog-submit" data-save-collection="${itemId||'new'}">保存分类</button>`);if(itemId)$('#collection-existing').value=byId(itemId).collection||'';$('#collection-name').focus();}
-function albumArt(name,large=false){return `<div class="album-art ${large?'large':''}" style="--album-hue:${hashHue(name)}"><div class="album-art-orb"></div><div class="album-vinyl"></div><span>kok</span><small ${name==='未命名专辑'?'':'data-user-content'}>${esc(name)}</small></div>`;}
-function renderMusic(){
+function albumArt(...args){return Kok.invoke('albumArt',this,args);}
+Kok.define('albumArt',function(name,large=false){return `<div class="album-art ${large?'large':''}" style="--album-hue:${hashHue(name)}"><div class="album-art-orb"></div><div class="album-vinyl"></div><span>kok</span><small ${name==='未命名专辑'?'':'data-user-content'}>${esc(name)}</small></div>`;});
+function renderMusic(...args){return Kok.invoke('renderMusic',this,args);}
+Kok.define('renderMusic',function(){
  const songs=state.items.filter(i=>i.kind==='music');const albums=[...new Set(songs.map(albumName))];
  if(state.musicAlbum){const tracks=songs.filter(i=>albumName(i)===state.musicAlbum);return `<button class="text-button album-back" data-album-back>← 所有专辑</button><section class="album-hero">${albumArt(state.musicAlbum,true)}<div><span class="album-kind">专辑</span><h1 ${state.musicAlbum==='未命名专辑'?'':'data-user-content'}>${esc(state.musicAlbum)}</h1><p>${tracks.length} 首歌曲 · ${esc([...new Set(tracks.map(i=>i.artist||'本地音乐'))].join(' / '))}</p><div class="album-actions"><button class="button primary" data-play-album="${esc(state.musicAlbum)}">${svg('play')}播放专辑</button><button class="button secondary" data-action="importFiles">${svg('plus')}导入</button></div></div></section><div class="track-table"><div class="track-table-heading"><span>#</span><span>歌曲</span><span>格式 / 大小</span><span></span></div>${tracks.map((i,n)=>`<article class="track-row"><button class="track-number" data-open="${i.id}" aria-label="播放 ${esc(i.name)}">${state.track?.id===i.id?svg('music'):String(n+1).padStart(2,'0')}</button><button class="track-title" data-open="${i.id}"><b>${esc(i.name)}</b><small ${!i.artist||i.artist==='本地音乐'?'':'data-user-content'}>${esc(i.artist||'本地音乐')}</small></button><span>${esc(i.ext)} · ${size(i.size)}</span><div><button class="icon-button ${i.favorite?'selected':''}" data-favorite="${i.id}" aria-label="收藏 ${esc(i.name)}">${svg('heart')}</button><button class="icon-button" data-menu="${i.id}" aria-label="更多操作">${svg('more')}</button></div></article>`).join('')}</div>`;}
  return heading('音乐',songs.length+' 首歌曲')+`<div class="library-toolbar"><div class="filter-tabs"><button class="filter-tab ${state.musicMode!=='songs'?'active':''}" data-music-mode="albums">专辑</button><button class="filter-tab ${state.musicMode==='songs'?'active':''}" data-music-mode="songs">全部歌曲</button></div><span class="subtle-label">${albums.length} 张专辑 · ${songs.length} 首音乐</span></div>${!songs.length?empty('你的第一张专辑，从这里开始','导入音乐，会按照文件夹自动归入专辑。'):state.musicMode==='songs'?`<div class="file-grid">${songs.map(card).join('')}</div>`:`<div class="album-grid">${albums.map(name=>`<button class="album-card" data-album="${esc(name)}">${albumArt(name)}<b ${name==='未命名专辑'?'':'data-user-content'}>${esc(name)}</b><small>${songs.filter(i=>albumName(i)===name).length} 首歌曲</small></button>`).join('')}</div>`}`;
-}
+});
 async function initVideoFeatures(item,player){
  subtitleTracks=[];$('#video-rate').value=String(state.settings.videoRate||1);player.playbackRate=Number(state.settings.videoRate)||1;
  $('#smart-speed').classList.toggle('enabled',!!state.settings.smartSpeed);
@@ -67,8 +70,10 @@ function initReadingFeatures(){
  const root=$('#reader-text');if(root){root.addEventListener('mouseup',()=>setTimeout(captureSelection,0));root.addEventListener('keyup',()=>setTimeout(captureSelection,0));}
  renderAnnotationIndex();
 }
-function hideSelectionTools(){viewer.querySelector('.selection-tools')?.remove();}
-function captureSelection(){
+function hideSelectionTools(...args){return Kok.invoke('hideSelectionTools',this,args);}
+Kok.define('hideSelectionTools',function(){viewer.querySelector('.selection-tools')?.remove();});
+function captureSelection(...args){return Kok.invoke('captureSelection',this,args);}
+Kok.define('captureSelection',function(){
  const selection=getSelection();if(!selection||selection.isCollapsed||!selection.rangeCount){hideSelectionTools();return;}
  const range=selection.getRangeAt(0);let root=range.commonAncestorContainer.nodeType===1?range.commonAncestorContainer:range.commonAncestorContainer.parentElement;
  const textRoot=root.closest('#reader-text');const layer=root.closest('.textLayer');
@@ -80,32 +85,35 @@ function captureSelection(){
  if(layer){const wrapper=layer.closest('.pdf-page');const box=wrapper.getBoundingClientRect();page=Number(wrapper.dataset.page);rects=[...range.getClientRects()].filter(r=>r.width>1&&r.height>1).map(r=>({x:(r.left-box.left)/box.width,y:(r.top-box.top)/box.height,w:r.width/box.width,h:r.height/box.height}));}
  selectionAnchor={start:before.toString().length,end:before.toString().length+range.toString().length,text:range.toString(),chapter:state.chapter||0,page,rects,left:rect.left,top:rect.bottom};
  hideSelectionTools();const bar=document.createElement('div');bar.className='selection-tools';bar.style.left=Math.max(16,Math.min(innerWidth-330,rect.left))+'px';bar.style.top=Math.min(innerHeight-55,rect.bottom+9)+'px';bar.innerHTML=`<button data-add-mark="underline"><u>下划线</u></button><button data-add-mark="highlight"><mark>荧光</mark></button><button data-add-mark="note">${svg('edit')}想法</button>${state.viewer.kind==='document'&&!page?'<button data-insert-text>插入文字</button>':''}`;viewer.append(bar);
-}
-async function addMark(style){
+});
+async function addMark(...args){return Kok.invoke('addMark',this,args);}
+Kok.define('addMark',async function(style){
  const anchor=selectionAnchor;if(!anchor||!state.viewer)return;
  const mark={id:uid(),style:style==='note'?'underline':style,text:anchor.text,note:'',chapter:anchor.chapter,start:anchor.start,end:anchor.end,page:anchor.page,rects:anchor.rects,x:0,y:0};
  state.viewer.annotations=state.viewer.annotations||[];state.viewer.annotations.push(mark);
  await patch(state.viewer,{annotations:state.viewer.annotations});hideSelectionTools();getSelection()?.removeAllRanges();
  if(pdfState)drawPdfMarks(mark.page);else{const pos=readerPosition();renderReader(pos);}
  renderAnnotationIndex();if(style==='note')showMarkPopover(mark.id,{left:anchor.left,top:anchor.top});
-}
-function showMarkPopover(id,point){
+});
+function showMarkPopover(...args){return Kok.invoke('showMarkPopover',this,args);}
+Kok.define('showMarkPopover',function(id,point){
  const mark=state.viewer?.annotations?.find(a=>a.id===id);if(!mark)return;
  viewer.querySelector('.mark-popover')?.remove();hideSelectionTools();
  const pop=document.createElement('aside');pop.className='mark-popover';const found=viewer.querySelector(`[data-mark="${id}"]`)?.getBoundingClientRect();const location=point||{left:found?.right||innerWidth-350,top:found?.top||150};
  pop.style.left=Math.max(20,Math.min(innerWidth-330,location.left+15))+'px';pop.style.top=Math.max(85,Math.min(innerHeight-340,location.top+12))+'px';
  pop.innerHTML=`<div class="popover-heading"><b>${mark.style==='insert'?'插入的文字':'此刻的想法'}</b><button class="icon-button" data-close-popover aria-label="关闭">${svg('close')}</button></div><blockquote>${esc(mark.text.slice(0,220))}</blockquote><textarea id="mark-note" placeholder="写下你的想法…" aria-label="选中文字的想法">${esc(mark.note||'')}</textarea><div class="popover-actions"><button data-delete-mark="${id}" class="text-button">移除标记</button><button class="button primary" data-save-mark="${id}">保存想法</button></div>`;viewer.append(pop);$('#mark-note').focus();
-}
+});
 function renderAnnotationIndex(){
  $('#annotation-index')?.remove();if(!state.viewer)return;
  const marks=state.viewer.annotations||[];const div=document.createElement('div');div.id='annotation-index';div.innerHTML=`<div class="annotation-index-title">划线与想法 <span>${marks.length}</span></div>${marks.length?marks.map(a=>`<button data-jump-mark="${a.id}"><b>${esc((a.page?'第 '+a.page+' 页 · ':'')+a.text.slice(0,48))}</b><small>${esc(a.note||'点击补充想法')}</small></button>`).join(''):'<p>选中正文中的文字，添加下划线或荧光标记。</p>'}`;$('#notes-panel').insertBefore(div,$('#notes'));
 }
-function insertTextDialog(){
+function insertTextDialog(...args){return Kok.invoke('insertTextDialog',this,args);}
+Kok.define('insertTextDialog',function(){
  if(pdfState){pdfState.inserting=!pdfState.inserting;$('.pdf-scroll').classList.toggle('inserting',pdfState.inserting);toast(pdfState.inserting?'请点击 PDF 页面中要插入文字的位置。':'已退出插入模式。');return;}
  if(!state.book||state.viewer?.kind!=='document')return;
  const at=selectionAnchor&&!selectionAnchor.page?selectionAnchor.end:state.book.chapters[state.chapter].text.length;
  hideSelectionTools();showSmall(`<h2>插入一段文字</h2><p class="dialog-description">插入到当前选择的后面；未选中文字时插入到本节末尾。修改保存为资料库中的阅读副本，原文件保留。</p><textarea id="insert-value" class="dialog-textarea" placeholder="写下需要补充的文字…"></textarea><button class="button primary dialog-submit" data-confirm-insert="${at}">插入并保存</button>`);$('#insert-value').focus();
-}
+});
 async function insertDocumentText(at,text){
  if(!text)return;const item=state.viewer,chapter=state.chapter,current=state.book.chapters[chapter].text;at=Math.max(0,Math.min(at,current.length));
  const edited=current.slice(0,at)+text+current.slice(at);const marks=(item.annotations||[]).map(a=>{if(a.chapter!==chapter||a.page)return a;return{...a,start:a.start>=at?a.start+text.length:a.start,end:a.end>=at?a.end+text.length:a.end};});
@@ -119,7 +127,8 @@ async function exportReading(){
  const html=`<!doctype html><meta charset="utf-8"><title>${esc(I18n.text(item.name+' · kok 阅读副本'))}</title><style>body{font:18px/2 'Microsoft YaHei',sans-serif;max-width:850px;margin:60px auto;padding:0 30px;color:#344152}h1,h2{font-weight:500}.content{white-space:pre-wrap}.mark-highlight{background:#ffea85}.mark-underline{text-decoration:underline;text-decoration-color:#7189c5;text-underline-offset:4px}aside{background:#f2f5fa;padding:20px;border-radius:14px;margin:20px 0}small{color:#8591a1}</style><h1>${esc(item.name)}</h1><p>${I18n.text('由 kok 导出 · 原文件保持不变')}${pdfState?' '+I18n.text('· PDF 批注摘要'):''}</p>${body}`;
  if(await native('exportReading',{name:item.name,html}))toast('阅读副本与批注已导出。');
 }
-async function renderPdf(item){
+async function renderPdf(...args){return Kok.invoke('renderPdf',this,args);}
+Kok.define('renderPdf',async function(item){
  const token=item.id;$('#viewer-content').innerHTML=pdfWorkspaceMarkup();
  const pdfjs=await import('./vendor/pdfjs/pdf.mjs');pdfjs.GlobalWorkerOptions.workerSrc=new URL('./vendor/pdfjs/pdf.worker.mjs',location.href).href;
  const task=pdfjs.getDocument({url:media(item),cMapUrl:new URL('./vendor/pdfjs/cmaps/',location.href).href,cMapPacked:true,standardFontDataUrl:new URL('./vendor/pdfjs/standard_fonts/',location.href).href,wasmUrl:new URL('./vendor/pdfjs/wasm/',location.href).href,isEvalSupported:false});
@@ -159,20 +168,22 @@ async function renderPdf(item){
  scroll.addEventListener('scroll',()=>{hideSelectionTools();clearTimeout(readerTimer);readerTimer=setTimeout(()=>savePdf().catch(fail),700);if(typeof scheduleAutoTranslation==='function')scheduleAutoTranslation();});
  scroll.addEventListener('click',e=>{if(!pdfState?.inserting||e.target.closest('[data-mark]'))return;const wrapper=e.target.closest('.pdf-page');if(!wrapper)return;const box=wrapper.getBoundingClientRect();pdfState.insertPoint={page:Number(wrapper.dataset.page),x:(e.clientX-box.left)/box.width,y:(e.clientY-box.top)/box.height};pdfState.inserting=false;scroll.classList.remove('inserting');showSmall(`<h2>在 PDF 上插入文字</h2><p class="dialog-description">文字保存为本地阅读批注，不改变原 PDF。第 ${wrapper.dataset.page} 页。</p><textarea id="pdf-insert-value" class="dialog-textarea" placeholder="输入补充的文字…"></textarea><button class="button primary dialog-submit" data-confirm-pdf-insert>插入并保存</button>`);$('#pdf-insert-value').focus();});
  initPdfWorkspace(doc,scroll);renderAnnotationIndex();
-}
+});
 function drawPdfMarks(page){
  if(!pdfState||!state.viewer)return;const wrapper=$(`.pdf-page[data-page="${page}"]`),layer=wrapper?.querySelector('.pdf-marks');if(!layer)return;
  layer.innerHTML=(state.viewer.annotations||[]).filter(a=>a.page===page).map(a=>a.style==='insert'?`<button class="pdf-insert" data-mark="${a.id}" style="left:${a.x*100}%;top:${a.y*100}%">${esc(a.text)}</button>`:(a.rects||[]).map(r=>`<button class="pdf-mark mark-${a.style}" data-mark="${a.id}" aria-label="${esc(a.note||a.text)}" style="left:${r.x*100}%;top:${r.y*100}%;width:${r.w*100}%;height:${r.h*100}%"></button>`).join('')).join('');
 }
-async function savePdf(){const scroll=$('.pdf-scroll');if(pdfState&&state.viewer&&scroll)await patch(state.viewer,{position:scroll.scrollTop/Math.max(1,scroll.scrollHeight-scroll.clientHeight),progress:(scroll.scrollTop+scroll.clientHeight)/Math.max(1,scroll.scrollHeight)});}
-function cleanupFeatures(){
+async function savePdf(...args){return Kok.invoke('savePdf',this,args);}
+Kok.define('savePdf',async function(){const scroll=$('.pdf-scroll');if(pdfState&&state.viewer&&scroll)await patch(state.viewer,{position:scroll.scrollTop/Math.max(1,scroll.scrollHeight-scroll.clientHeight),progress:(scroll.scrollTop+scroll.clientHeight)/Math.max(1,scroll.scrollHeight)});});
+function cleanupFeatures(...args){return Kok.invoke('cleanupFeatures',this,args);}
+Kok.define('cleanupFeatures',function(){
  if(typeof resetTranslationView==='function')resetTranslationView();
  hideSelectionTools();viewer.querySelector('.mark-popover')?.remove();selectionAnchor=null;photoEditor=null;
  if(pdfState){const session=pdfState;pdfState=null;session.dispose?.();session.doc.loadingTask.destroy().catch(()=>{});}
  if(speedTimer)clearInterval(speedTimer);speedTimer=null;if(videoAudioContext){videoAudioContext.close().catch(()=>{});videoAudioContext=null;}
  if(subtitleUrl)URL.revokeObjectURL(subtitleUrl);subtitleUrl=null;
  viewer.classList.remove('notes-open');
-}
+});
 $('#add-collection').addEventListener('click',()=>newCollection());
 document.addEventListener('mousedown',e=>{if(e.target.closest('.selection-tools'))e.preventDefault();});
 document.addEventListener('click',async e=>{
@@ -208,7 +219,7 @@ document.addEventListener('change',async e=>{
  try{if(e.target.id==='font-select'){await setting({fontFamily:e.target.value});await applyFont();}if(e.target.id==='video-rate'){await setting({videoRate:Number(e.target.value)});video.playbackRate=Number(e.target.value);}if(e.target.id==='subtitle-select'){setSubtitle(Number(e.target.value));if(typeof scheduleAutoTranslation==='function'&&!subtitleTracks[Number(e.target.value)]?.translated)scheduleAutoTranslation();}if(e.target.id==='pdf-zoom'&&pdfState){await savePdf();state.pdfZoom=Number(e.target.value);pdfState.relayout();}}catch(error){fail(error);}
 });
 // The native window asks for this synchronous snapshot before closing.
-window.kokSession=()=>{
+Kok.define('sessionSnapshot',()=>{
  const edits=[];
  if(state.viewer){const item=state.viewer;const patch={notes:$('#notes').value};const pop=viewer.querySelector('[data-save-mark]');if(pop&&$('#mark-note')){const mark=item.annotations?.find(a=>a.id===pop.dataset.saveMark);if(mark)mark.note=$('#mark-note').value;patch.annotations=item.annotations||[];}
  if(video&&Number.isFinite(video.duration)&&video.duration>0){patch.position=video.currentTime;patch.progress=video.currentTime/video.duration;}
@@ -217,4 +228,5 @@ window.kokSession=()=>{
  edits.push({id:item.id,patch});}
  if(state.track&&Number.isFinite(audio.duration)&&audio.duration>0)edits.push({id:state.track.id,patch:{position:audio.currentTime,progress:audio.currentTime/audio.duration}});
  return edits;
-};
+});
+window.kokSession=()=>Kok.invoke('sessionSnapshot',window,[]);

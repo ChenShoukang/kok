@@ -14,6 +14,7 @@
  font-display:swap;
 }
 :root{
- --user-font:'Smiley Sans','Segoe UI','Microsoft YaHei UI',sans-serif;
- --reading-font:'Smiley Sans','Segoe UI','Microsoft YaHei UI',sans-serif;
+ --user-font:'Microsoft YaHei UI','Segoe UI Variable Text','Segoe UI',sans-serif;
+ --display-font:'Smiley Sans','Microsoft YaHei UI','Segoe UI',sans-serif;
+ --reading-font:'Microsoft YaHei UI','Segoe UI Variable Text','Segoe UI',sans-serif;
 }

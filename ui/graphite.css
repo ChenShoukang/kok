@@ -39,7 +39,7 @@ body[data-theme][data-app-mode] :focus-visible{outline:2px solid var(--green);ou
 body[data-theme][data-app-mode] .collection-heading h1{font:600 26px/1.2 var(--ui-font);letter-spacing:.01em}
 body[data-theme][data-app-mode] .collection-heading :is(p,small,.subtitle){font-family:var(--num-font);color:var(--muted)}
 body[data-theme][data-app-mode] .file-card{border:0;background:none;border-radius:12px}
-body[data-theme][data-app-mode] .file-cover{border:0;border-radius:12px;background:var(--surface);box-shadow:var(--g-lift);overflow:hidden;transition:transform .24s var(--g-ease),box-shadow .24s var(--g-ease)}
+body[data-theme][data-app-mode] .file-cover{border:0;border-radius:6px;background:var(--surface);box-shadow:var(--g-lift);overflow:hidden;transition:transform .24s var(--g-ease),box-shadow .24s var(--g-ease)}
 body[data-theme=dark][data-app-mode] .file-cover{background:linear-gradient(180deg,#232A33,#1C2128)}
 body[data-theme][data-app-mode] .file-cover::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;box-shadow:inset 0 0 0 1px #FFFFFF14,inset 0 1px 0 #FFFFFF1f}
 body[data-theme][data-app-mode] .file-card:is(:hover,:focus-within) .file-cover{transform:translateY(-3px);box-shadow:var(--g-lift-hover)}
@@ -53,14 +53,46 @@ body[data-theme][data-app-mode] .card-favorite.selected{color:var(--green)}
 /* Typographic covers */
 .graphite-cover{position:absolute;inset:0;display:grid;place-items:center}
 .graphite-book>*{pointer-events:none}
-.graphite-book::before{content:"";position:absolute;width:58%;aspect-ratio:2/3;border-radius:3px 7px 7px 3px;background:linear-gradient(90deg,#00000040,#FFFFFF14 5%,transparent 9%),var(--cover);box-shadow:0 10px 20px -8px #000000a6,0 2px 4px #00000040}
-.graphite-book b{position:relative;width:46%;margin-top:-34%;color:#F6F7F9;font:600 13px/1.4 var(--ui-font);display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
-.graphite-book i{position:absolute;left:31%;top:68%;width:16px;height:2px;background:#F6F7F9;opacity:.5}
+.graphite-book{border-radius:3px 6px 6px 3px;background:var(--cover);box-shadow:inset 5px 0 7px #0003,inset -2px 0 #ffffff36,inset -5px 0 #0002}
+.graphite-book::before{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(90deg,#0005,transparent 4%,#fff2 5%,transparent 8%,transparent 95%,#fff2);pointer-events:none}
+.graphite-book b{position:absolute;left:17%;right:12%;top:19%;color:#F6F7F9;font:500 17px/1.6 var(--ui-font);display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.graphite-book i{position:absolute;left:17%;bottom:20%;width:22px;height:2px;background:#F6F7F9;opacity:.5}
+.graphite-document{display:flex;flex-direction:column;align-items:flex-start;gap:15px;padding:19% 14%;border-radius:3px 5px 5px 3px;background:var(--kok-solid);box-shadow:inset 0 0 0 1px var(--line),inset -3px 0 color-mix(in srgb,var(--muted) 15%,transparent),inset -6px 0 var(--surface)}
+.graphite-document::after{content:"";position:absolute;top:0;right:0;width:22px;height:22px;background:linear-gradient(45deg,var(--g-well) 49%,var(--bg) 51%);box-shadow:-1px 1px 2px #0001}
+.graphite-document small{font:11px var(--num-font);letter-spacing:.12em;color:var(--muted)}
+.graphite-document b{font:500 16px/1.65 var(--ui-font);color:var(--ink);display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.graphite-page-lines{width:85%;height:35px;margin-top:8px;background:repeating-linear-gradient(transparent 0 9px,var(--line) 9px 10px)}
 .graphite-record{background:var(--cover)}
-.graphite-disc{width:66%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,#FFFFFFe6 0 6%,#00000059 7% 17%,transparent 18%),repeating-radial-gradient(circle,#FFFFFF12 0 1px,transparent 1px 4px),radial-gradient(circle at 35% 30%,#FFFFFF33,transparent 60%),#15181C;box-shadow:0 10px 20px -6px #00000080}
-body[data-theme][data-app-mode] .file-card:hover .graphite-disc{animation:graphite-spin 2.4s linear infinite}
-@keyframes graphite-spin{to{transform:rotate(360deg)}}
+.graphite-disc{width:76%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,#FFFFFFe6 0 6%,#00000059 7% 17%,transparent 18%),repeating-radial-gradient(circle,#FFFFFF12 0 1px,transparent 1px 4px),radial-gradient(circle at 35% 30%,#FFFFFF33,transparent 60%),#15181C;box-shadow:0 10px 20px -6px #00000080;transition:transform .38s var(--g-ease)}
+body[data-theme][data-app-mode] .file-card:hover .graphite-disc{transform:rotate(18deg)}
 @media (prefers-reduced-motion:reduce){body[data-theme][data-app-mode] :is(.file-cover,.button,.sidebar .nav-item){transition:none!important}body[data-theme][data-app-mode] .file-card:hover .graphite-disc{animation:none}}
+
+/* Type-shaped objects, with no square frame surrounding books or paper. */
+body[data-theme][data-app-mode] .file-grid{container:library-items / inline-size;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));align-items:start;gap:30px 24px}
+body[data-theme][data-app-mode] .file-grid .file-card{width:100%;max-width:none;min-width:0;align-self:start;border-radius:6px;transform:none}
+body[data-theme][data-app-mode] .file-grid :is(.book,.document){max-width:185px;justify-self:center}
+body[data-theme][data-app-mode] .file-grid .book .file-cover{aspect-ratio:2/3;background:transparent;border-radius:3px 6px 6px 3px;overflow:visible}
+body[data-theme][data-app-mode] .file-grid .document .file-cover{aspect-ratio:3/4;background:transparent;border-radius:3px 5px 5px 3px;overflow:visible}
+body[data-theme][data-app-mode] .file-grid .video{grid-column:span 2}
+body[data-theme][data-app-mode] .file-grid .video .file-cover{aspect-ratio:16/9;background:var(--g-well);padding:0}
+body[data-theme][data-app-mode] .file-grid .video .video-art{inset:0;width:100%;height:100%;border-radius:inherit}
+body[data-theme][data-app-mode] .file-grid .photo .file-cover{aspect-ratio:4/3;padding:5px;border:1px solid var(--line);background:var(--surface)}
+body[data-theme][data-app-mode] .file-grid .photo .file-cover>img{object-fit:contain;max-width:100%;max-height:100%}
+body[data-theme][data-app-mode] .file-grid .file-progress{top:auto;bottom:0;left:0;right:0;pointer-events:none}
+body[data-theme][data-app-mode] .file-grid .private-folder-card{align-self:start;border:0;border-radius:6px;background:transparent;box-shadow:none;transform:none}
+body[data-theme][data-app-mode] .file-grid .private-folder-cover{aspect-ratio:4/3;width:100%;min-height:100px}
+body[data-theme][data-app-mode] .file-grid .private-folder-card>b,body[data-theme][data-app-mode] .file-grid .private-folder-card>small{padding-left:0;padding-right:0}
+body[data-theme][data-app-mode] .file-grid .private-folder-card:hover .private-vault{transform:translateY(-3px)}
+.private-vault{transition:transform .24s var(--g-ease)}
+body[data-theme][data-app-mode] .file-list .private-folder-cover{width:56px;height:44px;flex-shrink:0}
+body[data-theme][data-app-mode] .file-list .private-folder-cover>span{width:42px}
+body[data-theme][data-app-mode] .file-list .graphite-book b{font-size:0}
+body[data-theme][data-app-mode] .file-list .graphite-document{padding:5px;gap:2px}
+body[data-theme][data-app-mode] .file-list .graphite-document :is(b,small,.graphite-page-lines){display:none}
+@media(max-width:760px){body[data-theme][data-app-mode] .file-grid{grid-template-columns:repeat(auto-fill,minmax(135px,1fr));gap:24px 16px}}
+@media(max-width:460px){body[data-theme][data-app-mode] .file-grid .video{grid-column:auto}}
+@container library-items (max-width:340px){body[data-theme][data-app-mode] .file-grid .video{grid-column:auto}}
+@media(prefers-reduced-motion:reduce){.private-vault,.graphite-disc{transition:none}body[data-theme][data-app-mode] .file-card:hover .graphite-disc{transform:none}body[data-theme][data-app-mode] .file-grid .private-folder-card:hover .private-vault{transform:none}}
 
 /* Brand: indicator light and wordmark */
 body[data-theme][data-app-mode] .sidebar .brand{display:flex;align-items:center;justify-content:flex-start;gap:10px;height:40px;margin:0 6px 18px;padding:0 6px;text-decoration:none}
@@ -71,10 +103,11 @@ body[data-theme][data-app-mode] .sidebar .nav-item>svg{width:18px;height:18px}
 body[data-theme][data-app-mode] .sidebar .sidebar-rule{margin:12px 10px;border-color:var(--g-chrome-edge)}
 
 /* Private folder: a recessed vault with a lit shield */
-body[data-theme][data-app-mode] .private-folder-cover{background:var(--g-well);box-shadow:var(--g-well-shadow);border:0;border-radius:12px;display:grid;place-items:center}
+body[data-theme][data-app-mode] .private-folder-cover{background:transparent;box-shadow:none;border:0;border-radius:6px;display:grid;place-items:center}
 body[data-theme][data-app-mode] .private-folder-cover>img{display:none}
-body[data-theme][data-app-mode] .private-folder-cover>span{position:static;width:64px;height:64px;display:grid;place-items:center;border-radius:18px;background:var(--g-key);color:var(--green);box-shadow:var(--g-glint),var(--g-lift),0 0 0 1px var(--g-chrome-edge)}
-body[data-theme][data-app-mode] .private-folder-cover>span svg{width:30px;height:30px;filter:drop-shadow(0 0 6px var(--green-soft))}
+body[data-theme][data-app-mode] .private-folder-cover>span{position:static;inset:auto;transform:none;width:112px;height:auto;max-width:78%;display:grid;place-items:center;border-radius:0;background:none;color:var(--green);box-shadow:none}
+body[data-theme][data-app-mode] .private-folder-cover>span svg{width:100%;height:auto;filter:drop-shadow(0 5px 4px #0003)}
+.vault-case{fill:var(--g-well);stroke:var(--g-chrome-edge);stroke-width:2}.vault-door{fill:var(--kok-solid);stroke:var(--muted);stroke-width:1.5}.vault-hinge{stroke:var(--muted);stroke-width:3;stroke-linecap:round}.vault-wheel{fill:var(--surface);stroke:var(--green);stroke-width:2}.vault-spokes{stroke:var(--green);stroke-width:2.5;stroke-linecap:round}.vault-hub{fill:var(--green)}
 body[data-theme][data-app-mode] .private-folder-card b{font-size:14px;font-weight:500;color:var(--ink)}
 body[data-theme][data-app-mode] .private-folder-card small{font-size:12px;color:var(--g-faint)}
 
@@ -117,7 +150,7 @@ body[data-theme][data-app-mode] input[type=range]{accent-color:var(--green)}
 body[data-theme][data-app-mode] input[type=checkbox]{accent-color:var(--green)}
 
 /* Dialogs: graphite panels with a top glint; open with a short settle */
-body[data-theme][data-app-mode] :is(.small-dialog,#knowledge-dialog,.creative-dialog){border:0;border-radius:16px;background:linear-gradient(180deg,color-mix(in srgb,var(--surface) 92%,white 2%),var(--surface));color:var(--ink);box-shadow:var(--g-glint),0 0 0 1px var(--g-chrome-edge),0 40px 90px -30px #000000cc}
+body[data-theme][data-app-mode] :is(.small-dialog,#knowledge-dialog,.creative-dialog){border:0;border-radius:8px;background:linear-gradient(180deg,color-mix(in srgb,var(--surface) 92%,white 2%),var(--surface));color:var(--ink);box-shadow:var(--g-glint),0 0 0 1px var(--g-chrome-edge),0 40px 90px -30px #000000cc}
 body[data-theme][data-app-mode] :is(.small-dialog,#knowledge-dialog,.creative-dialog,.viewer)::backdrop{background:#0A0D1199;backdrop-filter:blur(10px) saturate(.9)}
 /* WAAPI owns presence, including cancellation and reversal. Do not add a
    second CSS entrance on top of motion.js. */
@@ -202,3 +235,46 @@ body.window-interacting .graphite-disc{animation-play-state:paused!important}
 
 /* Explicit custom glass takes priority over opaque graphite chrome. */
 body[data-theme][data-app-mode][data-custom-colors=on] :is(.sidebar,.topbar,.music-bar){background:var(--kok-panel);backdrop-filter:blur(var(--kok-blur)) saturate(120%)}
+/* A small format stamp, drawn once per extension; actual artwork stays visible. */
+.file-type-icon{width:27px;height:30px;display:block;flex-shrink:0;overflow:visible;color:hsl(var(--type-hue) 48% 43%);filter:drop-shadow(0 1px 1px #0002)}
+body[data-theme=dark] .file-type-icon{color:hsl(var(--type-hue) 48% 76%)}
+.type-body{fill:color-mix(in srgb,currentColor 16%,var(--kok-solid));stroke:color-mix(in srgb,currentColor 55%,var(--line));stroke-width:1.2;stroke-linejoin:round}
+.type-fold{fill:color-mix(in srgb,currentColor 12%,var(--surface));stroke:color-mix(in srgb,currentColor 55%,var(--line));stroke-width:1.2;stroke-linejoin:round}
+.type-detail{transform-box:fill-box;transform-origin:center}.type-top{transform-box:fill-box;transform-origin:left bottom}
+.type-label{fill:currentColor;font:700 7px var(--num-font);letter-spacing:.2px;stroke:none}
+body[data-theme][data-app-mode] .file-cover .ext{display:flex;align-items:center;gap:4px;padding:2px 5px 2px 2px;border-radius:4px;font-size:10px;background:color-mix(in srgb,var(--kok-solid) 92%,transparent);color:var(--ink);backdrop-filter:none;border:1px solid var(--line);box-shadow:var(--g-glint),0 1px 2px #0002}
+body[data-theme][data-app-mode] .file-cover .ext .file-type-icon{width:21px;height:23px;filter:none}
+#viewer-icon .file-type-icon{width:26px;height:30px;stroke-width:1.3}
+body[data-theme][data-app-mode] .file-list .file-cover .ext{display:none}
+body.window-interacting .file-type-icon{filter:none}
+body[data-theme][data-app-mode] .file-list .file-cover .ext{display:flex;position:absolute;inset:auto 0 0 auto;width:18px;height:20px;padding:0;border:0;background:var(--kok-solid);box-shadow:none}
+body[data-theme][data-app-mode] .file-list .file-cover .ext>span{display:none}
+body[data-theme][data-app-mode] .file-list .file-cover .ext .file-type-icon{width:18px;height:20px}
+.format-icons{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:14px 8px;margin:14px 0 18px}
+.format-icons>span{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0}.format-icons .file-type-icon{width:38px;height:42px}.format-icons b{font:10px var(--num-font);color:var(--muted);font-weight:500}
+/* Ordered shelves: preserve each object's proportion without mixed-height rows. */
+.library-shortcuts{display:flex;gap:12px;flex-wrap:wrap;margin:0 0 28px}
+body[data-theme][data-app-mode] .library-shortcuts .private-folder-card{display:grid;grid-template-columns:58px minmax(100px,1fr);grid-template-rows:1fr 1fr;align-items:center;column-gap:12px;width:max-content;max-width:100%;padding:8px 15px 8px 8px;border:1px solid var(--g-chrome-edge);border-radius:6px;background:var(--g-key);box-shadow:var(--g-glint),0 2px 4px #0001;transform:none}
+body[data-theme][data-app-mode] .library-shortcuts .private-folder-cover{grid-row:1/3;width:58px;height:48px;aspect-ratio:auto}
+body[data-theme][data-app-mode] .library-shortcuts .private-folder-cover>span{width:52px;max-width:100%}
+body[data-theme][data-app-mode] .library-shortcuts .private-folder-card>b{padding:1px 0 0;align-self:end;font-size:13px}
+body[data-theme][data-app-mode] .library-shortcuts .private-folder-card>small{padding:2px 0 1px;align-self:start;font-size:11px}
+body[data-theme][data-app-mode] .library-shortcuts .private-folder-card:hover{border-color:var(--green);box-shadow:var(--g-lift)}
+.library-shelves{display:flex;flex-direction:column;gap:34px}
+.library-shelf{min-width:0}.library-shelf>header{display:flex;align-items:center;gap:10px;margin:0 0 15px;padding:0 0 10px;border-bottom:1px solid var(--line)}
+.library-shelf h2{display:flex;align-items:center;gap:8px;margin:0;font-size:16px;font-weight:500;color:var(--ink)}.library-shelf h2 svg{width:17px;height:17px;color:var(--muted)}
+.library-shelf>header>small{font:11px var(--num-font);color:var(--muted)}.library-shelf>header>.text-button{margin-left:auto;color:var(--muted);font-size:12px}
+body[data-theme][data-app-mode] .file-grid.shelf-grid{grid-template-columns:repeat(auto-fill,minmax(140px,180px));gap:24px;align-items:start;justify-content:start}
+body[data-theme][data-app-mode] .shelf-grid[data-shelf-kind=video]{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
+body[data-theme][data-app-mode] .shelf-grid[data-shelf-kind=photo]{grid-template-columns:repeat(auto-fill,minmax(165px,1fr))}
+body[data-theme][data-app-mode] .shelf-grid[data-shelf-kind=music]{grid-template-columns:repeat(auto-fill,minmax(140px,180px))}
+body[data-theme][data-app-mode] .file-grid.shelf-grid .file-card{width:100%;max-width:none;justify-self:stretch;grid-column:auto}
+body[data-theme][data-app-mode] .file-grid.shelf-grid .file-info{height:52px;padding-top:10px}
+body[data-theme][data-app-mode] .file-grid.shelf-grid .file-info b{height:20px;line-height:20px;margin-bottom:6px}
+body[data-theme][data-app-mode] .file-grid.shelf-grid .file-info p{height:18px;line-height:18px;font-size:11px}
+@media(max-width:760px){.library-shelves{gap:27px}.library-shelf>header{margin-bottom:12px}.library-shelf h2{font-size:15px}body[data-theme][data-app-mode] .file-grid.shelf-grid{gap:20px 16px;grid-template-columns:repeat(auto-fill,minmax(125px,1fr))}body[data-theme][data-app-mode] .shelf-grid[data-shelf-kind=video]{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}body[data-theme][data-app-mode] .shelf-grid[data-shelf-kind=photo]{grid-template-columns:repeat(auto-fill,minmax(145px,1fr))}.library-shortcuts{margin-bottom:24px}}
+@container library-items (max-width:220px){body[data-theme][data-app-mode] .file-grid.shelf-grid{grid-template-columns:minmax(0,1fr)}}
+
+/* v0.7.2: Smiley Sans is the display face only (brand and page titles); everything else uses the upright UI font. */
+body[data-theme][data-app-mode] .sidebar .brand>span,
+body[data-theme][data-app-mode] :is(.page-heading,.collection-heading) h1{font-family:var(--display-font)}

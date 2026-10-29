@@ -17,8 +17,8 @@ function applyCustomColors(){
  const values={'--kok-bg-ink':ink,'--bg':background,'--surface':solid,'--ink':ink,'--muted':muted,'--line':blendColor(ink,background,.14),'--green':accent,'--green-dark':blendColor(accent,solid,.85),'--green-soft':blendColor(accent,solid,.08),'--glass':`rgba(${colorChannels(tint).join(',')},${alpha})`,'--glass-line':blendColor(panelInk,solid,.12),'--ambient':'none','--kok-panel':`rgba(${colorChannels(tint).join(',')},${alpha})`,'--kok-panel-ink':panelInk,'--kok-panel-muted':panelMuted,'--kok-hover':blendColor(panelInk,solid,.08),'--kok-border':blendColor(panelInk,solid,.15),'--kok-blur':Math.max(0,Math.min(48,Number(state.settings.glassBlur??28)))+'px','--kok-solid':solid,'--kok-accent-ink':colorIsDark(accent)?'#ffffff':'#191919'};
  for(const [key,value]of Object.entries(values))body.style.setProperty(key,value);body.dataset.customColors='on';
 }
-const applyThemeBeforeCustomColors=applyTheme;
-applyTheme=function(){applyThemeBeforeCustomColors();applyCustomColors();};
+
+Kok.extend('core','appearance.js:applyThemeBeforeCustomColors','applyTheme',applyThemeBeforeCustomColors=>function(){applyThemeBeforeCustomColors();applyCustomColors();});
 
 function appearanceSettingsRow(){
  const dark=document.body.dataset.theme==='dark',prefix=dark?'customDark':'customLight';
@@ -32,8 +32,8 @@ function showAppearance(){
  $('#small-dialog').querySelectorAll('[data-color-preset]').forEach(button=>button.onclick=async()=>{const [,bg,glass]=presets[Number(button.dataset.colorPreset)];await setting({customColorsEnabled:true,[prefix+'Bg']:bg,[prefix+'Glass']:glass});applyCustomColors();showAppearance();});
  I18n.localize($('#small-dialog'));
 }
-const settingsBeforeCustomColors=settings;
-settings=async function(){await settingsBeforeCustomColors();$('#theme-select')?.closest('.setting-row').insertAdjacentHTML('afterend',appearanceSettingsRow());hydrate($('#small-dialog'));I18n.localize($('#small-dialog'));};
+
+Kok.extend('core','appearance.js:settingsBeforeCustomColors','settings',settingsBeforeCustomColors=>async function(){await settingsBeforeCustomColors();$('#theme-select')?.closest('.setting-row').insertAdjacentHTML('afterend',appearanceSettingsRow());hydrate($('#small-dialog'));I18n.localize($('#small-dialog'));});
 document.addEventListener('input',event=>{
  const input=event.target,key=input.dataset.colorSetting;if(!key)return;
  state.settings[key]=input.type==='color'?input.value:Number(input.value);state.settings.customColorsEnabled=true;

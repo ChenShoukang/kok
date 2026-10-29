@@ -1,11 +1,11 @@
 'use strict';
 let speechJob=null,speechViewId=null,speechSettings=null,speechMediaInstalling=false;
 const speechPresets={groq:{endpoint:'https://api.groq.com/openai/v1',model:'whisper-large-v3-turbo',responseFormat:'verbose_json'},custom:{endpoint:'',model:'',responseFormat:'verbose_json'}};
-const originalBeginTranslationView=beginTranslationView;
-beginTranslationView=function(item){originalBeginTranslationView(item);ensureSpeechButton(item);};
+
+Kok.extend('speech','speech.js:originalBeginTranslationView','beginTranslationView',originalBeginTranslationView=>function(item){originalBeginTranslationView(item);ensureSpeechButton(item);});
 function ensureSpeechButton(item){if(!$('#speech-button'))$('.viewer-actions').insertAdjacentHTML('afterbegin',`<button class="button secondary hidden" id="speech-button" data-generate-subtitles title="生成字幕">${svg('document')}生成字幕</button>`);$('#speech-button').classList.toggle('hidden',item.kind!=='video'||!isSmartMode());speechViewId=item.id;}
-const originalCleanupSpeech=cleanupFeatures;
-cleanupFeatures=function(){if(speechJob){const id=speechJob.id;speechJob=null;native('cancelSpeech',{jobId:id}).catch(()=>{});}speechViewId=null;originalCleanupSpeech();};
+
+Kok.extend('speech','speech.js:originalCleanupSpeech','cleanupFeatures',originalCleanupSpeech=>function(){if(speechJob){const id=speechJob.id;speechJob=null;native('cancelSpeech',{jobId:id}).catch(()=>{});}speechViewId=null;originalCleanupSpeech();});
 function speechLanguageOptions(value){return[['auto','自动识别'],['zh','中文'],['en','English'],['ja','日本語'],['ko','한국어'],['fr','Français'],['de','Deutsch'],['es','Español']].map(([id,label])=>`<option value="${id}" ${value===id?'selected':''}>${label}</option>`).join('');}
 async function showSpeechSettings(){
  if(!isSmartMode()||state.viewer?.kind!=='video')return;speechSettings=await native('speechConfig');const c=speechSettings;
@@ -27,7 +27,7 @@ async function generateSpeech(){
  let index=subtitleTracks.findIndex(track=>track.generated);if(index<0){index=subtitleTracks.length;subtitleTracks.push(result);}else subtitleTracks[index]=result;renderSubtitleOptions();$('#subtitle-select').value=String(index);setSubtitle(index);
  const status=$('#speech-status');if(status)status.innerHTML='<span>字幕已生成并载入</span><div class="speech-result-actions"><button type="button" class="text-button" data-speech-export>导出 SRT</button><button type="button" class="text-button" data-speech-translate>翻译字幕</button></div>';$('#video-hint').textContent=I18n.text('字幕已生成并载入');I18n.localize($('#small-dialog'));
 }
-window.chrome?.webview?.addEventListener('message',event=>{if(event.data.eventName!=='speechProgress'||event.data.data.jobId!==speechJob?.id)return;const p=event.data.data,stage={engine:'正在下载识别程序',model:'正在下载语音模型',extract:'正在提取音轨',recognize:'正在识别语音'};if($('#speech-status'))$('#speech-status').textContent=I18n.text(stage[p.stage]||'正在准备音轨…')+' · '+(p.total?p.completed+' / '+p.total+' · ':'')+Math.floor(p.percent)+'%';if($('.speech-job-progress i'))$('.speech-job-progress i').style.width=p.percent+'%';});
+Kok.onMessage(event=>{if(event.data.eventName!=='speechProgress'||event.data.data.jobId!==speechJob?.id)return;const p=event.data.data,stage={engine:'正在下载识别程序',model:'正在下载语音模型',extract:'正在提取音轨',recognize:'正在识别语音'};if($('#speech-status'))$('#speech-status').textContent=I18n.text(stage[p.stage]||'正在准备音轨…')+' · '+(p.total?p.completed+' / '+p.total+' · ':'')+Math.floor(p.percent)+'%';if($('.speech-job-progress i'))$('.speech-job-progress i').style.width=p.percent+'%';});
 $('#small-dialog').addEventListener('close',()=>{if($('#small-dialog').open&&$('#speech-form'))return;if(speechMediaInstalling)native('cancelDownloadTools').catch(()=>{});if(speechJob){native('cancelSpeech',{jobId:speechJob.id}).catch(()=>{});speechJob=null;}$('#small-dialog').classList.remove('speech-dialog');});
 document.addEventListener('click',async event=>{const el=event.target.closest('button');if(!el)return;try{
  if(el.hasAttribute('data-generate-subtitles'))await showSpeechSettings();
