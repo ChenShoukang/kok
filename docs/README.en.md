@@ -4,6 +4,12 @@
 
 | Document | Contents |
 | --- | --- |
+| [v0.8.1 validation](VALIDATION_0.8.1.md#english) | Current native/desktop checks, reproduction and unverified limits |
+| [v0.8.1 public preview readiness](PUBLIC_PREVIEW_0.8.1.md) | Local fixes, privacy scope and remaining commit/visibility/CI steps |
+| [v0.8.1 warehouse status](WAREHOUSE_0.8.1.en.md) | Implemented foundations and incomplete acceptance items |
+| [v0.8.1 dispatch and work records](MODULES_0.8.1.en.md) | Module context, policy, capabilities, Operations, Jobs and remaining coverage |
+| [v0.8.1 modules and task recovery](ARCHITECTURE_0.8.1.en.md) | Module registration, native Agent, encrypted events, recovery, handoff and remaining stages |
+| [v0.7.1 scoped graphs and tactile files](WORKSPACE_0.7.1.en.md) | Scopes, built-in AI tasks, budgets, format artwork, motion and references |
 | [v0.6.2 Graphite interface](GRAPHITE_0.6.2.en.md) | Default Smiley Sans, graphite/frost, labelled sidebar, media and compact layouts |
 | [v0.6.1 notes and knowledge graph](KNOWLEDGE_0.6.1.en.md) | Note links, backlinks, tags, outline, tasks, templates and local graphs |
 | [v0.6.1 new documents](DOCUMENTS_0.6.1.md) | Markdown/DOCX/TXT, auto-save, source/preview, duplicates and conflict recovery |
@@ -19,7 +25,7 @@
 | [v0.4.1 preview](PREVIEW_0.4.1.en.md) | Coherent colors, reading tools and video downloads |
 | [Format compatibility](FORMATS.en.md) | Built-in reading, codecs and external-app boundaries |
 | [Development and tests](DEVELOPMENT.en.md) | Builds, isolated silent tests and source layout |
-| [Changelog](../CHANGELOG.en.md) | v0.4.1 and earlier versions |
+| [Changelog](../CHANGELOG.en.md) | Current and earlier versions |
 | [Current release notes](RELEASE_NOTES.md) | Bilingual notes consumed by GitHub Actions |
 | [Roadmap](../ROADMAP.en.md) | Future decoding and embedded-subtitle work |
 | [Release verification](TESTING.en.md) | Verified scope, first use and independent-machine checks |

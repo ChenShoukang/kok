@@ -1,6 +1,39 @@
 # kok changelog
 
-[中文](CHANGELOG.md)
+## v0.8.1 · Preview
+
+English · [中文](CHANGELOG.md)
+
+- Document/PPT implementations migrated to ES modules; draft saves serialize, and entry points/formats/Ctrl+N follow module state.
+- Consolidated common viewer/photo geometry; preserved toolbar nodes/focus and fixed shortcut interference, Inspector spacing and responsive control state.
+- Agent sessions, rendering and task interactions moved into a real ES module; three global scripts removed. Disable/re-enable protects drafts; saves serialize and coalesce.
+- Fixed scoped search/smart-collection omissions beyond 5,000 matches. Background searches coalesce requests and discard results from previous library scopes.
+- Native registry dispatch, narrow contexts, required schemas/policy, module management and a shared capability catalog.
+- SQLite core items, facets, common links and FTS5 search; original JSON/migration backup retained. Private stores are sealed from memory.
+- Global review, conflict-safe undo and managed-file byte versions; paged/exportable full history. Unified activity with progress, cancellation and supported pause/resume.
+- Today, contextual Inspector, source-linked Clips, four Space views, smart collections, editable Recipes and daily Review. AI summaries have bounded input/output and caching.
+- Asynchronous module-owned subtitle tools inherit Agent cancellation and produce durable, undoable receipts. No automatic model installation.
+- Workspace, clips and viewer migrated to ES modules; 42 stylesheet sources produce nine ordered runtime bundles. Default Smiley Sans retained.
+- Native preview edit/read transitions, tab feedback, real pointer drag/drop and editor-menu scope fixed. Large collections use pages of at most 120 cards.
+- Unpublished local preview. See [v0.8.1 coverage](docs/WAREHOUSE_0.8.1.en.md) for implementation and remaining compatibility work.
+
+## v0.7.2 · Local preview, unpublished
+
+- Classic skeuomorphic look by default: stitched leather sidebar, glossy bar and buttons, a wooden bookshelf, framed photos and chat bubbles; Graphite remains in Settings → Interface style. New app mark.
+- When several Agent actions wait for confirmation, Run all / Skip all handle them together.
+- New Agent home (default in Smart mode, switchable back to the library in Settings): reading files, search and collection lookups run on their own; moving to collections, tagging, writing notes and creating documents or slides each wait for confirmation and can be skipped or undone. Originals are never modified, local paths are never sent, and the private folder and Pure mode stay AI-free.
+- One entry point: the library AI tools, the viewer chat, graph analysis and smart organize now hand off to Agent; compare, note review and batch organize remain on the Agent page.
+- Upright UI font by default (Microsoft YaHei UI / Segoe UI); Smiley Sans is kept for the mark and page titles. Short library shelves now share a row.
+- Passes 168 native checks and a new isolated Agent interface test against a local mock model. See [Agent](docs/AGENT_0.7.2.en.md).
+
+## v0.7.1 · Local preview, unpublished
+
+- Separate the compact context menu from AI editing; restore clipboard/selection commands, keyboard focus and outside dismissal. Invalidate stale instruction reviews, retain exact PPTX substrings and keep sort menus through same-route background refreshes.
+- Scoped graphs, intersecting filters and saved views; bounded AI connections, summaries and questions, with send previews, cancellation and local result reuse.
+- Ordered type-based shelves, individual vector stamps for 56 import formats and restrained motion; centered private-folder artwork.
+- PPTX slides, notes, fullscreen, basic text/page editing, drafts, undo and exported PPTX copies. Complex office layouts are not fully reproduced; legacy PPT remains external.
+- Right-click AI text/object editing with review, explicit apply, undo and stale-target cancellation. Import short instruction-only SKILL.md files, loaded on demand without executing scripts.
+- Existing features and default Smiley Sans remain. A small PPTX export browser component is loaded on demand, without Office, Remotion or a new codec runtime. See [scope and validation](docs/PRESENTATION_AGENT_0.7.1.en.md).
 
 ## v0.6.2-r2 · Quality revision preview
 

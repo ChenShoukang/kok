@@ -4,7 +4,7 @@
 
 ## Supported versions
 
-The latest v0.3.1 preview and main branch receive maintenance. Upgrade older releases first. The project has no independent security audit and does not promise a fixed response time.
+v0.8.1 Preview and the main branch receive maintenance. Upgrade older releases first. The project has no independent security audit and does not promise a fixed response time.
 
 ## Reporting a security issue
 

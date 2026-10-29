@@ -16,6 +16,14 @@ Open **Private folder** from the library or sidebar, create an 8–256 character
 
 The folder stores a separate encrypted index. Open it before dropping or importing files. Existing ordinary-library entries are not moved or hidden automatically, including entries for the same original source file.
 
+You can also choose **Move to private folder** in the ordinary library. v0.8.1 saves encrypted records, exact existing covers and linked clips first, then cleans the selected ordinary records, full-text indexes, review entries, space memberships and related undo fields. Changes to other items in mixed operations remain; operations containing only moved items become non-undoable placeholders. An existing destination path rejects the move without overwriting either version. Cleanup failures are reported and leave an ID-only retry journal, processed before the next ordinary-library load. An error does not mean the move completed.
+
+The ordinary SQLite database enables secure deletion, rebuilds full-text indexes, compacts the database and recreates its `.bak`. Legacy `library.json`, `.bak` and `.pre-0.8.1` snapshots are rewritten only for affected records, keeping unrelated items and top-level metadata. Old covers and saved translation views are removed. Let cleanup finish before closing the app.
+
+Database pages and full-text segments require separate handling; see SQLite's [PRAGMA secure_delete](https://www.sqlite.org/pragma.html#pragma_secure_delete) and [FTS5 secure-delete](https://www.sqlite.org/fts5.html#the_secure_delete_configuration_option) documentation for their scope and limits.
+
+**This is neither retroactive encryption nor secure erasure of the computer.** Original files, source paths in automatic-import exclusions, earlier independent Agent chats/task records, AI summaries without traceable source IDs, encrypted file versions, exports and manually copied backups are not transferred. Unrelated caches and entire legacy backups are not deleted. Filesystem snapshots, historical SSD blocks and external/system caches are outside this guarantee. Use system disk encryption for protection against offline device access.
+
 The vault locks on window deactivation, minimize or five minutes idle. Owned file dialogs defer the lock; an in-progress import is covered immediately and finishes before locking. Locking saves current progress and notes, clears private UI content, disposes encryption keys, clears the browser disk cache and invalidates private media URLs.
 
 The index and notes in `data/private-vault/` use PBKDF2-SHA256 with 210,000 iterations and a random salt, AES-256-CBC with random IVs, and HMAC-SHA256 authentication verified before decryption. Covers are encrypted too. Passwords are not written to metadata; repeated failed attempts are throttled. Lost passwords cannot be recovered.

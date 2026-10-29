@@ -2,15 +2,15 @@
 
 [中文](TESTING.md) · English · [Documentation](README.en.md)
 
-This page retains v0.3.1 verification records. See the [local preview guide](PREVIEW_0.4.1.en.md) for v0.4.1 scope.
+**The current version is a v0.8.1 Preview. [v0.8.1 validation](VALIDATION_0.8.1.md#english) is the single source for current results, reproduction commands and limits.** This page keeps historical evidence and general checks; older counts below are not current-version results.
 
-kok v0.3.1 is a preview. Passing checks confirm the paths covered by those checks, rather than every Windows machine, codec or AI service.
+Passing checks confirm the paths covered by those checks, rather than every Windows machine, codec or AI service.
 
 ## v0.6.2 release checks
 
 2026-10-27: 127 native checks, six isolated silent desktop suites, PowerShell 5, dependency and privacy audits. Synthetic fixtures; no real AI configuration.
 
-## Evidence and limits
+## Historical evidence (not current results)
 
 | Area | Evidence and limits |
 | --- | --- |
@@ -48,6 +48,6 @@ Report app / Windows / WebView2 versions, display scaling, steps and redacted ev
 
 ## Versions and historical downloads
 
-The current preview is [v0.6.2](https://github.com/ChenShoukang/kok/releases/tag/v0.6.2). Older development numbers do not imply stable 1.0 support.
+Download [v0.8.1 Preview](https://github.com/ChenShoukang/kok/releases/tag/v0.8.1); use the files and checksums actually available in Releases. Older development numbers do not imply stable 1.0 support.
 
 Documentation and build procedures may be revised after the app version is published. Existing Release ZIPs are not silently replaced; use the matching commit's Actions artifacts for current source builds. Source, history and package pattern scanning is not a complete security audit.

@@ -1,4 +1,4 @@
-# 格式兼容性 · kok v0.3.1
+# 格式兼容性 · kok v0.7.1
 
 中文 · [English](FORMATS.en.md)
 
@@ -13,9 +13,10 @@
 | 音乐 | MP3 / WAV / OGG / OGA / FLAC / M4A / AAC / OPUS | 取决于编码 | MP3、PCM WAV、FLAC、Vorbis / Opus 和 AAC 等取决于实际编码与 WebView2；WAV 等容器也可能包含不支持的编码。 |
 | 音乐 | WMA / AIFF / APE | 建议系统应用 | 可以收录到专辑，建议使用系统播放器。 |
 | 文档 | PDF | 内置打开 | 内置 PDF 预览、文字层、标记与位置插入；扫描件不提供 OCR。批注保存在 kok，不能写回原 PDF。 |
+| 文档 | PPTX | 内置打开 | 内置幻灯片预览、备注与基础编辑，可另存 PPTX；复杂母版、图表、动画和嵌入对象不能完整还原。 |
 | 文档 | DOCX | 内置打开 | 提取正文阅读、插入与批注，不保留 Office 原始排版、图片、表格布局或宏。 |
 | 文档 | CSV / MD / MARKDOWN / LOG / JSON / HTML / HTM | 内置打开 | 按纯文本阅读，Markdown / HTML 不渲染排版，CSV 不显示电子表格。支持 UTF-8、UTF-16 和 GB18030。 |
-| 文档 | DOC / RTF / XLSX / XLS / PPTX / PPT | 建议系统应用 | 可以收录和分类，使用已安装的 Office、WPS 或其他系统应用打开。 |
+| 文档 | DOC / RTF / XLSX / XLS / PPT | 建议系统应用 | 可以收录和分类，使用已安装的 Office、WPS 或其他系统应用打开。 |
 | 读书 | EPUB / TXT | 内置打开 | 无 DRM 的 EPUB 正文与 TXT 分节阅读；EPUB 不还原图片、复杂排版与脚注交互。TXT 支持 UTF-8、UTF-16 和 GB18030。 |
 | 读书 | MOBI / AZW / AZW3 / FB2 | 建议系统应用 | 可以收录和分类，使用系统阅读器；不解密 DRM。 |
 
@@ -23,9 +24,9 @@
 
 ## 字幕、字体与导出
 
-- 外挂文字字幕：**SRT、VTT、ASS、SSA、SUB（仅 MicroDVD）、SBV、LRC、TTML、DFXP、SMI（SAMI）**。支持同名和语言后缀自动加载。ASS / SSA 只显示文字，不还原特效；TTML / DFXP 支持基础时钟、秒、毫秒时间，不支持完整样式及帧 / tick 时间。不提取内嵌或位图字幕，不做语音识别。
+- 外挂文字字幕：**SRT、VTT、ASS、SSA、SUB（仅 MicroDVD）、SBV、LRC、TTML、DFXP、SMI（SAMI）**。支持同名和语言后缀自动加载。ASS / SSA 只显示文字，不还原特效；TTML / DFXP 支持基础时钟、秒、毫秒时间，不支持完整样式及帧 / tick 时间。不提取内嵌或位图字幕；可选本地 Whisper 或独立语音 API 生成 SRT 字幕。
 - 字幕上限：单文件 8 MB、50,000 条；自动发现最多加载 20 轨。
-- 字体：TTF / OTF，单文件最多 20 MB。照片副本：PNG / JPEG。阅读副本和 PDF 批注导出：HTML。译文导出：TXT / SRT。
+- 字体：TTF / OTF，单文件最多 20 MB。照片副本：PNG / JPEG。阅读副本和 PDF 批注导出：HTML。译文副本：DOCX / EPUB / PDF / TXT / Markdown，字幕为 SRT。PPTX 导出重建可见基础元素，不完整还原复杂排版，见[PPTX 范围](PRESENTATION_AGENT_0.7.1.md)。
 - DOCX / EPUB 提取文字，不保留原排版；Markdown / HTML 按纯文本显示，不执行内容。扫描 PDF 需外部 OCR 才能选择文字。文本读取上限 24 MB，EPUB 内容总计上限 48 MB、最多 2,000 章。不解密 DRM。
 
 ## 实际解码结果

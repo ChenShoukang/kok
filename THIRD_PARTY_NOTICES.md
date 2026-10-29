@@ -193,3 +193,20 @@ runtime from either project is copied or bundled. The camera spring equations
 and scoped browser animation orchestration are implemented locally.
 https://github.com/jacomyal/sigma.js/blob/main/packages/sigma/src/core/camera.ts
 https://github.com/sveltejs/svelte/blob/main/packages/svelte/src/transition/index.js
+
+PptxGenJS 4.0.1 (MIT) is loaded locally on demand for PPTX export. Only its browser bundle is included; Office, Node.js and npm are not runtime requirements. The browser bundle contains JSZip (MIT/GPLv3 dual license; used under MIT) and pako (MIT/Zlib); upstream headers are retained. Licenses: docs/licenses/PptxGenJS-MIT.txt, docs/licenses/JSZip-MIT.txt and docs/licenses/pako-LICENSE.txt. Source: https://github.com/gitbrent/PptxGenJS
+
+The v0.7.1 contextual editor and instruction-only skills reference Pi's metadata/on-demand skills, tldraw's selection/history model, and AFFiNE's contextual content editing. Type-based shelves reference Jellyfin Web and Kavita. These are interaction concepts implemented locally; their application code, assets and runtimes are not bundled.
+https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/skills.md
+https://tldraw.dev/docs/editor
+https://github.com/toeverything/AFFiNE
+https://github.com/jellyfin/jellyfin-web
+https://wiki.kavitareader.com/guides/admin-settings/media/
+
+The contextual menu refinement references Radix Context Menu keyboard/focus patterns and Tiptap BubbleMenu selection-aware positioning/lifecycle. Concepts are implemented locally; neither framework is bundled.
+https://www.radix-ui.com/primitives/docs/components/context-menu
+https://tiptap.dev/docs/editor/extensions/functionality/bubble-menu
+
+SQLite 3.54.1 (public domain) is bundled as sqlite3.dll for local item/facet/link storage and FTS5 search. The official Windows x64 binary is pinned by URL and SHA-256 in tools/sqlite-source.json. SQLite does not require a license file: https://sqlite.org/copyright.html . Acorn 8.15.0 (MIT) is a development-only parser used for architecture checks and is not bundled with the application.
+
+The recipe editor uses n8n's public node/step configuration concepts as a reference. No n8n application code, assets or runtime are bundled. https://docs.n8n.io/build/understand-workflows/workflow-components/work-with-nodes.md

@@ -55,7 +55,7 @@ npm run test:i18n
 
 `package.ps1` creates `dist/kok-<version>-win-x64.zip` and its SHA-256 file from an explicit allowlist and current resource folders, excluding profiles, credentials, test binaries and temporary data.
 
-v0.6.2 enables `release.publish: true`. A push to main builds and audits on both Windows runners; the release job publishes only after both succeed. `package.ps1 -SkipTests` may repackage already-tested native sources; staging/ZIP privacy audits still run.
+v0.6.2 shipped with `release.publish: true`: a push to main builds and audits on both Windows runners, and the release job publishes only after both succeed. The current v0.8.1 local preview sets `release.publish: false` in `package.json`, so pushes to main build and audit without publishing; to publish, re-enable it and first update `docs/RELEASE_NOTES.md` for the target version. `package.ps1 -SkipTests` may repackage already-tested native sources; staging/ZIP privacy audits still run.
 
 Pushes to `main` trigger the [Windows workflow](https://github.com/ChenShoukang/kok/blob/main/.github/workflows/build.yml) on Windows Server 2022 / 2025. Script, dependency, source and complete Git-history checks run before native tests and packaging. Build jobs have read-only repository access; a separate publishing job waits for both environments before using `contents: write` and the built-in `GITHUB_TOKEN`. Future versions default to Preview; existing versions are not silently replaced. Server checks do not replace fresh Windows 10 / 11 desktop verification; see [release verification](TESTING.en.md).
 

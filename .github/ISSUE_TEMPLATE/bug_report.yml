@@ -11,7 +11,7 @@ body:
     id: version
     attributes:
       label: kok 版本 / App version
-      placeholder: v0.3.1
+      placeholder: 例如 v0.8.1 / v0.6.2-r2
     validations:
       required: true
   - type: input
