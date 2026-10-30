@@ -11,7 +11,7 @@ for(const file of fs.readdirSync('src').filter(name=>/^(Agent|Mcp).*\.cs$/.test(
   const value=JSON.parse('"'+match[1]+'"');if(/[\u3400-\u9fff]/.test(value)&&!catalog.messages[value]&&!patterns.some(re=>re.test(value)))missing.push('src/'+file+': '+value);
  }
 }
-for(const file of ['agent-operations.mjs','mcp.mjs']){
+for(const file of ['agent-operations.mjs','agent-platform.mjs','mcp.mjs']){
  for(const match of fs.readFileSync('ui/modules/'+file,'utf8').matchAll(/\bt\('([^']+)'\)/g)){
   const value=match[1];if(/[\u3400-\u9fff]/.test(value)&&!catalog.messages[value]&&!patterns.some(re=>re.test(value)))missing.push('ui/modules/'+file+': '+value);
  }

@@ -2,6 +2,9 @@
 
 ## v0.8.2 · In development
 
+- Semantic checkpoints and exact result recall, versioned encrypted memory, approved read-only subagents, offline QuickJS/WASM computation and saved artifacts.
+- Shared parent/child/summary/retry budgets, native per-task tool permissions, cancellation/recovery, owned child cleanup and bilingual management UI.
+
 - Persisted Agent plans and explicit evidence-linked outcome review, distinguishing complete, partial, needs-input and request-limited tasks.
 - Typed HTTP/network failures, bounded cancellable backoff, explicit-only tools fallback, per-request metrics and redacted diagnostic export.
 - Local stdio MCP connections, schema review, encrypted configuration, approval for every external call, definition fingerprints and process-tree lifetime management.

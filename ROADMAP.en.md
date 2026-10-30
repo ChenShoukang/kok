@@ -4,6 +4,8 @@
 
 ## In development: v0.8.2 · Agent execution and tools
 
+Follow-up work adds [semantic checkpoints, encrypted memory, read-only subagents and JavaScript/WASM isolation](docs/AGENT_RUNTIME_0.8.2.en.md).
+
 Plans, explicit outcome review, bounded retries, request traces and local stdio MCP tools are implemented. See [scope](docs/AGENT_0.8.2.en.md) and [validation](docs/VALIDATION_0.8.2.md). Source version updated; automatic publishing is off.
 
 ## Published: v0.8.1 Preview
@@ -18,7 +20,7 @@ The public download remains [v0.8.1 Preview](https://github.com/ChenShoukang/kok
 - Explicit orchestration: workflow-selected subtasks, evidence references and reviewed merges, without default full-session copying or automatic output merging.
 - A unified workspace connecting sources, Inspector, tasks, change review and recipes while preserving offline Pure mode.
 
-These are future goals. Long-term memory management, subagent orchestration and autonomous control of the whole computer are not current capabilities. Expand permissions only after execution and data-safety validation. Media compatibility and lightweight distribution remain priorities.
+These are further goals. Encrypted memory management and one-level read-only delegation are available; cross-Space memory policies, recursive or concurrent writing agents and autonomous control of the whole computer remain future work. Expand permissions only after execution and data-safety validation. Media compatibility and lightweight distribution remain priorities.
 
 ## Near term: stability and maintenance
 

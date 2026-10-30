@@ -13,6 +13,7 @@
 | 配置 DeepSeek 等服务或本机模型 | [AI 服务配置](AI_PROVIDERS.md) |
 | 给 Agent 任务，限定范围并审核修改 | [Agent 功能](AGENT_0.7.2.md) · [来源与修改审核](AGENT_INTERACTIONS.md) · [任务与交接边界](AGENT_BOUNDARIES.md) |
 | 使用任务计划、执行追踪或本地 MCP 工具（开发中） | [v0.8.2 Agent 与 MCP](AGENT_0.8.2.md) · [本地验证与可选模型评测](VALIDATION_0.8.2.md) |
+| 使用上下文压缩、长期记忆、子代理或隔离计算 | [Agent 运行能力](AGENT_RUNTIME_0.8.2.md) · [运行能力验证](VALIDATION_RUNTIME_0.8.2.md) |
 | 查文件、媒体编码、字幕和导出支持 | [格式兼容性](FORMATS.md) |
 | 写笔记、双向链接和查看知识图谱 | [笔记与图谱](KNOWLEDGE_0.6.1.md) |
 | 对照翻译文档、翻译字幕或生成语音字幕 | [翻译与字幕](TRANSLATION_CAPTIONS_0.5.1.md) |

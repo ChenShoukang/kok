@@ -109,6 +109,7 @@ class Tests {
             AgentTests.Run(Path.Combine(temp,"agent-rules"),Check);
             AgentTaskTests.Run(Path.Combine(temp,"agent-tasks"),Check);
             AgentKernelTests.Run(Path.Combine(temp,"agent-kernel"),Check);
+            AgentPlatformTests.Run(Path.Combine(temp,"agent-platform"),Check);
             McpTests.Run(Path.Combine(temp,"mcp"),Check);
             ModuleTests.Run(Path.Combine(temp,"modules"),Check);
             WarehouseTests.Run(Path.Combine(temp,"warehouse"),Check);

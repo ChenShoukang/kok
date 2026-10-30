@@ -1,6 +1,8 @@
-param([switch]$Test)
+﻿param([switch]$Test)
 $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
+& node (Join-Path $root 'tools\vendor-sandbox.cjs')
+if($LASTEXITCODE -ne 0){throw 'Sandbox asset verification failed.'}
 & node (Join-Path $root 'tools\build-styles.cjs')
 if($LASTEXITCODE -ne 0){throw 'Style bundle preparation failed.'}
 & node (Join-Path $root 'tools\prepare-sqlite.cjs')
@@ -97,6 +99,7 @@ if ($Test) {
     $testArgs += Join-Path $root 'tests\AgentTests.cs'
     $testArgs += Join-Path $root 'tests\AgentTaskTests.cs'
     $testArgs += Join-Path $root 'tests\AgentKernelTests.cs'
+    $testArgs += Join-Path $root 'tests\AgentPlatformTests.cs'
     $testArgs += Join-Path $root 'tests\McpTests.cs'
     $testArgs += Join-Path $root 'tests\ModuleTests.cs'
     $testArgs += Join-Path $root 'tests\WarehouseTests.cs'

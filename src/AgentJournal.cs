@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 
 namespace kok {
     public class AgentEvent {public int sequence;public string id,kind,created;public Dictionary<string,object> data;}
-    public class AgentTaskIndex {public string id,sessionId,title,status,updated;public int sequence;public long bytes;}
+    public class AgentTaskIndex {public string id,sessionId,title,status,updated,parentTaskId;public int sequence;public long bytes;}
     // Immutable, individually encrypted events. A crash before rename leaves only an ignored temp file.
     // Full tool results occur in one event, never in the UI-session snapshot or an automatic fork.
     public sealed class AgentJournal {
@@ -27,7 +27,7 @@ namespace kok {
             int count=Directory.Exists(dir)?Directory.GetFiles(dir,"*.sealed").Length:0;if(count>=MaxEvents)throw new InvalidDataException("任务记录空间不足，请导出交接记录后开始新任务。");
             var value=new AgentEvent{sequence=count+1,id=Guid.NewGuid().ToString("N"),kind=kind,created=DateTime.UtcNow.ToString("o"),data=Library.Json.Deserialize<Dictionary<string,object>>(Library.Json.Serialize(data))};
             CheckCapacity(id,Encoding.UTF8.GetByteCount(Library.Json.Serialize(value))+1024);Write(Path.Combine(dir,value.sequence.ToString("D5")+".sealed"),value);
-            if(item==null){item=new AgentTaskIndex{id=id};index.Add(item);}item.sessionId=sessionId;item.title=title;item.status=status;item.sequence=value.sequence;item.updated=value.created;item.bytes=Directory.GetFiles(dir,"*.sealed").Sum(f=>new FileInfo(f).Length);
+            if(item==null){item=new AgentTaskIndex{id=id};index.Add(item);}if(kind=="task.created")item.parentTaskId=AgentTaskState.Get<AgentTaskOptions>(value.data,"options").parentTaskId;item.sessionId=sessionId;item.title=title;item.status=status;item.sequence=value.sequence;item.updated=value.created;item.bytes=Directory.GetFiles(dir,"*.sealed").Sum(f=>new FileInfo(f).Length);
             Write(indexFile,index);return value;
         }}
         public void Delete(string id){lock(gate){var dir=TaskPath(id);var index=List();index.RemoveAll(x=>x.id==id);Write(indexFile,index);if(Directory.Exists(dir))Directory.Delete(dir,true);}}

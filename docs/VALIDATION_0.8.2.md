@@ -1,8 +1,8 @@
-# v0.8.2 · 验证记录 / Validation
+# v0.8.2 Preview 1 · 首批候选验证 / Initial candidate validation
 
 [功能与边界](AGENT_0.8.2.md) · [English feature guide](AGENT_0.8.2.en.md) · [v0.8.1 发布验证](VALIDATION_0.8.1.md)
 
-本地开发验证，未发布 v0.8.2。模拟服务检查执行机制，真实模型评测检查有限任务的实际表现，两者分开记录。旧记录中跨多个构建的“6/6”不作为最终构建通过的证据。
+这份记录对应本地 `v0.8.2-preview.1`（`888a199`）候选，不代表后续运行能力改动的验证结果。语义压缩、记忆、子代理与隔离计算另见[后续候选验证](VALIDATION_RUNTIME_0.8.2.md)。模拟服务检查执行机制，真实模型评测检查有限任务的实际表现，两者分开记录。旧记录中跨多个构建的“6/6”不作为同一构建通过的证据。
 
 ## 复核方式
 
@@ -13,7 +13,7 @@ npm run check:windows
 .\tools\test-package.ps1
 ```
 
-`package.ps1` 默认执行构建、原生测试、源码 / 包隐私模式扫描，生成 ZIP 与 SHA-256。`test-package.ps1` 检查校验文件，安全解压到新建隔离目录，再直接运行包里的程序，连续执行 `agent`、`agent-interactions`、`agent-reliable`、`agent-runtime`、`agent-kernel`、`mcp` 六组，不重新编译。
+`package.ps1` 默认执行构建、原生测试、源码 / 包隐私模式扫描，生成 ZIP 与 SHA-256。`test-package.ps1` 检查校验文件，安全解压到新建隔离目录，再直接运行包里的程序。首批候选连续执行 `agent`、`agent-interactions`、`agent-reliable`、`agent-runtime`、`agent-kernel`、`mcp` 六组，不重新编译；后续默认列表增加了 `agent-platform`，不可把旧六组结果当作新七组结果。
 
 每次桌面运行在 `run.json` 记录版本、所请求的组、开始 / 结束时间、源码 / 测试指纹、运行文件指纹与 EXE 的 SHA-256。测试过程中源码或运行文件变化会失败；`results.json` 逐组记录结果。包级 `archive.json` 再绑定 ZIP 校验值。不得把多个目录的定向通过拼成最终通过。
 
@@ -45,9 +45,9 @@ $env:KOK_LIVE_CASES='facts,injection' # 只选所需案例，每例最多 4 次�
 Remove-Item Env:KOK_LIVE_AI,Env:KOK_LIVE_KEY_FILE,Env:KOK_LIVE_MODEL,Env:KOK_LIVE_CASES
 ```
 
-## 当前结果与边界
+## 首批候选结果与当时边界
 
-2026-10-30（Asia/Taipei）最终候选结果：
+2026-10-30（Asia/Taipei）首批候选结果，归档保留：
 
 | 检查 | 实际结果 |
 | --- | --- |
@@ -59,11 +59,11 @@ Remove-Item Env:KOK_LIVE_AI,Env:KOK_LIVE_KEY_FILE,Env:KOK_LIVE_MODEL,Env:KOK_LIV
 | npm 依赖公告 | `npm audit --omit=optional --audit-level=info` 返回 0 个已知漏洞 |
 | 真实模型 / 远端 CI | 真实模型有上述未解决项；远端新 CI 未运行 |
 
-可提交的无内容证据：[包级汇总与指纹](validation/package-0.8.2.json)。完整本地记录在 `test-output/package-6ea24cc19532412786ba0f7ab3897ef0/` 的 `archive.json`、`desktop/run.json` 与 `desktop/results.json`；原生日志为 `test-output/agent-082-review-package.log`。ZIP 保持测试时的原样，最新汇总另附 `dist/kok-0.8.2-validation.json`，未将测试后的文档更新冒充为再次测试。
+可提交的无内容证据：[包级汇总与指纹](validation/package-0.8.2.json)。完整本地记录在 `test-output/package-6ea24cc19532412786ba0f7ab3897ef0/` 的 `archive.json`、`desktop/run.json` 与 `desktop/results.json`；原生日志为 `test-output/agent-082-review-package.log`。这是 SHA-256 以 `f98f3c44` 开头的旧包记录，不是 `dist` 下后续重建包的校验依据。测试后的文档更新不冒充为再次测试。
 
 新增桌面 CI 配置尚未在远端运行，不能说云端已绿。CI 只收集汇总、指纹与合成测试截图，不上传 profile、凭据或完整任务内容。源码 / 包的凭据模式扫描不等于全面安全审计。
 
-MCP 只验证合成 stdio 服务，未完成第三方兼容矩阵。解释器脚本 / 依赖未哈希，无系统沙箱、HTTP/OAuth、长期记忆或子代理。上下文仍是字符节选，没有 tokenizer / 语义压缩。模型自检与工具回执检查不能独立验收目标语义。
+首批候选只验证合成 stdio MCP 服务，未完成第三方兼容矩阵。MCP 解释器脚本 / 依赖未哈希，无系统沙箱、HTTP/OAuth。当时尚无长期记忆、子代理和语义压缩；后续实现及其边界见[运行能力指南](AGENT_RUNTIME_0.8.2.md)。模型自检与工具回执检查不能独立验收目标语义。
 
 `release.publish=false`；已发布的 v0.8.1 ZIP、tag 与 Release 不因本地开发改变。
 
@@ -73,6 +73,6 @@ The initial six-case DeepSeek evaluation passed **3/6**, using 20 requests with 
 
 The three-case follow-up used 10 more requests: two did not finish; the comparison passed its old assertions but failed manual arithmetic review (500 instead of 600). Future assertions are stricter. These runs do not establish final-tree model quality.
 
-The final candidate passed **326 native checks and all six packaged desktop suites in one invocation** on October 30 (Asia/Taipei). See the content-free [package evidence](validation/package-0.8.2.json). The ZIP is unchanged from the tested archive; later prose/evidence updates are supplied separately.
+The initial `v0.8.2-preview.1` candidate (`888a199`) passed **326 native checks and all six packaged desktop suites in one invocation** on October 30 (Asia/Taipei). See the historical [package evidence](validation/package-0.8.2.json), tied to ZIP hash `f98f3c44…`. These results do not validate the later semantic-context, memory, delegation or sandbox changes; see the [subsequent candidate validation](VALIDATION_RUNTIME_0.8.2.md).
 
 Package validation starts the extracted ZIP and runs all six Agent fixture suites in one invocation. Source/test and runtime fingerprints must remain unchanged throughout. `archive.json`, `run.json` and `results.json` bind the results to the archive and executable. The new remote desktop CI job has not run. Receipt checks, limited model evaluations and pattern-based privacy scans do not prove semantic autonomy, comprehensive security or third-party MCP compatibility.

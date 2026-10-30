@@ -4,6 +4,8 @@
 
 **Source development version, not released.** The published download remains v0.8.1 Preview. This iteration adds plans, outcome review, request diagnostics and local MCP tools to the existing library, operations and activity center, using C# / WebView2 without a large Agent framework.
 
+Follow-up development adds [context checkpoints, encrypted memory, read-only subagents and JavaScript/WASM computation](AGENT_RUNTIME_0.8.2.en.md), with per-task controls and approval.
+
 ## Task interaction
 
 Select sources and describe a goal. A short plan can accompany multi-step work. Local searches and reads run automatically; changes retain their previews and approval buttons. MCP calls always require approval. Task updates preserve disclosures, focus and drafts.
@@ -56,7 +58,7 @@ Encrypted local task events retain content needed for recovery. Diagnostic expor
 
 Tool cards and trace events can open local results on demand, including external error text; this content stays out of diagnostic exports. The cost column shows an estimate only when input/output rates are configured; otherwise it shows `—`, not a zero-cost claim or invoice.
 
-Default tests use loopback model fixtures and real local stdio children, with no API spending. An optional six-case live evaluation covers grounded facts, planned approved writes, rejection, injection, version comparison and missing information. It requires explicit opt-in and a credential file and allows at most four requests per case. An unrun evaluation is never reported as passed. See [validation](VALIDATION_0.8.2.md).
+Default tests use loopback model fixtures and real local stdio children, with no API spending. Six basic opt-in cases cover grounded facts, approved writes, rejection, injection, comparison and missing information, with at most four requests each. Two further cases cover isolated computation (limit 6) and read-only delegation (limit 8). Live evaluation requires explicit opt-in and a credential file; unrun cases are never reported as passed. See [historical validation](VALIDATION_0.8.2.md) and [runtime validation](VALIDATION_RUNTIME_0.8.2.md).
 
 ## Open-source references
 
@@ -67,4 +69,4 @@ Default tests use loopback model fixtures and real local stdio children, with no
 | [OpenHands SDK](https://github.com/OpenHands/software-agent-sdk/blob/main/openhands-sdk/openhands/sdk/agent/base.py) | Explicit task tracking / tool configuration and observable execution |
 | [MCP stdio](https://modelcontextprotocol.io/specification/2026-07-28/basic/transports/stdio) · [versioning](https://modelcontextprotocol.io/specification/2026-07-28/basic/versioning) | Newline JSON-RPC, modern versus legacy negotiation, and explicit tool trust |
 
-These are architectural references; their runtimes are not bundled. Context still retains the newest two rounds and character-based excerpts for older results, without a tokenizer or semantic compaction. Remote authentication, script hashing, isolated execution, long-term memory, subtask orchestration and broader model benchmarks remain future work. This is progress toward a modern Agent workspace, **not yet an autonomous computer operating system**.
+These are architectural references; their runtimes are not bundled. Budgeted semantic checkpoints, encrypted memory, read-only delegation and JavaScript/WASM isolation are now implemented. Context sizing remains a conservative upper bound, not an exact tokenizer. Remote authentication, MCP script hashing, general OS containers, concurrent writing subagents and broader model benchmarks remain future work. This is progress toward a modern Agent workspace, **not yet an autonomous computer operating system**.

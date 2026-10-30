@@ -1,3 +1,4 @@
+import {AgentPlatformUi} from './agent-platform.mjs';
 import {AgentOperations} from './agent-operations.mjs';
 // Migrated intact from agent-ui.js
 'use strict';
@@ -34,8 +35,8 @@ function agentEntries(){
 }
 function agentBatch(){
  const pending=agent.messages.filter(m=>m.status==='pending');if(pending.length<2)return '';
- const rows=pending.filter(m=>m.tool!=='mcp_call'),selected=rows.filter(m=>m.selected!==false).length,external=pending.length-rows.length;
- return `<div class="agent-batch"><span>${pending.length} ${I18n.text('项待确认')}${external?' · '+I18n.text('外部调用请逐项确认'):''}</span>${rows.length?`<button type="button" class="text-button" data-agent-toggle-selection>${I18n.text(selected===rows.length?'取消全选':'全选')}</button><button type="button" class="button primary" data-agent-run-selected ${!selected?'disabled':''}>${I18n.text('执行所选')} · ${selected}</button>`:''}<button type="button" class="button secondary" data-agent-skip-all>${I18n.text('全部跳过')}</button></div>`;
+ const rows=pending.filter(m=>!['mcp_call','delegate_task','run_code'].includes(m.tool)),selected=rows.filter(m=>m.selected!==false).length,external=pending.length-rows.length;
+ return `<div class="agent-batch"><span>${pending.length} ${I18n.text('项待确认')}${external?' · '+I18n.text(pending.some(m=>m.tool==='mcp_call')?'外部调用请逐项确认':'计算和子任务需逐项确认'):''}</span>${rows.length?`<button type="button" class="text-button" data-agent-toggle-selection>${I18n.text(selected===rows.length?'取消全选':'全选')}</button><button type="button" class="button primary" data-agent-run-selected ${!selected?'disabled':''}>${I18n.text('执行所选')} · ${selected}</button>`:''}<button type="button" class="button secondary" data-agent-skip-all>${I18n.text('全部跳过')}</button></div>`;
 }
 function agentMetadataDiff(m){
  if(!m.changes?.length)return '';
@@ -72,8 +73,8 @@ document.addEventListener('click',event=>{
  const t=event.target;
  const summary=t.closest('.agent-tool-group>summary');if(summary){const details=summary.parentElement;agentGroupOpen.set(details.dataset.groupId,!details.open);}
  if(t.closest('[data-agent-latest]')){const stream=$('#agent-stream');stream.scrollTo({top:stream.scrollHeight,behavior:reducedMotion()?'instant':'smooth'});$('#agent-input')?.focus({preventScroll:true});return;}
- if(t.closest('[data-agent-toggle-selection]')){const rows=agent.messages.filter(m=>m.status==='pending'&&m.tool!=='mcp_call'),value=!rows.every(m=>m.selected!==false);rows.forEach(m=>m.selected=value);agentPaint({scroll:false});return;}
- if(t.closest('[data-agent-run-selected]')){const ids=agent.messages.filter(m=>m.status==='pending'&&m.tool!=='mcp_call'&&m.selected!==false).map(m=>m.id);(async()=>{for(const id of ids)await agentDecide(id,true,true);})().catch(fail);return;}
+ if(t.closest('[data-agent-toggle-selection]')){const rows=agent.messages.filter(m=>m.status==='pending'&&!['mcp_call','delegate_task','run_code'].includes(m.tool)),value=!rows.every(m=>m.selected!==false);rows.forEach(m=>m.selected=value);agentPaint({scroll:false});return;}
+ if(t.closest('[data-agent-run-selected]')){const ids=agent.messages.filter(m=>m.status==='pending'&&!['mcp_call','delegate_task','run_code'].includes(m.tool)&&m.selected!==false).map(m=>m.id);(async()=>{for(const id of ids)await agentDecide(id,true,true);})().catch(fail);return;}
  const copy=t.closest('[data-agent-copy]');if(copy){const m=agent.messages.find(m=>m.id===copy.dataset.agentCopy);if(m)navigator.clipboard.writeText(m.text).then(()=>toast('回答已复制。')).catch(fail);return;}
  const save=t.closest('[data-agent-save-answer]');if(save){agentSaveAnswer(save.dataset.agentSaveAnswer).catch(fail);return;}
  const retry=t.closest('[data-agent-edit-request]');if(retry){const m=agent.messages.find(m=>m.id===retry.dataset.agentEditRequest);if(m&&!agent.job){agent.draft=m.goal||'';agentPaint({scroll:false});const input=$('#agent-input');if(input){input.value=agent.draft;input.focus();input.setSelectionRange(0,input.value.length);}}}
@@ -101,11 +102,12 @@ const AGENT_TOOLS={
 };
 const AGENT_READ=['search_library','read_items','list_collections'];
 const AGENT_STARTERS=[['整理最近导入的资料，按主题建议分类和标签','layers'],['总结一个分类里的资料，给出要点','list'],['把选中的资料整理成一篇 Markdown 笔记','edit'],['用选中的资料做一份 5 页的演示文稿','slide']];
-const agent={messages:[],context:[],budget:14000,job:null,history:[],draft:'',sessionId:uid(),sessions:[],loaded:false,saveTimer:null,scope:'all',collection:'',skill:'auto',requestLimit:6,costLimit:0,inputRate:0,outputRate:0,usage:null,phase:'',queue:[],options:false,lastScope:'',intent:'assist',protocol:'auto',watch:'',recovery:null,handoff:null};
+const agent={...AgentPlatformUi.defaults,messages:[],context:[],budget:14000,job:null,history:[],draft:'',sessionId:uid(),sessions:[],loaded:false,saveTimer:null,scope:'all',collection:'',skill:'auto',requestLimit:6,costLimit:0,inputRate:0,outputRate:0,usage:null,phase:'',queue:[],options:false,lastScope:'',intent:'assist',protocol:'auto',watch:'',recovery:null,handoff:null};
 
+AgentPlatformUi.bind(()=>agent,()=>agentPaint({scroll:false}));
 function agentAvailable(){return isSmartMode()&&!state.isPrivate&&Kok.enabled('agent');}
 function agentSnapshot(){
- return {taskId:agent.watch||'',protocol:agent.protocol,handoff:agent.handoff,id:agent.sessionId,title:(agent.messages.find(m=>m.role==='user')?.text||agent.draft||I18n.text('新任务')).slice(0,48),updated:new Date().toISOString(),messages:AgentModel.storedMessages(agent.messages),history:agent.history.slice(-40),draft:agent.draft,context:agent.context.slice(0,24),scope:agent.scope,collection:agent.collection,budget:agent.budget,skill:agent.skill,requestLimit:agent.requestLimit,costLimit:agent.costLimit,inputRate:agent.inputRate,outputRate:agent.outputRate,intent:agent.intent,usage:agent.usage,queue:agent.queue.slice(0,5),lastScope:agent.lastScope};
+ return {semanticCompression:agent.semanticCompression,contextTokens:agent.contextTokens,useMemory:agent.useMemory,allowDelegation:agent.allowDelegation,allowSandbox:agent.allowSandbox,allowedTools:agent.allowedTools,taskId:agent.watch||'',protocol:agent.protocol,handoff:agent.handoff,id:agent.sessionId,title:(agent.messages.find(m=>m.role==='user')?.text||agent.draft||I18n.text('新任务')).slice(0,48),updated:new Date().toISOString(),messages:AgentModel.storedMessages(agent.messages),history:agent.history.slice(-40),draft:agent.draft,context:agent.context.slice(0,24),scope:agent.scope,collection:agent.collection,budget:agent.budget,skill:agent.skill,requestLimit:agent.requestLimit,costLimit:agent.costLimit,inputRate:agent.inputRate,outputRate:agent.outputRate,intent:agent.intent,usage:agent.usage,queue:agent.queue.slice(0,5),lastScope:agent.lastScope};
 }
 function agentSessionText(){
  const row=agentSnapshot();agent.sessions=[row,...agent.sessions.filter(s=>s.id!==row.id)].slice(0,12);
@@ -136,6 +138,7 @@ function agentRestore(id){
  for(const key of ['draft','collection','skill','lastScope'])agent[key]=String(row[key]||'');
  agent.watch=row.taskId||'';agent.recovery=null;agent.handoff=row.handoff||null;agent.protocol=['auto','tools','json'].includes(row.protocol)?row.protocol:'auto';agent.sessionId=row.id;agent.messages=AgentModel.storedMessages(row.messages||[]);agent.messages.forEach(m=>{if(m.nativeCall)m.undo=agentNativeUndo(m);else if(m.undoChanges)m.undo=()=>agentApply(m.undoChanges);else if(m.undoCreated)m.undo=()=>native('agentUndoCreated',m.undoCreated);});agent.context=(row.context||[]).filter(id=>byId(id)).slice(0,24);agent.history=row.history||[];agent.scope=['all','selected','collection'].includes(row.scope)?row.scope:'all';agent.budget=[6000,14000,24000].includes(row.budget)?row.budget:14000;
  for(const key of ['requestLimit','costLimit','inputRate','outputRate']){const n=Number(row[key]);agent[key]=Number.isFinite(n)&&n>=0&&n<=10000?n:(key==='requestLimit'?6:0);}agent.requestLimit=Math.max(1,Math.min(12,Math.floor(agent.requestLimit)));
+ for(const key of ['semanticCompression','contextTokens','useMemory','allowDelegation','allowSandbox','allowedTools'])agent[key]=row[key]??AgentPlatformUi.defaults[key];
  agent.intent=row.intent==='discuss'?'discuss':'assist';agent.usage=row.usage||null;agent.phase='';agent.queue=(row.queue||[]).filter(t=>typeof t==='string'&&t.trim()).map(t=>t.slice(0,2000)).slice(0,5);
 }
 async function agentNew(id){
@@ -167,6 +170,7 @@ function agentSummary(tool,args){
  }return '';
 }
 function agentPreview(m){
+ const platform=AgentPlatformUi.preview(m);if(platform)return platform;
  const a=m.args;if(m.tool==='mcp_call')return `<div class="agent-external-warning">${I18n.text('外部工具可访问当前账户的文件和网络，不受资料库范围沙箱限制，且不能自动撤销。')}</div><dl class="agent-external-target"><dt>${I18n.text('服务 ID')}</dt><dd data-user-content>${esc(a.serverId)}</dd><dt>${I18n.text('工具')}</dt><dd data-user-content>${esc(a.tool)}</dd></dl><pre class="agent-preview" data-user-content>${esc(JSON.stringify(a.arguments,null,2))}</pre>`;if(m.changes?.length)return agentMetadataDiff(m);if(m.tool==='write_note')return `<details class="agent-diff"><summary>${I18n.text('查看修改前后')}</summary><div><section><b>${I18n.text('修改前')}</b><pre data-user-content>${esc(m.beforeText??byId(a.id)?.notes??'')}</pre></section><section><b>${I18n.text('修改后')}</b><pre data-user-content>${esc(m.afterText??a.text)}</pre></section></div></details>`;if(m.tool==='create_document')return `<pre class="agent-preview" data-user-content>${esc(a.text.slice(0,1200))}${a.text.length>1200?'…':''}</pre>`;
  if(m.tool==='create_presentation')return `<ol class="agent-preview agent-slides" data-user-content>${a.slides.map(s=>`<li><b>${esc(s.title)}</b>${(s.bullets||[]).length?`<span>${esc(s.bullets.join(' / '))}</span>`:''}</li>`).join('')}</ol>`;
  return '';
@@ -183,7 +187,7 @@ function agentMessage(m){
   :m.status==='undone'?`<div class="agent-card-actions"><span class="agent-status">${I18n.text('已撤销')}</span></div>`
   :m.status==='failed'?`<div class="agent-card-actions"><span class="agent-status bad">${esc(m.error||I18n.text('执行失败'))}</span></div>`
   :m.status==='running'?`<div class="agent-card-actions"><span class="agent-status"><span class="spinner"></span>${I18n.text('执行中')}</span></div>`:'';
- return `<article class="agent-card ${read?'agent-card-read':''} agent-${m.status}" data-agent-card="${m.id}"><header>${m.status==='pending'&&m.tool!=='mcp_call'?`<input type="checkbox" data-agent-select="${m.id}" ${m.selected!==false?'checked':''} aria-label="${I18n.text('选择此修改')}">`:''}${svg(tool.icon)}<b>${I18n.text(tool.label)}</b><span data-user-content>${esc(agentSummary(m.tool,m.args))}</span></header>${m.why?`<p data-user-content>${esc(m.why)}</p>`:''}${read?'':agentPreview(m)}${m.tool==='mcp_call'&&m.readPreview?`<details class="agent-external-result"><summary>${I18n.text('外部返回')}</summary><pre data-user-content>${esc(m.readPreview)}</pre>${m.resultEventId?`<button type="button" class="text-button" data-agent-full-result="${m.id}">${I18n.text('完整外部结果')}</button>`:''}</details>`:''}${read?(m.status==='done'?`<small>${I18n.text('已自动读取，未修改任何内容')}</small><div class="agent-sources">${agentSourceButtons(m.sourceIds)}</div>${m.readPreview?`<details class="agent-read-preview"><summary>${I18n.text('查看读取节选')}</summary><pre data-user-content>${esc(m.readPreview)}</pre>${m.resultEventId?`<button type="button" class="text-button" data-agent-full-result="${m.id}">${I18n.text('完整读取结果')}</button>`:''}</details>`:''}`:m.status==='failed'?`<small class="agent-read-error">${esc(m.error)}</small>`:''):controls}</article>`;
+ return `<article class="agent-card ${read?'agent-card-read':''} agent-${m.status}" data-agent-card="${m.id}"><header>${m.status==='pending'&&!['mcp_call','delegate_task','run_code'].includes(m.tool)?`<input type="checkbox" data-agent-select="${m.id}" ${m.selected!==false?'checked':''} aria-label="${I18n.text('选择此修改')}">`:''}${svg(tool.icon)}<b>${I18n.text(tool.label)}</b><span data-user-content>${esc(agentSummary(m.tool,m.args))}</span></header>${m.why?`<p data-user-content>${esc(m.why)}</p>`:''}${read?'':agentPreview(m)}${m.tool==='mcp_call'&&m.readPreview?`<details class="agent-external-result"><summary>${I18n.text('外部返回')}</summary><pre data-user-content>${esc(m.readPreview)}</pre>${m.resultEventId?`<button type="button" class="text-button" data-agent-full-result="${m.id}">${I18n.text('完整外部结果')}</button>`:''}</details>`:''}${read?(m.status==='done'?`<small>${I18n.text('已自动读取，未修改任何内容')}</small><div class="agent-sources">${agentSourceButtons(m.sourceIds)}</div>${m.readPreview?`<details class="agent-read-preview"><summary>${I18n.text('查看读取节选')}</summary><pre data-user-content>${esc(m.readPreview)}</pre>${m.resultEventId?`<button type="button" class="text-button" data-agent-full-result="${m.id}">${I18n.text('完整读取结果')}</button>`:''}</details>`:''}`:m.status==='failed'?`<small class="agent-read-error">${esc(m.error)}</small>`:''):controls}${AgentPlatformUi.result(m)}</article>`;
 }
 function agentEmpty(){
  return `<div class="agent-empty"><div class="agent-mark" aria-hidden="true"><span></span></div><h1>${I18n.text('今天想做点什么？')}</h1><p>${I18n.text('选定资料，说出要求，修改由你确认。')}</p>
@@ -195,7 +199,7 @@ function agentView(){
  const busy=!!agent.job,skills=[...AgentModel.presets,...AgentSkills.custom()],waiting=agent.messages.filter(m=>m.status==='pending').length;
  const usage=agent.usage;const used=usage?`${usage.estimated?I18n.text('保守估算'):I18n.text('服务商用量')} · ${usage.inputTokens} / ${usage.outputTokens} tokens${usage.cachedTokens?' · '+I18n.text('缓存命中')+' '+usage.cachedTokens:''}${agent.inputRate&&agent.outputRate?' · '+usage.cost.toFixed(5):''}`:I18n.text('仅在发送后调用 API');
  return `<section class="agent-page"><div class="agent-main">
- <div class="agent-toolbar"><select id="agent-scope" aria-label="${I18n.text('资料范围')}" ${busy?'disabled':''}>${[['all','整个资料库'],['selected','仅所选资料'],['collection','指定文件夹']].map(([v,l])=>`<option value="${v}" ${agent.scope===v?'selected':''}>${I18n.text(l)}</option>`).join('')}</select>${agent.scope==='collection'?`<select id="agent-collection" aria-label="${I18n.text('文件夹')}" ${busy?'disabled':''}><option value="">${I18n.text('选择文件夹')}</option>${state.collections.map(c=>`<option value="${esc(c)}" ${c===agent.collection?'selected':''} data-user-content>${esc(c)}</option>`).join('')}</select>`:''}<span class="agent-progress" id="agent-progress" role="status" data-busy="${busy}">${I18n.text(agent.phase||'就绪')}</span><button type="button" class="text-button" data-agent-sessions ${busy?'disabled':''}>${svg('clock')}${I18n.text('会话')}</button><button type="button" class="text-button" data-agent-task-records>${I18n.text('任务记录')}</button></div>
+ <div class="agent-toolbar">${AgentPlatformUi.button()}<select id="agent-scope" aria-label="${I18n.text('资料范围')}" ${busy?'disabled':''}>${[['all','整个资料库'],['selected','仅所选资料'],['collection','指定文件夹']].map(([v,l])=>`<option value="${v}" ${agent.scope===v?'selected':''}>${I18n.text(l)}</option>`).join('')}</select>${agent.scope==='collection'?`<select id="agent-collection" aria-label="${I18n.text('文件夹')}" ${busy?'disabled':''}><option value="">${I18n.text('选择文件夹')}</option>${state.collections.map(c=>`<option value="${esc(c)}" ${c===agent.collection?'selected':''} data-user-content>${esc(c)}</option>`).join('')}</select>`:''}<span class="agent-progress" id="agent-progress" role="status" data-busy="${busy}">${I18n.text(agent.phase||'就绪')}</span><button type="button" class="text-button" data-agent-sessions ${busy?'disabled':''}>${svg('clock')}${I18n.text('会话')}</button><button type="button" class="text-button" data-agent-task-records>${I18n.text('任务记录')}</button></div>
  <div class="agent-recovery">${agentRecoveryBar()}</div>${AgentOperations.view(agent.recovery&&(!agent.job||agent.job.id===agent.recovery.id)?agent.recovery:null)}<div class="agent-stream" id="agent-stream" aria-live="polite">${agent.messages.length?agentEntries():agentEmpty()}</div><div class="agent-review">${agentBatch()}</div>
  <button type="button" class="agent-latest text-button" data-agent-latest hidden>${I18n.text('回到最新')}${svg('arrow')}</button><form class="agent-composer" id="agent-form"><div class="agent-context">${agentContextChips()}<button type="button" class="agent-chip agent-add" data-agent-pick ${busy?'disabled':''}>${svg('plus')}<b>${I18n.text('添加资料')}</b></button></div>
  <textarea id="agent-input" rows="2" maxlength="2000" placeholder="${esc(I18n.text(busy?'补充当前要求，或加入待办…':'让 Agent 整理、总结、写笔记或做演示文稿…  输入 / 使用技能'))}" aria-label="${esc(I18n.text('给 Agent 的要求'))}">${esc(agent.draft)}</textarea>
@@ -222,7 +226,7 @@ function agentPaint({scroll=true}={}){
 }
 // The native task engine owns the loop, tool execution, approvals and the encrypted journal. This page renders
 // its snapshots and forwards decisions, adjustments and stops; it never schedules model turns itself.
-function agentNativeUndo(m){return m.status==='done'&&(m.undoChanges||m.undoCreated)?'native':null;}
+function agentNativeUndo(m){return m.status==='done'&&(m.undoChanges||m.undoCreated||m.undoMemory)?'native':null;}
 function agentApplySnapshot(snap){
  if(!snap?.id||state.isPrivate||snap.sessionId!==agent.sessionId)return;agent.recovery=snap;const id=snap.id,job=agent.job&&agent.job.id===id?agent.job:null;
  const rows=snap.messages.map(m=>{const old=agent.messages.find(x=>x.id===m.id&&x.taskId===id);const row={...m,taskId:id};if(old){if(old.selected!==undefined)row.selected=old.selected;if(old.savedId)row.savedId=old.savedId;}if(!snap.running&&['pending','queued','running'].includes(row.status))row.status='paused';if(m.role==='tool')row.undo=agentNativeUndo(m);if(m.role==='error')row.retryable=!!(snap.retryable&&snap.resumable);return row;});
@@ -252,7 +256,7 @@ async function agentDecide(id,run,batch=false){
  const m=agent.messages.find(x=>x.id===id);if(!m||m.status!=='pending')return;
  // A card from a task that is no longer running cannot be approved; resuming re-plans instead of replaying it.
  if(!m.taskId||agent.job?.id!==m.taskId){m.status='skipped';agentPaint({scroll:false});return;}
- if(run&&(!agentAvailable()||batch&&m.tool==='mcp_call'))return;
+ if(run&&(!agentAvailable()||batch&&['mcp_call','delegate_task','run_code'].includes(m.tool)))return;
  m.status=run?'running':'skipped';agentPaint({scroll:false});
  try{agentApplySnapshot(await native('agentTaskDecide',{taskId:m.taskId,callId:id,approve:run,batch}));if(run)await refresh();}
  catch(error){fail(error);agentPull(m.taskId);}
@@ -275,7 +279,7 @@ async function runAgent(goal){
  const scope=agentScope();if(scope.mode==='selected'&&!scope.ids.length||scope.mode==='collection'&&!scope.collection){toast('请选择有效的 Agent 资料范围。',true);return;}
  const scopeKey=agentScopeKey();if(agent.lastScope!==scopeKey){agent.history=[];agent.lastScope=scopeKey;}
  const skill=AgentModel.skill(agent.skill,goal,AgentSkills.custom()),preset=!!skill&&AgentModel.presets.includes(skill);
- const options={sessionId:agent.sessionId,goal:goal.trim(),intent:agent.intent,protocol:agent.protocol,handoff:agent.handoff,workflow:preset?skill.name:'',instruction:skill&&!preset?('[Skill: '+skill.name+'] '+skill.instructions).slice(0,800):'',scope,history:AgentModel.history(agent.history,Math.min(6000,Math.floor(agent.budget/3))).slice(-10),budget:agent.budget,requestLimit:agent.requestLimit,costLimit:agent.costLimit,inputRate:agent.inputRate,outputRate:agent.outputRate};
+ const options={semanticCompression:agent.semanticCompression,contextTokens:agent.contextTokens,useMemory:agent.useMemory,allowDelegation:agent.allowDelegation,allowSandbox:agent.allowSandbox,...(agent.allowedTools?{allowedTools:agent.allowedTools}:{}),sessionId:agent.sessionId,goal:goal.trim(),intent:agent.intent,protocol:agent.protocol,handoff:agent.handoff,workflow:preset?skill.name:'',instruction:skill&&!preset?('[Skill: '+skill.name+'] '+skill.instructions).slice(0,800):'',scope,history:AgentModel.history(agent.history,Math.min(6000,Math.floor(agent.budget/3))).slice(-10),budget:agent.budget,requestLimit:agent.requestLimit,costLimit:agent.costLimit,inputRate:agent.inputRate,outputRate:agent.outputRate};
  const job={id:'',goal:goal.trim(),raw:'',partial:'',request:0,cancelled:false};
  agent.handoff=null;agent.recovery=null;agent.job=job;agent.usage=null;agent.draft='';const sent=$('#agent-input');if(sent)sent.value='';
  if(skill&&!preset)agent.messages.push({id:uid(),role:'agent',meta:true,text:I18n.text('使用技能')+' · '+I18n.text(skill.title||skill.name)+' — '+I18n.text(skill.description||'')});

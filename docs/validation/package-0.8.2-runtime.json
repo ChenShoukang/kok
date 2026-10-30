@@ -1,0 +1,74 @@
+{
+  "format": "kok.package.validation",
+  "version": "0.8.2",
+  "archive": "kok-0.8.2-win-x64.zip",
+  "sha256": "d2c501587a343dd3d5e659437002ad4f7c9f14a829b84c2782eb6f40229813db",
+  "started": "2026-10-30T08:15:24.2129911Z",
+  "finished": "2026-10-30T08:17:08.5073100Z",
+  "fingerprint": {
+    "source": {
+      "count": 359,
+      "sha256": "2161a2c9f4605062ef72ad43376228ddf4fe7dbdd79dec52c5bcf68a255858f7"
+    },
+    "runtime": {
+      "count": 352,
+      "sha256": "8ce17c36b587ce3b62e615681c680acceaf74e8bc655ead55cc56375f56a589d"
+    },
+    "executableSha256": "b46ddefe8a83f3934c4edcd7e2572e27cb962ded60a717e4a17080f0cb2ac424"
+  },
+  "suites": [
+    "agent",
+    "agent-interactions",
+    "agent-reliable",
+    "agent-runtime",
+    "agent-kernel",
+    "mcp",
+    "agent-platform"
+  ],
+  "passed": true,
+  "archiveBytes": 22771460,
+  "nativeTests": 346,
+  "desktop": {
+    "started": "2026-10-30T08:15:24.3581244Z",
+    "finished": "2026-10-30T08:17:08.4718473Z",
+    "results": [
+      {
+        "passed": true,
+        "suite": "agent"
+      },
+      {
+        "passed": true,
+        "suite": "agent-interactions"
+      },
+      {
+        "passed": true,
+        "suite": "agent-reliable"
+      },
+      {
+        "passed": true,
+        "suite": "agent-runtime"
+      },
+      {
+        "passed": true,
+        "suite": "agent-kernel"
+      },
+      {
+        "passed": true,
+        "suite": "mcp"
+      },
+      {
+        "passed": true,
+        "suite": "agent-platform"
+      }
+    ],
+    "unchangedSourceAndRuntime": true
+  },
+  "limits": [
+    "Local Windows/WebView2 only; the updated remote CI job has not run.",
+    "All seven packaged desktop suites use local model fixtures, not a real model.",
+    "Two targeted real-model cases are recorded separately; previous quality failures are preserved.",
+    "JavaScript/WASM runtime isolation does not sandbox MCP or provide an OS container.",
+    "Source fingerprint excludes prose, generated bundles and third-party assets; runtime fingerprint includes binaries and all packaged UI assets.",
+    "Post-test prose and validation records are distributed separately; the tested ZIP is unchanged."
+  ]
+}

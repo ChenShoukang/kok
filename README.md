@@ -6,7 +6,7 @@
 
 [下载 v0.8.1 Preview](https://github.com/ChenShoukang/kok/releases/tag/v0.8.1) · [使用指南](docs/GUIDE.md) · [English](README.en.md) · [格式支持](docs/FORMATS.md)
 
-开发中的 **[v0.8.2](docs/AGENT_0.8.2.md)**：任务计划与结果核对、有限重试、执行追踪、本地 MCP 外部工具。支持撤销后核对失效与同任务补充信息。源码已升级，尚未发布新下载；[验证范围](docs/VALIDATION_0.8.2.md)。
+开发中的 **[v0.8.2](docs/AGENT_0.8.2.md)**：任务计划与结果核对、有限重试、执行追踪、本地 MCP 外部工具。支持撤销后核对失效与同任务补充信息；新增[语义压缩、加密记忆、只读子代理和隔离计算](docs/AGENT_RUNTIME_0.8.2.md)。源码已升级，尚未发布新下载；[本地候选验证](docs/VALIDATION_RUNTIME_0.8.2.md)。
 
 ![kok v0.8.1 资料库，使用内置原创示例](docs/screenshots/library-081-zh.png)
 

@@ -30,6 +30,6 @@ namespace kok {
    else if(action=="mcpRemove")Mcp.Remove(id);
    return Mcp.Snapshot();
   }
-  AgentCall PrepareTaskCall(AgentTaskState state,AgentAction action,string turn,string provider){var call=normalLibrary.PrepareAgentCall(state,action,turn,provider);call.steering=state.steerVersion;if(call.tool=="mcp_call")call.externalStamp=Mcp.Stamp(ModuleContext.Text(call.args,"serverId"),ModuleContext.Text(call.args,"tool"),AgentTaskState.Get<Dictionary<string,object>>(call.args,"arguments"));return call;}
+  AgentCall PrepareTaskCall(AgentTaskState state,AgentAction action,string turn,string provider){if(!ToolAllowed(state,AgentRules.Tools.First(x=>x.Name==action.tool)))throw new AgentFailure("policy","此工具未获得当前任务授权。");var call=normalLibrary.PrepareAgentCall(state,action,turn,provider);call.steering=state.steerVersion;if(call.tool=="mcp_call")call.externalStamp=Mcp.Stamp(ModuleContext.Text(call.args,"serverId"),ModuleContext.Text(call.args,"tool"),AgentTaskState.Get<Dictionary<string,object>>(call.args,"arguments"));return call;}
  }
 }

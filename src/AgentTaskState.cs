@@ -7,11 +7,12 @@ namespace kok {
     public class AgentTaskOptions {
         public string sessionId,goal,intent="assist",protocol="auto",workflow="",instruction="",workflowGuidance="";
         public AgentScope scope=new AgentScope();public List<string> allowed=new List<string>();public List<ChatTurn> history=new List<ChatTurn>();
+        public bool semanticCompression=true,useMemory,allowDelegation,allowSandbox;public int contextTokens=32000;public List<string> allowedTools;public string parentTaskId="",parentCallId="";public int parentSteering;
         public int budget=14000,requestLimit=6,kernelVersion;public double costLimit,inputRate,outputRate;public AgentHandoff handoff;
     }
     public class AgentHandoff {public string taskId,eventId,note;public List<string> callIds=new List<string>(),ids=new List<string>();}
     public class AgentCall {
-        public string id,providerId,turnId,tool,why,status="queued",error="",errorKind="",resultEventId,stamp,externalStamp;
+        public string childTaskId;public string id,providerId,turnId,tool,why,status="queued",error="",errorKind="",resultEventId,stamp,externalStamp;
         public Dictionary<string,object> args=new Dictionary<string,object>(),result;
         public List<AgentChange> changes;public string beforeText,afterText;
         public int sequence,attempt,steering;public bool retryable;public Dictionary<string,string> sources=new Dictionary<string,string>();
@@ -22,6 +23,7 @@ namespace kok {
         public AgentTaskOptions options;public int sequence,requests,round,inputTokens,outputTokens,cachedTokens,repairs,steerVersion,replySteering;
         public double cost;public List<AgentCall> calls=new List<AgentCall>();public List<AgentDialogue> dialogue=new List<AgentDialogue>();public List<string> adjustments=new List<string>();
         public List<AgentEvent> events=new List<AgentEvent>();
+        public AgentContextCheckpoint checkpoint;
         public List<AgentPlanStep> plan=new List<AgentPlanStep>();public AgentVerification verification;public int planSteering;public string planInvalidation="",reviewInvalidation="";
         public bool PlanCurrent {get{return plan.Count==0||planSteering==steerVersion&&planInvalidation=="";}}
         void InvalidateReview(string reason){if(verification!=null){verification=null;reviewInvalidation=reason;if(status=="completed"||status=="partial"){status="review_required";phase="核对已失效，请重新检查结果。";}}if(plan.Count>0)planInvalidation=reason;}
@@ -37,6 +39,9 @@ namespace kok {
                 case "task.plan":plan=Get<List<AgentPlanStep>>(d,"steps");planSteering=Get<int>(d,"steering");planInvalidation="";verification=null;break;
                 case "task.verified":verification=Get<AgentVerification>(d,"verification");reviewInvalidation="";break;
                 case "task.review_invalidated":InvalidateReview(Get<string>(d,"reason"));break;
+                case "context.compacted":checkpoint=Get<AgentContextCheckpoint>(d,"checkpoint");break;
+                case "subtask.started":calls.First(c=>c.id==Get<string>(d,"callId")).childTaskId=Get<string>(d,"taskId");break;
+                case "tool.reconfirm":calls.First(c=>c.id==Get<string>(d,"callId")).status="pending";break;
                 case "task.protocol":protocol=Get<string>(d,"protocol");break;
                 case "request.repair":repairs++;break;
                 case "task.adjusted":AddInstruction(e);break;

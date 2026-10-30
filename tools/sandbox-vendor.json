@@ -1,0 +1,55 @@
+{
+  "version": "0.32.0",
+  "files": [
+    {
+      "source": "quickjs-emscripten-core/dist/chunk-TAV5CUKK.mjs",
+      "target": "core/chunk-TAV5CUKK.mjs",
+      "sha256": "b423c720a9deef215b404e4ee212533bcef9de785a11f44aacf1ad8266ae6769"
+    },
+    {
+      "source": "quickjs-emscripten-core/dist/chunk-V2S4ZYJR.mjs",
+      "target": "core/chunk-V2S4ZYJR.mjs",
+      "sha256": "9601ad84160a56f1321e1ed67910a3b79a4e29312f11de129e6f94a5b3e17b9a"
+    },
+    {
+      "source": "quickjs-emscripten-core/dist/index.mjs",
+      "target": "core/index.mjs",
+      "sha256": "5f7a507ca71ffbff0ec0bad88a9c38f717d34fd8ab9222b58deacc9de5644a3e"
+    },
+    {
+      "source": "quickjs-emscripten-core/dist/module-asyncify-2EFITU5U.mjs",
+      "target": "core/module-asyncify-2EFITU5U.mjs",
+      "sha256": "c8cec04532f68af9aa436ad117defdc686d36a1670691d98cea9263345ba7b2b"
+    },
+    {
+      "source": "quickjs-emscripten-core/dist/module-ES6BEMUI.mjs",
+      "target": "core/module-ES6BEMUI.mjs",
+      "sha256": "289a200ab91f855ed79f75147eb674b81cea7adf032f9344bd8b29ff5e7a7d43"
+    },
+    {
+      "source": "@jitl/quickjs-ffi-types/dist/index.mjs",
+      "target": "types/index.mjs",
+      "sha256": "5b6ccfe50a0d0066411135c66964b0c15c05167f5324df2e8066493da807efbe"
+    },
+    {
+      "source": "@jitl/quickjs-wasmfile-release-sync/dist/index.mjs",
+      "target": "variant/index.mjs",
+      "sha256": "334f0e7eec1af1be0737f6bcaaa430656686843e29b91aa5e74c661708094538"
+    },
+    {
+      "source": "@jitl/quickjs-wasmfile-release-sync/dist/ffi.mjs",
+      "target": "variant/ffi.mjs",
+      "sha256": "ccf8b3aa066c2be5755e3ea49d81b01dff5a671deb34b7ec3a1c983dd52e9335"
+    },
+    {
+      "source": "@jitl/quickjs-wasmfile-release-sync/dist/emscripten-module.browser.mjs",
+      "target": "variant/emscripten-module.browser.mjs",
+      "sha256": "3b8e916b3248062be4bbd3281c8d2832f074e6850596fc9951e93b846139ddea"
+    },
+    {
+      "source": "@jitl/quickjs-wasmfile-release-sync/dist/emscripten-module.wasm",
+      "target": "variant/emscripten-module.wasm",
+      "sha256": "105c3bed22d457e43e3d1c3c1c6959fda62a8fe06f0fc8a985303c3a2be72232"
+    }
+  ]
+}

@@ -13,6 +13,7 @@ Start with the [user guide](GUIDE.en.md). Find help by the task you want to comp
 | Configure a remote provider or a local model service | [AI setup](AI_PROVIDERS.en.md) |
 | Give Agent a scoped task and review changes | [Agent](AGENT_0.7.2.en.md) · [Evidence and review](AGENT_INTERACTIONS.en.md) · [Task/handoff boundaries](AGENT_BOUNDARIES.en.md) |
 | Use plans, request traces or local MCP tools (development) | [v0.8.2 Agent and MCP](AGENT_0.8.2.en.md) · [Local checks and optional model evaluations](VALIDATION_0.8.2.md) |
+| Use semantic compaction, memory, subagents or sandbox computation | [Agent runtime](AGENT_RUNTIME_0.8.2.en.md) · [Runtime validation](VALIDATION_RUNTIME_0.8.2.md) |
 | Check files, codecs, subtitles and export support | [Formats](FORMATS.en.md) |
 | Write linked notes and explore a knowledge graph | [Notes and graphs](KNOWLEDGE_0.6.1.en.md) |
 | Translate documents/subtitles or configure speech captions | [Translation and captions](TRANSLATION_CAPTIONS_0.5.1.md) |

@@ -35,7 +35,7 @@ namespace kok {
         public async Task Decide(string callId,bool approve,bool batch=false){
             await decisions.WaitAsync();try{validate();Cancellation.Token.ThrowIfCancellationRequested();var call=State.calls.FirstOrDefault(c=>c.id==callId);if(!IsRunning||call==null||call.status!="pending")throw new InvalidOperationException("请先继续任务并重新确认操作。");
                 if(!approve){Emit("tool.skipped",new{callId=call.id,reason="user"});Signal();return;}
-                if(call.tool=="mcp_call"&&batch)throw new AgentFailure("approval","外部工具需要逐项确认。");
+                if(new[]{"mcp_call","delegate_task","run_code"}.Contains(call.tool)&&batch)throw new AgentFailure("approval","外部工具需要逐项确认。");
                 journal.CheckCapacity(State.id,600000);Emit("tool.started",new{callId=call.id});
                 try{var receipt=await write(State,call,Cancellation.Token);Emit("tool.completed",new{callId=call.id,result=receipt.result,stamp=receipt.stamp});}
                 catch(OperationCanceledException){throw;}catch(Exception error){var f=AgentFailure.Classify(error);var toolFailure=error as AgentToolFailure;Emit("tool.failed",new{callId=call.id,kind=f.kind,message=f.Message,retryable=false,result=toolFailure==null?null:toolFailure.result});}
@@ -71,7 +71,7 @@ namespace kok {
                     var turn=await model(this,Cancellation.Token);Cancellation.Token.ThrowIfCancellationRequested();validate();
                     if(steering!=State.steerVersion){Emit("request.discarded",new{reason="new user instructions"});continue;}
                     string turnId=Guid.NewGuid().ToString("N");
-                    var sources=State.calls.Where(c=>c.status=="done"&&c.tool=="read_items"&&c.result!=null).SelectMany(c=>AgentTaskState.Get<List<ChatReference>>(c.result,"references")??new List<ChatReference>()).Select(r=>r.fileId).Where(id=>id!=null).Distinct().ToList();
+                    var sources=State.calls.Where(c=>c.status=="done"&&c.result!=null).SelectMany(c=>AgentTaskState.Get<List<ChatReference>>(c.result,"references")??new List<ChatReference>()).Select(r=>r.fileId).Where(id=>id!=null&&State.options.allowed.Contains(id)).Distinct().ToList();
                     var proposals=new List<AgentCall>();for(int n=0;n<turn.reply.actions.Count;n++)proposals.Add(prepare(State,turn.reply.actions[n],turnId,n<turn.providerIds.Count?turn.providerIds[n]:null));
                     Emit("assistant.reply",new{text=turn.reply.reply,turnId=turnId,done=turn.reply.done,sources=sources,steering=steering});
                     foreach(var call in proposals)Emit("tool.proposed",new{call=call});

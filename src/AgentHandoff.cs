@@ -38,6 +38,7 @@ namespace kok {
         void ReconcileTask(AgentTaskState t){
             var engine=MakeEngine(t);
             foreach(var c in t.calls.Where(c=>c.status=="running"&&!AgentRules.ReadTools.Contains(c.tool)).ToList()){
+                if(ReconcilePlatform(engine,t,c))continue;
                 var receipt=normalLibrary.AgentReceipt(c.id);
                 if(receipt!=null)engine.Emit("tool.completed",new{callId=c.id,result=receipt,stamp=(string)null});
                 else engine.Emit("tool.failed",new{callId=c.id,kind="uncertain_write",message="上次写入结果尚未核对，不能自动重放。请核对改动后重新规划。",retryable=false});

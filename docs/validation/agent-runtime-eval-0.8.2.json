@@ -1,0 +1,77 @@
+{
+  "format": "kok.agent.eval",
+  "version": 2,
+  "model": "deepseek-chat",
+  "maximumRequests": 14,
+  "cases": [
+    {
+      "id": "computation",
+      "status": "completed",
+      "checks": {
+        "reviewed": true,
+        "requestBudget": true,
+        "computed": true,
+        "correct": true
+      },
+      "requests": 2,
+      "usage": {
+        "cachedTokens": 5760,
+        "cost": 0,
+        "estimated": false,
+        "inputTokens": 8745,
+        "outputTokens": 595,
+        "repairs": 0,
+        "requests": 2
+      },
+      "durationMs": 3950,
+      "passed": true
+    },
+    {
+      "id": "delegation",
+      "status": "completed",
+      "checks": {
+        "reviewed": true,
+        "requestBudget": true,
+        "delegated": true,
+        "sources": true,
+        "sharedBudget": true
+      },
+      "requests": 6,
+      "usage": {
+        "cachedTokens": 16768,
+        "cost": 0,
+        "estimated": false,
+        "inputTokens": 24510,
+        "outputTokens": 2522,
+        "repairs": 1,
+        "requests": 6
+      },
+      "durationMs": 16521,
+      "passed": true
+    }
+  ],
+  "passed": true,
+  "keyCleared": true,
+  "provenance": {
+    "started": "2026-10-30T08:11:30.2130080Z",
+    "finished": "2026-10-30T08:11:58.9615872Z",
+    "version": "0.8.2",
+    "fingerprint": {
+      "source": {
+        "count": 359,
+        "sha256": "2161a2c9f4605062ef72ad43376228ddf4fe7dbdd79dec52c5bcf68a255858f7"
+      },
+      "runtime": {
+        "count": 407,
+        "sha256": "f43d25547e1a7b1978a0e1d1c155559ec96c6ed56007bf54565238ad8d22eddd"
+      },
+      "executableSha256": "689e1d9b177946bbc628e9ae276c7569d9edbd5d131e37e6eb77c7937e5b08a7"
+    },
+    "passed": true
+  },
+  "limits": [
+    "Two targeted synthetic-source cases only, not the previous six-case evaluation.",
+    "No configured prices: recorded zero cost is not a billing claim.",
+    "Runtime fingerprint belongs to this live run; final package validation is recorded separately."
+  ]
+}

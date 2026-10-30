@@ -210,3 +210,9 @@ https://tiptap.dev/docs/editor/extensions/functionality/bubble-menu
 SQLite 3.54.1 (public domain) is bundled as sqlite3.dll for local item/facet/link storage and FTS5 search. The official Windows x64 binary is pinned by URL and SHA-256 in tools/sqlite-source.json. SQLite does not require a license file: https://sqlite.org/copyright.html . Acorn 8.15.0 (MIT) is a development-only parser used for architecture checks and is not bundled with the application.
 
 The recipe editor uses n8n's public node/step configuration concepts as a reference. No n8n application code, assets or runtime are bundled. https://docs.n8n.io/build/understand-workflows/workflow-components/work-with-nodes.md
+
+## QuickJS WebAssembly computation
+
+The offline JavaScript interpreter uses QuickJS Emscripten 0.32.0 (release-sync). QuickJS Emscripten and the QuickJS engine are MIT licensed. The combined Jake Teton-Landis, Fabrice Bellard and Charlie Gordon notices are retained in [QuickJS-Emscripten-MIT.txt](docs/licenses/QuickJS-Emscripten-MIT.txt). Only the browser module, binding helpers and WebAssembly binary are shipped; Node.js and other build dependencies are not included.
+
+Project: https://github.com/justjake/quickjs-emscripten

@@ -71,7 +71,7 @@ jobs:
       - name: Exercise Agent and MCP with local fixtures
         shell: pwsh
         run: |
-          ./tools/test-desktop.ps1 -Suites @('agent','agent-interactions','agent-reliable','agent-runtime','agent-kernel','mcp')
+          ./tools/test-desktop.ps1 -Suites @('agent','agent-interactions','agent-reliable','agent-runtime','agent-kernel','mcp','agent-platform')
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -83,6 +83,7 @@ jobs:
             test-output/**/failure.png
             test-output/**/kernel-*.png
             test-output/**/mcp-*.png
+            test-output/**/platform-*.png
   release:
     name: Publish preview
     needs: [build, agent-ui]

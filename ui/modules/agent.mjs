@@ -2,7 +2,7 @@ import './mcp.mjs';
 import {AgentUi} from './agent-runtime.mjs';
 Kok.register({
  id:'agent',routes:{agent:()=>AgentUi.render()},
- nativeActions:['agentTaskStart','agentTaskRead','agentTaskList','agentTaskResume','agentTaskDecide','agentTaskStop','agentTaskAdjust','agentTaskUndo','agentTaskEvents','agentTaskTrace','exportAgentTrace','agentTaskDelete','agentHandoffPreview','agentHandoffPrepare','agentHandoffRead','agentSessions','saveAgentSessions','agentPatch','agentCreatedStamp','agentUndoCreated','commandAgent'],
+ nativeActions:['agentRuntimeInfo','agentMemoryList','agentMemorySave','agentMemoryDelete','agentMemoryUndo','agentSandboxResult','agentArtifactSave','agentTaskStart','agentTaskRead','agentTaskList','agentTaskResume','agentTaskDecide','agentTaskStop','agentTaskAdjust','agentTaskUndo','agentTaskEvents','agentTaskTrace','exportAgentTrace','agentTaskDelete','agentHandoffPreview','agentHandoffPrepare','agentHandoffRead','agentSessions','saveAgentSessions','agentPatch','agentCreatedStamp','agentUndoCreated','commandAgent'],
  beforeNavigate(route){if(route==='organize-legacy')return {route:'organize'};if(route==='organize'&&AgentUi.available()){AgentUi.open({prompt:I18n.text('整理最近导入的资料，按主题建议分类和标签')});return {handled:true};}},
  nav:[{id:'agent',route:'agent',label:'Agent',icon:'agent',order:-100,className:'agent-nav',badge:()=>!!AgentUi.state.job,when:()=>AgentUi.available()}],
  start:AgentUi.start,

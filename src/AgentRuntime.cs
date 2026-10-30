@@ -35,8 +35,8 @@ namespace kok {
              "Read before writing about content. Keep each message to the user under 400 characters.";
         }
         public static string NativeProtocol(bool english,bool modern=false){return Rules(english)+(modern?" Use the function interface. Maintain an explicit plan when work has multiple steps. Finish with finish_task after checking the actual outcomes; done=true or a plain reply is not completion. Do not approve your own writes.":" Call tools through the provided function interface. When you need no more read results, answer the user and include any write proposals in that same final round.");}
-        public static string Protocol(bool english,Library library=null,bool external=false){
-            var available=Tools.Where(t=>(external||t.Module!="mcp")&&(library==null||ModuleRegistry.Builtins.ToolEnabled(t.Name,library))).ToArray();
+        public static string Protocol(bool english,Library library=null,bool external=false,Func<AgentToolSpec,bool> predicate=null){
+            var available=Tools.Where(t=>(predicate==null||predicate(t))&&(external||t.Module!="mcp")&&(library==null||ModuleRegistry.Builtins.ToolEnabled(t.Name,library))).ToArray();
             return Rules(english)+" Return ONLY JSON: {\"reply\":\"short message to the user\",\"actions\":[{\"tool\":\"name\",\"args\":{},\"why\":\"one short reason\"}],\"done\":true|false}. "+
              "Read tools: "+String.Join(", ",available.Where(t=>!t.Write).Select(t=>t.Signature))+". Write tools: "+String.Join(", ",available.Where(t=>t.Write).Select(t=>t.Signature))+". "+
              "Set done=false only when you need read results to continue; propose writes in the same round as your final reply.";
