@@ -1,8 +1,10 @@
 # Agent：运行底层与工作流的边界
 
-[English](AGENT_BOUNDARIES.en.md) · [返回 Agent](AGENT_0.7.2.md)
+[English](AGENT_BOUNDARIES.en.md) · [当前 Agent](AGENT_0.8.2.md)
 
 kok 当前不自动派生或合并 session，也不提供 bash 工具。
+
+v0.8.2 开发版在此基础上加入[计划、结果核对、请求追踪与本地 MCP](AGENT_0.8.2.md)。工作流决定计划内容；内核校验工具依据、处理重试和持久状态。内置工具没有任意 shell；用户自己连接的 MCP 程序具有账户权限，外部调用始终单独确认。
 
 | 层次 | 应负责的内容 |
 | --- | --- |

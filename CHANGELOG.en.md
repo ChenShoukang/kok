@@ -1,5 +1,15 @@
 # kok changelog
 
+## v0.8.2 · In development
+
+- Persisted Agent plans and explicit evidence-linked outcome review, distinguishing complete, partial, needs-input and request-limited tasks.
+- Typed HTTP/network failures, bounded cancellable backoff, explicit-only tools fallback, per-request metrics and redacted diagnostic export.
+- Local stdio MCP connections, schema review, encrypted configuration, approval for every external call, definition fingerprints and process-tree lifetime management.
+- Bilingual compact task/MCP UI, native/desktop checks, default Agent regressions, a dedicated desktop CI job and optional six-case live-model evaluation.
+- Undo after completion and changed local sources invalidate prior review; steering marks old plans stale. Needs-input replies continue the original task and selected sources retain user order.
+- Repairable invalid MCP calls, retained local error results, native/UI enforcement of individual external approval, cost estimates and source/runtime fingerprints for desktop and ZIP validation.
+- Pure/private boundaries and local write review retained, without a large Agent framework. Automatic publishing remains off. See [scope and limits](docs/AGENT_0.8.2.en.md).
+
 ## v0.8.1 · Preview
 
 English · [中文](CHANGELOG.md)

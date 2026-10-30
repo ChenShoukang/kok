@@ -5,6 +5,17 @@ const patterns=catalog.patterns.map(row=>new RegExp(row.pattern,'s'));
 assert(Object.keys(catalog.messages).length>250);
 for(const [source,target]of Object.entries(catalog.messages)){assert(source.trim());assert.equal(typeof target,'string');assert(target.trim());}
 const missing=[];
+// Agent failures carry a typed code first and the user-facing message second.
+for(const file of fs.readdirSync('src').filter(name=>/^(Agent|Mcp).*\.cs$/.test(name))){
+ for(const match of fs.readFileSync('src/'+file,'utf8').matchAll(/(?:throw|return) new Agent(?:Http)?Failure\("[^"\\]+","((?:\\.|[^"\\])*)"\s*[,)]/g)){
+  const value=JSON.parse('"'+match[1]+'"');if(/[\u3400-\u9fff]/.test(value)&&!catalog.messages[value]&&!patterns.some(re=>re.test(value)))missing.push('src/'+file+': '+value);
+ }
+}
+for(const file of ['agent-operations.mjs','mcp.mjs']){
+ for(const match of fs.readFileSync('ui/modules/'+file,'utf8').matchAll(/\bt\('([^']+)'\)/g)){
+  const value=match[1];if(/[\u3400-\u9fff]/.test(value)&&!catalog.messages[value]&&!patterns.some(re=>re.test(value)))missing.push('ui/modules/'+file+': '+value);
+ }
+}
 for(const match of fs.readFileSync('src/PrivateTransfer.cs','utf8').matchAll(/throw new \w+\("((?:\\.|[^"\\])*)"\s*[,)]/g)){
  const value=JSON.parse('"'+match[1]+'"');if(/[\u3400-\u9fff]/.test(value)&&!catalog.messages[value]&&!patterns.some(re=>re.test(value)))missing.push('src/PrivateTransfer.cs: '+value);
 }

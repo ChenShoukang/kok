@@ -59,7 +59,7 @@ namespace kok {
             int dataIndex=Array.IndexOf(args,"--data-dir");
             if(dataIndex>=0 && dataIndex+1<args.Length) dataDir=Path.GetFullPath(args[dataIndex+1]);
             Directory.CreateDirectory(dataDir);
-            RuntimeLog.Configure(dataDir);RuntimeLog.Write("startup","version=0.8.1 process="+Process.GetCurrentProcess().Id);
+            RuntimeLog.Configure(dataDir);RuntimeLog.Write("startup","version=0.8.2 process="+Process.GetCurrentProcess().Id);
             try { databaseLock=new FileStream(Path.Combine(dataDir,".kok.lock"),FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None); }
             catch(IOException) { throw new InvalidOperationException("这个资料库已经在另一个 kok 窗口中打开，请使用原窗口。\n如需独立窗口，请通过 --data-dir 指定其他资料库。"); }
             library=new Library(dataDir);
@@ -124,7 +124,7 @@ namespace kok {
                 web.CoreWebView2.NewWindowRequested+=delegate(object sender,CoreWebView2NewWindowRequestedEventArgs e){ e.Handled=true; };
                 web.CoreWebView2.NavigationStarting+=delegate(object sender,CoreWebView2NavigationStartingEventArgs e){ if(!e.Uri.StartsWith("https://app.kok.local/",StringComparison.OrdinalIgnoreCase)) e.Cancel=true; };
                 web.CoreWebView2.PermissionRequested+=delegate(object sender,CoreWebView2PermissionRequestedEventArgs e){ e.State=CoreWebView2PermissionState.Deny; };
-                web.CoreWebView2.Navigate("https://app.kok.local/index.html?v=0.8.1-modules");
+                web.CoreWebView2.Navigate("https://app.kok.local/index.html?v=0.8.2-modules");
             } catch(Exception ex) { RuntimeLog.Write("engine-init-error",ex);MessageBox.Show(this,L(ex.Message),L("kok · 初始化失败"),MessageBoxButtons.OK,MessageBoxIcon.Error); Close(); }
         }
         void HandleProcessFailed(object sender,CoreWebView2ProcessFailedEventArgs e) {

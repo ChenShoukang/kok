@@ -1,4 +1,28 @@
-# kok v0.8.1 Preview
+# kok v0.8.2 Preview · 发布草稿
+
+本地开发版本，**尚未发布**。GitHub 当前下载仍为 v0.8.1 Preview。
+
+这版围绕“选定资料 → 执行 → 审核 → 核对结果”改进 Agent，保留视频、照片、音乐、文档、阅读、空间、摘录与编辑功能。
+
+- **有计划，有完成条件**：多步骤任务显示计划，结束前显式核对工具回执；完成、部分完成、需要信息与请求上限分别显示。撤销或本地依据变化后清除旧核对，更新要求后旧计划显示失效。
+- **错误可以处理**：按错误类型有限重试，尊重取消与预算；只在接口明确拒绝工具参数时切换 JSON。需要信息时可在同一任务补充，选定资料保持选择顺序。
+- **接入本地 MCP**：手动添加可信的 stdio 服务，审核工具定义与参数，每次外部调用单独确认。错误结果可查看并回传模型；外部副作用不提供自动撤销。
+- **看得见执行过程**：逐请求 HTTP / 耗时 / token / 费用估算，事件时间线与本地结果入口；诊断 JSON 排除提示词、正文、参数与密钥。
+- **验证按同一份构建留证**：桌面记录包含版本、源码与运行文件指纹；包级检查从 ZIP 解压启动。真实模型评测单独记录，不等同于模拟测试通过。
+
+安装需要 Windows 10 / 11 x64、.NET Framework 4.8 和 WebView2；便携包未签名，运行不需 Node.js。MCP 服务及其运行时由你安装，拥有当前账户权限，**没有系统沙箱**。纯净模式与私密文件夹禁用 AI / MCP。
+
+上下文仍按字符节选，无语义压缩；暂无远程 MCP / OAuth、长期记忆、子代理与自主目标验收。工具回执核对不能证明模型的语义判断正确。实现及评测边界见 [Agent 与 MCP](AGENT_0.8.2.md)、[验证记录](VALIDATION_0.8.2.md)。
+
+## English · v0.8.2 draft
+
+Local development version, not published. GitHub downloads remain v0.8.1 Preview. Adds persisted plans and explicit receipt-based review, review invalidation after undo or changed evidence, task-local supplementary input, typed bounded retries, local stdio MCP with individual approvals, repairable invalid calls, preserved external errors, request metrics and redacted diagnostic export. Existing media, reading, editing, Spaces and Clips remain available.
+
+Desktop evidence binds a single run to source/runtime fingerprints. Package checks start the extracted ZIP. Live model evaluations are recorded separately from fixture tests. Windows 10/11 x64, .NET Framework 4.8 and WebView2 are required; the portable ZIP is unsigned. MCP servers use your account permissions without an OS sandbox. No remote MCP/OAuth, semantic compaction, long-term memory, subagents or autonomous semantic verification is claimed. See [feature guide](AGENT_0.8.2.en.md) and [validation](VALIDATION_0.8.2.md).
+
+---
+
+## v0.8.1 Preview · 已发布版本
 
 视频、照片、音乐、文档、电子书放进一个本地仓库，从日常观看与阅读，继续到笔记、摘录和 AI 协作。
 

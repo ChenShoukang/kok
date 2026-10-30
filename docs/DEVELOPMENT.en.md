@@ -55,7 +55,7 @@ npm run test:i18n
 
 `package.ps1` creates `dist/kok-<version>-win-x64.zip` and its SHA-256 file from an explicit allowlist and current resource folders, excluding profiles, credentials, test binaries and temporary data.
 
-v0.6.2 shipped with `release.publish: true`: a push to main builds and audits on both Windows runners, and the release job publishes only after both succeed. The current v0.8.1 local preview sets `release.publish: false` in `package.json`, so pushes to main build and audit without publishing; to publish, re-enable it and first update `docs/RELEASE_NOTES.md` for the target version. `package.ps1 -SkipTests` may repackage already-tested native sources; staging/ZIP privacy audits still run.
+v0.6.2 shipped with `release.publish: true`: a push to main builds and audits on both Windows runners, and the release job publishes only after both succeed. The current v0.8.2 development version sets `release.publish: false` in `package.json`, so pushes to main build and audit without publishing; to publish, re-enable it and first update `docs/RELEASE_NOTES.md` for the target version. `package.ps1 -SkipTests` may repackage already-tested native sources; staging/ZIP privacy audits still run.
 
 Pushes to `main` trigger the [Windows workflow](https://github.com/ChenShoukang/kok/blob/main/.github/workflows/build.yml) on Windows Server 2022 / 2025. Script, dependency, source and complete Git-history checks run before native tests and packaging. Build jobs have read-only repository access; a separate publishing job waits for both environments before using `contents: write` and the built-in `GITHUB_TOKEN`. Future versions default to Preview; existing versions are not silently replaced. Server checks do not replace fresh Windows 10 / 11 desktop verification; see [release verification](TESTING.en.md).
 
@@ -86,3 +86,7 @@ Targeted media components / streams: `powershell -NoProfile -Command "& ./tools/
 Page discovery follows [HTML media elements](https://html.spec.whatwg.org/multipage/media.html), [Open Graph](https://ogp.me/) and [VideoObject metadata](https://schema.org/VideoObject). See `src/MediaResolver.cs`; page JavaScript is not executed.
 
 Site adapters: `powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-desktop.ps1 -Suites site-adapters`. Original local media and offline HTTP fixtures verify layouts, split tracks and encrypted sessions; live checks read public metadata only. Set `KOK_SKIP_LIVE_SITES=1` to skip external checks. YouTube dependencies are pinned in `tools/youtube-dependencies.json`; build verifies package / DLL SHA-256, with licenses under `docs/licenses/`.
+
+## v0.8.2 Agent regression
+
+`npm run test:agent` runs six Agent/MCP suites in isolated profiles using loopback models and stdio fixtures. The default desktop list also includes these suites. A dedicated `Agent desktop integration` workflow job gates future publishing; this local workflow change has not run remotely. Live model evaluation is opt-in and excluded from CI. See [v0.8.2 validation](VALIDATION_0.8.2.md).

@@ -12,6 +12,7 @@
 | 离线使用、切换模式、建立私密文件夹和备份 | [模式、私密与数据边界](MODES.md) |
 | 配置 DeepSeek 等服务或本机模型 | [AI 服务配置](AI_PROVIDERS.md) |
 | 给 Agent 任务，限定范围并审核修改 | [Agent 功能](AGENT_0.7.2.md) · [来源与修改审核](AGENT_INTERACTIONS.md) · [任务与交接边界](AGENT_BOUNDARIES.md) |
+| 使用任务计划、执行追踪或本地 MCP 工具（开发中） | [v0.8.2 Agent 与 MCP](AGENT_0.8.2.md) · [本地验证与可选模型评测](VALIDATION_0.8.2.md) |
 | 查文件、媒体编码、字幕和导出支持 | [格式兼容性](FORMATS.md) |
 | 写笔记、双向链接和查看知识图谱 | [笔记与图谱](KNOWLEDGE_0.6.1.md) |
 | 对照翻译文档、翻译字幕或生成语音字幕 | [翻译与字幕](TRANSLATION_CAPTIONS_0.5.1.md) |
@@ -30,7 +31,7 @@
 | [模块契约](MODULES_0.8.1.md) | 统一入口、权限、能力、历史和后台任务 |
 | [架构与任务恢复](ARCHITECTURE_0.8.1.md) | 注册表、Agent 事件、恢复和交接 |
 | [发布准备记录](PUBLIC_PREVIEW_0.8.1.md) | 隐私修复与公开预览门槛 |
-| [更新记录](../CHANGELOG.md) · [当前发布说明](RELEASE_NOTES.md) | 版本变化与 Preview 范围 |
+| [更新记录](../CHANGELOG.md) · [发布草稿与上次发布说明](RELEASE_NOTES.md) | 版本变化与 Preview 范围 |
 | [路线图](../ROADMAP.md) | 后续目标，未实现部分不等于现有功能 |
 | [安全报告](../SECURITY.md) · [贡献说明](../CONTRIBUTING.md) | 漏洞反馈、参与开发和社区约定 |
 

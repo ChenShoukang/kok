@@ -14,9 +14,9 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
   if(mode==='late')reply={reply:'LATE_AGENT_REPLY',actions:[],done:true};
   if(mode==='stream'){
    // Native mode streams the plain reply; JSON mode streams the protocol object that the page parses as it arrives.
-   res.writeHead(200,{'content-type':'text/event-stream'});const raw=request.tools?'STREAMED_REPLY live progress':JSON.stringify({reply:'STREAMED_REPLY live progress',actions:[],done:true}),cut=request.tools?16:28;
+   res.writeHead(200,{'content-type':'text/event-stream'});const completed=Fixture.message(request,{reply:'STREAMED_REPLY live progress',actions:[],done:true}),raw=request.tools?completed.content:completed.content,cut=request.tools?16:28;
    res.write('data: '+JSON.stringify({choices:[{delta:{content:raw.slice(0,cut)}}]})+'\n\n');
-   setTimeout(()=>{res.write('data: '+JSON.stringify({choices:[{delta:{content:raw.slice(cut)},finish_reason:'stop'}]})+'\n\n');res.write('data: '+JSON.stringify({choices:[],usage:{prompt_tokens:125,completion_tokens:35}})+'\n\n');res.end('data: [DONE]\n\n');},700);return;
+   setTimeout(()=>{res.write('data: '+JSON.stringify({choices:[{delta:{content:raw.slice(cut),...(completed.tool_calls?{tool_calls:completed.tool_calls.map((c,index)=>({...c,index}))}:{})},finish_reason:completed.tool_calls?'tool_calls':'stop'}]})+'\n\n');res.write('data: '+JSON.stringify({choices:[],usage:{prompt_tokens:125,completion_tokens:35}})+'\n\n');res.end('data: [DONE]\n\n');},700);return;
   }
   const payload=Fixture.payload(request,reply,{prompt_tokens:120,completion_tokens:40});
   const send=()=>{res.setHeader('content-type','application/json');res.end(payload);};if(mode==='late'||mode==='steer')setTimeout(send,650);else send();

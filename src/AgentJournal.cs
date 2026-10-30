@@ -13,7 +13,7 @@ namespace kok {
     // Full tool results occur in one event, never in the UI-session snapshot or an automatic fork.
     public sealed class AgentJournal {
         readonly string root,indexFile;readonly object gate=new object();
-        public const int MaxTasks=64,MaxEvents=256;public const long MaxBytes=8*1024*1024;
+        public const int MaxTasks=64,MaxEvents=1024;public const long MaxBytes=8*1024*1024;
         public AgentJournal(string dataDir){root=Path.Combine(dataDir,"agent-tasks");indexFile=Path.Combine(root,"index.sealed");}
         public static bool ValidId(string id){return id!=null&&Regex.IsMatch(id,"^[a-f0-9]{32}$");}
         string TaskPath(string id){if(!ValidId(id))throw new InvalidDataException("任务记录无效。");string path=Path.GetFullPath(Path.Combine(root,id));if(!path.StartsWith(Path.GetFullPath(root).TrimEnd(Path.DirectorySeparatorChar)+Path.DirectorySeparatorChar,StringComparison.OrdinalIgnoreCase))throw new InvalidDataException("任务记录无效。");return path;}

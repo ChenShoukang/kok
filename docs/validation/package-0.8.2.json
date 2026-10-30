@@ -1,0 +1,66 @@
+{
+  "format": "kok.package.validation",
+  "version": "0.8.2",
+  "archive": "kok-0.8.2-win-x64.zip",
+  "sha256": "f98f3c4434339f58435a95026f72bf96c4b96c84cba501d03112f1a8b77c77d2",
+  "started": "2026-10-30T05:43:14.5606996Z",
+  "finished": "2026-10-30T05:44:39.1024939Z",
+  "fingerprint": {
+    "source": {
+      "count": 347,
+      "sha256": "b3d3e33a5135cbee364803b591cc2f3a7e87dc3d9baa7f073b9f318e5d7137f0"
+    },
+    "runtime": {
+      "count": 339,
+      "sha256": "74ee9dd3a5928e457d969bfcedf975f35aad0798e8381b74c1b3f6c55c7b99cb"
+    },
+    "executableSha256": "406dd3c91669a6abad1e2035ecf35c2f4b7dab060940529f4c50b2a8ed236e7c"
+  },
+  "suites": [
+    "agent",
+    "agent-interactions",
+    "agent-reliable",
+    "agent-runtime",
+    "agent-kernel",
+    "mcp"
+  ],
+  "passed": true,
+  "nativeTests": 326,
+  "desktop": {
+    "started": "2026-10-30T05:43:14.6918507Z",
+    "finished": "2026-10-30T05:44:39.0684943Z",
+    "results": [
+      {
+        "passed": true,
+        "suite": "agent"
+      },
+      {
+        "passed": true,
+        "suite": "agent-interactions"
+      },
+      {
+        "passed": true,
+        "suite": "agent-reliable"
+      },
+      {
+        "passed": true,
+        "suite": "agent-runtime"
+      },
+      {
+        "passed": true,
+        "suite": "agent-kernel"
+      },
+      {
+        "passed": true,
+        "suite": "mcp"
+      }
+    ],
+    "unchangedSourceAndRuntime": true
+  },
+  "limits": [
+    "Local Windows/WebView2 only; remote CI has not run.",
+    "All six packaged desktop suites use local model fixtures, not a real model.",
+    "Live quality evaluations are recorded separately and have unresolved failures.",
+    "Source fingerprint excludes prose, generated bundles and third-party assets; runtime fingerprint includes binaries and all packaged UI assets."
+  ]
+}

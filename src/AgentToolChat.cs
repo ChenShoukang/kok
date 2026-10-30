@@ -10,14 +10,22 @@ using System.Threading.Tasks;
 
 namespace kok {
     // A provider-side refusal of the tools parameter; the host switches the task to the JSON protocol once.
-    public sealed class AgentToolsUnsupported:Exception {public AgentToolsUnsupported(string text):base(text){}}
+    public sealed class AgentToolsUnsupported:AgentFailure {public AgentToolsUnsupported(string text,int status=400):base("tools_unsupported",text,false,status){}}
     // The model called tools with invalid arguments. Messages answer every call with an error so the next round can repair it.
-    public sealed class AgentRepair:Exception {public readonly List<object> messages;public AgentRepair(string problem,List<object> messages):base(problem){this.messages=messages;}}
+    public sealed class AgentRepair:Exception {
+        public readonly List<object> messages;public AgentRepair(string problem,List<object> messages):base(problem){this.messages=messages;}
+        public static AgentRepair ForTurn(AgentModelTurn turn,string[] problems){
+            var rows=new List<object>();if(turn.protocol=="tools"){
+                rows.Add(new{role="assistant",content=turn.reply.reply,tool_calls=turn.reply.actions.Select((action,n)=>{var args=new Dictionary<string,object>(action.args);if(!String.IsNullOrEmpty(action.why))args["why"]=action.why;return new{id=turn.providerIds[n],type="function",function=new{name=action.tool,arguments=Library.Json.Serialize(args)}};}).ToArray()});
+                for(int n=0;n<turn.reply.actions.Count;n++)rows.Add(new{role="tool",tool_call_id=turn.providerIds[n],content=problems[n]==null?"Not executed because another call was invalid. Repeat it if needed.":"Error: "+problems[n]+". Nothing was executed. Inspect list_mcp_tools for the approved schema and correct the call."});
+            }return new AgentRepair(String.Join("; ",problems.Where(p=>p!=null)),rows.Count==0?null:rows);
+        }
+    }
     public partial class TranslationService {
         sealed class ToolCallDraft {public string id="",name="";public StringBuilder arguments=new StringBuilder();}
         // OpenAI-compatible function calling (DeepSeek, OpenAI, Qwen, SiliconFlow, OpenRouter, Ollama, LM Studio ...).
         // Messages are built by the host in a stable order so providers with automatic prefix caching can reuse earlier rounds.
-        public async Task<AgentModelTurn> AgentToolChat(List<object> messages,object[] tools,Func<string,bool> exists,CancellationToken token,Action<string> onDelta,Action<ChatUsage> onUsage,Action<int> beforeRequest,int maxTokens){
+        public async Task<AgentModelTurn> AgentToolChat(List<object> messages,object[] tools,Func<string,bool> exists,CancellationToken token,Action<string> onDelta,Action<ChatUsage> onUsage,Action<int> beforeRequest,int maxTokens,Action<int> onStatus=null){
             if(maxTokens<128||maxTokens>3000)throw new ArgumentOutOfRangeException("maxTokens");
             AiConfig c=ConfigSnapshot();if(String.IsNullOrWhiteSpace(c.model))throw new InvalidDataException("请先在设置中配置 AI 翻译接口和模型。");Uri endpoint=Endpoint(c.endpoint);string key=ReadKey(c);
             var body=new Dictionary<string,object>{{"model",c.model},{"messages",messages},{"tools",tools},{"tool_choice","auto"},{"stream",true}};AddTokenLimit(body,c,maxTokens);
@@ -30,7 +38,7 @@ namespace kok {
             using(var handler=handlerFactory!=null?handlerFactory():new HttpClientHandler{AllowAutoRedirect=false,UseProxy=!endpoint.IsLoopback})using(var client=new HttpClient(handler))using(var timeout=CancellationTokenSource.CreateLinkedTokenSource(token))using(var request=new HttpRequestMessage(HttpMethod.Post,endpoint)){
                 client.Timeout=TimeSpan.FromSeconds(185);timeout.CancelAfter(TimeSpan.FromSeconds(180));if(key!="")request.Headers.Authorization=new AuthenticationHeaderValue("Bearer",key);request.Content=new StringContent(json,Encoding.UTF8,"application/json");
                 try{using(var reply=await client.SendAsync(request,HttpCompletionOption.ResponseHeadersRead,timeout.Token)){
-                    int status=(int)reply.StatusCode;if(status==400||status==422)throw new AgentToolsUnsupported("当前模型或接口不支持工具调用，已改用兼容协议。");if(!reply.IsSuccessStatusCode)throw new InvalidDataException(HttpError(status));
+                    if(onStatus!=null)onStatus((int)reply.StatusCode);if(!reply.IsSuccessStatusCode){var failure=await AgentHttpFailure.Read(reply,timeout.Token);if(failure.kind=="tools_unsupported")throw new AgentToolsUnsupported(failure.Message,failure.httpStatus);throw failure;}
                     using(var stream=await reply.Content.ReadAsStreamAsync())using(var registration=timeout.Token.Register(()=>stream.Dispose()))using(var reader=new StreamReader(stream,Encoding.UTF8)){
                         bool plain=reply.Content.Headers.ContentType!=null&&reply.Content.Headers.ContentType.MediaType=="application/json";
                         if(plain){
@@ -49,9 +57,9 @@ namespace kok {
                             if(!complete)throw new InvalidDataException("AI 回答未完成，请重试。");
                         }
                     }
-                }}catch(Exception ex){if(token.IsCancellationRequested)throw new OperationCanceledException(token);if(timeout.IsCancellationRequested)throw new InvalidDataException("翻译请求超时，请稍后重试或更换模型。");if(ex is AgentToolsUnsupported||ex is InvalidDataException)throw;if(ex is HttpRequestException||ex is IOException)throw new InvalidDataException("无法连接翻译服务，请检查接口地址与网络。");throw new InvalidDataException("AI 未返回有效回答，请重试。");}
+                }}catch(Exception ex){if(token.IsCancellationRequested)throw new OperationCanceledException(token);if(timeout.IsCancellationRequested)throw new TimeoutException("翻译请求超时，请稍后重试或更换模型。");if(ex is AgentToolsUnsupported||ex is AgentFailure)throw;if(ex is HttpRequestException||ex is IOException&&!(ex is InvalidDataException))throw new HttpRequestException("无法连接翻译服务，请检查接口地址与网络。");throw new AgentFailure("response","AI 未返回有效回答，请重试。",true);}
             }
-            token.ThrowIfCancellationRequested();if(finish=="length")throw new InvalidDataException("AI 回答被截断，请缩小提问范围后重试。");
+            token.ThrowIfCancellationRequested();if(finish=="length")throw new AgentFailure("context","AI 回答被截断，请缩小提问范围后重试。");
             return ToTurn(text.ToString().Trim(),calls.Values.ToList(),exists);
         }
         static void Absorb(Dictionary<string,object> part,StringBuilder text,SortedDictionary<int,ToolCallDraft> calls,Action<string> onDelta){

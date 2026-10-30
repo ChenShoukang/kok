@@ -6,6 +6,8 @@ Keep videos, photos, music, documents and books in one local library. Organize t
 
 [Download v0.8.1 Preview](https://github.com/ChenShoukang/kok/releases/tag/v0.8.1) · [User guide](docs/GUIDE.en.md) · [中文](README.md) · [Supported formats](docs/FORMATS.en.md)
 
+In development: **[v0.8.2](docs/AGENT_0.8.2.en.md)** adds task plans and outcome review, bounded retries, request tracing and local MCP tools. Undo invalidates prior review and missing information can be supplied within the task. Source version upgraded; no new download released. [Validation scope](docs/VALIDATION_0.8.2.md).
+
 ![kok v0.8.1 library using bundled original samples](docs/screenshots/library-081-en.png)
 
 ## From collecting to creating

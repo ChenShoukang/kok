@@ -12,6 +12,7 @@ Start with the [user guide](GUIDE.en.md). Find help by the task you want to comp
 | Use kok offline, switch modes, protect records or back up a vault | [Modes, privacy and data boundaries](MODES.en.md) |
 | Configure a remote provider or a local model service | [AI setup](AI_PROVIDERS.en.md) |
 | Give Agent a scoped task and review changes | [Agent](AGENT_0.7.2.en.md) · [Evidence and review](AGENT_INTERACTIONS.en.md) · [Task/handoff boundaries](AGENT_BOUNDARIES.en.md) |
+| Use plans, request traces or local MCP tools (development) | [v0.8.2 Agent and MCP](AGENT_0.8.2.en.md) · [Local checks and optional model evaluations](VALIDATION_0.8.2.md) |
 | Check files, codecs, subtitles and export support | [Formats](FORMATS.en.md) |
 | Write linked notes and explore a knowledge graph | [Notes and graphs](KNOWLEDGE_0.6.1.en.md) |
 | Translate documents/subtitles or configure speech captions | [Translation and captions](TRANSLATION_CAPTIONS_0.5.1.md) |
@@ -30,7 +31,7 @@ Start with the [user guide](GUIDE.en.md). Find help by the task you want to comp
 | [Module contracts](MODULES_0.8.1.en.md) | Dispatch, policy, capabilities, history and background jobs |
 | [Architecture and recovery](ARCHITECTURE_0.8.1.en.md) | Registration, Agent events, recovery and handoff |
 | [Preview readiness](PUBLIC_PREVIEW_0.8.1.md) | Privacy fixes and public-preview requirements |
-| [Changelog](../CHANGELOG.en.md) · [Release notes](RELEASE_NOTES.md) | Version changes and Preview scope |
+| [Changelog](../CHANGELOG.en.md) · [Release draft and published notes](RELEASE_NOTES.md) | Version changes and Preview scope |
 | [Roadmap](../ROADMAP.en.md) | Future goals, distinguished from implemented features |
 | [Security](../SECURITY.en.md) · [Contributing](../CONTRIBUTING.md) | Reporting, development and community conduct |
 

@@ -1,9 +1,15 @@
-﻿param([string[]]$Suites=@('ui','features','translation','i18n','minimal','drop','workspaces','video-layout','refinements','menus-covers','compatibility','organizer','companion','private-space','app-modes','recovery'),[string]$LargeMediaFile,[string]$RealFilesFolder,[string]$Executable)
+﻿param([string[]]$Suites=@('ui','features','translation','i18n','minimal','drop','workspaces','video-layout','refinements','menus-covers','compatibility','organizer','companion','private-space','app-modes','recovery','agent','agent-interactions','agent-reliable','agent-runtime','agent-kernel','mcp'),[string]$LargeMediaFile,[string]$RealFilesFolder,[string]$Executable,[string]$AuditDirectory)
 $ErrorActionPreference='Stop'
 $projectRoot=Split-Path $PSScriptRoot -Parent
 $executable=if($Executable){(Resolve-Path -LiteralPath $Executable).Path}else{Join-Path $projectRoot 'dist\kok\kok.exe'}
-$auditRoot=Join-Path $projectRoot ('test-output\full-'+[DateTime]::Now.ToString('yyyyMMdd-HHmmss'))
+$testBoundary=[IO.Path]::GetFullPath((Join-Path $projectRoot 'test-output')).TrimEnd([IO.Path]::DirectorySeparatorChar)+[IO.Path]::DirectorySeparatorChar
+$auditRoot=if($AuditDirectory){[IO.Path]::GetFullPath($AuditDirectory)}else{Join-Path $projectRoot ('test-output\full-'+[DateTime]::Now.ToString('yyyyMMdd-HHmmss')+'-'+[guid]::NewGuid().ToString('N').Substring(0,8))}
+if(-not $auditRoot.StartsWith($testBoundary,[StringComparison]::OrdinalIgnoreCase)){throw 'Desktop evidence must stay inside the project test-output directory.'}
 New-Item -ItemType Directory -Path $auditRoot -Force | Out-Null
+$fingerprintJson=& node (Join-Path $projectRoot 'tools\source-fingerprint.cjs') --runtime (Split-Path -Parent $executable)
+if($LASTEXITCODE -ne 0){throw 'Unable to fingerprint the test source and runtime.'}
+$runRecord=@{started=[DateTime]::UtcNow.ToString('o');version=[Diagnostics.FileVersionInfo]::GetVersionInfo($executable).ProductVersion;executable=$executable;fingerprint=($fingerprintJson|ConvertFrom-Json);requestedSuites=$Suites;passed=$false}
+$runRecord|ConvertTo-Json -Depth 6|Set-Content -LiteralPath (Join-Path $auditRoot 'run.json') -Encoding utf8
 $results=@()
 foreach($suite in $Suites){
     if($suite -notmatch '^[a-z0-9-]+$' -or -not (Test-Path -LiteralPath (Join-Path $projectRoot ('tests\'+$suite+'.cjs')))){throw 'Unknown desktop test suite'}
@@ -70,4 +76,11 @@ foreach($suite in $Suites){
         for($attempt=0;$attempt -lt 20;$attempt++){try{Invoke-RestMethod -Uri 'http://127.0.0.1:9225/json/version' -TimeoutSec 1|Out-Null;Start-Sleep -Milliseconds 150}catch{break}}
     }
 }
+$finalFingerprintJson=& node (Join-Path $projectRoot 'tools\source-fingerprint.cjs') --runtime (Split-Path -Parent $executable)
+if($LASTEXITCODE -ne 0){throw 'Unable to verify the test source and runtime after the run.'}
+$finalFingerprint=$finalFingerprintJson|ConvertFrom-Json
+if($runRecord.fingerprint.source.sha256 -ne $finalFingerprint.source.sha256 -or $runRecord.fingerprint.runtime.sha256 -ne $finalFingerprint.runtime.sha256){throw 'Source or runtime changed during desktop testing; this run cannot validate the final tree.'}
+$runRecord.passed=$true
+$runRecord.finished=[DateTime]::UtcNow.ToString('o')
+$runRecord|ConvertTo-Json -Depth 6|Set-Content -LiteralPath (Join-Path $auditRoot 'run.json') -Encoding utf8
 Write-Output ('Desktop audit completed: '+$auditRoot)

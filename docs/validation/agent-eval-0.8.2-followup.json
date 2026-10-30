@@ -1,0 +1,105 @@
+{
+  "format": "kok.agent.eval",
+  "version": 1,
+  "model": "deepseek-chat",
+  "maximumRequests": 12,
+  "cases": [
+    {
+      "id": "plan",
+      "status": "failed",
+      "checks": {
+        "reviewed": false,
+        "requestBudget": true,
+        "plan": true,
+        "oneNote": true,
+        "evidence": false
+      },
+      "requests": 4,
+      "usage": {
+        "cachedTokens": 13440,
+        "cost": 0,
+        "estimated": false,
+        "inputTokens": 17494,
+        "outputTokens": 1242,
+        "repairs": 1,
+        "requests": 4
+      },
+      "durationMs": 8660,
+      "passed": false
+    },
+    {
+      "id": "rejection",
+      "status": "limited",
+      "checks": {
+        "reviewed": false,
+        "requestBudget": true,
+        "noAppliedWrite": true,
+        "honestOutcome": false,
+        "rejected": true
+      },
+      "requests": 4,
+      "usage": {
+        "cachedTokens": 14336,
+        "cost": 0,
+        "estimated": false,
+        "inputTokens": 17162,
+        "outputTokens": 837,
+        "repairs": 0,
+        "requests": 4
+      },
+      "durationMs": 5890,
+      "passed": false
+    },
+    {
+      "id": "comparison",
+      "status": "completed",
+      "checks": {
+        "reviewed": true,
+        "requestBudget": true,
+        "bothValues": true,
+        "versions": true,
+        "sources": true,
+        "plan": true
+      },
+      "requests": 2,
+      "usage": {
+        "cachedTokens": 3456,
+        "cost": 0,
+        "estimated": false,
+        "inputTokens": 4955,
+        "outputTokens": 884,
+        "repairs": 0,
+        "requests": 2
+      },
+      "durationMs": 4841,
+      "passed": true
+    }
+  ],
+  "passed": false,
+  "keyCleared": true,
+  "provenance": {
+    "started": "2026-10-30T05:37:21.2045906Z",
+    "version": "0.8.2",
+    "fingerprint": {
+      "source": {
+        "count": 347,
+        "sha256": "c136a23bbc1285d87db8f3f76d141c9c79dd578b1a83ca37143564f9b8beacce"
+      },
+      "runtime": {
+        "count": 394,
+        "sha256": "2cad89f87eb6bdcf0032754489a66f99439e973d067a3ee163dc3c7027da17cb"
+      },
+      "executableSha256": "5d7d731d21c6b93c6bced445e11575a1bab1bcea8981d9c6d94fe58d048a94f5"
+    },
+    "note": "Targeted follow-up only. Not a replacement six-case run on the final packaged binary."
+  },
+  "manualReview": {
+    "comparison": {
+      "arithmetic": false,
+      "expectedDifference": 600,
+      "claimedDifference": 500
+    },
+    "accepted": false,
+    "note": "Automatic checks initially missed this calculation error. Future evaluation version 2 requires correct difference and an actually applied note."
+  }
+}

@@ -2,7 +2,7 @@
 
 [中文](TESTING.md) · English · [Documentation](README.en.md)
 
-**The current version is a v0.8.1 Preview. [v0.8.1 validation](VALIDATION_0.8.1.md#english) is the single source for current results, reproduction commands and limits.** This page keeps historical evidence and general checks; older counts below are not current-version results.
+**The published version is v0.8.1 Preview. Development [v0.8.2 validation](VALIDATION_0.8.2.md) is recorded separately; older counts do not apply. [v0.8.1 validation](VALIDATION_0.8.1.md#english) is the single source for current results, reproduction commands and limits.** This page keeps historical evidence and general checks; older counts below are not current-version results.
 
 Passing checks confirm the paths covered by those checks, rather than every Windows machine, codec or AI service.
 

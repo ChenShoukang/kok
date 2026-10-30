@@ -27,4 +27,7 @@ Write-Output "Package: $archive ($size MB)"
 Write-Output "SHA-256: $hash"
 # Verification passed; drop the GUID staging copy so dist/ does not accumulate full app trees.
 $stageRoot=Split-Path -Parent $stage
-if(Test-Path -LiteralPath $stageRoot){Remove-Item -LiteralPath $stageRoot -Recurse -Force}
+$distBoundary=[IO.Path]::GetFullPath((Join-Path $root 'dist')).TrimEnd([IO.Path]::DirectorySeparatorChar)+[IO.Path]::DirectorySeparatorChar
+$resolvedStage=[IO.Path]::GetFullPath($stageRoot)
+if(-not $resolvedStage.StartsWith($distBoundary,[StringComparison]::OrdinalIgnoreCase) -or [IO.Path]::GetFileName($resolvedStage) -notmatch '^release-[a-f0-9]{32}$'){throw 'Refusing to remove a staging path outside the release directory.'}
+if(Test-Path -LiteralPath $resolvedStage){Remove-Item -LiteralPath $resolvedStage -Recurse -Force}

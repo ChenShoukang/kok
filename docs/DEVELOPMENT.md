@@ -55,7 +55,7 @@ npm run test:i18n
 
 `package.ps1` 从明确的文件清单和当前资源目录生成 `dist/kok-<版本>-win-x64.zip` 及 SHA-256 文件，排除资料库、密钥、调试二进制和临时测试内容。
 
-v0.6.2 发布时启用过 `release.publish: true`：推送 main 后，两个 Windows 环境通过构建、测试与审计才发布预览包。当前 v0.8.1 本地预览在 `package.json` 中设为 `release.publish: false`，推送 main 只构建与审计、不会发布；需要发布时改回 true，并先确认 `docs/RELEASE_NOTES.md` 已是目标版本。已对相同原生源码完成检查后，可用 `package.ps1 -SkipTests` 重新打包；暂存目录与 ZIP 隐私审计仍执行。
+v0.6.2 发布时启用过 `release.publish: true`：推送 main 后，两个 Windows 环境通过构建、测试与审计才发布预览包。当前 v0.8.2 开发版在 `package.json` 中设为 `release.publish: false`，推送 main 只构建与审计、不会发布；需要发布时改回 true，并先确认 `docs/RELEASE_NOTES.md` 已是目标版本。已对相同原生源码完成检查后，可用 `package.ps1 -SkipTests` 重新打包；暂存目录与 ZIP 隐私审计仍执行。
 
 推送 `main` 后，[Windows 构建工作流](https://github.com/ChenShoukang/kok/blob/main/.github/workflows/build.yml) 在 Windows Server 2022 / 2025 上执行脚本、依赖、源码及完整 Git 历史检查，再运行原生测试与打包。构建只读仓库；独立发布任务等待两个环境通过后，才使用 `contents: write` 和内置 `GITHUB_TOKEN`。后续版本默认发布为 Preview；已有版本不会被静默替换。服务器检查不能替代 Windows 10 / 11 新电脑验证，范围见[发布验证](TESTING.md)。
 
@@ -86,3 +86,7 @@ v0.6.2 发布时启用过 `release.publish: true`：推送 main 后，两个 Win
 网页识别参考 [HTML 媒体元素](https://html.spec.whatwg.org/multipage/media.html)、[Open Graph](https://ogp.me/) 与 [VideoObject 元数据](https://schema.org/VideoObject)，实现见 `src/MediaResolver.cs`；不执行网页 JavaScript。
 
 站点适配：`powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-desktop.ps1 -Suites site-adapters`。使用原创本机媒体与离线 HTTP 模拟验证三站数据、分轨和加密会话；实站只读取公开元数据。设 `KOK_SKIP_LIVE_SITES=1` 可跳过外部检查。YouTube 依赖由 `tools/youtube-dependencies.json` 固定，构建校验 NuGet 和 DLL SHA-256；新增许可位于 `docs/licenses/`。
+
+## v0.8.2 Agent 定向回归
+
+`npm run test:agent` 为六组 Agent / MCP 检查各建隔离资料库，只使用本地模拟模型与 stdio 服务。默认桌面列表也包含这些组。工作流新增 `Agent desktop integration` 作业，并成为后续发布的必要依赖；本地修改尚未在云端执行。可选真实模型评测需要显式启用，不进入 CI。见 [v0.8.2 验证与边界](VALIDATION_0.8.2.md)。

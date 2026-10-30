@@ -29,7 +29,7 @@ class AgentTests {
   check(Rejects(()=>AgentRules.Parse("not json",exists))&&Rejects(()=>AgentRules.Parse("{\"reply\":\"\"}",exists)),"invalid or empty agent output never executes");
   check(Rejects(()=>AgentRules.Parse("{\"reply\":\"x\",\"actions\":[{\"tool\":\"create_document\",\"args\":{\"name\":\"../escape\",\"format\":\"md\",\"text\":\"x\"}}]}",exists)),"document names cannot escape the managed folder");
   var readSchemas=Library.Json.Serialize(AgentRules.Schemas(false));
-  check(readSchemas.Contains("read_items")&&!readSchemas.Contains("write_note")&&AgentRules.Schemas(true).Length==AgentRules.Tools.Length,"discussion requests offer only read tools; assist requests offer every registered tool");
+  check(readSchemas.Contains("read_items")&&!readSchemas.Contains("write_note")&&AgentRules.Schemas(true,null,true).Length==AgentRules.Tools.Length&&!readSchemas.Contains("mcp_call"),"discussion requests offer only read tools; connected assist requests offer every registered tool");
   check(AgentRules.ReadTools.SequenceEqual(ModuleRegistry.Builtins.Tools.Where(t=>!t.Write).Select(t=>t.Name))&&AgentRules.ReadTools.Contains("read_clips")&&AgentRules.Protocol(false).Contains("read_items{ids[<=8],question?}"),"the registry drives both tool groups and the JSON fallback protocol");
   AgentReply invalidReply;string problem;
   check(!AgentRules.TryParse("{\"reply\":\"x\",\"actions\":[{\"tool\":\"open_item\",\"args\":{\"id\":\""+new string('a',32)+"\"}}]}",exists,out invalidReply,out problem)&&problem.Contains("action 1 (open_item)")&&problem.Contains("unknown or out-of-scope file ID"),"invalid replies name the action and argument for a repair round");
@@ -46,7 +46,7 @@ class AgentTests {
   provider.type="application/json";provider.body="{\"choices\":[{\"message\":{\"content\":\"\",\"tool_calls\":[{\"id\":\"call_2\",\"type\":\"function\",\"function\":{\"name\":\"delete_file\",\"arguments\":\"{}\"}}]},\"finish_reason\":\"tool_calls\"}]}";
   AgentRepair repair=null;try{ask();}catch(AgentRepair e){repair=e;}
   check(repair!=null&&repair.messages.Count==2&&Library.Json.Serialize(repair.messages[1]).Contains("Error: unknown tool"),"an invalid native call becomes a repair round that answers the call with its error");
-  provider.status=HttpStatusCode.BadRequest;provider.body="{}";bool unsupported=false;try{ask();}catch(AgentToolsUnsupported){unsupported=true;}
+  provider.status=HttpStatusCode.BadRequest;provider.body="{\"error\":{\"code\":\"unsupported_parameter\",\"param\":\"tools\"}}";bool unsupported=false;try{ask();}catch(AgentToolsUnsupported){unsupported=true;}
   check(unsupported,"a provider that rejects tools signals the JSON fallback instead of failing the task");
   check(Rejects(()=>AgentRules.Parse("{\"reply\":\"x\",\"actions\":[{\"tool\":\"create_presentation\",\"args\":{\"title\":\"Deck\",\"slides\":[]}}]}",exists)),"presentations need at least one slide");
   library.Update(id,new Dictionary<string,object>{{"tags",new List<string>{"design"," design ","plan"}}});

@@ -1,3 +1,4 @@
+import {AgentOperations} from './agent-operations.mjs';
 // Migrated intact from agent-ui.js
 'use strict';
 // Interaction patterns: assistant-ui tool groups/sources/reviewable diffs, OpenHands event grouping,
@@ -23,7 +24,7 @@ function agentAnswer(m){
 }
 function agentEntries(){
  for(const m of agent.messages)m.id||=uid();
- return AgentModel.groups(agent.messages).map(group=>{
+ return AgentModel.groups(agent.messages.filter(m=>!(['update_plan','finish_task'].includes(m.tool)&&m.status==='done'))).map(group=>{
   const first=group.items[0];if(group.kind==='message')return `<div class="agent-entry" data-entry="${first.id}">${agentMessage(first)}</div>`;
   const active=group.items.some(m=>['queued','running'].includes(m.status)),failed=group.items.some(m=>m.status==='failed');
   const done=group.items.filter(m=>m.status==='done').length;
@@ -32,9 +33,9 @@ function agentEntries(){
  }).join('');
 }
 function agentBatch(){
- const rows=agent.messages.filter(m=>m.status==='pending');if(rows.length<2)return '';
- const selected=rows.filter(m=>m.selected!==false).length;
- return `<div class="agent-batch"><span>${rows.length} ${I18n.text('项待确认')}</span><button type="button" class="text-button" data-agent-toggle-selection>${I18n.text(selected===rows.length?'取消全选':'全选')}</button><button type="button" class="button primary" data-agent-run-selected ${!selected?'disabled':''}>${I18n.text('执行所选')} · ${selected}</button><button type="button" class="button secondary" data-agent-skip-all>${I18n.text('全部跳过')}</button></div>`;
+ const pending=agent.messages.filter(m=>m.status==='pending');if(pending.length<2)return '';
+ const rows=pending.filter(m=>m.tool!=='mcp_call'),selected=rows.filter(m=>m.selected!==false).length,external=pending.length-rows.length;
+ return `<div class="agent-batch"><span>${pending.length} ${I18n.text('项待确认')}${external?' · '+I18n.text('外部调用请逐项确认'):''}</span>${rows.length?`<button type="button" class="text-button" data-agent-toggle-selection>${I18n.text(selected===rows.length?'取消全选':'全选')}</button><button type="button" class="button primary" data-agent-run-selected ${!selected?'disabled':''}>${I18n.text('执行所选')} · ${selected}</button>`:''}<button type="button" class="button secondary" data-agent-skip-all>${I18n.text('全部跳过')}</button></div>`;
 }
 function agentMetadataDiff(m){
  if(!m.changes?.length)return '';
@@ -71,8 +72,8 @@ document.addEventListener('click',event=>{
  const t=event.target;
  const summary=t.closest('.agent-tool-group>summary');if(summary){const details=summary.parentElement;agentGroupOpen.set(details.dataset.groupId,!details.open);}
  if(t.closest('[data-agent-latest]')){const stream=$('#agent-stream');stream.scrollTo({top:stream.scrollHeight,behavior:reducedMotion()?'instant':'smooth'});$('#agent-input')?.focus({preventScroll:true});return;}
- if(t.closest('[data-agent-toggle-selection]')){const rows=agent.messages.filter(m=>m.status==='pending'),value=!rows.every(m=>m.selected!==false);rows.forEach(m=>m.selected=value);agentPaint({scroll:false});return;}
- if(t.closest('[data-agent-run-selected]')){const ids=agent.messages.filter(m=>m.status==='pending'&&m.selected!==false).map(m=>m.id);(async()=>{for(const id of ids)await agentDecide(id,true);})().catch(fail);return;}
+ if(t.closest('[data-agent-toggle-selection]')){const rows=agent.messages.filter(m=>m.status==='pending'&&m.tool!=='mcp_call'),value=!rows.every(m=>m.selected!==false);rows.forEach(m=>m.selected=value);agentPaint({scroll:false});return;}
+ if(t.closest('[data-agent-run-selected]')){const ids=agent.messages.filter(m=>m.status==='pending'&&m.tool!=='mcp_call'&&m.selected!==false).map(m=>m.id);(async()=>{for(const id of ids)await agentDecide(id,true,true);})().catch(fail);return;}
  const copy=t.closest('[data-agent-copy]');if(copy){const m=agent.messages.find(m=>m.id===copy.dataset.agentCopy);if(m)navigator.clipboard.writeText(m.text).then(()=>toast('回答已复制。')).catch(fail);return;}
  const save=t.closest('[data-agent-save-answer]');if(save){agentSaveAnswer(save.dataset.agentSaveAnswer).catch(fail);return;}
  const retry=t.closest('[data-agent-edit-request]');if(retry){const m=agent.messages.find(m=>m.id===retry.dataset.agentEditRequest);if(m&&!agent.job){agent.draft=m.goal||'';agentPaint({scroll:false});const input=$('#agent-input');if(input){input.value=agent.draft;input.focus();input.setSelectionRange(0,input.value.length);}}}
@@ -160,10 +161,13 @@ function agentSummary(tool,args){
   case 'create_document':return args.name+'.'+args.format;
   case 'create_presentation':return args.title+' · '+args.slides.length+I18n.text(' 页');
   case 'open_item':return agentItemName(args.id);
+  case 'mcp_call':return args.tool;
+  case 'update_plan':return String(args.steps?.length||0);
+  case 'finish_task':return I18n.text(({review_required:'核对已失效',completed:'已完成',partial:'部分完成',needs_input:'需要补充信息'})[args.status]||'任务核对');
  }return '';
 }
 function agentPreview(m){
- const a=m.args;if(m.changes?.length)return agentMetadataDiff(m);if(m.tool==='write_note')return `<details class="agent-diff"><summary>${I18n.text('查看修改前后')}</summary><div><section><b>${I18n.text('修改前')}</b><pre data-user-content>${esc(m.beforeText??byId(a.id)?.notes??'')}</pre></section><section><b>${I18n.text('修改后')}</b><pre data-user-content>${esc(m.afterText??a.text)}</pre></section></div></details>`;if(m.tool==='create_document')return `<pre class="agent-preview" data-user-content>${esc(a.text.slice(0,1200))}${a.text.length>1200?'…':''}</pre>`;
+ const a=m.args;if(m.tool==='mcp_call')return `<div class="agent-external-warning">${I18n.text('外部工具可访问当前账户的文件和网络，不受资料库范围沙箱限制，且不能自动撤销。')}</div><dl class="agent-external-target"><dt>${I18n.text('服务 ID')}</dt><dd data-user-content>${esc(a.serverId)}</dd><dt>${I18n.text('工具')}</dt><dd data-user-content>${esc(a.tool)}</dd></dl><pre class="agent-preview" data-user-content>${esc(JSON.stringify(a.arguments,null,2))}</pre>`;if(m.changes?.length)return agentMetadataDiff(m);if(m.tool==='write_note')return `<details class="agent-diff"><summary>${I18n.text('查看修改前后')}</summary><div><section><b>${I18n.text('修改前')}</b><pre data-user-content>${esc(m.beforeText??byId(a.id)?.notes??'')}</pre></section><section><b>${I18n.text('修改后')}</b><pre data-user-content>${esc(m.afterText??a.text)}</pre></section></div></details>`;if(m.tool==='create_document')return `<pre class="agent-preview" data-user-content>${esc(a.text.slice(0,1200))}${a.text.length>1200?'…':''}</pre>`;
  if(m.tool==='create_presentation')return `<ol class="agent-preview agent-slides" data-user-content>${a.slides.map(s=>`<li><b>${esc(s.title)}</b>${(s.bullets||[]).length?`<span>${esc(s.bullets.join(' / '))}</span>`:''}</li>`).join('')}</ol>`;
  return '';
 }
@@ -179,12 +183,12 @@ function agentMessage(m){
   :m.status==='undone'?`<div class="agent-card-actions"><span class="agent-status">${I18n.text('已撤销')}</span></div>`
   :m.status==='failed'?`<div class="agent-card-actions"><span class="agent-status bad">${esc(m.error||I18n.text('执行失败'))}</span></div>`
   :m.status==='running'?`<div class="agent-card-actions"><span class="agent-status"><span class="spinner"></span>${I18n.text('执行中')}</span></div>`:'';
- return `<article class="agent-card ${read?'agent-card-read':''} agent-${m.status}" data-agent-card="${m.id}"><header>${m.status==='pending'?`<input type="checkbox" data-agent-select="${m.id}" ${m.selected!==false?'checked':''} aria-label="${I18n.text('选择此修改')}">`:''}${svg(tool.icon)}<b>${I18n.text(tool.label)}</b><span data-user-content>${esc(agentSummary(m.tool,m.args))}</span></header>${m.why?`<p data-user-content>${esc(m.why)}</p>`:''}${read?'':agentPreview(m)}${read?(m.status==='done'?`<small>${I18n.text('已自动读取，未修改任何内容')}</small><div class="agent-sources">${agentSourceButtons(m.sourceIds)}</div>${m.readPreview?`<details class="agent-read-preview"><summary>${I18n.text('查看读取节选')}</summary><pre data-user-content>${esc(m.readPreview)}</pre>${m.resultEventId?`<button type="button" class="text-button" data-agent-full-result="${m.id}">${I18n.text('完整读取结果')}</button>`:''}</details>`:''}`:m.status==='failed'?`<small class="agent-read-error">${esc(m.error)}</small>`:''):controls}</article>`;
+ return `<article class="agent-card ${read?'agent-card-read':''} agent-${m.status}" data-agent-card="${m.id}"><header>${m.status==='pending'&&m.tool!=='mcp_call'?`<input type="checkbox" data-agent-select="${m.id}" ${m.selected!==false?'checked':''} aria-label="${I18n.text('选择此修改')}">`:''}${svg(tool.icon)}<b>${I18n.text(tool.label)}</b><span data-user-content>${esc(agentSummary(m.tool,m.args))}</span></header>${m.why?`<p data-user-content>${esc(m.why)}</p>`:''}${read?'':agentPreview(m)}${m.tool==='mcp_call'&&m.readPreview?`<details class="agent-external-result"><summary>${I18n.text('外部返回')}</summary><pre data-user-content>${esc(m.readPreview)}</pre>${m.resultEventId?`<button type="button" class="text-button" data-agent-full-result="${m.id}">${I18n.text('完整外部结果')}</button>`:''}</details>`:''}${read?(m.status==='done'?`<small>${I18n.text('已自动读取，未修改任何内容')}</small><div class="agent-sources">${agentSourceButtons(m.sourceIds)}</div>${m.readPreview?`<details class="agent-read-preview"><summary>${I18n.text('查看读取节选')}</summary><pre data-user-content>${esc(m.readPreview)}</pre>${m.resultEventId?`<button type="button" class="text-button" data-agent-full-result="${m.id}">${I18n.text('完整读取结果')}</button>`:''}</details>`:''}`:m.status==='failed'?`<small class="agent-read-error">${esc(m.error)}</small>`:''):controls}</article>`;
 }
 function agentEmpty(){
  return `<div class="agent-empty"><div class="agent-mark" aria-hidden="true"><span></span></div><h1>${I18n.text('今天想做点什么？')}</h1><p>${I18n.text('选定资料，说出要求，修改由你确认。')}</p>
  <div class="agent-starters">${AGENT_STARTERS.map(([text,icon])=>`<button type="button" data-agent-starter="${esc(text)}">${svg(icon)}<span>${I18n.text(text)}</span></button>`).join('')}</div>
- <div class="agent-tools-row"><span>${I18n.text('其他工具')}</span><button type="button" class="text-button" data-study-open="compare">${I18n.text('多文件对比')}</button><button type="button" class="text-button" data-study-open="review">${I18n.text('笔记回顾')}</button><button type="button" class="text-button" data-open-knowledge>${I18n.text('知识图谱')}</button><button type="button" class="text-button" data-route="organize-legacy">${I18n.text('批量 AI 归纳')}</button></div></div>`;
+ <div class="agent-tools-row">${Kok.enabled('mcp')?`<button type="button" class="text-button" data-mcp-settings>${I18n.text('外部工具 MCP')}</button>`:''}<span>${I18n.text('其他工具')}</span><button type="button" class="text-button" data-study-open="compare">${I18n.text('多文件对比')}</button><button type="button" class="text-button" data-study-open="review">${I18n.text('笔记回顾')}</button><button type="button" class="text-button" data-open-knowledge>${I18n.text('知识图谱')}</button><button type="button" class="text-button" data-route="organize-legacy">${I18n.text('批量 AI 归纳')}</button></div></div>`;
 }
 function agentView(){
  if(!agentAvailable())return `<section class="agent-page agent-off"><div class="agent-empty"><h1>${I18n.text('Agent 需要智能模式')}</h1><p>${I18n.text('纯净模式和私密文件夹不会发送任何 AI 请求。切换到智能模式并配置 AI 服务后即可使用。')}</p><button class="button primary" data-agent-settings>${I18n.text('切换到智能模式')}</button></div></section>`;
@@ -192,12 +196,12 @@ function agentView(){
  const usage=agent.usage;const used=usage?`${usage.estimated?I18n.text('保守估算'):I18n.text('服务商用量')} · ${usage.inputTokens} / ${usage.outputTokens} tokens${usage.cachedTokens?' · '+I18n.text('缓存命中')+' '+usage.cachedTokens:''}${agent.inputRate&&agent.outputRate?' · '+usage.cost.toFixed(5):''}`:I18n.text('仅在发送后调用 API');
  return `<section class="agent-page"><div class="agent-main">
  <div class="agent-toolbar"><select id="agent-scope" aria-label="${I18n.text('资料范围')}" ${busy?'disabled':''}>${[['all','整个资料库'],['selected','仅所选资料'],['collection','指定文件夹']].map(([v,l])=>`<option value="${v}" ${agent.scope===v?'selected':''}>${I18n.text(l)}</option>`).join('')}</select>${agent.scope==='collection'?`<select id="agent-collection" aria-label="${I18n.text('文件夹')}" ${busy?'disabled':''}><option value="">${I18n.text('选择文件夹')}</option>${state.collections.map(c=>`<option value="${esc(c)}" ${c===agent.collection?'selected':''} data-user-content>${esc(c)}</option>`).join('')}</select>`:''}<span class="agent-progress" id="agent-progress" role="status" data-busy="${busy}">${I18n.text(agent.phase||'就绪')}</span><button type="button" class="text-button" data-agent-sessions ${busy?'disabled':''}>${svg('clock')}${I18n.text('会话')}</button><button type="button" class="text-button" data-agent-task-records>${I18n.text('任务记录')}</button></div>
- <div class="agent-recovery">${agentRecoveryBar()}</div><div class="agent-stream" id="agent-stream" aria-live="polite">${agent.messages.length?agentEntries():agentEmpty()}</div><div class="agent-review">${agentBatch()}</div>
+ <div class="agent-recovery">${agentRecoveryBar()}</div>${AgentOperations.view(agent.recovery&&(!agent.job||agent.job.id===agent.recovery.id)?agent.recovery:null)}<div class="agent-stream" id="agent-stream" aria-live="polite">${agent.messages.length?agentEntries():agentEmpty()}</div><div class="agent-review">${agentBatch()}</div>
  <button type="button" class="agent-latest text-button" data-agent-latest hidden>${I18n.text('回到最新')}${svg('arrow')}</button><form class="agent-composer" id="agent-form"><div class="agent-context">${agentContextChips()}<button type="button" class="agent-chip agent-add" data-agent-pick ${busy?'disabled':''}>${svg('plus')}<b>${I18n.text('添加资料')}</b></button></div>
  <textarea id="agent-input" rows="2" maxlength="2000" placeholder="${esc(I18n.text(busy?'补充当前要求，或加入待办…':'让 Agent 整理、总结、写笔记或做演示文稿…  输入 / 使用技能'))}" aria-label="${esc(I18n.text('给 Agent 的要求'))}">${esc(agent.draft)}</textarea>
  <div class="agent-controls"><select id="agent-intent" aria-label="${I18n.text('任务方式')}" ${busy?'disabled':''}><option value="assist" ${agent.intent==='assist'?'selected':''}>${I18n.text('协作修改')}</option><option value="discuss" ${agent.intent==='discuss'?'selected':''}>${I18n.text('仅讨论')}</option></select><select id="agent-skill" aria-label="${I18n.text('技能')}" ${busy?'disabled':''}><option value="auto" ${agent.skill==='auto'?'selected':''}>${I18n.text('自动选择技能')}</option><option value="" ${!agent.skill?'selected':''}>${I18n.text('不使用技能')}</option>${skills.map(s=>`<option value="${esc(s.name)}" ${agent.skill===s.name?'selected':''}>${esc(I18n.text(s.title||s.name))}</option>`).join('')}</select>
  <select id="agent-budget" aria-label="${I18n.text('用量')}" ${busy?'disabled':''}>${[[6000,'省用量'],[14000,'均衡'],[24000,'更多上下文']].map(([v,l])=>`<option value="${v}" ${agent.budget===v?'selected':''}>${I18n.text(l)}</option>`).join('')}</select><button type="button" class="text-button" data-agent-limits aria-expanded="${agent.options}" ${busy?'disabled':''}>${I18n.text('用量设置')}</button>
- ${busy?`<button type="submit" class="button secondary">${I18n.text('补充要求')}</button><button type="button" class="text-button" data-agent-queue>${I18n.text('稍后执行')}</button><button type="button" class="button secondary agent-send" data-agent-stop>${svg('stop')}${I18n.text('停止')}</button>`:`<button type="button" class="text-button" data-agent-new>${I18n.text('新任务')}</button><button type="submit" class="button primary agent-send">${svg('send')}${I18n.text('发送')}</button>`}</div>
+ ${busy?`<button type="submit" class="button secondary">${I18n.text('补充要求')}</button><button type="button" class="text-button" data-agent-queue>${I18n.text('稍后执行')}</button><button type="button" class="button secondary agent-send" data-agent-stop>${svg('stop')}${I18n.text('停止')}</button>`:`<button type="button" class="text-button" data-agent-new>${I18n.text('新任务')}</button><button type="submit" class="button primary agent-send">${svg('send')}${I18n.text(agent.recovery?.respondable?'补充并继续':'发送')}</button>`}</div>
  <div class="agent-limits" ${agent.options?'':'hidden'}><label>${I18n.text('调用协议')}<select id="agent-protocol" ${busy?'disabled':''}>${[['auto','自动'],['tools','原生工具调用'],['json','兼容 JSON']].map(([v,l])=>`<option value="${v}" ${agent.protocol===v?'selected':''}>${I18n.text(l)}</option>`).join('')}</select></label>${[['requestLimit','请求上限',1,12,1],['inputRate','每百万输入 token 单价',0,10000,'any'],['outputRate','每百万输出 token 单价',0,10000,'any'],['costLimit','本次费用上限',0,10000,'any']].map(([k,l,min,max,step])=>`<label>${I18n.text(l)}<input data-agent-limit="${k}" type="number" min="${min}" max="${max}" step="${step}" value="${agent[k]}" ${busy?'disabled':''}></label>`).join('')}<small>${I18n.text('单价与额度使用同一货币，0 表示关闭费用限制；按保守额度拦截下一轮，实际费用以服务商为准。')}</small></div>
  <div class="agent-footnote"><small id="agent-usage" data-user-content>${esc(used)}</small><small id="agent-queue-count">${agent.queue.length?I18n.text('待办')+' · '+agent.queue.length:''}</small>${agent.queue.length&&!busy?`<button type="button" class="text-button" data-agent-next>${I18n.text('继续待办')}</button><button type="button" class="text-button" data-agent-clear-queue>${I18n.text('清空待办')}</button>`:''}</div></form></div></section>`;
 }
@@ -207,8 +211,8 @@ function agentPaint({scroll=true}={}){
  const template=document.createElement('template');template.innerHTML=agentView();
  if(!stream||!agentAvailable()){root.replaceChildren(template.content);I18n.localize(root);return;}
  const next=template.content;
- for(const selector of ['.agent-toolbar','.agent-recovery','.agent-context','.agent-controls','.agent-limits','.agent-footnote','.agent-review']){
-  const old=root.querySelector(selector),fresh=next.querySelector(selector);if(old&&fresh&&!(selector==='.agent-limits'&&old.contains(document.activeElement))&&!agentChromeEqual(old,fresh))old.replaceWith(fresh);
+ for(const selector of ['.agent-toolbar','.agent-recovery','.agent-mission','.agent-context','.agent-controls','.agent-limits','.agent-footnote','.agent-review']){
+  const old=root.querySelector(selector),fresh=next.querySelector(selector);if(old&&fresh&&!(selector==='.agent-limits'&&old.contains(document.activeElement))&&!agentChromeEqual(old,fresh))selector==='.agent-mission'?AgentOperations.preserve(old,fresh):old.replaceWith(fresh);
  }
  const incoming=next.querySelector('#agent-stream'),keys=new Set([...incoming.children].map(e=>e.dataset.entry).filter(Boolean));
  for(const node of [...stream.children])if(!node.dataset.entry||!keys.has(node.dataset.entry))node.remove();
@@ -224,6 +228,7 @@ function agentApplySnapshot(snap){
  const rows=snap.messages.map(m=>{const old=agent.messages.find(x=>x.id===m.id&&x.taskId===id);const row={...m,taskId:id};if(old){if(old.selected!==undefined)row.selected=old.selected;if(old.savedId)row.savedId=old.savedId;}if(!snap.running&&['pending','queued','running'].includes(row.status))row.status='paused';if(m.role==='tool')row.undo=agentNativeUndo(m);if(m.role==='error')row.retryable=!!(snap.retryable&&snap.resumable);return row;});
  const first=agent.messages.findIndex(m=>m.taskId===id),rest=agent.messages.filter(m=>m.taskId!==id);
  agent.messages=first<0?[...rest,...rows]:[...rest.slice(0,first),...rows,...rest.slice(first)];
+ if(!job&&snap.status==='review_required')agentSetPhase('核对已失效');
  if(job){agent.usage=snap.usage;if(snap.phase)agentSetPhase(snap.phase);if(!snap.running)agentFinish(job,snap);}
  agentPaint({scroll:!!job});
 }
@@ -238,18 +243,18 @@ function agentFinish(job,snap){
  if(agent.job!==job)return;agent.job=null;
  const reply=[...snap.messages].reverse().find(m=>m.role==='agent'&&!m.meta),calls=snap.messages.filter(m=>m.role==='tool');
  agent.history.push({role:'user',content:job.goal},{role:'assistant',content:I18n.text('任务结果')+': '+(reply?.text||'')+' '+calls.map(c=>c.tool+':'+c.status).join(', ')});agent.history=agent.history.slice(-40);
- agentSetPhase(snap.status==='completed'?'已完成':snap.status==='limited'?'已达到本次请求上限。':snap.status==='cancelled'?'任务已取消':'任务已停止');
+ agentSetPhase(snap.status==='review_required'?'核对已失效':snap.status==='completed'?'已完成':snap.status==='partial'?'部分完成':snap.status==='needs_input'?'需要补充信息':snap.status==='limited'?'已达到本次请求上限。':snap.status==='cancelled'?'任务已取消':'任务已停止');
  renderNav();agentSave();
  if(snap.status==='completed'&&job.autoQueue!==false&&!job.cancelled&&agentAvailable()&&agent.queue.length){const next=agent.queue.shift();setTimeout(()=>runAgent(next).catch(fail),0);}
 }
 async function agentTrack(job,snap){if(job.cancelled){await native('agentTaskStop',{taskId:snap.id});return;}job.id=snap.id;agent.watch=snap.id;for(const text of job.pendingAdjustments||[])snap=await native('agentTaskAdjust',{taskId:snap.id,text});agentApplySnapshot(snap);return agentPull(snap.id);}
-async function agentDecide(id,run){
+async function agentDecide(id,run,batch=false){
  const m=agent.messages.find(x=>x.id===id);if(!m||m.status!=='pending')return;
  // A card from a task that is no longer running cannot be approved; resuming re-plans instead of replaying it.
  if(!m.taskId||agent.job?.id!==m.taskId){m.status='skipped';agentPaint({scroll:false});return;}
- if(run&&!agentAvailable())return;
+ if(run&&(!agentAvailable()||batch&&m.tool==='mcp_call'))return;
  m.status=run?'running':'skipped';agentPaint({scroll:false});
- try{agentApplySnapshot(await native('agentTaskDecide',{taskId:m.taskId,callId:id,approve:run}));if(run)await refresh();}
+ try{agentApplySnapshot(await native('agentTaskDecide',{taskId:m.taskId,callId:id,approve:run,batch}));if(run)await refresh();}
  catch(error){fail(error);agentPull(m.taskId);}
 }
 async function agentUndo(id){
@@ -259,7 +264,7 @@ async function agentUndo(id){
 }
 function agentAddInput(text,queued=false){
  text=text.trim();if(!text)return;
- if(!agent.job)return runAgent(text);
+ if(!agent.job)return agent.recovery?.respondable?agentRespond(text):runAgent(text);
  if(queued){if(agent.queue.length>=5)throw Error(I18n.text('待办最多 5 项。'));agent.queue.push(text);}
  else{if(!agent.job.id){const pending=agent.job.pendingAdjustments||=[];if(pending.join('').length+text.length>400)throw Error(I18n.text('本次补充要求最多 400 字符。'));pending.push(text);}else native('agentTaskAdjust',{taskId:agent.job.id,text}).then(agentApplySnapshot).catch(fail);}
  agent.draft='';$('#agent-input').value='';agentPaint();
@@ -278,6 +283,11 @@ async function runAgent(goal){
  try{await agentSave();if(job.cancelled)return;await agentTrack(job,await native('agentTaskStart',options));}
  catch(error){if(agent.job===job)agent.job=null;agent.messages.push({id:uid(),role:'error',text:error.message,goal});agentSetPhase('任务已停止');agentPaint();renderNav();}
 }
+async function agentRespond(text){
+ if(agent.job||!agentAvailable()||!agent.recovery?.respondable)return;
+ const taskId=agent.recovery.id,job={id:taskId,goal:text,raw:'',partial:'',request:0,cancelled:false};agent.job=job;agent.draft='';agentSetPhase('生成方案');renderNav();agentPaint();
+ try{await agentTrack(job,await native('agentTaskAdjust',{taskId,text}));}catch(error){if(agent.job===job)agent.job=null;agent.draft=text;fail(error);agentPaint();renderNav();}
+}
 async function agentContinue(taskId){
  if(agent.job||!agentAvailable())return;const job={id:taskId,goal:agent.messages.find(m=>m.taskId===taskId&&m.role==='user')?.text||'',raw:'',partial:'',request:0,cancelled:false};
  agent.job=job;agentSetPhase('生成方案');renderNav();agentPaint();
@@ -291,6 +301,7 @@ async function stopAgent(){
 let agentStreamFrame;
 Kok.on('*',(data,eventName)=>{
  const m={data,eventName};if(m.eventName==='librarySwitched'){stopAgent().catch(fail);return;}
+ if(['libraryChanged','libraryRefreshed'].includes(m.eventName)&&agent.watch&&!agent.job&&agentAvailable())return agentPull(agent.watch);
  if(m.eventName==='agentTaskChanged'){if(m.data?.taskId&&m.data.taskId===agent.watch)agentPull(m.data.taskId);return;}
  if(m.eventName!=='agentDelta'||!agent.job||m.data.jobId!==agent.job.id||agent.job.cancelled||!agentAvailable())return;
  const job=agent.job;if(m.data.request!==job.request){job.request=m.data.request;job.raw='';}job.format=m.data.format;job.raw=(job.raw||'')+m.data.text;if(job.raw.length>26000)job.raw=job.raw.slice(-26000);
@@ -323,7 +334,7 @@ document.addEventListener('click',event=>{
  if(t.closest('[data-agent-undo]'))return agentUndo(t.closest('[data-agent-undo]').dataset.agentUndo);
  if(t.closest('[data-agent-stop]'))return stopAgent();
  if(t.closest('[data-agent-continue]')){agentContinue(t.closest('[data-agent-continue]').dataset.agentContinue).catch(fail);return;}
- if(t.closest('[data-agent-run-all],[data-agent-skip-all]')){const run=!!t.closest('[data-agent-run-all]');(async()=>{for(const m of agent.messages.filter(x=>x.status==='pending'))await agentDecide(m.id,run);})().catch(fail);return;}
+ if(t.closest('[data-agent-run-all],[data-agent-skip-all]')){const run=!!t.closest('[data-agent-run-all]');(async()=>{for(const m of agent.messages.filter(x=>x.status==='pending'&&(!run||x.tool!=='mcp_call')))await agentDecide(m.id,run,true);})().catch(fail);return;}
  if(t.closest('[data-agent-new]')){agentNew().catch(fail);return;}
  if(t.closest('[data-agent-next]')){if(!agent.job&&agent.queue.length)runAgent(agent.queue.shift()).catch(fail);return;}
  if(t.closest('[data-agent-clear-queue]')){if(!agent.job){agent.queue=[];agentPaint({scroll:false});}return;}
@@ -382,12 +393,13 @@ function agentRecoveryBar(){
  const t=agent.recovery;
  if(agent.handoff)return `<span>${I18n.text('已准备交接')} · ${agent.handoff.ids.length} ${I18n.text('份资料')}</span><button type="button" class="text-button" data-agent-drop-handoff>${I18n.text('移除')}</button>`;
  if(!t||agent.job)return '';
+ if(t.respondable)return `<span>${I18n.text('在下方补充信息，继续同一任务；沿用原请求上限。')}</span>`;
  const retry=t.resumable&&(t.status!=='failed'||t.retryable);
  return `${retry?`<span>${I18n.text('任务已暂停，继续后再确认修改。')}</span><button type="button" class="button secondary" data-agent-continue-task="${t.id}">${I18n.text(t.status==='failed'?'重试当前步骤':'继续任务')}</button>`:''}${t.calls?.some(c=>c.tool==='read_items'&&c.status==='done')?`<button type="button" class="text-button" data-agent-prepare-handoff="${t.id}">${I18n.text('交接到新任务')}</button>`:''}`;
 }
 async function agentTaskRecords(){
  const rows=await native('agentTaskList');
- showSmall(`<h2>${I18n.text('任务记录')}</h2><div class="agent-task-records">${rows.length?rows.sort((a,b)=>b.updated.localeCompare(a.updated)).map(t=>`<div class="agent-task-record"><button type="button" class="text-button" data-agent-inspect-task="${t.id}"><b data-user-content>${esc(t.title)}</b><small>${esc(new Date(t.updated).toLocaleString())} · ${I18n.text(({completed:'已完成',limited:'已达到本次请求上限。',failed:'执行失败',stopped:'任务已停止',waiting:'等待确认',cancelled:'已取消'})[t.status]||'任务已暂停')}</small></button><button type="button" class="icon-button" data-agent-delete-task="${t.id}" aria-label="${I18n.text('删除任务记录')}">${svg('trash')}</button></div>`).join(''):`<p>${I18n.text('暂无任务记录')}</p>`}</div>`);I18n.localize($('#small-dialog'));
+ showSmall(`<h2>${I18n.text('任务记录')}</h2><div class="agent-task-records">${rows.length?rows.sort((a,b)=>b.updated.localeCompare(a.updated)).map(t=>`<div class="agent-task-record"><button type="button" class="text-button" data-agent-inspect-task="${t.id}"><b data-user-content>${esc(t.title)}</b><small>${esc(new Date(t.updated).toLocaleString())} · ${I18n.text(({review_required:'核对已失效',completed:'已完成',partial:'部分完成',needs_input:'需要补充信息',limited:'已达到本次请求上限。',failed:'执行失败',stopped:'任务已停止',waiting:'等待确认',cancelled:'已取消'})[t.status]||'任务已暂停')}</small></button><button type="button" class="icon-button" data-agent-delete-task="${t.id}" aria-label="${I18n.text('删除任务记录')}">${svg('trash')}</button></div>`).join(''):`<p>${I18n.text('暂无任务记录')}</p>`}</div>`);I18n.localize($('#small-dialog'));
  $('#small-dialog').onclick=async event=>{try{
   const open=event.target.closest('[data-agent-inspect-task]'),remove=event.target.closest('[data-agent-delete-task]');
   if(open){if(agent.job){toast('请先停止当前任务。',true);return;}const snap=await native('agentTaskRead',{taskId:open.dataset.agentInspectTask});await agentSave();
@@ -405,7 +417,7 @@ async function agentPrepareHandoff(taskId){
 async function agentFullResult(id){
  const m=agent.messages.find(m=>m.id===id);if(!m?.resultEventId)return;
  const e=await native('agentTaskEvents',{taskId:m.taskId,eventId:m.resultEventId});
- showSmall(`<h2>${I18n.text('完整读取结果')}</h2><pre class="agent-full-result" data-user-content>${esc(e?.data?.result?.text||'')}</pre>`);I18n.localize($('#small-dialog'));
+ showSmall(`<h2>${I18n.text(m.tool==='mcp_call'?'完整外部结果':'完整读取结果')}</h2><pre class="agent-full-result" data-user-content>${esc(e?.data?.result?.text||'')}</pre>`);I18n.localize($('#small-dialog'));
 }
 document.addEventListener('click',event=>{
  const t=event.target;

@@ -1,6 +1,6 @@
 # Agent runtime and workflow boundaries
 
-[中文](AGENT_BOUNDARIES.md) · [Back to Agent](AGENT_0.7.2.en.md)
+[中文](AGENT_BOUNDARIES.md) · [Current Agent](AGENT_0.8.2.en.md)
 
 kok does not automatically fork or merge sessions and does not expose a bash tool.
 
@@ -11,6 +11,8 @@ kok does not automatically fork or merge sessions and does not expose a bash too
 | Interface | Showing stages, evidence and changes; letting the user review, correct and stop work |
 
 Forking, event persistence and reading branches can be runtime capabilities. Automatically copying the entire session for every task and merging it afterward should not be a universal default policy. Restoring a session must not automatically replay unfinished writes.
+
+The v0.8.2 development version adds [plans, outcome review, request traces and local MCP](AGENT_0.8.2.en.md). Workflows choose plans; the kernel validates receipts and owns retries and persistence. Built-in tools do not expose an arbitrary shell. Explicitly configured MCP programs run with account permissions and every external call requires approval.
 
 ## Logs and model context are different
 

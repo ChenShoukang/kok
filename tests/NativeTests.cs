@@ -108,6 +108,8 @@ class Tests {
             PresentationRulesTests.Run(Path.Combine(temp,"presentation-rules"),Check);
             AgentTests.Run(Path.Combine(temp,"agent-rules"),Check);
             AgentTaskTests.Run(Path.Combine(temp,"agent-tasks"),Check);
+            AgentKernelTests.Run(Path.Combine(temp,"agent-kernel"),Check);
+            McpTests.Run(Path.Combine(temp,"mcp"),Check);
             ModuleTests.Run(Path.Combine(temp,"modules"),Check);
             WarehouseTests.Run(Path.Combine(temp,"warehouse"),Check);
             File.WriteAllText(lib.StoragePath,"bad sqlite"); bool rejected=false;try{new Library(lib.DataDir);}catch(InvalidDataException){rejected=true;}

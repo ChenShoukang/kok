@@ -2,17 +2,23 @@
 
 [中文](ROADMAP.md) · English
 
-## v0.8.1 Preview: implemented foundations and remaining goals
+## In development: v0.8.2 · Agent execution and tools
 
-First pass at unified action dispatch, a native Agent core, Operations / Jobs and the SQLite warehouse; still a local preview and not yet fully accepted. See [warehouse progress](docs/WAREHOUSE_0.8.1.en.md) and [module notes](docs/MODULES_0.8.1.en.md).
+Plans, explicit outcome review, bounded retries, request traces and local stdio MCP tools are implemented. See [scope](docs/AGENT_0.8.2.en.md) and [validation](docs/VALIDATION_0.8.2.md). Source version updated; automatic publishing is off.
 
-## Published: v0.6.2-r2 preview
+## Published: v0.8.1 Preview
 
-This revision adds the Graphite / frost interface, knowledge graph, document creation and motion fixes; see the [v0.6.2 notes](docs/GRAPHITE_0.6.2.en.md) and [preview download](https://github.com/ChenShoukang/kok/releases/tag/v0.6.2-r2).
+The public download remains [v0.8.1 Preview](https://github.com/ChenShoukang/kok/releases/tag/v0.8.1), including unified dispatch, a native Agent, Operations / Jobs, SQLite, Spaces and Clips. See [implementation scope](docs/WAREHOUSE_0.8.1.en.md).
 
-The app includes five local library categories, drag-and-drop import, media playback, photo edits, document / book annotations and Chinese / English interfaces. Pure blocks AI requests; Smart enables optional translation, file chat and organization. A password-protected folder lives inside the library and encrypts its index, notes and covers, but not original files.
+## Direction: a modern Agent workspace and operating layer
 
-See the [README](README.en.md) for features and the [changelog](CHANGELOG.en.md) for history. More independent machines and real files still need verification; see [release verification](docs/TESTING.en.md) for boundaries and checks.
+- Reliable execution: broader real-model evaluations, source-linked review and explicit recovery boundaries.
+- External tools: remote MCP, OAuth and finer permissions; evaluate execution isolation separately from process-lifetime control.
+- Controlled memory: editable, deletable Space-scoped memory with provenance, timestamps and expiry.
+- Explicit orchestration: workflow-selected subtasks, evidence references and reviewed merges, without default full-session copying or automatic output merging.
+- A unified workspace connecting sources, Inspector, tasks, change review and recipes while preserving offline Pure mode.
+
+These are future goals. Long-term memory management, subagent orchestration and autonomous control of the whole computer are not current capabilities. Expand permissions only after execution and data-safety validation. Media compatibility and lightweight distribution remain priorities.
 
 ## Near term: stability and maintenance
 
