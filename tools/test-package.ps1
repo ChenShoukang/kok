@@ -22,6 +22,10 @@ try{
 [IO.Compression.ZipFile]::ExtractToDirectory($archivePath,$unpacked)
 $executable=Join-Path $unpacked 'kok\kok.exe'
 if(-not (Test-Path -LiteralPath $executable) -or [Diagnostics.FileVersionInfo]::GetVersionInfo($executable).ProductVersion -ne $version){throw 'The extracted executable version does not match package.json.'}
+# Probe/install the CI runtime only after extracting the exact release artifact.
+if($env:CI -eq 'true'){
+    & (Join-Path $PSScriptRoot 'ensure-test-webview.ps1') -CoreAssembly (Join-Path (Split-Path -Parent $executable) 'Microsoft.Web.WebView2.Core.dll')
+}
 $fingerprintJson=& node (Join-Path $projectRoot 'tools\source-fingerprint.cjs') --runtime (Split-Path -Parent $executable)
 if($LASTEXITCODE -ne 0){throw 'Unable to fingerprint the extracted package.'}
 $record=@{format='kok.package.validation';version=$version;archive=[IO.Path]::GetFileName($archivePath);sha256=$hash;started=[DateTime]::UtcNow.ToString('o');fingerprint=($fingerprintJson|ConvertFrom-Json);suites=$Suites;passed=$false}

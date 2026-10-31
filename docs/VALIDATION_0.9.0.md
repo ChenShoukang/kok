@@ -8,7 +8,7 @@
 
 原生 **404 / 404**，`npm run check`、Windows PowerShell 检查、源码 / Git 历史隐私审计与依赖审计通过（依赖审计 0 个已知漏洞）。本机 ZIP **11 / 11 桌面套件通过**，包含真实 PDF.js、Windows OCR、配对采集、stdIO MCP、双协议质量回放与基础媒体 / 编辑功能。
 
-[包级原始记录](validation/package-0.9.0-local.json) · [资料服务记录](validation/library-services-0.9.0.json)。本机候选 ZIP 为 `kok-0.9.0-win-x64.zip`，22,902,386 字节，SHA-256 `52dbfad25e85a956d0387ce0f89950de21a903430471494c07a3241845696751`。这是本机候选的哈希；GitHub 云端会重新构建并直接验收其待发布 ZIP，公开下载应核对 Release 随附的 SHA-256。
+[包级原始记录](validation/package-0.9.0-local.json) · [资料服务记录](validation/library-services-0.9.0.json)。本机候选 ZIP 为 `kok-0.9.0-win-x64.zip`，23,146,384 字节，SHA-256 `1b9264d59b7131b3a82a70d710553d512f32218573164bb580311f36e3126ca4`。这是本机候选的哈希；GitHub 云端会重新构建并直接验收其待发布 ZIP，公开下载应核对 Release 随附的 SHA-256。
 
 云端发布以 [Windows 构建 / 包级门禁](https://github.com/ChenShoukang/kok/actions/workflows/build.yml)与 [v0.9.0 Release](https://github.com/ChenShoukang/kok/releases/tag/v0.9.0)的实际状态为准。Windows 2022 / 2025 构建、原生测试、依赖 / 隐私审计与同 ZIP 的桌面检查必须通过后，发布作业才执行。
 
@@ -18,7 +18,11 @@
 
 [首次云端失败记录](validation/ci-0.9.0-initial-failure.json)：两组 Windows 的静态 / 隐私检查通过，原生 MCP 握手失败，发布作业被门禁跳过。复现确认 .NET Framework 在 UTF-8 控制台下先写入 BOM，再发送 JSON；Node 服务正确拒绝该前缀。本机旧代码页未触发，因此此前的本机通过不能代替云端验证。
 
-修复使用独立字节管道，限定仅继承三个标准输入输出句柄，子进程先纳入生命周期 Job 再运行，保持调用者控制台编码。实现依据 [Microsoft 重定向子进程标准输入输出](https://learn.microsoft.com/en-us/windows/win32/procthread/creating-a-child-process-with-redirected-input-and-output)与[句柄继承白名单](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-updateprocthreadattribute)。增加 UTF-8 控制台原生回归后本机 404 项通过，后续仍以同一新候选的包级 / 云端门禁为准。
+修复使用独立字节管道，限定仅继承三个标准输入输出句柄，子进程先纳入生命周期 Job 再运行，保持调用者控制台编码。实现依据 [Microsoft 重定向子进程标准输入输出](https://learn.microsoft.com/en-us/windows/win32/procthread/creating-a-child-process-with-redirected-input-and-output)与[句柄继承白名单](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-updateprocthreadattribute)。增加 UTF-8 控制台原生回归后，本机 404 项及新 ZIP 的 11 组桌面检查通过，Windows 2022 / 2025 云端构建也已通过。[首个本机候选记录](validation/package-0.9.0-local-initial.json)保留，不覆盖历史结果。
+
+### 云端 ZIP 运行环境的准备次序
+
+[第二轮云端记录](validation/ci-0.9.0-bootstrap-failure.json)：两组构建通过后，包级检查下载了待发布 ZIP，但 WebView2 探测脚本在解压前读取旧的 `dist/kok` 构建目录，导致初始化失败，未执行桌面套件，也未发布。修复将探测移到 ZIP 安全解压及版本校验后，使用该包内的 SDK 程序集；保留 Microsoft 安装程序签名校验与全部桌面门禁。最终发布仍以工作流实际结果为准。
 
 ## 固定检查与桌面集成
 

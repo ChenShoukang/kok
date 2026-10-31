@@ -1,0 +1,11 @@
+{
+  "format": "kok.ci.validation",
+  "version": "0.9.0",
+  "commit": "647a39d6eb4fc9404d279641dff1af1132356e20",
+  "run": "https://github.com/ChenShoukang/kok/actions/runs/41161642608",
+  "build_windows_2022": "passed",
+  "build_windows_2025": "passed",
+  "package_integration": "bootstrap failed before desktop suites: WebView2 helper referenced dist/kok before the downloaded ZIP was extracted",
+  "published": false,
+  "fix": "Invoke WebView2 helper after package extraction and pass the SDK assembly path from that exact package"
+}

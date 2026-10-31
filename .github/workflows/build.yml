@@ -67,9 +67,6 @@ jobs:
         with:
           name: kok-windows-2025-win-x64
           path: dist
-      - name: Ensure signed Microsoft WebView2 runtime
-        shell: pwsh
-        run: ./tools/ensure-test-webview.ps1
       - name: Exercise the release ZIP with local fixtures
         shell: pwsh
         run: ./tools/test-package.ps1

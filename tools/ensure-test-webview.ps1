@@ -1,8 +1,10 @@
 # CI/test setup only. The shipped app never installs a runtime silently.
 # https://learn.microsoft.com/microsoft-edge/webview2/concepts/distribution
+param([string]$CoreAssembly)
 $ErrorActionPreference='Stop'
 $projectRoot=Split-Path $PSScriptRoot -Parent
-$core=Join-Path $projectRoot 'dist\kok\Microsoft.Web.WebView2.Core.dll'
+if(-not $CoreAssembly){$CoreAssembly=Join-Path $projectRoot 'dist\kok\Microsoft.Web.WebView2.Core.dll'}
+$core=(Resolve-Path -LiteralPath $CoreAssembly).Path
 Add-Type -Path $core
 function Get-TestRuntimeVersion {
     try { return [Microsoft.Web.WebView2.Core.CoreWebView2Environment]::GetAvailableBrowserVersionString() } catch { return '' }
