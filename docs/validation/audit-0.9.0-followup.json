@@ -1,0 +1,50 @@
+{
+  "format": "kok.audit.followup",
+  "version": "0.9.0",
+  "syntheticOnly": true,
+  "supersededRun": "https://github.com/ChenShoukang/kok/actions/runs/41162700940",
+  "supersededRunCancelled": true,
+  "nativeChecks": 425,
+  "nativePassed": true,
+  "newPackageSuites": 11,
+  "realModelRequests": 150,
+  "additionalRealModelRequests": 0,
+  "newRealModelSuccessRate": null,
+  "fixes": [
+    "historical plan receipts vs current completion checks",
+    "real host read-back after metadata writes",
+    "portable v2 relative paths and v1 compatibility",
+    "capture auth/origin before body",
+    "bounded background capture parsing/image encoding",
+    "shared scoped MCP hybrid search and Pure fallback",
+    "default 6-request and optional 4/6 dual-budget reporting with tool errors"
+  ],
+  "initialAuditPackage": {
+    "nativeChecks": 422,
+    "desktopSuitesPassed": 11,
+    "sha256": "e9c15b005070c7b7e47f7a1554f3832ed9735ef65a451bb419019a6ba6f307ce"
+  },
+  "additionalBoundaries": [
+    "global operation-history undo rejects plan evidence even before a task status event",
+    "automatic read-back batches contain at most 8 source IDs"
+  ],
+  "packagePassed": true,
+  "packageSha256": "5814dac0272b59b325c81f290d48230735934285c887e9a6fc2ae6163995a1ea",
+  "fingerprint": {
+    "source": {
+      "count": 402,
+      "sha256": "958d12fec704d7057078636f61e4670d3cba06c56bb9d2b8ee964a3ddd7cb933"
+    },
+    "runtime": {
+      "count": 356,
+      "sha256": "d63b817da714a1df841a7b0a3a24c4c3c0b82a8e4332fd94952c9e9f7fb8b8f1"
+    },
+    "executableSha256": "4d4539af803530e279c54d2c08c8a506d9c55f6a1a99681eba1f9e1a6a910c5d"
+  },
+  "portableVersion": 2,
+  "defaultExternalReferenceLayout": "filename",
+  "nestedRelativeLayoutRequiresExplicitRoot": true,
+  "legacyV1Restore": true,
+  "capturePreparationConcurrency": 2,
+  "newRealModelEvaluationRun": false
+}

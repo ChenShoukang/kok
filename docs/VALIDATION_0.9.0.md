@@ -6,9 +6,9 @@
 
 ## 本机发行包验收
 
-原生 **404 / 404**，`npm run check`、Windows PowerShell 检查、源码 / Git 历史隐私审计与依赖审计通过（依赖审计 0 个已知漏洞）。本机 ZIP **11 / 11 桌面套件通过**，包含真实 PDF.js、Windows OCR、配对采集、stdIO MCP、双协议质量回放与基础媒体 / 编辑功能。
+原生 **425 / 425**，`npm run check`、Windows PowerShell 检查、源码 / Git 历史隐私审计与依赖审计通过（依赖审计 0 个已知漏洞）。本机 ZIP **11 / 11 桌面套件通过**，包含真实 PDF.js、Windows OCR、配对采集、stdIO MCP、双协议质量回放与基础媒体 / 编辑功能。
 
-[包级原始记录](validation/package-0.9.0-local.json) · [资料服务记录](validation/library-services-0.9.0.json)。本机候选 ZIP 为 `kok-0.9.0-win-x64.zip`，23,146,384 字节，SHA-256 `1b9264d59b7131b3a82a70d710553d512f32218573164bb580311f36e3126ca4`。这是本机候选的哈希；GitHub 云端会重新构建并直接验收其待发布 ZIP，公开下载应核对 Release 随附的 SHA-256。
+[包级原始记录](validation/package-0.9.0-local.json) · [资料服务记录](validation/library-services-0.9.0.json)。本机候选 ZIP 为 `kok-0.9.0-win-x64.zip`，23,154,517 字节，SHA-256 `5814dac0272b59b325c81f290d48230735934285c887e9a6fc2ae6163995a1ea`。这是本机候选的哈希；GitHub 云端会重新构建并直接验收其待发布 ZIP，公开下载应核对 Release 随附的 SHA-256。
 
 云端发布以 [Windows 构建 / 包级门禁](https://github.com/ChenShoukang/kok/actions/workflows/build.yml)与 [v0.9.0 Release](https://github.com/ChenShoukang/kok/releases/tag/v0.9.0)的实际状态为准。Windows 2022 / 2025 构建、原生测试、依赖 / 隐私审计与同 ZIP 的桌面检查必须通过后，发布作业才执行。
 
@@ -28,9 +28,20 @@
 
 另行补查的[本机翻译套件](validation/translation-0.9.0-local.json)通过：使用当前可见布局 / 语言控件，模拟服务正确处理取消的 HTTP 连接，验证原件哈希、PDF / 字幕、导出、切换文件取消及缓存恢复；仅用本地模拟服务。该附加检查不计入 ZIP 的 11 组或完整历史 25 组通过。
 
+## 用户审计后的追加修复
+
+[追加审计记录](validation/audit-0.9.0-followup.json)。当前 425 项原生回归及最终 ZIP 的 11 组桌面套件通过；[审计首包记录](validation/package-0.9.0-audit-initial.json)和[审计前候选](validation/package-0.9.0-pre-audit.json)保留。收到实际失败轨迹与四个子系统问题后，主动取消旧候选 [80f4321 的自动发布](https://github.com/ChenShoukang/kok/actions/runs/41162700940)，发布作业没有执行。
+
+- 计划步骤与完成核对分开：历史动作要求成功且未撤销，当前内容主张仍要求 current。读取 → 批准写入 → 再读取 → 引用旧读取的最终计划这条四请求轨迹已加入原生确定性回归。
+- 批准元数据写入后执行真正的范围内 `read_items`，单独记录 `hostGenerated` 回执，保持工具权限和实际读回门禁；不把 `afterText` 直接当读取。相同工作流的自动回查三请求轨迹也有回归。
+- 便携清单改用 v2 相对路径；默认外部文件名，可选显式相对根目录，仍兼容 v1 恢复。检查不泄露自动记录的本机绝对路径、相对目录映射和穿越拒绝。
+- 采集在正文读取 / 分配前验证密钥及 Origin；JSON 解析和图像解码 / 重编码放入最多两个并发后台准备任务，提交前重查当前库与权限。
+- stdio MCP 查询使用与 UI / Agent 相同的本机混合检索配置、范围和回退；Pure 模式仅词面，不发送 embedding。
+- 真实模型评测默认每例六请求，可显式用 `KOK_LIVE_REQUEST_LIMITS=4,6` 分预算报告；每次工具结果带 call ID、结果事件、失败类型 / 原因和自动回查标记。**这些修复没有新增真实模型调用，150 次总账不变；不把确定性回放换算成 29/30 模型成功率。**
+
 ## 固定检查与桌面集成
 
-本地原生回归已通过 404 项，包括范围隔离、索引失效、向量缓存与参数校验、便携恢复、附件破坏、采集去重、路径重连及 MCP 授权。固定响应的 `agent-quality` 检查实际计算结果、读取来源、写入回查、拒绝、注入、中断和事件版本；这不是模型成功率。
+本地原生回归已通过 425 项，包括范围隔离、索引失效、向量缓存与参数校验、便携恢复、附件破坏、采集去重、路径重连及 MCP 授权。固定响应的 `agent-quality` 检查实际计算结果、读取来源、写入回查、拒绝、注入、中断和事件版本；这不是模型成功率。
 
 发行包门禁现在包含 11 组：基础 UI、扩展媒体功能、Agent、交互、可靠性、运行时、核对内核、MCP、平台能力、质量回放和资料服务。通过 ZIP 解压启动，验证 SHA-256、源码 / 运行指纹；CI 使用同一待发布 ZIP，不另编译一份替代它。旧 25 组开发套件与这组发行门禁的覆盖不同，本页不把所有历史开发套件标记为通过。
 
@@ -81,6 +92,6 @@ Windows OCR 已在本地真实识别合成图片。CI 镜像若缺 Windows OCR �
 
 ## English
 
-The native regression passes 404 checks. A persistent ledger limited real DeepSeek use to exactly 150 requests: initial 30 cases (24/30 after a separately recorded grading correction), targeted 10 (9/10 after quote inspection), targeted 8 (7/8 with a genuine missing-readback false completion), then the repaired case (1/1). Raw failures, corrections and fingerprints are retained. The host now requires a current read after metadata writes before completion. These targeted runs do not establish a final-build 30/30 result or the full proposed quality threshold; this remains a human-reviewed Preview.
+The native regression passes 425 checks. A persistent ledger limited real DeepSeek use to exactly 150 requests: initial 30 cases (24/30 after a separately recorded grading correction), targeted 10 (9/10 after quote inspection), targeted 8 (7/8 with a genuine missing-readback false completion), then the repaired case (1/1). Raw failures, corrections and fingerprints are retained. The host now requires a current read after metadata writes before completion. These targeted runs do not establish a final-build 30/30 result or the full proposed quality threshold; this remains a human-reviewed Preview.
 
 Real Ollama/EmbeddingGemma retrieval used 42 synthetic documents, 84 chunks and 40 queries. Exact recall was preserved; 24 paraphrase/English queries improved from 0/24 lexical to 24/24 hybrid. Three of four no-answer queries had no candidates, while one returned ten approximate candidates. Scope leaks: zero. This small benchmark is not a general quality/capacity or competitor claim. See raw reports above for machine, model digest, timings and source/runtime fingerprints.

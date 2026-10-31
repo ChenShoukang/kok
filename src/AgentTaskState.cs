@@ -15,7 +15,7 @@ namespace kok {
         public string childTaskId;public string id,providerId,turnId,tool,why,status="queued",error="",errorKind="",resultEventId,stamp,externalStamp;
         public Dictionary<string,object> args=new Dictionary<string,object>(),result;
         public List<AgentChange> changes;public string beforeText,afterText;
-        public int sequence,attempt,steering;public bool retryable;public Dictionary<string,string> sources=new Dictionary<string,string>();
+        public int sequence,attempt,steering;public bool retryable,hostGenerated;public Dictionary<string,string> sources=new Dictionary<string,string>();
     }
     public class AgentDialogue {public string id,role,text,turnId,requestId;public int sequence;public bool meta,interrupted;public List<string> sourceIds=new List<string>();}
     public class AgentTaskState {

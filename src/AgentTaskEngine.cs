@@ -15,10 +15,11 @@ namespace kok {
         readonly Func<AgentTaskState,AgentCall,CancellationToken,Task<Dictionary<string,object>>> read;
         readonly Func<AgentTaskState,AgentCall,CancellationToken,Task<AgentToolReceipt>> write;
         readonly Func<AgentTaskState,AgentAction,string,string,AgentCall> prepare;
-        readonly Func<AgentCall,bool> evidenceCurrent;
+        readonly Func<AgentCall,bool> evidenceCurrent,historicalEvidence;
         readonly object gate=new object();readonly SemaphoreSlim decisions=new SemaphoreSlim(1,1);
         TaskCompletionSource<bool> wake=new TaskCompletionSource<bool>();public Task Completion;public bool IsRunning;
-        public AgentTaskEngine(AgentTaskState state,AgentJournal journal,Action validate,Func<AgentTaskEngine,CancellationToken,Task<AgentModelTurn>> model,Func<AgentTaskState,AgentCall,CancellationToken,Task<Dictionary<string,object>>> read,Func<AgentTaskState,AgentCall,CancellationToken,Task<AgentToolReceipt>> write,Func<AgentTaskState,AgentAction,string,string,AgentCall> prepare,Action changed,Func<AgentCall,bool> evidenceCurrent=null,Func<bool> automaticAllowed=null){State=state;this.journal=journal;this.validate=validate;this.model=model;this.read=read;this.write=write;this.prepare=prepare;this.changed=changed;this.evidenceCurrent=evidenceCurrent??(c=>c.status=="done");this.automaticAllowed=automaticAllowed;}
+        public AgentTaskEngine(AgentTaskState state,AgentJournal journal,Action validate,Func<AgentTaskEngine,CancellationToken,Task<AgentModelTurn>> model,Func<AgentTaskState,AgentCall,CancellationToken,Task<Dictionary<string,object>>> read,Func<AgentTaskState,AgentCall,CancellationToken,Task<AgentToolReceipt>> write,Func<AgentTaskState,AgentAction,string,string,AgentCall> prepare,Action changed,Func<AgentCall,bool> evidenceCurrent=null,Func<bool> automaticAllowed=null,Func<AgentCall,bool> historicalEvidence=null){State=state;this.journal=journal;this.validate=validate;this.model=model;this.read=read;this.write=write;this.prepare=prepare;this.changed=changed;this.evidenceCurrent=evidenceCurrent??(c=>c.status=="done");this.automaticAllowed=automaticAllowed;this.historicalEvidence=historicalEvidence;}
+        internal bool Executed(AgentCall call){return call.status=="done"&&(historicalEvidence==null||historicalEvidence(call));}
         public AgentEvent Emit(string kind,object data){lock(gate){
             string status=State.cancelRequested||kind=="task.cancel_requested"?"cancelled":kind=="task.failed"?"failed":kind=="task.waiting"?"waiting":kind=="task.paused"?"paused":kind=="task.stopped"?"stopped":kind=="task.running"?"running":kind=="task.completed"?"completed":State.status;
             if(kind=="task.completed"){var outcome=Library.Json.Deserialize<Dictionary<string,object>>(Library.Json.Serialize(data));status=AgentTaskState.Get<bool>(outcome,"limited")?"limited":outcome.ContainsKey("outcome")?AgentTaskState.Get<string>(outcome,"outcome"):"completed";}
@@ -41,8 +42,14 @@ namespace kok {
                 if(automatic){var permit=AgentApproval.Find(State,call);if(permit==null||!CanAutoApprove(call))return;Emit("approval.used",new{grantId=permit.id,callId=call.id});}
                 if(grant)Emit("approval.granted",new{grant=new AgentApprovalGrant{id=Guid.NewGuid().ToString("N"),tool=call.tool,ids=AgentApproval.Targets(call),steering=State.steerVersion}});
                 journal.CheckCapacity(State.id,600000);Emit("tool.started",new{callId=call.id});
-                try{var receipt=await write(State,call,Cancellation.Token);Emit("tool.completed",new{callId=call.id,result=receipt.result,stamp=receipt.stamp});}
+                bool applied=false;try{var receipt=await write(State,call,Cancellation.Token);Emit("tool.completed",new{callId=call.id,result=receipt.result,stamp=receipt.stamp});applied=true;}
                 catch(OperationCanceledException){throw;}catch(Exception error){RevokeGrants("failed");var f=AgentFailure.Classify(error);var toolFailure=error as AgentToolFailure;Emit("tool.failed",new{callId=call.id,kind=f.kind,message=f.Message,retryable=false,result=toolFailure==null?null:toolFailure.result});}
+                if(applied&&State.options.kernelVersion>=3&&call.changes!=null&&read!=null){
+                    // This is an actual host read, with its own durable outcome; afterText is never a read receipt.
+                    try{var ids=call.changes.Select(c=>c.id).Distinct().ToList();for(int n=0;n<ids.Count;n+=8){var back=prepare(State,new AgentAction{tool="read_items",args=new Dictionary<string,object>{{"ids",ids.Skip(n).Take(8).ToList()}},why="Host read-back after approved metadata write"},call.turnId,null);back.hostGenerated=true;Emit("tool.proposed",new{call=back});await ReadCall(back);}}
+                    catch(OperationCanceledException){throw;}catch(AgentFailure f){Emit("task.note",new{text="Automatic read-back unavailable: "+f.Message});}
+                    catch{Emit("task.note",new{text="Automatic read-back unavailable. Read the changed sources before completing."});}
+                }
                 Signal();
             }finally{decisions.Release();}
         }

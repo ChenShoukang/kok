@@ -17,8 +17,8 @@ function complete(request,turn){
  if((turn.actions||[]).some(a=>control(a.tool)))return turn;
  const repeated=(turn.actions||[]).length>0&&turn.actions.every(a=>!['read_items','search_library'].includes(a.tool)&&records.some(c=>c.tool===a.tool&&JSON.stringify(c.args)===JSON.stringify(a.args||{})));
  if((turn.actions||[]).length&&!repeated)return turn;
- const stale=new Set(toolResults(request).filter(m=>/\nSTALE RECEIPT:/.test(m.content||'')).map(m=>/^\[kok_call_id=([a-f0-9]{32})/.exec(m.content)?.[1]));
- if(!request.tools)for(const m of text(request).matchAll(/^\[[^\n]* callId=([a-f0-9]{32}) status=done\]\nSTALE RECEIPT:/gm))stale.add(m[1]);
+ const stale=new Set(toolResults(request).filter(m=>/\n(?:STALE RECEIPT|HISTORICAL READ RECEIPT):/.test(m.content||'')).map(m=>/^\[kok_call_id=([a-f0-9]{32})/.exec(m.content)?.[1]));
+ if(!request.tools)for(const m of text(request).matchAll(/^\[[^\n]* callId=([a-f0-9]{32}) status=done\]\n(?:STALE RECEIPT|HISTORICAL READ RECEIPT):/gm))stale.add(m[1]);
  const evidence=records.filter(c=>c.status==='done'&&!stale.has(c.id)).map(c=>c.id).slice(-12),partial=records.some(c=>c.status!=='done');
  const changed=[...new Set(records.filter(c=>c.status==='done'&&['write_note','set_collection','add_tags'].includes(c.tool)).flatMap(c=>c.args.ids||[c.args.id]))];
  const readBack=[];if(!partial)for(let n=0;n<changed.length;n+=8)readBack.push({tool:'read_items',args:{ids:changed.slice(n,n+8)}});
