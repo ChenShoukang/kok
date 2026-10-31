@@ -8,6 +8,7 @@ Start with the [user guide](GUIDE.en.md). Find help by the task you want to comp
 
 | Goal | Read |
 | --- | --- |
+| v0.9.4 flat UI refresh, grouped navigation and page-by-page layout checks | [Flat UI notes](FLAT_UI.md) · [Interface references](INTERFACE_REFERENCES.md) · [Interface validation](INTERFACE_VALIDATION.md) · [Release validation](VALIDATION_0.9.4.md) |
 | Search, browser capture, OCR, portable restore or external read-only MCP | [v0.9.0 guide](LIBRARY_0.9.0.en.md) · [Current validation](VALIDATION_0.9.0.md) |
 | Import sources and understand Library, Spaces, Clips and smart collections | [Current user guide](GUIDE.en.md) |
 | Use kok offline, switch modes, protect records or back up a vault | [Modes, privacy and data boundaries](MODES.en.md) |

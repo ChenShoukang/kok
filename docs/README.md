@@ -8,6 +8,7 @@
 
 | 想做什么 | 从这里开始 |
 | --- | --- |
+| v0.9.4 扁平界面改版的发布验证 | [扁平界面说明](FLAT_UI.md) · [界面参考](INTERFACE_REFERENCES.md) · [界面验证](INTERFACE_VALIDATION.md) · [发布验证](VALIDATION_0.9.4.md) |
 | 真实模型补充验证（用户授权 API 预算） | [v0.9.2 真实模型验证](VALIDATION_0.9.2_LIVE.md) · [请求总账](validation/live-ledger-0.9.2.json) |
 | Agent MCP 便携运行时沙箱 / OAuth 设备码 / PDF 视频批量索引 | [Agent 0.9.3 能力与边界](AGENT_0.9.3.md) · [验证](VALIDATION_0.9.3.md) |
 | Agent OAuth MCP / PDF 页与视频帧视觉 / AppContainer 沙箱 | [Agent 0.9.2 能力与边界](AGENT_0.9.2.md) · [验证](VALIDATION_0.9.2.md) |

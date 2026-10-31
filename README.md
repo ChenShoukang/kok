@@ -4,11 +4,11 @@
 
 把视频、照片、音乐、文档和电子书收进同一个本地资料库；用空间组织主题，用摘录连接原文与笔记，需要时再让 AI 帮你翻译、整理和写作。
 
-[下载 v0.9.3 Preview](https://github.com/ChenShoukang/kok/releases/tag/v0.9.3) · [使用指南](docs/GUIDE.md) · [English](README.en.md) · [格式支持](docs/FORMATS.md)
+[下载 v0.9.4 Preview](https://github.com/ChenShoukang/kok/releases/tag/v0.9.4) · [使用指南](docs/GUIDE.md) · [English](README.en.md) · [格式支持](docs/FORMATS.md)
 
-**v0.9.3 Preview** 让本地 MCP 可在可授权的便携运行时目录中启用 AppContainer 沙箱，新增 MCP OAuth 设备码登录，并为 PDF 页与视频帧提供逐次审批的批量本地索引。见 [Agent 0.9.3](docs/AGENT_0.9.3.md)、[当前验证](docs/VALIDATION_0.9.3.md)、[v0.9.2 能力](docs/AGENT_0.9.2.md) 与 [路线图](ROADMAP.md)。
+**v0.9.4 Preview** 完成界面改版：统一的扁平视觉、分组导航、文件卡片/列表、阅读与媒体工具栏，并做了 25 组逐页/回归检查与 120 张截图复核；新增的界面套件已纳入 14 组包级门禁。本版不改变数据格式，也没有新增真实模型调用（总账 359）。见 [扁平界面说明](docs/FLAT_UI.md)、[界面验证](docs/INTERFACE_VALIDATION.md)、[当前验证](docs/VALIDATION_0.9.4.md) 与 [路线图](ROADMAP.md)。
 
-![kok v0.8.1 资料库，使用内置原创示例](docs/screenshots/library-081-zh.png)
+![kok v0.9.4 扁平界面资料库，使用内置原创示例](docs/screenshots/overview-flat-zh.jpg)
 
 ## 不只是把文件放在一起
 
@@ -35,7 +35,7 @@
 
 ## 开始使用
 
-1. 下载 [最新 Release](https://github.com/ChenShoukang/kok/releases/latest) 中的 `kok-0.9.3-win-x64.zip`，核对随附 SHA-256，完整解压后运行 `kok.exe`。后续版本号以 Release 页面为准。
+1. 下载 [最新 Release](https://github.com/ChenShoukang/kok/releases/latest) 中的 `kok-0.9.4-win-x64.zip`，核对随附 SHA-256，完整解压后运行 `kok.exe`。后续版本号以 Release 页面为准。
 2. 首次选择**纯净模式**或**智能模式**；不配置 AI 也能使用本地基础功能。
 3. 点击“体验示例”或拖入自己的文件，先浏览资料，再试着创建一个空间或保存一条摘录。
 
@@ -62,7 +62,7 @@
 
 ## 文档与开发
 
-[使用指南](docs/GUIDE.md) · [文档目录](docs/README.md) · [Agent 能力与边界](docs/AGENT_0.9.3.md) · [验证记录](docs/VALIDATION_0.9.3.md) · [实现进度](docs/WAREHOUSE_0.8.1.md) · [反馈](https://github.com/ChenShoukang/kok/issues/new/choose) · [安全报告](SECURITY.md)
+[使用指南](docs/GUIDE.md) · [文档目录](docs/README.md) · [Agent 能力与边界](docs/AGENT_0.9.3.md) · [验证记录](docs/VALIDATION_0.9.4.md) · [实现进度](docs/WAREHOUSE_0.8.1.md) · [反馈](https://github.com/ChenShoukang/kok/issues/new/choose) · [安全报告](SECURITY.md)
 
 ```powershell
 npm ci --omit=optional

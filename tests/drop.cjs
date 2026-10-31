@@ -23,8 +23,8 @@ const before=Object.fromEntries(originals.map(([,name])=>[name,digest(path.join(
  const drag=async(type,files)=>session.send('Input.dispatchDragEvent',{type,x:500,y:300,data:data(files)});
  async function drop(files){
    await page.evaluate(()=>$('#toasts').replaceChildren());await drag('dragEnter',files);await drag('dragOver',files);await drag('drop',files);
-   await page.waitForFunction(()=>!$('#import-status').classList.contains('hidden')||$('#toasts').children.length>0);
-   await page.waitForFunction(()=>$('#import-status').classList.contains('hidden')&&$('#toasts').children.length>0);
+   await page.waitForFunction(()=>!$('#import-status').classList.contains('hidden')||/已加入|Added/.test($('#toasts').textContent));
+   await page.waitForFunction(()=>$('#import-status').classList.contains('hidden')&&/已加入|Added/.test($('#toasts').textContent));
    return page.locator('#toasts').innerText();
  }
  try{

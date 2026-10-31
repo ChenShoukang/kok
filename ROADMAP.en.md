@@ -2,6 +2,10 @@
 
 [中文](ROADMAP.md) · English
 
+## v0.9.4 Preview deliverables
+
+The interface is refreshed with a flat visual system, grouped navigation, unified file cards/lists, consistent reading/media toolbars and keyboard-accessible interactions at compact widths. Saved classic/graphite skin preferences remain readable but render as the flat interface. Validation covers 25 local UI/regression suites and a 14-suite package gate; 120 screenshots were reviewed with no geometry or runtime findings, and the real-model ledger stays at 359. See [flat UI notes](docs/FLAT_UI.md) and [validation](docs/VALIDATION_0.9.4.md).
+
 ## v0.9.3 Preview deliverables
 
 v0.9.3 completes the portable-runtime AppContainer MCP sandbox with a CI gate, the MCP OAuth device-code flow and approval-gated PDF/video batch indexing. All remain local-first and approval-gated, with no new real-model calls (ledger 359). See [Agent 0.9.3](docs/AGENT_0.9.3.md) and [validation](docs/VALIDATION_0.9.3.md).

@@ -11,7 +11,7 @@ const CalmMotion=(()=>{
  }
  function finishAll(){for(const channels of [...active.values()])for(const animation of [...channels.values()])try{animation.finish();}catch{animation.cancel();}}
  function enter(element,kind='menu'){
-  if(!element)return;const side=kind==='drawer',running=active.get(element)?.has('surface'),style=running?getComputedStyle(element):null;return play(element,[{opacity:style?.opacity??.35,transform:'none'},{opacity:1,transform:'none'}],{duration:side?220:160});
+  if(!element)return;const side=kind==='drawer',running=active.get(element)?.has('surface'),style=running?getComputedStyle(element):null;return play(element,[{opacity:style?.opacity??0,transform:style?.transform??(side?'translateX(10px)':'translateY(-4px)')},{opacity:1,transform:'none'}],{duration:side?180:140});
  }
  function exit(element,remove=false){
   if(!element)return Promise.resolve();const style=getComputedStyle(element),animation=play(element,[{opacity:style.opacity,transform:'none'},{opacity:0,transform:'none'}],{duration:100,persist:true});

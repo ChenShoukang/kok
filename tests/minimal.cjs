@@ -17,16 +17,16 @@ const path=require('node:path');
  assert.equal(await page.locator('.hero,.quote-card,.category-grid,.workspace,.avatar,.bottom-line').count(),0);
  assert.equal(await page.locator('#main h1').innerText(),'资料库');
  assert.equal(await page.locator('.file-card').count(),await page.evaluate(()=>state.items.length));
- const blur=await page.locator('.sidebar').evaluate(el=>getComputedStyle(el).backdropFilter);assert(blur.includes('blur('));
+ const blur=await page.locator('.sidebar').evaluate(el=>getComputedStyle(el).backdropFilter);assert.equal(blur,'none');
  await page.locator('#import-more').click();await page.waitForSelector('#import-menu:not(.hidden)');assert.equal(await page.locator('#import-menu [data-action="importFolder"]').count(),1);await page.keyboard.press('Escape');assert(await page.locator('#import-menu').evaluate(el=>el.classList.contains('hidden')));
- console.log('PASS: minimal startup, content-first home, glass sidebar and import menu');
- // Check the actual overlapping page snapshots and rapid navigation cancellation.
+ console.log('PASS: minimal startup, content-first home, flat sidebar and import menu');
+ // Check the actual route fade service and rapid navigation cancellation.
  const motion=await page.evaluate(async()=>{
    const properties=new Set();const samples=[];let last=performance.now(),running=true;
    function frame(now){samples.push(now-last);last=now;if(running)requestAnimationFrame(frame);}requestAnimationFrame(frame);
    const longTasks=[];let observer;try{observer=new PerformanceObserver(list=>longTasks.push(...list.getEntries().map(e=>e.duration)));observer.observe({type:'longtask',buffered:false});}catch{}
    let transitions=0;
-   for(const route of ['photo','document','music','book','overview']){navigate(route);const transition=pageTransition;if(transition){await transition.ready;transitions++;}for(const animation of document.getAnimations())for(const frame of animation.effect.getKeyframes())for(const key of Object.keys(frame))if(!['offset','computedOffset','easing','composite'].includes(key))properties.add(key);if(transition)await transition.finished;else await new Promise(resolve=>setTimeout(resolve,500));}
+   for(const route of ['photo','document','music','book','overview']){navigate(route);const transition=pageTransition||pageAnimation;if(transition){await transition.ready;transitions++;}for(const animation of document.getAnimations())for(const frame of animation.effect.getKeyframes())for(const key of Object.keys(frame))if(!['offset','computedOffset','easing','composite'].includes(key))properties.add(key);if(transition)await transition.finished;else await new Promise(resolve=>setTimeout(resolve,500));}
    running=false;observer?.disconnect();samples.sort((a,b)=>a-b);
    return{frames:samples.length,p95FrameMs:samples[Math.floor(samples.length*.95)]||0,longTasks,properties:[...properties],transitions};
  });

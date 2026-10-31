@@ -1,0 +1,85 @@
+{
+  "format": "kok.interface.validation",
+  "version": "0.9.4",
+  "date": "2026-11-01",
+  "nativeChecks": {
+    "count": 542,
+    "passed": true
+  },
+  "interfaceSuites": [
+    "flat-design",
+    "interface-usage",
+    "interface-audit"
+  ],
+  "regressionSuites": {
+    "requested": 25,
+    "passed": 25,
+    "suites": [
+      "ui",
+      "features",
+      "translation",
+      "i18n",
+      "drop",
+      "workspaces",
+      "video-layout",
+      "menus-covers",
+      "organizer",
+      "companion",
+      "private-space",
+      "agent-interactions",
+      "agent-reliable",
+      "modules",
+      "documents",
+      "warehouse",
+      "viewer-shell",
+      "library-services",
+      "reading-flow",
+      "photo-tools",
+      "presentations-agent",
+      "interface-usage",
+      "flat-design",
+      "interface-audit",
+      "minimal"
+    ]
+  },
+  "audit": {
+    "screenshots": 120,
+    "geometryFindings": 0,
+    "runtimeFindings": 0,
+    "viewports": [
+      [
+        1440,
+        1000
+      ],
+      [
+        960,
+        720
+      ],
+      [
+        650,
+        520
+      ]
+    ],
+    "themes": [
+      "light",
+      "dark"
+    ]
+  },
+  "packageGate": {
+    "suites": 14,
+    "passed": true,
+    "archive": "kok-0.9.4-win-x64.zip",
+    "sha256": "6baa9745a90b8afededd76da673180b692799fbb045c561b52a7c5207e53f24d"
+  },
+  "fixes": [
+    "interface-audit waits for the created Space before selecting it",
+    "organizer markup is localized before insertion, covering background repaint",
+    "organizer language test waits for the i18n catalog and retries after an async repaint",
+    "documents private-vault step reloads the renderer and closes lingering modals first",
+    "docs no longer link to ignored test-output artifacts",
+    "flat-design/interface-usage/interface-audit added to the package gate"
+  ],
+  "modelCalls": 0,
+  "realModelLedger": 359,
+  "artifacts": "Local screenshots/logs live under test-output/ and are not committed."
+}

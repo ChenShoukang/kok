@@ -4,11 +4,11 @@
 
 Keep videos, photos, music, documents and books in one local library. Organize topics with Spaces, connect sources to notes with Clips, and bring in AI when you want help translating, organizing or writing.
 
-[Download v0.9.3 Preview](https://github.com/ChenShoukang/kok/releases/tag/v0.9.3) · [User guide](docs/GUIDE.en.md) · [中文](README.md) · [Supported formats](docs/FORMATS.en.md)
+[Download v0.9.4 Preview](https://github.com/ChenShoukang/kok/releases/tag/v0.9.4) · [User guide](docs/GUIDE.en.md) · [中文](README.md) · [Supported formats](docs/FORMATS.en.md)
 
-**v0.9.3 Preview** makes local MCP sandboxing usable from a grantable portable-runtime directory, adds MCP OAuth device-code sign-in, and provides approval-gated local batch indexing for PDF pages and video frames. See [Agent 0.9.3](docs/AGENT_0.9.3.md), [current validation](docs/VALIDATION_0.9.3.md), [v0.9.2 capabilities](docs/AGENT_0.9.2.md) and the [roadmap](ROADMAP.en.md).
+**v0.9.4 Preview** refreshes the interface with a flat visual system, grouped navigation, unified file cards and lists, and consistent reading/media toolbars. It was checked with 25 local UI/regression suites and 120 reviewed screenshots; the new interface suites are part of the 14-suite package gate. No data format changes and no additional real-model calls (ledger stays at 359). See [flat UI notes](docs/FLAT_UI.md), [interface validation](docs/INTERFACE_VALIDATION.md), [current validation](docs/VALIDATION_0.9.4.md) and the [roadmap](ROADMAP.en.md).
 
-![kok v0.8.1 library using bundled original samples](docs/screenshots/library-081-en.png)
+![kok v0.9.4 flat library using bundled original samples](docs/screenshots/overview-en.jpg)
 
 ## From collecting to creating
 
@@ -35,7 +35,7 @@ See the [user guide](docs/GUIDE.en.md) for workflows, editing/export scope and p
 
 ## Get started
 
-1. Download `kok-0.9.3-win-x64.zip` from the [latest Release](https://github.com/ChenShoukang/kok/releases/latest), check the accompanying SHA-256, extract the full ZIP and run `kok.exe`. Use the version shown on the Release page for later releases.
+1. Download `kok-0.9.4-win-x64.zip` from the [latest Release](https://github.com/ChenShoukang/kok/releases/latest), check the accompanying SHA-256, extract the full ZIP and run `kok.exe`. Use the version shown on the Release page for later releases.
 2. Choose **Pure** or **Smart**. Local essentials work without configuring AI.
 3. Explore the original samples or drop in your own files, then create a Space or save a Clip.
 
@@ -62,7 +62,7 @@ Choose light/dark themes, background and glass colors, bundled Smiley Sans/LXGW 
 
 ## Documentation and development
 
-[User guide](docs/GUIDE.en.md) · [Documentation](docs/README.en.md) · [Validation](docs/VALIDATION_0.9.0.md) · [Implementation scope](docs/WAREHOUSE_0.8.1.en.md) · [Issues](https://github.com/ChenShoukang/kok/issues/new/choose) · [Security](SECURITY.en.md)
+[User guide](docs/GUIDE.en.md) · [Documentation](docs/README.en.md) · [Validation](docs/VALIDATION_0.9.4.md) · [Implementation scope](docs/WAREHOUSE_0.8.1.en.md) · [Issues](https://github.com/ChenShoukang/kok/issues/new/choose) · [Security](SECURITY.en.md)
 
 ```powershell
 npm ci --omit=optional

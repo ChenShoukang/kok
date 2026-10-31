@@ -20,7 +20,21 @@ const Kok=(()=>{
  function beforeNavigate(route){for(const m of modules.values()){if(!enabled(m.id))continue;const answer=m.beforeNavigate?.(route);if(answer)return answer;}return {route};}
  function descriptors(key,context){return [...modules.values()].filter(m=>enabled(m.id)).flatMap(m=>(typeof m[key]==='function'?m[key](context):(m[key]||[])).filter(d=>!d.when||d.when(context)).map(d=>({...d,module:m.id}))).sort((a,b)=>(a.order||0)-(b.order||0));}
  function nav(){
-  for(const place of ['main','extra']){const parent=$('#'+place+'-nav');if(!parent)continue;parent.innerHTML=descriptors('nav').filter(d=>(d.place||'main')===place&&(!state.isPrivate||d.allowPrivate)).map(d=>{const badge=d.badge?.(),count=d.count?.(),icon=d.mediaIcon?navigationIcon(d.icon):svg(d.icon);return `<button class="nav-item ${d.spaceId?(state.route==='spaces'&&Warehouse.activeSpace===d.spaceId?'active':''):(d.route===state.route?'active':'')} ${d.className||''}" ${d.spaceId?`data-space="${esc(d.spaceId)}" data-space-drop="${esc(d.spaceId)}"`:d.route?`data-route="${esc(d.route)}"`:d.command?`data-kok-command="${esc(d.command)}"`:''} ${d.id==='knowledge'?'data-open-knowledge':''} aria-label="${esc(d.userContent?d.label:I18n.text(d.label))}" ${d.userContent?'data-user-content':''}>${icon}<span class="nav-label">${esc(d.userContent?d.label:I18n.text(d.label))}</span>${badge?`<span class="count agent-busy" aria-label="${esc(I18n.text('正在处理'))}"></span>`:count?`<span class="count">${esc(count)}</span>`:''}</button>`;}).join('');}
+  const group=d=>d.spaceId||['spaces','clips','queries','review','recipes'].includes(d.id)?'organize':['overview','video','photo','music','document','book'].includes(d.id)?'library':['today','agent'].includes(d.id)?'work':['favorites','recent'].includes(d.id)?'quick':'tools';
+  const groups=[['work','工作台','Workspace'],['library','资料库','Library'],['organize','组织','Organize'],['quick','快捷访问','Quick access'],['tools','更多工具','More tools']];
+  for(const place of ['main','extra']){
+   const parent=$('#'+place+'-nav');if(!parent)continue;
+   const entries=descriptors('nav').filter(d=>(d.place||'main')===place&&(!state.isPrivate||d.allowPrivate));
+   parent.innerHTML=groups.map(([key,zh,en])=>{
+    const rows=entries.filter(d=>group(d)===key);if(!rows.length)return '';
+    const label=I18n.language==='en'?en:zh,disclosure=key==='tools'&&isSmartMode(),activeGroup=rows.some(d=>d.route&&d.route===state.route);
+    return (disclosure?`<details class="nav-group" data-nav-group="${place}-${key}" ${activeGroup?'open':''}><summary class="nav-group-label">${svg('more')}<span>${label}</span>${svg('chevronDown')}</summary>`:`<div class="nav-group" role="group" aria-label="${label}"><div class="nav-group-label">${label}</div>`)+rows.map(d=>{
+     const badge=d.badge?.(),count=d.count?.(),icon=d.mediaIcon?navigationIcon(d.icon):svg(d.icon);
+     const active=d.spaceId?state.route==='spaces'&&Warehouse.activeSpace===d.spaceId:d.route===state.route;
+     return `<button class="nav-item ${active?'active':''} ${d.className||''}" ${active?'aria-current="page"':''} ${d.spaceId?`data-space="${esc(d.spaceId)}" data-space-drop="${esc(d.spaceId)}"`:d.route?`data-route="${esc(d.route)}"`:d.command?`data-kok-command="${esc(d.command)}"`:''} ${d.id==='knowledge'?'data-open-knowledge':''} aria-label="${esc(d.userContent?d.label:I18n.text(d.label))}" ${d.userContent?'data-user-content':''}>${icon}<span class="nav-label">${esc(d.userContent?d.label:I18n.text(d.label))}</span>${badge?`<span class="count agent-busy" aria-label="${esc(I18n.text('正在处理'))}"></span>`:count?`<span class="count">${esc(count)}</span>`:''}</button>`;
+    }).join('')+(disclosure?'</details>':'</div>');
+   }).join('');
+  }
  }
 
  function toolbar(context){return descriptors('cardActions',context).map(d=>`<button class="button secondary ${d.className||''}" type="button" data-kok-command="${esc(d.command)}" title="${esc(I18n.text(d.title||d.label))}">${svg(d.icon)}${esc(I18n.text(d.label))}</button>`).join('');}

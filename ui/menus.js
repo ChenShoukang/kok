@@ -6,8 +6,11 @@ const GlassMenu=(()=>{
  function close(restore=false,immediate=false){
   const current=active;if(!current)return;active=null;cancelAnimationFrame(frame);
   if(current.select){current.select.setAttribute('aria-expanded','false');current.select.removeAttribute('aria-controls');current.select.removeAttribute('aria-activedescendant');}
+  else if(current.anchor?.isConnected){current.anchor.setAttribute('aria-expanded','false');current.anchor.removeAttribute('aria-controls');}
   const remove=()=>{try{current.menu.hidePopover();}catch{}current.menu.remove();};
-  if(immediate||reducedMotion())remove();else if(typeof CalmMotion!=='undefined'){current.menu.style.pointerEvents='none';current.menu.classList.add('is-closing');current.menu.setAttribute('aria-hidden','true');current.menu.inert=true;CalmMotion.exit(current.menu).finally(remove);}else{current.menu.style.pointerEvents='none';current.menu.classList.add('is-closing');current.menu.setAttribute('aria-hidden','true');current.menu.inert=true;const animation=current.menu.animate([{opacity:1,transform:'translateY(0) scale(1)'},{opacity:0,transform:`translateY(${current.above?3:-3}px) scale(.985)`}],{duration:115,easing:'ease-out',fill:'forwards'});animation.finished.catch(()=>{}).finally(remove);}
+  // Desktop menus dismiss immediately. Leaving a closing popover in the top
+  // layer creates duplicate menus when the next action opens one quickly.
+  remove();
   if(restore&&current.anchor.isConnected){if(current.restoreFocus)current.restoreFocus();else current.anchor.focus({preventScroll:true});}
   current.onClose?.();
  }
@@ -40,7 +43,7 @@ const GlassMenu=(()=>{
   if(scroll&&button){const top=button.offsetTop,bottom=top+button.offsetHeight;if(top<current.menu.scrollTop)current.menu.scrollTop=top;else if(bottom>current.menu.scrollTop+current.menu.clientHeight)current.menu.scrollTop=bottom-current.menu.clientHeight;}
  }
  function move(delta){const current=active;if(!current)return;let n=current.index;for(let count=0;count<current.items.length;count++){n=(n+delta+current.items.length)%current.items.length;if(!current.items[n].disabled){highlight(n);break;}}}
- function choose(index){const current=active,item=current?.items[index];if(!item||item.disabled)return;close(true,true);item.action();}
+ function choose(index){const current=active,item=current?.items[index];if(!item||item.disabled)return;close(true,true);try{Promise.resolve(item.action()).catch(fail);}catch(error){fail(error);}}
  function show(anchor,items,select=null,rect=null,options={}){
   // A text editor owns its selection/menu. Only a library/media context opts in
   // to item capabilities; stale library selections must not pollute editor menus.
@@ -52,13 +55,15 @@ const GlassMenu=(()=>{
   if(options.heading){const heading=document.createElement('div');heading.className='context-heading';heading.textContent=options.heading;heading.setAttribute('data-user-content','');menu.append(heading);}
   items.forEach((item,index)=>{const button=document.createElement('button');button.type='button';button.tabIndex=-1;button.id=menu.id+'-'+index;button.dataset.menuIndex=index;button.setAttribute('role',select?'option':'menuitem');if(select)button.setAttribute('aria-selected',String(!!item.selected));button.disabled=!!item.disabled;
    if(item.separatorBefore){const separator=document.createElement('div');separator.setAttribute('role','separator');separator.className='context-separator';menu.append(separator);}if(item.key)button.dataset.contextAction=item.key;
-   const text=document.createElement('span');text.textContent=item.label;if(item.protected)text.setAttribute('data-user-content','');button.append(text);const check=document.createElement('span');check.className='menu-check';check.setAttribute('aria-hidden','true');check.innerHTML=item.selected?'<svg viewBox="0 0 24 24" fill="none"><path d="m5 12 4 4 10-10"/></svg>':'';if(item.shortcut){check.classList.add('context-shortcut');check.textContent=item.shortcut;}button.append(check);menu.append(button);
+   if(item.icon){const icon=document.createElement('span');icon.className='menu-leading-icon';icon.innerHTML=svg(item.icon);button.append(icon);}if(item.danger)button.classList.add('danger');
+   const text=document.createElement('span');text.className='menu-label';text.textContent=item.label;if(item.protected)text.setAttribute('data-user-content','');button.append(text);const check=document.createElement('span');check.className='menu-check';check.setAttribute('aria-hidden','true');check.innerHTML=item.selected?svg('check'):'';if(item.shortcut){check.classList.add('context-shortcut');check.textContent=item.shortcut;}button.append(check);menu.append(button);
   });
   (document.fullscreenElement||anchor.closest('dialog[open]')||document.body).append(menu);
-  active={anchor,select,rect,items,menu,index:Math.max(0,items.findIndex(item=>item.selected&&!item.disabled)),desiredWidth:Math.max(190,...items.map(item=>Math.min(330,Array.from(item.label).length*8+64))),above:false,restoreFocus:options.restoreFocus,onClose:options.onClose};
+  active={anchor,select,rect,items,menu,index:Math.max(0,items.findIndex(item=>item.selected&&!item.disabled)),desiredWidth:Math.max(select?190:260,...items.map(item=>Math.min(330,Array.from(item.label).length*8+64))),above:false,restoreFocus:options.restoreFocus,onClose:options.onClose};
   if(select){active.optionValues=JSON.stringify([...select.options].map(option=>[option.value,option.disabled]));active.route=JSON.stringify([state.route,state.collection,state.query,!!state.isPrivate,state.viewer?.id]);active.owner=select.closest('dialog');}
   if(items[active.index]?.disabled)active.index=Math.max(0,items.findIndex(item=>!item.disabled));
   if(select){select.setAttribute('aria-expanded','true');select.setAttribute('aria-controls',menu.id);}
+  else{anchor.setAttribute('aria-expanded','true');anchor.setAttribute('aria-controls',menu.id);}
   menu.showPopover();position();highlight(active.index,false);
   highlight(active.index,!!select);
   if(options.focus)menu.querySelector(`[data-menu-index="${active.index}"]`)?.focus({preventScroll:true});
@@ -94,5 +99,5 @@ const GlassMenu=(()=>{
  new MutationObserver(()=>{if(active&&!frame)frame=requestAnimationFrame(position);}).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['open']});
  let menuLanguage=document.documentElement.lang;
  new MutationObserver(()=>{const next=document.documentElement.lang;if(next!==menuLanguage){menuLanguage=next;close(false,true);}}).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});
- return{close,openAt(anchor,point,items,options={}){show(anchor,items,null,{left:point.x,right:point.x,top:point.y,bottom:point.y,width:0,height:0},options);},context(event,items){event.preventDefault();const anchor=event.currentTarget;anchor.focus?.({preventScroll:true});show(anchor,items,null,{left:event.clientX,right:event.clientX,top:event.clientY,bottom:event.clientY,width:0,height:0},{capabilities:true});},get isOpen(){return!!active;}};
+ return{close,open(anchor,items,options={}){show(anchor,items,null,null,options);},openAt(anchor,point,items,options={}){show(anchor,items,null,{left:point.x,right:point.x,top:point.y,bottom:point.y,width:0,height:0},options);},context(event,items){event.preventDefault();const anchor=event.currentTarget;anchor.focus?.({preventScroll:true});show(anchor,items,null,{left:event.clientX,right:event.clientX,top:event.clientY,bottom:event.clientY,width:0,height:0},{capabilities:true});},get isOpen(){return!!active;}};
 })();

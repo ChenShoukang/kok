@@ -10,7 +10,7 @@ function albumName(item){return item.album||'未命名专辑';}
 function hashHue(value){let n=0;for(const c of value)n=(n*31+c.charCodeAt(0))%360;return n;}
 async function applyFont(...args){return Kok.invoke('applyFont',this,args);}
 Kok.define('applyFont',async function(){
- const generation=++fontApplyGeneration;let name=state.settings.fontFamily||'smiley';
+ const generation=++fontApplyGeneration;let name=state.settings.fontFamily||'system';
  if(name==='chill'){name='smiley';await setting({fontFamily:name});if(generation!==fontApplyGeneration)return;}
  let family=fontStacks[name];
  try{
@@ -23,7 +23,7 @@ Kok.define('applyFont',async function(){
 });
 function setupSettings(){
  const row=document.createElement('div');row.className='setting-row';row.innerHTML=`<div>常用字体<small>同时应用于界面与正文阅读</small></div><select id="font-select" aria-label="字体选择">${[['smiley','得意黑（默认，内置）'],['wenkai','霞鹜文楷轻便版（内置）'],['system','系统字体'],['yahei','微软雅黑'],['song','宋体'],['kai','楷体'],...(state.fonts||[]).map(f=>[f.id,f.name])].map(([v,l])=>`<option value="${esc(v)}">${esc(l)}</option>`).join('')}</select>`;
- $('#theme-select').closest('.setting-row').after(row);$('#font-select').value=state.settings.fontFamily||'smiley';
+ $('#theme-select').closest('.setting-row').after(row);$('#font-select').value=state.settings.fontFamily||'system';
  row.insertAdjacentHTML('afterend',`<div class="setting-row"><div>导入字体<small>本地 TTF / OTF，最多 20 MB</small></div><button class="button secondary" data-import-font>${svg('plus')}导入</button></div>`);
  $('#small-dialog .about-details').insertAdjacentHTML('beforebegin','<div class="setting-row"><div>视频操作<small>快捷键、跳跃距离与双击全屏</small></div><button class="button secondary" data-video-preferences>播放偏好</button></div>');
  if(isSmartMode()&&typeof setupTranslationSettings==='function')setupTranslationSettings();

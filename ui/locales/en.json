@@ -2301,7 +2301,24 @@
     "便携运行时目录（可选）": "Portable runtime directory (optional)",
     "沙箱需要读取运行时目录；请使用用户可写目录中的便携运行时。": "The sandbox needs to read the runtime directory; use a portable runtime in a user-writable directory.",
     "OAuth 浏览器回调": "OAuth browser callback",
-    "OAuth 设备码": "OAuth device code"
+    "OAuth 设备码": "OAuth device code",
+    "工作台": "Workspace",
+    "组织": "Organize",
+    "更多工具": "More tools",
+    "混合": "Hybrid",
+    "语义": "Semantic",
+    "检索方式": "Search mode",
+    "视图": "View",
+    "查看": "View",
+    "资料库工具": "Library tools",
+    "文件操作": "File actions",
+    "扩展工具": "Additional tools",
+    "更多文件操作…": "More file actions…",
+    "联网与视觉": "Web and vision",
+    "模型支持图片输入（视觉），允许 Agent 读图回答": "The model supports image input (vision); allow Agent to answer from images",
+    "联网搜索服务地址（可选，SearXNG 兼容）": "Web search service URL (optional, SearXNG compatible)",
+    "视觉与联网都属于 AI 请求；网络读取仍会在任务中逐次审批。": "Vision and web access are AI requests; web reads still require approval in each task.",
+    "https://你的搜索服务/search?q={query}&format=json": "https://your-search-service/search?q={query}&format=json"
   },
   "patterns": [
     {

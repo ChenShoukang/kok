@@ -1,27 +1,19 @@
 'use strict';
-// Unmodified local Microsoft Fluent Emoji Flat assets, MIT licensed.
+// Use the same outline glyphs for navigation and all fallback artwork.
 const libraryObjectFiles={grid:'card_file_box_flat.svg',video:'clapper_board_flat.svg',photo:'framed_picture_flat.svg',music:'musical_note_flat.svg',document:'page_facing_up_flat.svg',book:'blue_book_flat.svg'};
-function libraryObject(kind){const file=libraryObjectFiles[kind];return file?`<img class="object-icon" data-object="${kind}" src="icons/fluent/${file}" width="96" height="96" alt="" draggable="false">`:svg(kind);}
+function libraryObject(kind){return `<span class="flat-object-icon" aria-hidden="true">${svg(kind)}</span>`;}
 function navigationIcon(...args){return Kok.invoke('navigationIcon',this,args);}
 Kok.define('navigationIcon',function(kind){return libraryObjectFiles[kind]?`<span class="nav-art nav-art-${kind}" aria-hidden="true">${libraryObject(kind)}</span>`:svg(kind);});
 (() => {
  const hint=document.createElement('div');hint.id='navigation-hint';hint.className='navigation-hint';hint.setAttribute('role','tooltip');hint.setAttribute('popover','manual');hint.setAttribute('data-user-content','');document.body.append(hint);
  let target=null,focusHint=false,pointer=null;
  let alignmentFrame=0;
- function alignSidebar(){
-  alignmentFrame=0;
-  for(const icon of document.querySelectorAll('.sidebar .nav-item svg,.sidebar #add-collection svg')){
-   if(icon.dataset.aligned||!icon.getClientRects().length)continue;
-   const box=icon.getBBox(),view=icon.viewBox.baseVal,stroke=parseFloat(getComputedStyle(icon).strokeWidth)||0;
-   const longest=Math.max(box.width,box.height)+stroke;if(!longest||!view.width)continue;
-   const scale=(5/6)*view.width/longest,x=((view.x+view.width/2)-(box.x+box.width/2))/view.width*scale*100,y=((view.y+view.height/2)-(box.y+box.height/2))/view.height*scale*100;
-   icon.style.setProperty('--glyph-scale',scale);icon.style.setProperty('--glyph-x',x+'%');icon.style.setProperty('--glyph-y',y+'%');icon.classList.add('nav-utility-icon');icon.dataset.aligned='true';
-  }
- }
+ function alignSidebar(){alignmentFrame=0;}
  function scheduleAlignment(){if(!alignmentFrame)alignmentFrame=requestAnimationFrame(alignSidebar);}
  function hide(){if(target)target.removeAttribute('aria-describedby');target=null;hint.classList.remove('visible');if(hint.matches(':popover-open'))hint.hidePopover();}
  function show(button){
   if(!button||document.querySelector('dialog[open]'))return;
+  const visibleLabel=button.querySelector('.nav-label');if(visibleLabel&&getComputedStyle(visibleLabel).display!=='none'&&visibleLabel.scrollWidth<=visibleLabel.clientWidth){hide();return;}
   if(target===button)return;hide();
   const label=button.getAttribute('aria-label')||button.querySelector('span:not(.nav-art):not(.count)')?.textContent?.trim();if(!label)return;
   target=button;const count=button.querySelector('.count')?.textContent.trim();hint.textContent=label+(count?' · '+count:'');button.setAttribute('aria-describedby',hint.id);hint.showPopover();

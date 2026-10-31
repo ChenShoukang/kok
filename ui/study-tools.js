@@ -3,7 +3,6 @@ const studySession={generation:0,kind:'compare',anchor:null,ids:new Set(),limit:
 const outlineSession={generation:0,job:null,error:'',busy:false};
 let studyPaintFrame=null;
 
-Kok.extend('ai','study-tools.js:studyViewOptions','viewOptions',studyViewOptions=>function(...args){return (isSmartMode()?`<button class="button secondary study-launch" data-study-open="compare" title="多文件对比与笔记回顾">${svg('spark')}AI 工具</button>`:'')+studyViewOptions(...args);});
 function noteText(item){return state.viewer?.id===item.id?$('#notes')?.value??item.notes??'':item.notes||'';}
 function hasStudyNotes(item){return !!noteText(item).trim()||(item.annotations||[]).some(a=>a.text?.trim()||a.note?.trim());}
 function studyCandidates(){return state.items.filter(item=>studySession.kind==='compare'?['video','document','book'].includes(item.kind):hasStudyNotes(item));}

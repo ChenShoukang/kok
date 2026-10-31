@@ -24,7 +24,7 @@ body.window-resizing .viewer,body.window-resizing .viewer :is(.reader-toc,.readi
 body.window-resizing .viewer.media-fit{transition:none!important}
 .pdf-page{width:calc(var(--pdf-fit-width,700) * 1px)!important;height:auto!important;aspect-ratio:var(--pdf-page-ratio,.7071)}
 .pdf-page canvas{width:100%!important;height:auto!important}.pdf-page>.textLayer{transform-origin:0 0;transform:scale(calc(var(--pdf-fit-width,700) / var(--pdf-rendered-width,700)))}
-body[data-theme] .viewer :is(.photo-tools,.pdf-toolbar){flex-wrap:nowrap!important;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;justify-content:flex-start;gap:6px;padding:6px 10px;height:auto;min-height:52px}
+body[data-theme] .viewer .photo-tools{flex-wrap:nowrap!important;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;justify-content:flex-start;gap:6px;padding:6px 10px;height:auto;min-height:52px}
 .viewer :is(.photo-tools,.pdf-toolbar)>*{flex-shrink:0}.viewer :is(.photo-tools,.pdf-toolbar) .toolbar-spacer{flex:1;min-width:0}#viewer-content:focus{outline:none}
 body.preview-window .viewer{will-change:auto}.viewer.opening-preview{will-change:transform,opacity;transform-origin:var(--opening-origin,50% 50%)}
 @media(max-width:1100px){.viewer .viewer-extra-actions{display:none!important}.viewer #viewer-more-actions{display:grid!important}}

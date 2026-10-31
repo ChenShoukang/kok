@@ -9,7 +9,7 @@ const paths={
   clock:'M12 8v5l3 2 M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0Z',settings:'m9 3-1 3-3 1-2 4 2 2v3l3 2 1 3h5l1-3 3-2v-3l2-2-2-4-3-1-1-3H9Z M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z',
   shield:'M12 3 3 7v5c0 5 9 10 9 10s9-5 9-10V7l-9-4Z m-4 9 3 3 5-6',search:'M21 21l-5-5 M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z',plus:'M12 5v14 M5 12h14',arrow:'M5 12h14 m-5-5 5 5-5 5',chevron:'m9 5 7 7-7 7',
   calendar:'M4 5h16v16H4z M8 3v4 M16 3v4 M4 10h16',leaf:'M20 3S3 2 3 13c0 8 12 9 15 1 2-5 2-11 2-11Z M6 18 16 8',
-  folder:'M3 7V4h7l2 3h9v14H3V7Z',list:'M8 6h13 M8 12h13 M8 18h13 M3 6h.01 M3 12h.01 M3 18h.01',more:'M5 12h.01 M12 12h.01 M19 12h.01',
+  lock:'M6 10h12v11H6z M8 10V7a4 4 0 0 1 8 0v3 M12 14v3',folder:'M3 7V4h7l2 3h9v14H3V7Z',list:'M8 6h13 M8 12h13 M8 18h13 M3 6h.01 M3 12h.01 M3 18h.01',more:'M5 12h.01 M12 12h.01 M19 12h.01',
   play:'m9 5 11 7-11 7V5Z',pause:'M7 5h3v14H7z M14 5h3v14h-3z',skipBack:'M5 5v14 M19 5 8 12l11 7V5Z',skipForward:'M19 5v14 M5 5l11 7-11 7V5Z',
   repeat:'m17 2 4 4-4 4 M3 11V9a3 3 0 0 1 3-3h15 M7 22l-4-4 4-4 M21 13v2a3 3 0 0 1-3 3H3',shuffle:'M3 6h3c4 0 8 12 12 12h3 M17 14l4 4-4 4 M3 18h3c2 0 4-3 5-5 M13 9c2-2 3-3 5-3h3 m-4-4 4 4-4 4',
   volume:'M11 4 6 8H3v8h3l5 4V4Z M15 8a6 6 0 0 1 0 8 M18 5a10 10 0 0 1 0 14',listMusic:'M3 5h12 M3 10h12 M3 15h6 M16 18V9l6-1v8 M16 18c0 2-5 3-5 0s5-3 5 0Z',
@@ -18,7 +18,7 @@ const paths={
   info:'M12 11v6 M12 7h.01 M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0Z',rotate:'M3 10a9 9 0 1 1 2 8 M3 3v7h7',zoomIn:'M10 7v6 M7 10h6 M21 21l-5-5 M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z',zoomOut:'M7 10h6 M21 21l-5-5 M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z',sun:'M12 3v2 M12 19v2 M3 12h2 M19 12h2 m-3-7-1.5 1.5 M6.5 17.5 5 19 M5 5l1.5 1.5 M17.5 17.5 19 19 M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z'
 };
 const $=s=>document.querySelector(s);
-const svg=name=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${paths[name]||paths.document}"/></svg>`;
+const svg=name=>`<svg class="ui-icon" data-lucide="${Object.hasOwn(KokIcons,name)?name:'document'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${KokIcons[name]||KokIcons.document}</svg>`;
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function hydrate(root=document){root.querySelectorAll('[data-icon]').forEach(el=>{el.innerHTML=svg(el.dataset.icon);});}
 const kinds=[['video','视频','光影与故事'],['photo','照片','定格的小美好'],['music','音乐','生活的背景音'],['document','文档','灵感与思考'],['book','读书','字里行间的世界']];
@@ -82,21 +82,21 @@ $('#collections-nav').addEventListener('scroll',updateNavIndicator);
 function heading(title,subtitle=''){return `<div class="page-heading"><h1 ${state.route==='collection'&&!state.query?'data-user-content':''}>${esc(title)}</h1>${subtitle?`<span>${esc(subtitle)}</span>`:''}</div>`;}
 function viewOptions(...args){return Kok.invoke('viewOptions',this,args);}
 Kok.define('viewOptions',function(sort=state.settings.sort||'added'){
- return `<div class="view-options"><select class="sort-select" id="sort" aria-label="排序方式">${[['added','最近加入'],['opened','最近打开'],['name','名称'],['size','文件大小']].map(([key,label])=>`<option value="${key}" ${sort===key?'selected':''}>${label}</option>`).join('')}</select><div class="view-toggle"><button class="${state.settings.view!=='list'?'active':''}" data-view="grid" title="网格视图" aria-label="网格视图">${svg('grid')}</button><button class="${state.settings.view==='list'?'active':''}" data-view="list" title="列表视图" aria-label="列表视图">${svg('list')}</button></div></div>`;
+ return `<div class="view-options"><select class="sort-select" id="sort" aria-label="排序方式">${[['added','最近加入'],['opened','最近打开'],['name','名称'],['size','文件大小']].map(([key,label])=>`<option value="${key}" ${sort===key?'selected':''}>${label}</option>`).join('')}</select><div class="view-toggle" role="group" aria-label="${I18n.language==='en'?'View':'视图'}"><button class="${state.settings.view!=='list'?'active':''}" aria-pressed="${state.settings.view!=='list'}" data-view="grid" title="网格视图" aria-label="网格视图">${svg('grid')}</button><button class="${state.settings.view==='list'?'active':''}" aria-pressed="${state.settings.view==='list'}" data-view="list" title="列表视图" aria-label="列表视图">${svg('list')}</button></div><button class="icon-button library-tools-button" data-library-tools aria-haspopup="menu" aria-expanded="false" title="${I18n.language==='en'?'Library tools':'资料库工具'}" aria-label="${I18n.language==='en'?'Library tools':'资料库工具'}">${svg('more')}</button></div>`;
 });
 function fileCollection(items,includePrivate=false){
  const visible=items.slice(0,state.limit),more=items.length>state.limit?'<button class="button secondary load-more" data-action="loadMore">显示更多</button>':'';
  if(state.settings.view==='list')return items.length||includePrivate?'<div class="file-list">'+(includePrivate?privateFolderCard():'')+visible.map(card).join('')+'</div>'+more:'';
- const kindsPresent=[...new Set(visible.map(i=>i.kind))],shortcuts=includePrivate?'<div class="library-shortcuts">'+privateFolderCard()+'</div>':'';
- if(kindsPresent.length<=1)return shortcuts+(visible.length?'<div class="file-grid shelf-grid" data-shelf-kind="'+kindsPresent[0]+'">'+visible.map(card).join('')+'</div>':'')+more;
- const shelves=kinds.map(([kind,label])=>{const rows=visible.filter(i=>i.kind===kind);if(!rows.length)return '';return '<section class="library-shelf" data-library-kind="'+kind+'" data-count="'+Math.min(rows.length,4)+'"><header><h2>'+svg(kind)+'<span>'+label+'</span></h2><small data-user-content>'+rows.length+'</small>'+(rows.length>3?'<button class="text-button" data-route="'+kind+'">查看全部</button>':'')+'</header><div class="file-grid shelf-grid" data-shelf-kind="'+kind+'">'+rows.map(card).join('')+'</div></section>';}).join('');
- return shortcuts+'<div class="library-shelves">'+shelves+'</div>'+more;
+ const shortcuts=includePrivate?'<div class="library-shortcuts">'+privateFolderCard()+'</div>':'';
+ return shortcuts+(visible.length?'<div class="file-grid flat-library-grid">'+visible.map(card).join('')+'</div>':'')+more;
 }
 
+function libraryFilters(){return '<div class="filter-tabs" role="group" aria-label="'+(I18n.language==='en'?'File type':'文件类型')+'">'+[['all','全部'],...kinds.map(k=>[k[0],k[1]])].map(([key,label])=>'<button class="filter-tab '+(state.filter===key?'active':'')+'" data-filter="'+key+'" aria-pressed="'+(state.filter===key)+'">'+I18n.text(label)+'</button>').join('')+'</div>';}
 function overview(){
  const items=filtered();
- return `<div class="collection-heading">${heading('资料库',`${items.length} 个文件`)}${viewOptions()}${Kok.toolbar('library')}</div>`+(fileCollection(items,true)+(items.length?'':empty('导入你的第一份文件','拖入文件，或点击导入。',true)));
+ return '<div class="collection-heading">'+heading('资料库',items.length+' 个文件')+'</div><div class="library-toolbar">'+libraryFilters()+viewOptions()+'</div>'+fileCollection(items)+(items.length?'':empty('导入你的第一份文件','拖入文件，或点击导入。',true));
 }
+
 function cover(...args){return Kok.invoke('cover',this,args);}
 Kok.define('cover',function(i){
  if(i.kind==='photo')return `<img src="${media(i,'thumb')}" alt="" loading="lazy" data-fallback="photo">${svg('photo')}`;
@@ -129,7 +129,7 @@ function collection(){
  const route=state.route,items=filtered();
  const title=state.query?`搜索结果`:labels[route]||({favorites:'收藏',recent:'最近打开',all:'全部文件',collection:state.collection})[route]||'资料库';
  const showTabs=!labels[route]&&route!=='recent';
- return `<div class="collection-heading">${heading(title,`${items.length} 个文件`)}${viewOptions(state.settings.sort||(route==='recent'?'opened':'added'))}${Kok.toolbar('library')}</div>${showTabs?`<div class="library-toolbar"><div class="filter-tabs">${[['all','全部'],...kinds.map(k=>[k[0],k[1]])].map(([key,label])=>`<button class="filter-tab ${state.filter===key?'active':''}" data-filter="${key}">${label}</button>`).join('')}</div></div>`:''}`+(items.length?fileCollection(items):empty(state.query?'没有找到相关文件':route==='favorites'?'还没有收藏':route==='recent'?'还没有打开记录':'这个分类导入你的第一份文件',state.query?'试试文件名、格式或笔记里的关键词。':route==='favorites'?'点击文件上的爱心即可收藏。':'导入文件，或在文件菜单中更改分类。'));
+ return `<div class="collection-heading">${heading(title,`${items.length} 个文件`)}</div><div class="library-toolbar">${showTabs?libraryFilters():''}${viewOptions(state.settings.sort||(route==='recent'?'opened':'added'))}</div>`+(items.length?fileCollection(items):empty(state.query?'没有找到相关文件':route==='favorites'?'还没有收藏':route==='recent'?'还没有打开记录':'这个分类导入你的第一份文件',state.query?'试试文件名、格式或笔记里的关键词。':route==='favorites'?'点击文件上的爱心即可收藏。':'导入文件，或在文件菜单中更改分类。'));
 }
 let pageAnimation=null,pageTransition=null,renderSequence=0;
 async function dismissElement(element){if(!element)return;element.style.pointerEvents='none';await animateOut(element);element.remove();}
@@ -279,7 +279,7 @@ document.addEventListener('click',async e=>{
   if(el.hasAttribute('data-close-dialog')){await closeSmall();return;}
   if(el.dataset.open){await openItem(el.dataset.open);return;}
   if(el.dataset.favorite){await favorite(el.dataset.favorite);if($('#small-dialog').open)await closeSmall();return;}
-  if(el.dataset.menu){fileMenu(el.dataset.menu);return;}
+  if(el.dataset.menu){fileMenu(el.dataset.menu,el);return;}
   if(el.dataset.native){await native(el.dataset.native,{id:el.dataset.id});return;}
   if(el.dataset.remove){const item=byId(el.dataset.remove);await native('remove',{id:item.id});if(state.track?.id===item.id)$('#close-player').click();state.items=state.items.filter(i=>i.id!==item.id);state.queue=state.queue.filter(i=>i.id!==item.id);await closeSmall();render();toast('已从资料库移除，原文件已保留。');return;}
   if(el.dataset.filter){state.filter=el.dataset.filter;state.limit=60;render();return;}

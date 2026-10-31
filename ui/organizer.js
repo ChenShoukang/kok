@@ -5,7 +5,7 @@ function organizerCandidates(){return organizerPool().filter(i=>!organizer.exclu
 async function loadOrganizer(){if(!isSmartMode())return;if(!organizer.datesLoaded){await native('fileDates');organizer.datesLoaded=true;await refresh();}const [sources,config]=await Promise.all([native('sources'),native('aiConfig')]);organizer.folders=sources.folders;organizer.scanning=sources.busy;organizer.api=config;organizer.loaded=true;paintOrganizer();}
 function paintOrganizer(){if(state.route==='organize'&&!state.query){$('#main').innerHTML=renderOrganizer();I18n.localize($('#main'));}}
 function organizerStatus(){const el=$('#organizer-status');if(!el)return;el.textContent=organizer.status;el.classList.toggle('error',organizer.error);I18n.localize(el);const progress=$('#organizer-progress');if(progress)progress.style.transform=`scaleX(${organizer.total?organizer.progress/organizer.total:0})`;}
-function renderOrganizer(){
+function renderOrganizerRaw(){
  const candidates=organizerCandidates(),organized=state.items.filter(i=>i.aiFingerprint).length,ready=!!organizer.api?.model;
  const files=organizer.preview.length?organizer.preview.map(row=>byId(row.id)).filter(Boolean):organizerPool();
  return `<section class="organizer-page" data-organize-mode="${organizerMode()}"><header class="organizer-heading"><div><span class="organizer-eyebrow">KOK / 智能资料库</span><h1>让文件，各就其位。</h1><p>自动发现，轻松归纳。</p></div><div class="organizer-emblem ${organizer.busy||organizer.scanning?'working':''}" aria-hidden="true"><span></span>${svg('layers')}</div></header>
@@ -20,6 +20,12 @@ function renderOrganizer(){
  <div class="organizer-progress-track ${organizer.busy?'running':''}"><span id="organizer-progress" style="transform:scaleX(${organizer.total?organizer.progress/organizer.total:0})"></span></div><p id="organizer-status" class="organizer-status ${organizer.error?'error':''}" role="status">${esc(organizer.status)}</p></section></div>
  ${renderLocalOrganization()}<section class="organizer-results"><div class="organizer-results-heading"><div><h2>${organizer.preview.length?'整理预览':'待整理文件'}</h2><span>${files.length} / 50</span></div>${organizer.preview.length?`<div class="organizer-apply-actions"><button class="text-button" data-organizer="discard">放弃预览</button><button class="button primary" data-organizer="apply" ${!organizer.selected.size?'disabled':''}>应用所选分类</button></div>`:''}</div>
  ${files.length?`<div class="organizer-result-grid">${files.map((file,n)=>{const row=organizer.preview.find(x=>x.id===file.id);return `<article class="organizer-result-card ${row?'has-result':''}" style="--entry-delay:${Math.min(n,8)*25}ms"><label class="organizer-file-check"><input type="checkbox" ${row?(organizer.selected.has(file.id)?'checked':''):(organizer.excluded.has(file.id)?'':'checked')} ${organizer.busy?'disabled':''} data-organizer-select="${file.id}"><span class="organizer-file-icon ${file.kind}">${svg(file.kind)}</span><span class="organizer-file-name"><b data-user-content title="${esc(file.name)}">${esc(file.name)}</b><small>${esc(file.ext)} · ${size(file.size)}</small></span></label>${row?`<div class="organizer-suggestion" data-user-content><b>${esc(row.category)}</b><p>${esc(row.summary)}</p><div class="organizer-tags">${row.tags.map(t=>`<span>${esc(t)}</span>`).join('')}</div></div>`:`<div class="organizer-file-type"><span>${labels[file.kind]}</span>${svg('arrow')}<span>等待分析</span></div>`}</article>`;}).join('')}</div>`:`<div class="organizer-complete">${svg('layers')}<h3>一切井然有序</h3><p>添加文件夹，或切换范围重新分析已有资料。</p></div>`}</section></section>`;
+}
+function renderOrganizer(){
+ const holder=document.createElement('div');
+ holder.innerHTML=renderOrganizerRaw();
+ if(typeof I18n!=='undefined')I18n.localize(holder);
+ return holder.innerHTML;
 }
 async function runOrganizer(){
  if(!isSmartMode())return;

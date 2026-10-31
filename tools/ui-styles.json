@@ -54,10 +54,10 @@
     "agent.css"
   ],
   "bundle-09-finishes.css": [
-    "classic.css",
     "calm-motion.css",
     "viewer-shell.css",
     "warehouse.css",
-    "library-services.css"
+    "library-services.css",
+    "interface.css"
   ]
 }
