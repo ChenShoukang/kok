@@ -4,7 +4,7 @@
   "syntheticOnly": true,
   "supersededRun": "https://github.com/ChenShoukang/kok/actions/runs/41162700940",
   "supersededRunCancelled": true,
-  "nativeChecks": 425,
+  "nativeChecks": 426,
   "nativePassed": true,
   "newPackageSuites": 11,
   "realModelRequests": 150,
@@ -26,20 +26,21 @@
   },
   "additionalBoundaries": [
     "global operation-history undo rejects plan evidence even before a task status event",
-    "automatic read-back batches contain at most 8 source IDs"
+    "automatic read-back batches contain at most 8 source IDs",
+    "stop acknowledgement durably journals delivered visible prose before the provider stream unwinds"
   ],
   "packagePassed": true,
-  "packageSha256": "8a63243018cc6174f6142653cce55bbbdf9708c8f410d31048ff3c8cc171a8b2",
+  "packageSha256": "f489311d162b479bd42d078c6e4bb12787e86b5bb49a93c8187a32d3d24ea367",
   "fingerprint": {
     "source": {
       "count": 402,
-      "sha256": "f924a5792d499bf2cf66646098c87ff4147650aabc4eb1561a514b19ded8d085"
+      "sha256": "265ca9451da04bf3cad5abdcee764582c00c353fdce918983a17a3ec61745787"
     },
     "runtime": {
       "count": 356,
-      "sha256": "dd54472aa13e41bff318abd236336abb51b18f6d0297addd82f154f3b5b1a515"
+      "sha256": "413359d94c3bde697a9ae4e8d7a31f5909f1129656236ba86c6622ece0bbb8a3"
     },
-    "executableSha256": "3f00a5e594a3a3dc5f6137f826a3ff2f65112556435abbe52f1ff4e05717a7da"
+    "executableSha256": "096a923834a2ee067a5a5dcbc38547a073b17c695e479cce84a56a4bb02e3419"
   },
   "portableVersion": 2,
   "defaultExternalReferenceLayout": "filename",
@@ -56,5 +57,16 @@
     "passed": true,
     "nativeChecks": 425,
     "packageSuites": 11
+  },
+  "streamStopBoundary": {
+    "nativeChecks": 426,
+    "desktopSuites": 11,
+    "packageSha256": "f489311d162b479bd42d078c6e4bb12787e86b5bb49a93c8187a32d3d24ea367",
+    "regression": "provider deliberately delays 250 ms after cancellation; interrupted visible text is replayable immediately when stop returns"
+  },
+  "fixedPackage": {
+    "sha256": "f489311d162b479bd42d078c6e4bb12787e86b5bb49a93c8187a32d3d24ea367",
+    "sourceFingerprint": "265ca9451da04bf3cad5abdcee764582c00c353fdce918983a17a3ec61745787",
+    "executableSha256": "096a923834a2ee067a5a5dcbc38547a073b17c695e479cce84a56a4bb02e3419"
   }
 }

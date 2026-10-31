@@ -1,0 +1,21 @@
+{
+  "format": "kok.ci.validation",
+  "version": "0.9.0",
+  "commit": "6b711f77453d39d40151982a012503e31e38a4d4",
+  "run": "https://github.com/ChenShoukang/kok/actions/runs/41165250774",
+  "windows2022": "425 passed",
+  "windows2025": "425 passed",
+  "desktopSuitesPassedBeforeFailure": 9,
+  "qualityCorpusCases": "passed in both protocols",
+  "failure": "immediate post-stop snapshot occasionally preceded asynchronous interrupted-text journal commit",
+  "screenshot": "later failure screenshot already contains interrupted visible prose without hidden tool arguments",
+  "fix": "Stop synchronously journals delivered visible prose before acknowledging cancellation; provider shutdown can finish asynchronously",
+  "published": false,
+  "localFixValidation": {
+    "nativeChecks": 426,
+    "desktopSuites": 11,
+    "packageSha256": "f489311d162b479bd42d078c6e4bb12787e86b5bb49a93c8187a32d3d24ea367",
+    "sourceFingerprint": "265ca9451da04bf3cad5abdcee764582c00c353fdce918983a17a3ec61745787"
+  },
+  "cloudRevalidation": "pending"
+}

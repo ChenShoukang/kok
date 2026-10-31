@@ -6,9 +6,9 @@
 
 ## 本机发行包验收
 
-原生 **425 / 425**，`npm run check`、Windows PowerShell 检查、源码 / Git 历史隐私审计与依赖审计通过（依赖审计 0 个已知漏洞）。本机 ZIP **11 / 11 桌面套件通过**，包含真实 PDF.js、Windows OCR、配对采集、stdIO MCP、双协议质量回放与基础媒体 / 编辑功能。
+原生 **426 / 426**，`npm run check`、Windows PowerShell 检查、源码 / Git 历史隐私审计与依赖审计通过（依赖审计 0 个已知漏洞）。本机 ZIP **11 / 11 桌面套件通过**，包含真实 PDF.js、Windows OCR、配对采集、stdIO MCP、双协议质量回放与基础媒体 / 编辑功能。
 
-[包级原始记录](validation/package-0.9.0-local.json) · [资料服务记录](validation/library-services-0.9.0.json)。本机候选 ZIP 为 `kok-0.9.0-win-x64.zip`，23,151,800 字节，SHA-256 `8a63243018cc6174f6142653cce55bbbdf9708c8f410d31048ff3c8cc171a8b2`。这是本机候选的哈希；GitHub 云端会重新构建并直接验收其待发布 ZIP，公开下载应核对 Release 随附的 SHA-256。
+[包级原始记录](validation/package-0.9.0-local.json) · [资料服务记录](validation/library-services-0.9.0.json)。本机候选 ZIP 为 `kok-0.9.0-win-x64.zip`，23,153,471 字节，SHA-256 `f489311d162b479bd42d078c6e4bb12787e86b5bb49a93c8187a32d3d24ea367`。这是本机候选的哈希；GitHub 云端会重新构建并直接验收其待发布 ZIP，公开下载应核对 Release 随附的 SHA-256。
 
 云端发布以 [Windows 构建 / 包级门禁](https://github.com/ChenShoukang/kok/actions/workflows/build.yml)与 [v0.9.0 Release](https://github.com/ChenShoukang/kok/releases/tag/v0.9.0)的实际状态为准。Windows 2022 / 2025 构建、原生测试、依赖 / 隐私审计与同 ZIP 的桌面检查必须通过后，发布作业才执行。
 
@@ -30,7 +30,7 @@
 
 ## 用户审计后的追加修复
 
-[追加审计记录](validation/audit-0.9.0-followup.json)。当前 425 项原生回归及最终 ZIP 的 11 组桌面套件通过；[审计首包记录](validation/package-0.9.0-audit-initial.json)和[审计前候选](validation/package-0.9.0-pre-audit.json)保留。收到实际失败轨迹与四个子系统问题后，主动取消旧候选 [80f4321 的自动发布](https://github.com/ChenShoukang/kok/actions/runs/41162700940)，发布作业没有执行。
+[追加审计记录](validation/audit-0.9.0-followup.json)。当前 426 项原生回归及最终 ZIP 的 11 组桌面套件通过；[审计首包记录](validation/package-0.9.0-audit-initial.json)和[审计前候选](validation/package-0.9.0-pre-audit.json)保留。收到实际失败轨迹与四个子系统问题后，主动取消旧候选 [80f4321 的自动发布](https://github.com/ChenShoukang/kok/actions/runs/41162700940)，发布作业没有执行。
 
 - 计划步骤与完成核对分开：历史动作要求成功且未撤销，当前内容主张仍要求 current。读取 → 批准写入 → 再读取 → 引用旧读取的最终计划这条四请求轨迹已加入原生确定性回归。
 - 批准元数据写入后执行真正的范围内 `read_items`，单独记录 `hostGenerated` 回执，保持工具权限和实际读回门禁；不把 `afterText` 直接当读取。相同工作流的自动回查三请求轨迹也有回归。
@@ -41,9 +41,11 @@
 
 [追加云端连接失败](validation/ci-0.9.0-early-close-failure.json)：Windows 2022 的 425 项通过，Windows 2025 在提前拒绝未授权 MCP 请求后出现 TCP reset。关闭仍有接收数据的 TCP 会话可能重置已发送的 403，修复为先发送完整拒绝、半关闭输出，再用固定 8 KiB 缓冲作最多 500 ms 的有界丢弃。正文处理仍在鉴权之后，头部拒绝不等待客户端发送正文；增加 40 次大小请求交替的真实 TCP 回归，修复后本机 425 项及新 ZIP 的全部 11 套件再次通过。[修复前包记录](validation/package-0.9.0-before-graceful-close.json)保留。
 
+[流式停止时序记录](validation/ci-0.9.0-stream-stop-failure.json)：两组 Windows 构建与前 9 个桌面套件、双协议六类质量回放通过，立即停止后的快照偶尔早于异步保存；失败截图稍后已显示中断正文。修复让 Stop 返回前同步提交已交付的可见正文，不等待供应商流关闭，也不把工具参数当正文。新增供应商故意延迟 250 ms 退出时的原生回归，验证停止确认到达时日志已经可恢复。修复后本机 426 项原生回归与 11 组桌面套件在新 ZIP 上通过；[修复前 425 项包记录](validation/package-0.9.0-before-stream-stop-fix.json)保留。
+
 ## 固定检查与桌面集成
 
-本地原生回归已通过 425 项，包括范围隔离、索引失效、向量缓存与参数校验、便携恢复、附件破坏、采集去重、路径重连及 MCP 授权。固定响应的 `agent-quality` 检查实际计算结果、读取来源、写入回查、拒绝、注入、中断和事件版本；这不是模型成功率。
+本地原生回归已通过 426 项，包括范围隔离、索引失效、向量缓存与参数校验、便携恢复、附件破坏、采集去重、路径重连及 MCP 授权。固定响应的 `agent-quality` 检查实际计算结果、读取来源、写入回查、拒绝、注入、中断和事件版本；这不是模型成功率。
 
 发行包门禁现在包含 11 组：基础 UI、扩展媒体功能、Agent、交互、可靠性、运行时、核对内核、MCP、平台能力、质量回放和资料服务。通过 ZIP 解压启动，验证 SHA-256、源码 / 运行指纹；CI 使用同一待发布 ZIP，不另编译一份替代它。旧 25 组开发套件与这组发行门禁的覆盖不同，本页不把所有历史开发套件标记为通过。
 
@@ -94,6 +96,6 @@ Windows OCR 已在本地真实识别合成图片。CI 镜像若缺 Windows OCR �
 
 ## English
 
-The native regression passes 425 checks. A persistent ledger limited real DeepSeek use to exactly 150 requests: initial 30 cases (24/30 after a separately recorded grading correction), targeted 10 (9/10 after quote inspection), targeted 8 (7/8 with a genuine missing-readback false completion), then the repaired case (1/1). Raw failures, corrections and fingerprints are retained. The host now requires a current read after metadata writes before completion. These targeted runs do not establish a final-build 30/30 result or the full proposed quality threshold; this remains a human-reviewed Preview.
+The native regression passes 426 checks. A persistent ledger limited real DeepSeek use to exactly 150 requests: initial 30 cases (24/30 after a separately recorded grading correction), targeted 10 (9/10 after quote inspection), targeted 8 (7/8 with a genuine missing-readback false completion), then the repaired case (1/1). Raw failures, corrections and fingerprints are retained. The host now requires a current read after metadata writes before completion. These targeted runs do not establish a final-build 30/30 result or the full proposed quality threshold; this remains a human-reviewed Preview.
 
 Real Ollama/EmbeddingGemma retrieval used 42 synthetic documents, 84 chunks and 40 queries. Exact recall was preserved; 24 paraphrase/English queries improved from 0/24 lexical to 24/24 hybrid. Three of four no-answer queries had no candidates, while one returned ten approximate candidates. Scope leaks: zero. This small benchmark is not a general quality/capacity or competitor claim. See raw reports above for machine, model digest, timings and source/runtime fingerprints.

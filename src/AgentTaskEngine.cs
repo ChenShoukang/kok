@@ -28,7 +28,7 @@ namespace kok {
             var e=journal.Append(State.id,kind,data,State.options.sessionId,State.options.goal.Substring(0,Math.Min(48,State.options.goal.Length)),status);State.Apply(e);if(kind=="assistant.reply")ClearStream();if(changed!=null)changed();return e;
         }}
         public void Start(){if(IsRunning)throw new InvalidOperationException("Agent 正在处理，请等待或停止当前任务。");if(State.Terminal)throw new InvalidOperationException("任务已结束，请开始新任务。");IsRunning=true;Completion=Run();}
-        public void Stop(){Cancellation.Cancel();Signal();}
+        public void Stop(){Cancellation.Cancel();InterruptStream("cancelled");Signal();}
         public T ReadSnapshot<T>(Func<T> read){lock(gate)return read();}
         void Signal(){lock(gate){var previous=wake;wake=new TaskCompletionSource<bool>();previous.TrySetResult(true);}}
         async Task Wait(){Task pending;lock(gate){if(!State.calls.Any(c=>c.status=="pending"||c.status=="running"))return;pending=wake.Task;}using(Cancellation.Token.Register(()=>Signal())){await pending;Cancellation.Token.ThrowIfCancellationRequested();}}
