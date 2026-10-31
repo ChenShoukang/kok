@@ -1,0 +1,14 @@
+{
+  "format": "kok.ci.failure",
+  "run": "https://github.com/ChenShoukang/kok/actions/runs/41160722520",
+  "commit": "471d426d2e6bf5f6e2a667f7825d8c7db1b5d89b",
+  "failedJobs": [
+    "Build (windows-2022)",
+    "Build (windows-2025)"
+  ],
+  "stage": "native MCP child handshake",
+  "publicationBlocked": true,
+  "rootCause": "The .NET Framework redirected stdin writer emitted EF BB BF under a UTF-8 console before the explicit JSON-RPC writer. The synthetic Node server correctly rejected the non-JSON prefix.",
+  "fix": "Use owned byte pipes, inherit only the three stdio handles and attach the suspended child to its lifetime job before resuming. Preserve the caller console encoding.",
+  "localRegression": "404 native checks passed including the UTF-8 console case; cloud revalidation required."
+}

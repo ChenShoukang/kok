@@ -15,9 +15,9 @@ static class McpTests {
   var lib=new Library(root);lib.SetAppMode("smart",true);var service=new McpService(lib,()=>{});string marker="synthetic-mcp-env-"+Guid.NewGuid().ToString("N");
   string id=service.Configure(new McpServerConfig{name="fixture",executable=Node(),args=new List<string>{Fixture,"modern"},trusted=true,environment=new Dictionary<string,string>{{"KOK_MCP_ALLOWED",marker}}});
   check(!System.Text.Encoding.UTF8.GetString(File.ReadAllBytes(Path.Combine(root,"mcp-servers.sealed"))).Contains(marker),"MCP arguments and environment are DPAPI encrypted on disk");
-  Environment.SetEnvironmentVariable("KOK_MCP_SECRET_CANARY","not-inherited");
+  Environment.SetEnvironmentVariable("KOK_MCP_SECRET_CANARY","not-inherited");var previousInputEncoding=Console.InputEncoding;Console.InputEncoding=new System.Text.UTF8Encoding(true);
   try{
-   await service.Connect(id,CancellationToken.None);var state=Library.Json.Deserialize<List<Dictionary<string,object>>>(Library.Json.Serialize(service.Snapshot()))[0];var tools=Library.Json.Deserialize<List<Dictionary<string,object>>>(Library.Json.Serialize(state["tools"]));
+   await service.Connect(id,CancellationToken.None);check(Console.InputEncoding.GetPreamble().Length==3,"MCP startup leaves UTF-8 console encoding unchanged and sends BOM-free protocol bytes");var state=Library.Json.Deserialize<List<Dictionary<string,object>>>(Library.Json.Serialize(service.Snapshot()))[0];var tools=Library.Json.Deserialize<List<Dictionary<string,object>>>(Library.Json.Serialize(state["tools"]));
    check(Convert.ToString(state["protocol"])=="2026-07-28"&&!service.Available&&tools.Any(t=>Convert.ToString(t["name"])=="complex"&&!Convert.ToBoolean(t["supported"])),"modern MCP discovers tools but none are exposed before explicit approval; unsupported refs stay blocked");
    bool blocked=false;try{service.Stamp(id,"echo",Args("test"));}catch(AgentFailure){blocked=true;}check(blocked,"an unapproved MCP tool cannot even become an execution proposal");
    var echo=tools.Single(t=>Convert.ToString(t["name"])=="echo");service.Approve(id,new Dictionary<string,string>{{"echo",Convert.ToString(echo["stamp"])}});string unicode="你好，echo 🌱 \"引号\"\\目录";string stamp=service.Stamp(id,"echo",Args(unicode));
@@ -41,6 +41,6 @@ static class McpTests {
    bool exited=false;for(int n=0;n<30&&!exited;n++){try{using(var child=System.Diagnostics.Process.GetProcessById(worker))exited=child.HasExited;}catch(ArgumentException){exited=true;}if(!exited)await Task.Delay(50);}check(exited,"closing MCP terminates its worker process tree, not only the parent launcher");
    lib.SetAppMode("pure",false);blocked=false;try{await service.Connect(id,CancellationToken.None);}catch(InvalidOperationException){blocked=true;}check(blocked,"Pure mode blocks MCP process creation and external tool use");
    check(AgentRules.WriteTools.Contains("mcp_call")&&!AgentRules.ReadTools.Contains("mcp_call")&&!Library.Json.Serialize(AgentRules.Schemas(false,lib,true)).Contains("\"name\":\"mcp_call\""),"external MCP calls always require human approval, even when servers claim read-only behavior");
-  }finally{service.Dispose();Environment.SetEnvironmentVariable("KOK_MCP_SECRET_CANARY",null);}
+  }finally{service.Dispose();Environment.SetEnvironmentVariable("KOK_MCP_SECRET_CANARY",null);Console.InputEncoding=previousInputEncoding;}
  }
 }

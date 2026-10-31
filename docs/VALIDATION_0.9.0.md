@@ -6,7 +6,7 @@
 
 ## 本机发行包验收
 
-原生 **403 / 403**，`npm run check`、Windows PowerShell 检查、源码 / Git 历史隐私审计与依赖审计通过（依赖审计 0 个已知漏洞）。本机 ZIP **11 / 11 桌面套件通过**，包含真实 PDF.js、Windows OCR、配对采集、stdIO MCP、双协议质量回放与基础媒体 / 编辑功能。
+原生 **404 / 404**，`npm run check`、Windows PowerShell 检查、源码 / Git 历史隐私审计与依赖审计通过（依赖审计 0 个已知漏洞）。本机 ZIP **11 / 11 桌面套件通过**，包含真实 PDF.js、Windows OCR、配对采集、stdIO MCP、双协议质量回放与基础媒体 / 编辑功能。
 
 [包级原始记录](validation/package-0.9.0-local.json) · [资料服务记录](validation/library-services-0.9.0.json)。本机候选 ZIP 为 `kok-0.9.0-win-x64.zip`，22,902,386 字节，SHA-256 `52dbfad25e85a956d0387ce0f89950de21a903430471494c07a3241845696751`。这是本机候选的哈希；GitHub 云端会重新构建并直接验收其待发布 ZIP，公开下载应核对 Release 随附的 SHA-256。
 
@@ -14,9 +14,15 @@
 
 ![本机验收中的检索面板，使用合成资料和模拟 embedding 端口](screenshots/library-services-090-validation-en.png)
 
+### 首次云端校验发现的编码差异
+
+[首次云端失败记录](validation/ci-0.9.0-initial-failure.json)：两组 Windows 的静态 / 隐私检查通过，原生 MCP 握手失败，发布作业被门禁跳过。复现确认 .NET Framework 在 UTF-8 控制台下先写入 BOM，再发送 JSON；Node 服务正确拒绝该前缀。本机旧代码页未触发，因此此前的本机通过不能代替云端验证。
+
+修复使用独立字节管道，限定仅继承三个标准输入输出句柄，子进程先纳入生命周期 Job 再运行，保持调用者控制台编码。实现依据 [Microsoft 重定向子进程标准输入输出](https://learn.microsoft.com/en-us/windows/win32/procthread/creating-a-child-process-with-redirected-input-and-output)与[句柄继承白名单](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-updateprocthreadattribute)。增加 UTF-8 控制台原生回归后本机 404 项通过，后续仍以同一新候选的包级 / 云端门禁为准。
+
 ## 固定检查与桌面集成
 
-本地原生回归已通过 403 项，包括范围隔离、索引失效、向量缓存与参数校验、便携恢复、附件破坏、采集去重、路径重连及 MCP 授权。固定响应的 `agent-quality` 检查实际计算结果、读取来源、写入回查、拒绝、注入、中断和事件版本；这不是模型成功率。
+本地原生回归已通过 404 项，包括范围隔离、索引失效、向量缓存与参数校验、便携恢复、附件破坏、采集去重、路径重连及 MCP 授权。固定响应的 `agent-quality` 检查实际计算结果、读取来源、写入回查、拒绝、注入、中断和事件版本；这不是模型成功率。
 
 发行包门禁现在包含 11 组：基础 UI、扩展媒体功能、Agent、交互、可靠性、运行时、核对内核、MCP、平台能力、质量回放和资料服务。通过 ZIP 解压启动，验证 SHA-256、源码 / 运行指纹；CI 使用同一待发布 ZIP，不另编译一份替代它。旧 25 组开发套件与这组发行门禁的覆盖不同，本页不把所有历史开发套件标记为通过。
 
@@ -67,6 +73,6 @@ Windows OCR 已在本地真实识别合成图片。CI 镜像若缺 Windows OCR �
 
 ## English
 
-The native regression passes 403 checks. A persistent ledger limited real DeepSeek use to exactly 150 requests: initial 30 cases (24/30 after a separately recorded grading correction), targeted 10 (9/10 after quote inspection), targeted 8 (7/8 with a genuine missing-readback false completion), then the repaired case (1/1). Raw failures, corrections and fingerprints are retained. The host now requires a current read after metadata writes before completion. These targeted runs do not establish a final-build 30/30 result or the full proposed quality threshold; this remains a human-reviewed Preview.
+The native regression passes 404 checks. A persistent ledger limited real DeepSeek use to exactly 150 requests: initial 30 cases (24/30 after a separately recorded grading correction), targeted 10 (9/10 after quote inspection), targeted 8 (7/8 with a genuine missing-readback false completion), then the repaired case (1/1). Raw failures, corrections and fingerprints are retained. The host now requires a current read after metadata writes before completion. These targeted runs do not establish a final-build 30/30 result or the full proposed quality threshold; this remains a human-reviewed Preview.
 
 Real Ollama/EmbeddingGemma retrieval used 42 synthetic documents, 84 chunks and 40 queries. Exact recall was preserved; 24 paraphrase/English queries improved from 0/24 lexical to 24/24 hybrid. Three of four no-answer queries had no candidates, while one returned ten approximate candidates. Scope leaks: zero. This small benchmark is not a general quality/capacity or competitor claim. See raw reports above for machine, model digest, timings and source/runtime fingerprints.

@@ -12,7 +12,7 @@ namespace kok {
  public sealed class McpStdioClient:IDisposable {
   public const string ModernVersion="2026-07-28";
   readonly Process process;readonly SemaphoreSlim writer=new SemaphoreSlim(1,1);readonly object gate=new object();readonly Dictionary<string,TaskCompletionSource<Dictionary<string,object>>> pending=new Dictionary<string,TaskCompletionSource<Dictionary<string,object>>>();
-  bool closed;int serial;McpProcessGroup processGroup;StreamWriter input;public string Protocol {get;private set;}public volatile bool CatalogChanged;
+  bool closed;int serial;McpPipeProcess pipes;StreamWriter input;public string Protocol {get;private set;}public volatile bool CatalogChanged;
   public int ProcessId {get{return process.Id;}}public bool Connected {get{try{return !closed&&!process.HasExited;}catch(InvalidOperationException){return false;}}}
   public McpStdioClient(string executable,List<string> args,Dictionary<string,string> environment){
    if(!Path.IsPathRooted(executable)||executable.StartsWith(@"\\",StringComparison.Ordinal)||!File.Exists(executable)||!Path.GetExtension(executable).Equals(".exe",StringComparison.OrdinalIgnoreCase))throw new AgentFailure("mcp_config","请选择已安装的本地 MCP 可执行文件。");
@@ -20,7 +20,7 @@ namespace kok {
    var start=new ProcessStartInfo{FileName=Path.GetFullPath(executable),Arguments=String.Join(" ",args.Select(Quote)),UseShellExecute=false,CreateNoWindow=true,RedirectStandardInput=true,RedirectStandardOutput=true,RedirectStandardError=true,StandardOutputEncoding=new UTF8Encoding(false,true),StandardErrorEncoding=new UTF8Encoding(false,true),WorkingDirectory=Path.GetDirectoryName(Path.GetFullPath(executable))};
    // Never inherit API keys/tokens from kok's process environment.
    start.EnvironmentVariables.Clear();foreach(var name in new[]{"SystemRoot","WINDIR","PATH","TEMP","TMP","USERPROFILE","APPDATA","LOCALAPPDATA","PROGRAMDATA","COMSPEC","PATHEXT"}){string value=Environment.GetEnvironmentVariable(name);if(value!=null)start.EnvironmentVariables[name]=value;}foreach(var pair in environment)start.EnvironmentVariables[pair.Key]=pair.Value;start.EnvironmentVariables["PYTHONIOENCODING"]="utf-8";
-   process=new Process{StartInfo=start,EnableRaisingEvents=true};try{if(!process.Start())throw new IOException();processGroup=new McpProcessGroup(process);input=new StreamWriter(process.StandardInput.BaseStream,new UTF8Encoding(false,true)){AutoFlush=true};Task.Run((Func<Task>)ReadLoop);Task.Run(async()=>{try{char[] chars=new char[1024];while(await process.StandardError.ReadAsync(chars,0,chars.Length)>0){} }catch{}});}catch{try{if(!process.HasExited)process.Kill();}catch{}if(processGroup!=null)processGroup.Dispose();process.Dispose();throw new AgentFailure("mcp_start","MCP 服务启动失败，请检查本地程序和参数。");}
+   try{pipes=new McpPipeProcess(start);process=pipes.Process;input=pipes.Input;Task.Run((Func<Task>)ReadLoop);Task.Run(async()=>{try{char[] chars=new char[1024];while(await pipes.Error.ReadAsync(chars,0,chars.Length)>0){} }catch{}});}catch(Exception error){pipes?.Dispose();if(error is AgentFailure)throw;throw new AgentFailure("mcp_start","MCP 服务启动失败，请检查本地程序和参数。");}
   }
   public static string Quote(string value){var s=new StringBuilder("\"");int slash=0;foreach(char c in value){if(c=='\\'){slash++;continue;}if(c=='\"'){s.Append('\\',slash*2+1);s.Append(c);}else{s.Append('\\',slash);s.Append(c);}slash=0;}s.Append('\\',slash*2);s.Append('"');return s.ToString();}
   async Task Send(object value){await writer.WaitAsync();try{if(closed)throw new IOException();await input.WriteLineAsync(Library.Json.Serialize(value));}finally{writer.Release();}}
@@ -36,7 +36,7 @@ namespace kok {
    }finally{lock(gate)pending.Remove(id);}
   }
   async Task Cancel(string id){try{var send=Send(new{jsonrpc="2.0",method="notifications/cancelled",@params=new{requestId=id,reason="Client cancelled"}});await Task.WhenAny(send,Task.Delay(100));}catch{}Dispose();}
-  async Task ReadLoop(){try{var buffer=new char[2048];var line=new StringBuilder();int read;while((read=await process.StandardOutput.ReadAsync(buffer,0,buffer.Length))>0){for(int n=0;n<read;n++){char c=buffer[n];if(c=='\n'){if(line.Length>0){Receive(line.ToString().TrimEnd('\r'));line.Clear();}}else{if(line.Length>=1024*1024)throw new InvalidDataException();line.Append(c);}}}throw new EndOfStreamException();}catch{lock(gate){foreach(var item in pending.Values)item.TrySetException(new AgentFailure("mcp_disconnected","MCP 服务已断开，请检查外部执行结果后重新连接。"));}Dispose();}}
+  async Task ReadLoop(){try{var buffer=new char[2048];var line=new StringBuilder();int read;while((read=await pipes.Output.ReadAsync(buffer,0,buffer.Length))>0){for(int n=0;n<read;n++){char c=buffer[n];if(c=='\n'){if(line.Length>0){Receive(line.ToString().TrimEnd('\r'));line.Clear();}}else{if(line.Length>=1024*1024)throw new InvalidDataException();line.Append(c);}}}throw new EndOfStreamException();}catch{lock(gate){foreach(var item in pending.Values)item.TrySetException(new AgentFailure("mcp_disconnected","MCP 服务已断开，请检查外部执行结果后重新连接。"));}Dispose();}}
   void Receive(string json){var message=Library.Json.Deserialize<Dictionary<string,object>>(json);if(message==null||!message.ContainsKey("jsonrpc")||Convert.ToString(message["jsonrpc"])!="2.0")throw new InvalidDataException();
    object value;if(message.TryGetValue("method",out value)){
     string method=Convert.ToString(value);if(method=="notifications/tools/list_changed")CatalogChanged=true;
@@ -54,6 +54,6 @@ namespace kok {
    if(discovery!=null){if(!discovery.ContainsKey("supportedVersions")||!Library.Json.Deserialize<List<string>>(Library.Json.Serialize(discovery["supportedVersions"])).Contains(ModernVersion))throw new AgentFailure("mcp_version","MCP 协议版本不兼容。");Protocol=ModernVersion;}
    if(legacy){Protocol="2025-11-25";var result=await Request("initialize",new Dictionary<string,object>{{"protocolVersion",Protocol},{"capabilities",new Dictionary<string,object>()},{"clientInfo",new{name="kok",version=AppVersion.Current}}},token,15000,false);string version=result.ContainsKey("protocolVersion")?Convert.ToString(result["protocolVersion"]):"";if(!new[]{"2025-11-25","2025-06-18","2025-03-26","2024-11-05"}.Contains(version))throw new AgentFailure("mcp_version","MCP 协议版本不兼容。");Protocol=version;await Send(new{jsonrpc="2.0",method="notifications/initialized"});}
   }
-  public void Dispose(){lock(gate){if(closed)return;closed=true;foreach(var item in pending.Values)item.TrySetException(new AgentFailure("mcp_disconnected","MCP 服务未连接，请重新连接。"));}try{if(input!=null)input.Dispose();}catch{}try{if(!process.HasExited&&!process.WaitForExit(150))process.Kill();}catch{}if(processGroup!=null)processGroup.Dispose();try{process.Dispose();}catch{} }
+  public void Dispose(){lock(gate){if(closed)return;closed=true;foreach(var item in pending.Values)item.TrySetException(new AgentFailure("mcp_disconnected","MCP 服务未连接，请重新连接。"));}pipes?.Dispose();}
  }
 }
