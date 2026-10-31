@@ -1,6 +1,6 @@
 # v0.9.2 验证与发行记录
 
-[项目首页](../README.md) · [v0.9.2 Agent 能力与边界](AGENT_0.9.2.md) · [English summary](#english-summary)
+[项目首页](../README.md) · [v0.9.2 Agent 能力与边界](AGENT_0.9.2.md) · [真实模型补充验证](VALIDATION_0.9.2_LIVE.md) · [English summary](#english-summary)
 
 验证日期：2026-10-31（Asia/Taipei）。真实模型请求总账仍为 **150 / 150**，本版没有新增真实模型调用。v0.9.2 在 v0.9.1 基础上新增 OAuth MCP、PDF 页/视频帧视觉与 AppContainer 沙箱，既有能力保持不变。
 

@@ -1,0 +1,21 @@
+{
+  "format": "kok.live-request-ledger",
+  "version": 1,
+  "model": "deepseek-chat",
+  "date": "2026-10-31",
+  "previousCount": 150,
+  "additionalCount": 209,
+  "totalCount": 359,
+  "authorization": "User approved roughly CNY 20 for real-model testing.",
+  "tokenTotals": {
+    "inputTokens": 963815,
+    "cachedTokens": 611712,
+    "outputTokens": 61993
+  },
+  "costEstimate": {
+    "typicalCny": 1.51,
+    "conservativeUpperBoundCny": 4.85
+  },
+  "keyCleared": true,
+  "record": "docs/validation/agent-live-0.9.2-tuned.json"
+}
