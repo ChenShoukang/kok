@@ -1,0 +1,13 @@
+[
+  {
+    "id": "pdfium",
+    "version": "158.0.8125.0",
+    "tag": "chromium/8125",
+    "url": "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium/8125/pdfium-win-x64.tgz",
+    "sha256": "9a964261760cff52570aabf038ab346d3a5034dd8b30d0d5fe8861235d356b8b",
+    "entry": "bin/pdfium.dll",
+    "dllSha256": "4b0dec92555d69437bef0df37be630181ab3e83a6823ca264ede355a4f2ef994",
+    "license": "BSD-3-Clause",
+    "project": "https://github.com/bblanchon/pdfium-binaries"
+  }
+]

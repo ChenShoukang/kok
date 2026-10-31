@@ -119,6 +119,7 @@ class Tests {
             AgentReliability090Tests.Run(Path.Combine(temp,"agent-090"),Check);
             McpTests.Run(Path.Combine(temp,"mcp"),Check);
             McpRemoteTests.Run(Path.Combine(temp,"mcp-remote"),Check);
+            McpOAuthTests.Run(Path.Combine(temp,"mcp-oauth"),Check);
             ModuleTests.Run(Path.Combine(temp,"modules"),Check);
             WarehouseTests.Run(Path.Combine(temp,"warehouse"),Check);
             ContentServicesTests.Run(Path.Combine(temp,"content-services"),Check);

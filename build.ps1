@@ -51,6 +51,7 @@ $forms = Join-Path $sdk 'lib\net462\Microsoft.Web.WebView2.WinForms.dll'
 & (Join-Path $root 'tools\prepare-youtube.ps1')
 & (Join-Path $root 'tools\prepare-media.ps1')
 & (Join-Path $root 'tools\prepare-agent.ps1')
+& (Join-Path $root 'tools\prepare-pdfium.ps1')
 $tagLibrary=Join-Path $root 'tools\media-source\TagLibSharp.dll'
 $agentLibraries=@((Get-Content -LiteralPath (Join-Path $root 'tools\agent-dependencies.json') -Raw | ConvertFrom-Json) | ForEach-Object {Join-Path $root ('tools\agent-source\lib\'+$_.id+'.dll')})
 $siteLibraries=@((Get-Content -LiteralPath (Join-Path $root 'tools\youtube-dependencies.json') -Raw | ConvertFrom-Json) | ForEach-Object {Join-Path $root ('tools\youtube-source\lib\'+$_.id+'.dll')})
@@ -70,6 +71,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Compilation failed.' }
 Copy-Item $core,$forms -Destination $out -Force
 Copy-Item $tagLibrary -Destination $out -Force
 Copy-Item -LiteralPath (Join-Path $root 'tools\sqlite\sqlite3.dll') -Destination $out -Force
+Copy-Item -LiteralPath (Join-Path $root 'tools\pdfium-source\pdfium.dll') -Destination $out -Force
 Copy-Item $siteLibraries -Destination $out -Force
 Copy-Item $agentLibraries -Destination $out -Force
 Copy-Item (Join-Path $sdk 'runtimes\win-x64\native\WebView2Loader.dll') -Destination $out -Force
@@ -113,6 +115,7 @@ if ($Test) {
     $testArgs += Join-Path $root 'tests\AgentReliability090Tests.cs'
     $testArgs += Join-Path $root 'tests\McpTests.cs'
     $testArgs += Join-Path $root 'tests\McpRemoteTests.cs'
+    $testArgs += Join-Path $root 'tests\McpOAuthTests.cs'
     $testArgs += Join-Path $root 'tests\ModuleTests.cs'
     $testArgs += Join-Path $root 'tests\WarehouseTests.cs'
     $testArgs += Join-Path $root 'tests\ContentServicesTests.cs'

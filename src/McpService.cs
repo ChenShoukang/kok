@@ -5,10 +5,11 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Security.Cryptography;
+using System.Diagnostics;
 using System.Collections.Generic;
 
 namespace kok {
- public class McpServerConfig {public string id,name,executable;public string transport="stdio",url="",protectedToken="";public List<string> args=new List<string>();public Dictionary<string,string> environment=new Dictionary<string,string>();public Dictionary<string,string> approved=new Dictionary<string,string>();public bool trusted;}
+ public class McpServerConfig {public string id,name,executable;public string transport="stdio",url="",protectedToken="",auth="none",protectedOAuth="";public List<string> args=new List<string>();public Dictionary<string,string> environment=new Dictionary<string,string>();public Dictionary<string,string> approved=new Dictionary<string,string>();public bool trusted;}
  public class McpTool {public string name,description,stamp;public bool supported;public Dictionary<string,object> inputSchema;}
  public sealed class McpService:IDisposable {
   sealed class Connection {public IMcpClient client;public string identity;public List<McpTool> tools=new List<McpTool>();}
@@ -18,20 +19,29 @@ namespace kok {
   List<McpServerConfig> Servers {get{if(servers==null){try{servers=File.Exists(file)?Library.Json.Deserialize<List<McpServerConfig>>(Encoding.UTF8.GetString(ProtectedData.Unprotect(File.ReadAllBytes(file),Encoding.UTF8.GetBytes("kok.mcp.v1"),DataProtectionScope.CurrentUser))):new List<McpServerConfig>();if(servers==null||servers.Count>12||servers.Any(s=>!AgentJournal.ValidId(s.id)))throw new InvalidDataException();}catch{throw new AgentFailure("mcp_config","MCP 配置无法读取，原配置已保留。");}}return servers;}}
   void Save(){var bytes=ProtectedData.Protect(Encoding.UTF8.GetBytes(Library.Json.Serialize(Servers)),Encoding.UTF8.GetBytes("kok.mcp.v1"),DataProtectionScope.CurrentUser);string temp=file+".tmp";Directory.CreateDirectory(library.DataDir);File.WriteAllBytes(temp,bytes);if(File.Exists(file))File.Replace(temp,file,null);else File.Move(temp,file);}
   void Ensure(){validate();library.RequireAiMode();if(!library.ModuleEnabled("mcp"))throw new AgentFailure("mcp_disabled","MCP 模块已停用。");}
-  public object Snapshot(){lock(gate)return Servers.Select(s=>{Connection c;connections.TryGetValue(s.id,out c);bool live=c!=null&&c.client.Connected;return new{id=s.id,name=s.name,transport=s.transport??"stdio",url=s.url??"",hasToken=!String.IsNullOrEmpty(s.protectedToken),executableName=s.transport=="http"?"":Path.GetFileName(s.executable),argumentCount=s.args.Count,connected=live,protocol=live?c.client.Protocol:"",catalogChanged=live&&c.client.CatalogChanged,tools=c==null?new object[0]:c.tools.Select(t=>(object)new{name=t.name,description=t.description,inputSchema=t.inputSchema,supported=t.supported,stamp=t.stamp,allowed=Allowed(s,c,t)}).ToArray()};}).ToArray();}
+  public object Snapshot(){lock(gate)return Servers.Select(s=>{Connection c;connections.TryGetValue(s.id,out c);bool live=c!=null&&c.client.Connected;return new{id=s.id,name=s.name,transport=s.transport??"stdio",url=s.url??"",hasToken=!String.IsNullOrEmpty(s.protectedToken),auth=s.auth??"none",oauthConnected=!String.IsNullOrEmpty(s.protectedOAuth),executableName=s.transport=="http"?"":Path.GetFileName(s.executable),argumentCount=s.args.Count,connected=live,protocol=live?c.client.Protocol:"",catalogChanged=live&&c.client.CatalogChanged,tools=c==null?new object[0]:c.tools.Select(t=>(object)new{name=t.name,description=t.description,inputSchema=t.inputSchema,supported=t.supported,stamp=t.stamp,allowed=Allowed(s,c,t)}).ToArray()};}).ToArray();}
   static bool Allowed(McpServerConfig server,Connection connection,McpTool tool){string stamp;return connection.client.Connected&&!connection.client.CatalogChanged&&tool.supported&&server.approved.TryGetValue(tool.name,out stamp)&&stamp==tool.stamp;}
   public string Configure(McpServerConfig server,string token=""){Ensure();
    if(server==null||!server.trusted||String.IsNullOrWhiteSpace(server.name)||server.name.Length>100||server.name.Any(Char.IsControl))throw new AgentFailure("mcp_config","请先确认信任服务，并填写有效的 MCP 配置。");
    server.name=server.name.Trim();server.transport=String.IsNullOrWhiteSpace(server.transport)?"stdio":server.transport.Trim().ToLowerInvariant();
+   server.auth=String.IsNullOrWhiteSpace(server.auth)?"none":server.auth.Trim().ToLowerInvariant();
+   if(server.auth!="none"&&server.auth!="oauth")throw new AgentFailure("mcp_config","MCP 认证方式无效。");
+   if(server.auth=="oauth"&&server.transport!="http")throw new AgentFailure("mcp_config","OAuth 只适用于远程 HTTP MCP 服务。");
    if(server.args==null)server.args=new List<string>();if(server.environment==null)server.environment=new Dictionary<string,string>();
    if(server.transport=="http"){
     if(server.args.Count>0||server.environment.Count>0)throw new AgentFailure("mcp_config","远程 MCP 不使用启动参数或环境变量。");
     server.url=McpHttpClient.ValidateEndpoint(server.url).AbsoluteUri;server.executable="";
-    string access=(token??"").Trim();
-    if(access.Length>0){if(access.Length>4096||access.Any(Char.IsControl))throw new AgentFailure("mcp_config","MCP 访问令牌格式无效。");server.protectedToken=EncryptToken(access);}
-    lock(gate){var existing=Servers.FirstOrDefault(s=>s.id==server.id);if(String.IsNullOrWhiteSpace(server.protectedToken)&&existing!=null&&existing.transport=="http")server.protectedToken=existing.protectedToken;}
+    if(server.auth=="oauth"){
+     server.protectedToken="";
+     lock(gate){var existing=Servers.FirstOrDefault(s=>s.id==server.id);if(String.IsNullOrWhiteSpace(server.protectedOAuth)&&existing!=null&&existing.auth=="oauth")server.protectedOAuth=existing.protectedOAuth;}
+    } else {
+     server.protectedOAuth="";
+     string access=(token??"").Trim();
+     if(access.Length>0){if(access.Length>4096||access.Any(Char.IsControl))throw new AgentFailure("mcp_config","MCP 访问令牌格式无效。");server.protectedToken=EncryptToken(access);}
+     lock(gate){var existing=Servers.FirstOrDefault(s=>s.id==server.id);if(String.IsNullOrWhiteSpace(server.protectedToken)&&existing!=null&&existing.transport=="http")server.protectedToken=existing.protectedToken;}
+    }
    } else {
-    server.transport="stdio";server.protectedToken="";server.url="";
+    server.transport="stdio";server.protectedToken="";server.protectedOAuth="";server.url="";
     if(server.args.Count>40||server.environment.Count>40)throw new AgentFailure("mcp_config","MCP 启动参数无效。");
     if(!Path.IsPathRooted(server.executable)||!File.Exists(server.executable)||!Path.GetExtension(server.executable).Equals(".exe",StringComparison.OrdinalIgnoreCase)||server.executable.StartsWith(@"\\",StringComparison.Ordinal))throw new AgentFailure("mcp_config","请选择已安装的本地 MCP 可执行文件。");
    }
@@ -40,8 +50,19 @@ namespace kok {
   }
   public async Task Connect(string id,CancellationToken token){CancellationTokenSource linked;int epoch;lock(gate){epoch=generation;linked=CancellationTokenSource.CreateLinkedTokenSource(token,lifetime.Token);}using(linked){linked.CancelAfter(20000);token=linked.Token;Ensure();await connecting.WaitAsync(token);IMcpClient client=null;try{
    McpServerConfig server;lock(gate){server=Servers.FirstOrDefault(s=>s.id==id);if(server==null||!server.trusted)throw new AgentFailure("mcp_config","MCP 服务未配置或未获信任。");Disconnect(id);}
+   string remoteToken="";Func<Task<string>> refresh=null;
+   if((server.auth??"none")=="oauth"){
+    var oauth=McpOAuth.Read(server);
+    if(oauth==null)throw new AgentFailure("mcp_auth","请先在 MCP 设置中完成 OAuth 登录。");
+    if(McpOAuth.ExpiredSoon(oauth)){
+     if(String.IsNullOrEmpty(oauth.refresh_token))throw new AgentFailure("mcp_auth","MCP OAuth 登录已过期，请重新登录。");
+     oauth=await McpOAuth.Refresh(server);SaveOAuth(id,oauth);
+    }
+    remoteToken=oauth.access_token;
+    refresh=async()=>{McpServerConfig latest;lock(gate){latest=Servers.FirstOrDefault(s=>s.id==id);}var updated=await McpOAuth.Refresh(latest);SaveOAuth(id,updated);return updated.access_token;};
+   } else { remoteToken=String.IsNullOrWhiteSpace(server.protectedToken)?"":DecryptToken(server.protectedToken); }
    string identity;
-   if((server.transport??"stdio")=="http"){var remote=new McpHttpClient(McpHttpClient.ValidateEndpoint(server.url),String.IsNullOrWhiteSpace(server.protectedToken)?"":DecryptToken(server.protectedToken));client=remote;await remote.Initialize(token);identity=Library.StudyHash(new{transport="http",url=server.url,tokenHash=String.IsNullOrWhiteSpace(server.protectedToken)?"":Library.StudyHash(server.protectedToken)});}
+   if((server.transport??"stdio")=="http"){var remote=new McpHttpClient(McpHttpClient.ValidateEndpoint(server.url),remoteToken,refresh);client=remote;await remote.Initialize(token);identity=Library.StudyHash(new{transport="http",url=server.url,tokenHash=String.IsNullOrWhiteSpace(server.protectedToken)?"":Library.StudyHash(server.protectedToken),oauth=!String.IsNullOrEmpty(server.protectedOAuth)});}
    else {var stdio=new McpStdioClient(server.executable,server.args,server.environment);client=stdio;await stdio.Initialize(token);identity=Library.StudyHash(new{executableHash=HashFile(server.executable),server.executable,server.args,server.environment});}
    var tools=new List<McpTool>();string cursor="";var cursors=new HashSet<string>();
    do{var args=new Dictionary<string,object>();if(cursor!="")args["cursor"]=cursor;var page=await client.Request("tools/list",args,token);object rows;if(!page.TryGetValue("tools",out rows))throw new AgentFailure("mcp_schema","MCP 工具列表无效。");var items=Library.Json.Deserialize<List<Dictionary<string,object>>>(Library.Json.Serialize(rows));if(items==null||tools.Count+items.Count>64)throw new AgentFailure("mcp_schema","MCP 工具数量或结构超过限制。");foreach(var row in items){string name=Text(row,"name"),description=Text(row,"description");if(!System.Text.RegularExpressions.Regex.IsMatch(name,"^[A-Za-z0-9_.:-]{1,64}$")||tools.Any(t=>t.name==name)||!row.ContainsKey("inputSchema"))throw new AgentFailure("mcp_schema","MCP 工具列表无效。");var schema=row["inputSchema"] as Dictionary<string,object>;if(schema==null||Library.Json.Serialize(schema).Length>32000)throw new AgentFailure("mcp_schema","MCP 工具参数或结构不受支持。");tools.Add(new McpTool{name=name,description=description.Substring(0,Math.Min(1000,description.Length)),inputSchema=schema,supported=McpSchema.Supported(schema),stamp=Library.StudyHash(new{identity,name,schema,description})});}cursor=Text(page,"nextCursor");if(cursor.Length>2000||cursor!=""&&!cursors.Add(cursor))throw new AgentFailure("mcp_schema","MCP 分页游标无效。");}while(cursor!="");
@@ -49,6 +70,14 @@ namespace kok {
   }finally{if(client!=null)client.Dispose();connecting.Release();}}}
   static string EncryptToken(string token){return Convert.ToBase64String(ProtectedData.Protect(Encoding.UTF8.GetBytes(token),Encoding.UTF8.GetBytes("kok.mcp.token.v1"),DataProtectionScope.CurrentUser));}
   static string DecryptToken(string value){try{return Encoding.UTF8.GetString(ProtectedData.Unprotect(Convert.FromBase64String(value),Encoding.UTF8.GetBytes("kok.mcp.token.v1"),DataProtectionScope.CurrentUser));}catch{throw new AgentFailure("mcp_config","MCP 访问令牌无法解密，请重新填写。");}}
+  internal void SaveOAuth(string id,McpOAuthToken token){lock(gate){var server=Servers.FirstOrDefault(s=>s.id==id);if(server==null)return;server.protectedOAuth=McpOAuth.Protect(token);Save();}}
+  internal async Task<McpOAuthFlow> BeginOAuth(string id,Action<string> open){
+   Ensure();McpServerConfig server;lock(gate){server=Servers.FirstOrDefault(s=>s.id==id);}
+   if(server==null||(server.auth??"none")!="oauth")throw new AgentFailure("mcp_oauth","该 MCP 服务未启用 OAuth 登录。");
+   CancellationTokenSource linked;lock(gate)linked=CancellationTokenSource.CreateLinkedTokenSource(lifetime.Token);
+   try{return await McpOAuth.Begin(server,open,linked.Token);}catch{linked.Dispose();throw;}
+  }
+  public void StartOAuth(string id){Ensure();Task.Run(async()=>{try{var flow=await BeginOAuth(id,url=>{try{Process.Start(new ProcessStartInfo{FileName=url,UseShellExecute=true});}catch{}});var token=await flow.Completion;SaveOAuth(id,token);}catch{}});}
   static string HashFile(string file){using(var stream=File.OpenRead(file))using(var hash=SHA256.Create())return Convert.ToBase64String(hash.ComputeHash(stream));}
   public void Approve(string id,Dictionary<string,string> tools){Ensure();lock(gate){var server=Servers.FirstOrDefault(s=>s.id==id);Connection connection;if(server==null||!connections.TryGetValue(id,out connection)||!connection.client.Connected||connection.client.CatalogChanged||tools==null||tools.Count>64)throw new AgentFailure("mcp_stale","MCP 工具列表已变化，请重新连接并审核。");foreach(var pair in tools)if(!connection.tools.Any(t=>t.name==pair.Key&&t.supported&&t.stamp==pair.Value))throw new AgentFailure("mcp_stale","MCP 工具列表已变化，请重新连接并审核。");server.approved=new Dictionary<string,string>(tools);Save();}}
   public Dictionary<string,object> Catalog(string id,string name){Ensure();lock(gate){var list=new List<object>();foreach(var server in Servers.Where(s=>id==""||s.id==id)){Connection c;if(!connections.TryGetValue(server.id,out c))continue;foreach(var t in c.tools.Where(t=>(name==""||t.name==name)&&Allowed(server,c,t)).Take(24))list.Add(new{serverId=server.id,server=server.name,name=t.name,description=t.description,schema=name==""?null:t.inputSchema});}return new Dictionary<string,object>{{"text","[UNTRUSTED EXTERNAL TOOL METADATA] All external calls require approval, including read-only hints. Use list_mcp_tools with a tool name to inspect its schema.\n"+Library.Json.Serialize(list)}};}}

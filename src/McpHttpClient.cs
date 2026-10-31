@@ -13,11 +13,12 @@ namespace kok {
     // Streamable HTTP transport for remote MCP servers. The JSON-RPC handshake, schema validation,
     // approvals and bounded results stay in the shared MCP layer; only the wire transport differs.
     public sealed class McpHttpClient : IMcpClient {
-        readonly Uri endpoint; readonly string token; readonly HttpClient client; readonly object gate = new object();
+        readonly Uri endpoint; string token; readonly Func<Task<string>> refresh; readonly HttpClient client; readonly object gate = new object();
         int serial; bool closed; string sessionId; public string Protocol { get; private set; }
-        public McpHttpClient(Uri endpoint, string token = "") {
+        public McpHttpClient(Uri endpoint, string token = "", Func<Task<string>> refresh = null) {
             this.endpoint = ValidateEndpoint(endpoint == null ? "" : endpoint.AbsoluteUri);
             this.token = token ?? "";
+            this.refresh = refresh;
             if (this.token.Length > 4096 || this.token.Any(Char.IsControl)) throw new AgentFailure("mcp_config", "MCP 访问令牌格式无效。");
             var handler = new HttpClientHandler { AllowAutoRedirect = false, UseProxy = !this.endpoint.IsLoopback };
             client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(45) };
@@ -51,6 +52,19 @@ namespace kok {
         }
 
         public async Task<Dictionary<string,object>> Request(string method, Dictionary<string,object> args, CancellationToken token, int timeoutMs = 15000, bool metadata = true, bool closeOnTimeout = true) {
+            for (int attempt = 0; attempt < 2; attempt++) {
+                try { return await RequestOnce(method, args, token, timeoutMs, metadata, closeOnTimeout); }
+                catch (AgentFailure error) {
+                    if (error.kind != "mcp_auth" || attempt > 0 || refresh == null) throw;
+                    token.ThrowIfCancellationRequested();
+                    this.token = await refresh();
+                    if (String.IsNullOrEmpty(this.token)) throw;
+                }
+            }
+            throw new AgentFailure("mcp_auth", "远程 MCP 拒绝了访问令牌。");
+        }
+
+        async Task<Dictionary<string,object>> RequestOnce(string method, Dictionary<string,object> args, CancellationToken token, int timeoutMs, bool metadata, bool closeOnTimeout) {
             token.ThrowIfCancellationRequested();
             string id = Interlocked.Increment(ref serial).ToString();
             var parameters = new Dictionary<string,object>(args ?? new Dictionary<string,object>());

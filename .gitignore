@@ -3,6 +3,7 @@ tools/webview2/
 tools/webview2.zip
 tools/youtube-source/
 tools/agent-source/
+tools/pdfium-source/
 tools/media-source/
 node_modules/
 ui/vendor/

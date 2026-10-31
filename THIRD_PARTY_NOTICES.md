@@ -223,6 +223,10 @@ kok bundles these libraries only to read and extract public web pages that the u
 
 - **NCrontab 3.4.0** (Apache-2.0) - cron expression parsing for the optional Agent schedule list. Schedules only start ordinary Agent tasks, which keep their normal approvals, scope and request limits. Source: https://github.com/atifaziz/NCrontab . License: `docs/licenses/agent/NCrontab-Apache-2.0.txt`.
 
+## PDF page rendering
+
+- **PDFium** (BSD-3-Clause; pdfium-binaries chromium/8125) - native PDF page rasterization used by Agent vision for PDF pages. Source: https://github.com/bblanchon/pdfium-binaries . Full notice and transitive licenses: `docs/licenses/PDFium-NOTICE.txt`.
+
 ## Agent token estimation
 
 - **SharpToken 2.0.6** (MIT) - a C# port of OpenAI's tiktoken used to estimate prompt tokens for model requests (cl100k_base encoding, with the script-aware estimate as a fallback). Source: https://github.com/dmitry-brazhenko/SharpToken . License: `docs/licenses/agent/SharpToken-MIT.txt`.
