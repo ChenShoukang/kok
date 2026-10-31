@@ -42,7 +42,7 @@ jobs:
       - name: Compile, test and package
         shell: pwsh
         run: ./package.ps1
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: kok-${{ matrix.os }}-win-x64
           if-no-files-found: error
@@ -73,7 +73,7 @@ jobs:
       - name: Exercise the release ZIP with local fixtures
         shell: pwsh
         run: ./tools/test-package.ps1
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: agent-desktop-evidence
