@@ -26,8 +26,8 @@ static class AgentOrchestrationTests {
  public static void Run(string root,Action<bool,string> check){RunAsync(root,check).GetAwaiter().GetResult();}
  static async Task RunAsync(string root,Action<bool,string> check){
   Directory.CreateDirectory(root);
-  var f=new Fixture(Path.Combine(root,"parallel"));var source=f.lib.CreateDocument("ORCH_SOURCE","md","","PARALLEL FACT 42").id;
-  int active=0,maxActive=0,childReads=0;
+  ThreadPool.SetMinThreads(4,4);var f=new Fixture(Path.Combine(root,"parallel"));var source=f.lib.CreateDocument("ORCH_SOURCE","md","","PARALLEL FACT 42").id;
+  int active=0,maxActive=0,childReads=0;bool parallelSeen=false;var parallelGate=new ManualResetEventSlim(false);
   f.model.run=body=>{
    var messages=AgentTaskState.Get<List<Dictionary<string,object>>>(body,"messages");string json=Library.Json.Serialize(body);
    bool parent=json.Contains("\"name\":\"delegate_parallel\"");
@@ -35,7 +35,7 @@ static class AgentOrchestrationTests {
     bool report=messages.Any(m=>Convert.ToString(m["role"])=="tool"&&Convert.ToString(m["content"]).Contains("PARALLEL SUBTASK REPORTS"));
     return report?Reply(Finish("completed",Receipts(body))):Reply(Call("delegate_parallel",new{goals=new[]{"CHILD_ONE","CHILD_TWO"},ids=new[]{source},requests=2}));
    }
-   int now=Interlocked.Increment(ref active);maxActive=Math.Max(maxActive,now);Thread.Sleep(40);Interlocked.Decrement(ref active);
+   int now=Interlocked.Increment(ref active);maxActive=Math.Max(maxActive,now);if(now>=2){parallelSeen=true;parallelGate.Set();}parallelGate.Wait(5000);Interlocked.Decrement(ref active);
    var receipts=Receipts(body);if(receipts.Length==0){Interlocked.Increment(ref childReads);return Reply(Call("read_items",new{ids=new[]{source}}));}
    return Reply(Finish("completed",receipts));
   };
@@ -52,7 +52,7 @@ static class AgentOrchestrationTests {
   int completedChildren=0;foreach(var childId in childIds){var child=await Read(f,childId);if(Convert.ToString(child["status"])=="completed")completedChildren++;}
   int requests=Convert.ToInt32(AgentTaskState.Get<Dictionary<string,object>>(done,"usage")["requests"]);
   check(Convert.ToString(done["status"])=="completed"&&completedChildren==2&&childIds.Count==2,"one approved parallel card starts two read-only children and the parent reviews their reports (status="+Convert.ToString(done["status"])+", children="+childIds.Count+", completed="+completedChildren+", reads="+childReads+", active="+maxActive+", requests="+requests+")");
-  check(childReads>=2&&maxActive>=2,"parallel children actually run concurrently instead of serially");
+  check(childReads>=2&&maxActive>=2&&parallelSeen,"parallel children actually run concurrently instead of serially");
   check(requests<=8,"parallel children share the parent request budget");
   await f.service.HandleAgentTaskAction("agentTaskDelete",Obj(new{taskId}));
  }

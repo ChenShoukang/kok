@@ -14,9 +14,9 @@
   - System.Text.Encoding.CodePages 10.0.10（MIT，编码支持）
   - NCrontab 3.4.0（Apache-2.0，cron 解析）
   - SharpToken 2.0.6（MIT，tiktoken 预算估算）
-- 本机发行 ZIP：`kok-0.9.1-win-x64.zip`，26.61 MB，SHA-256 `bf9a52176ada322c5face0a227676c990539c2a41d1029de4ffb021ebb06fbf4`。
+- 本机发行 ZIP：`kok-0.9.1-win-x64.zip`，26.61 MB（27,906,974 bytes），SHA-256 `6141185411e6cd456a688f233aa894a75163f8b3f4fd13bd619330d73e76146c`。
 - 桌面套件：**11 / 11 通过**（ui、features、agent、agent-interactions、agent-reliable、agent-runtime、agent-kernel、mcp、agent-platform、agent-quality、library-services），针对上述 ZIP 解压后的 `kok.exe` 运行。
-- 包级记录：[package-0.9.1-local.json](validation/package-0.9.1-local.json)。源文件指纹 `fa86193018459ade0d9263869d790905ff26e2fb94589125b31d57beba69bc92`（417 个源文件），运行时文件指纹 `a86fb2a0815966d89b24bc96afb2bd2231d0dbc13a6ad03d699dbf7d8fc57436`（361 个文件），`kok.exe` SHA-256 `5c9af26a01b912562126f7f631d95dc9eabb2f7c9f5f97541afe9d05cbeaa7c8`。
+- 包级记录：[package-0.9.1-local.json](validation/package-0.9.1-local.json)。源文件指纹 `1c3f357daf4eeac2e3f7b9fd1088b5ef00bdac010dfd7b59e605bb7f3411ae2c`（417 个源文件），运行时文件指纹 `51bfe0c2512bafe73b9220d20bdf5d346ace00b40fdc32b00793e4c286e0bfcf`（361 个文件），`kok.exe` SHA-256 `d6d38ec69b0c8e6e8e88f27fc7a0157a800b80e0a6c3abc893a3b888f37682e9`。
 
 ## 覆盖的确定性回归（新增部分）
 

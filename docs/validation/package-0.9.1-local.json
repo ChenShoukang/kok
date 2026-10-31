@@ -1,5 +1,5 @@
 ﻿{
-    "started":  "2026-10-31T10:10:41.7750093Z",
+    "started":  "2026-10-31T10:40:16.6169041Z",
     "version":  "0.9.1",
     "passed":  true,
     "format":  "kok.package.validation",
@@ -20,14 +20,14 @@
     "fingerprint":  {
                         "source":  {
                                        "count":  417,
-                                       "sha256":  "fa86193018459ade0d9263869d790905ff26e2fb94589125b31d57beba69bc92"
+                                       "sha256":  "1c3f357daf4eeac2e3f7b9fd1088b5ef00bdac010dfd7b59e605bb7f3411ae2c"
                                    },
                         "runtime":  {
                                         "count":  361,
-                                        "sha256":  "a86fb2a0815966d89b24bc96afb2bd2231d0dbc13a6ad03d699dbf7d8fc57436"
+                                        "sha256":  "51bfe0c2512bafe73b9220d20bdf5d346ace00b40fdc32b00793e4c286e0bfcf"
                                     },
-                        "executableSha256":  "5c9af26a01b912562126f7f631d95dc9eabb2f7c9f5f97541afe9d05cbeaa7c8"
+                        "executableSha256":  "d6d38ec69b0c8e6e8e88f27fc7a0157a800b80e0a6c3abc893a3b888f37682e9"
                     },
-    "finished":  "2026-10-31T10:13:39.7895300Z",
-    "sha256":  "bf9a52176ada322c5face0a227676c990539c2a41d1029de4ffb021ebb06fbf4"
+    "finished":  "2026-10-31T10:43:13.5842892Z",
+    "sha256":  "6141185411e6cd456a688f233aa894a75163f8b3f4fd13bd619330d73e76146c"
 }
