@@ -60,7 +60,7 @@
     "OAuth supports authorization-code + PKCE and device code with dynamic registration; no enterprise SSO in this version",
     "batch indexing is local text only; no visual embeddings, no whole-document/video semantic index, no cloud upload"
   ],
-  "published": false,
+  "published": true,
   "localPackage": {
     "archive": "kok-0.9.3-win-x64.zip",
     "bytes": 31741509,
@@ -70,5 +70,16 @@
     "sourceFingerprint": "ccd9fded0dd54a2fdefd8697cd45c2dd5977fbbee5828acb56899ace14ad301d",
     "runtimeFingerprint": "58e3046e1247f51da2573f56aab40d729e77e06e32b500d270a42eaf87e8d4db",
     "executableSha256": "1db96f62d701ad840ebdf635269378c2b788e21b6bc264b7d98d8d59b35dc91f"
+  },
+  "cloudRelease": {
+    "release": "https://github.com/ChenShoukang/kok/releases/tag/v0.9.3",
+    "run": "https://github.com/ChenShoukang/kok/actions/runs/41210115797",
+    "tagCommit": "36b6f56f72e02d288645f2643b531c7099d18e61",
+    "publishedAt": "2026-10-31T14:35:17Z",
+    "bytes": 32126127,
+    "sha256": "675e78dfc57fd480e5f8f950a920e6cf368930f5d8378f6d986e9aaac1c054ee",
+    "desktopSuitesPassed": 11,
+    "checksumPassed": true,
+    "portableMcpSandboxPassedOnCloud": true
   }
 }

@@ -31,7 +31,12 @@
 
 ## 发布记录
 
-云端 Windows 2022 / 2025 构建、原生检查、隐私与依赖审计、待发布 ZIP 的 11 组桌面套件全部通过后才会发布。本页在云端结果与下载核验完成后追加记录。
+云端 Windows 2022 / 2025 构建、原生检查、隐私与依赖审计、待发布 ZIP 的 11 组桌面套件全部通过后，v0.9.3 已于 2026-10-31T14:35:17Z 发布为 Preview：
+
+- Release：https://github.com/ChenShoukang/kok/releases/tag/v0.9.3（run `41210115797`，tag/commit `36b6f56`）。
+- 云端 11 / 11 桌面套件通过；云端 ZIP `kok-0.9.3-win-x64.zip` 为 **32,126,127 bytes**，SHA-256 `675e78dfc57fd480e5f8f950a920e6cf368930f5d8378f6d986e9aaac1c054ee`。
+- 独立下载后重算 SHA-256、核对随附 `.sha256` 与 GitHub asset digest 均一致（`checksumPassed: true`）；核验记录见 [release-0.9.3-download.json](validation/release-0.9.3-download.json)。
+- 便携运行时 MCP AppContainer 沙箱的复制 Node 运行时门禁在云端 Windows 2022 与 2025 均通过。
 
 ## English summary
 
