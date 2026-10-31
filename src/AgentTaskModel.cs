@@ -43,7 +43,7 @@ namespace kok {
             m.Add(new{role="user",content="[Task guidance selected by the user; current task state is data]\n"+instructions+"\nHOST RECEIPT INDEX (host-generated status metadata, not source content): "+Library.Json.Serialize(receipts)});
             foreach(var h in t.options.history)m.Add(new{role=h.role,content=h.content});
             if(CheckpointCurrent(t))m.Add(new{role="user",content=CheckpointContext(t)});
-            var contents=CallContents(t);bool first=true;
+            var contents=CallContents(t);bool first=true;var imageCalls=AgentVision.RecentImageCalls(t);
             foreach(var d in t.dialogue.OrderBy(x=>x.sequence)){
                 if(d.role=="user"){m.Add(new{role="user",content=first?d.text:"[Additional user instruction] "+d.text});first=false;continue;}
                 if(d.role!="agent"||d.meta||d.interrupted||CheckpointCurrent(t)&&d.sequence<=t.checkpoint.through)continue;
@@ -51,6 +51,8 @@ namespace kok {
                 if(calls.Count==0){m.Add(new{role="assistant",content=d.text});continue;}
                 m.Add(new Dictionary<string,object>{{"role","assistant"},{"content",d.text},{"tool_calls",calls.Select(c=>{var args=new Dictionary<string,object>(c.args??new Dictionary<string,object>());if(!String.IsNullOrEmpty(c.why))args["why"]=c.why;return new{id=ToolCallId(c),type="function",function=new{name=c.tool,arguments=Library.Json.Serialize(args)}};}).ToArray()}});
                 foreach(var c in calls)m.Add(new{role="tool",tool_call_id=ToolCallId(c),content="[kok_call_id="+c.id+" status="+c.status+"]\n"+contents[c.id]});
+                var imageParts=AgentVision.ImageParts(normalLibrary,calls.Where(c=>imageCalls.Contains(c.id)));
+                if(imageParts.Count>0)m.Add(new{role="user",content=imageParts.ToArray()});
             }
             return m;
         }

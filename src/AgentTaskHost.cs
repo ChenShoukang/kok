@@ -61,6 +61,7 @@ namespace kok {
             if(action=="agentTaskStart"){
                 normalLibrary.RequireAiMode();if(taskEngine!=null&&taskEngine.IsRunning)throw new InvalidOperationException("Agent 正在处理，请等待或停止当前任务。");
                 var o=Library.Json.Deserialize<AgentTaskOptions>(Library.Json.Serialize(a));
+                o.vision=translations.VisionEnabled;o.searchEndpoint=translations.SearchEndpoint;
                 o.kernelVersion=3;if(o.contextTokens<8000||o.contextTokens>64000||o.allowedTools!=null&&(o.allowedTools.Count>100||o.allowedTools.Any(n=>!AgentRules.Tools.Any(t=>t.Name==n))))throw new InvalidDataException("任务工具或上下文设置无效。");
                 if(!AgentJournal.ValidId(o.sessionId)||String.IsNullOrWhiteSpace(o.goal)||o.goal.Length>2000||o.instruction==null||o.instruction.Length>800||o.requestLimit<1||o.requestLimit>AgentRules.MaxRounds||!new[]{6000,14000,24000}.Contains(o.budget)||!new[]{"assist","discuss"}.Contains(o.intent)||!new[]{"auto","json","tools"}.Contains(o.protocol))throw new InvalidDataException("任务设置无效。");
                 o.costLimit=AgentNumber(a,"costLimit",0,10000);o.inputRate=AgentNumber(a,"inputRate",0,10000);o.outputRate=AgentNumber(a,"outputRate",0,10000);if(o.costLimit>0&&(o.inputRate<=0||o.outputRate<=0))throw new InvalidDataException("请填写输入与输出单价后启用费用上限。");

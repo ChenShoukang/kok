@@ -7,7 +7,7 @@ namespace kok {
     public class AgentTaskOptions {
         public string sessionId,goal,intent="assist",protocol="auto",workflow="",instruction="",workflowGuidance="",approvalPolicy="each";
         public AgentScope scope=new AgentScope();public List<string> allowed=new List<string>();public List<ChatTurn> history=new List<ChatTurn>();
-        public bool semanticCompression=true,useMemory,allowDelegation,allowSandbox;public int contextTokens=32000;public List<string> allowedTools;public string parentTaskId="",parentCallId="";public int parentSteering;
+        public bool semanticCompression=true,useMemory,allowDelegation,allowSandbox;public bool vision;public string searchEndpoint="";public int contextTokens=32000;public List<string> allowedTools;public string parentTaskId="",parentCallId="";public int parentSteering;
         public int budget=14000,requestLimit=6,kernelVersion;public double costLimit,inputRate,outputRate;public AgentHandoff handoff;
     }
     public class AgentHandoff {public string taskId,eventId,note;public List<string> callIds=new List<string>(),ids=new List<string>();}

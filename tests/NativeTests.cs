@@ -108,6 +108,7 @@ class Tests {
             PresentationRulesTests.Run(Path.Combine(temp,"presentation-rules"),Check);
             AgentTests.Run(Path.Combine(temp,"agent-rules"),Check);
             AgentTaskTests.Run(Path.Combine(temp,"agent-tasks"),Check);
+            AgentVisionTests.Run(Path.Combine(temp,"agent-vision"),Check);
             AgentKernelTests.Run(Path.Combine(temp,"agent-kernel"),Check);
             AgentPlatformTests.Run(Path.Combine(temp,"agent-platform"),Check);
             AgentReliability090Tests.Run(Path.Combine(temp,"agent-090"),Check);
