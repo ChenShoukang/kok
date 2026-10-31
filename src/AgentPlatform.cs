@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Windows.Forms;
 
 namespace kok {
  public partial class AgentService {
@@ -11,14 +12,14 @@ namespace kok {
   AgentMemoryStore Memories {get{return memoryStore??(memoryStore=new AgentMemoryStore(normalLibrary));}}
   AgentSandbox Sandbox {get{return sandbox??(sandbox=new AgentSandbox(Notify,()=>context.Policy.Ensure(Need.Ai|Need.NormalLibrary,"agent")));}}
   readonly object budgetGate=new object(),childrenGate=new object();readonly Dictionary<string,AgentTaskEngine> budgetRoots=new Dictionary<string,AgentTaskEngine>();readonly Dictionary<string,AgentTaskEngine> children=new Dictionary<string,AgentTaskEngine>();
-  internal static readonly string[] PlatformActions={"agentRuntimeInfo","agentMemoryList","agentMemorySave","agentMemoryDelete","agentMemoryUndo","agentSandboxResult","agentArtifactSave"};
+  internal static readonly string[] PlatformActions={"agentRuntimeInfo","agentMemoryList","agentMemorySave","agentMemoryDelete","agentMemoryUndo","agentSandboxResult","agentArtifactSave","agentWorkspaceConfig","agentWorkspaceSave","agentWorkspaceChooseFolder"};
   AgentTaskEngine BudgetOwner(AgentTaskEngine engine){if(String.IsNullOrEmpty(engine.State.options.parentTaskId))return engine;lock(childrenGate){AgentTaskEngine owner;if(budgetRoots.TryGetValue(engine.State.id,out owner))return owner;}if(taskEngine==null||taskEngine.State.id!=engine.State.options.parentTaskId)throw new OperationCanceledException();return taskEngine;}
   void RequestEvent(AgentTaskEngine engine,string kind,object data){var root=BudgetOwner(engine);if(root!=engine){var row=Library.Json.Deserialize<Dictionary<string,object>>(Library.Json.Serialize(data));row["childTaskId"]=engine.State.id;root.Emit(kind,row);}engine.Emit(kind,data);}
   bool IsTaskRunning(string id){if(taskEngine!=null&&taskEngine.State.id==id)return taskEngine.IsRunning;lock(childrenGate){AgentTaskEngine child;return children.TryGetValue(id,out child)&&child.IsRunning;}}
   void StopChildren(){AgentTaskEngine[] copy;lock(childrenGate)copy=children.Values.ToArray();foreach(var child in copy)child.Stop();if(sandbox!=null)sandbox.Stop();}
   void CancelStaleChildren(AgentTaskState parent){AgentTaskEngine[] copy;lock(childrenGate)copy=children.Values.Where(c=>c.State.options.parentTaskId==parent.id&&c.State.options.parentSteering!=parent.steerVersion).ToArray();foreach(var child in copy)child.Stop();}
   bool ToolAllowed(AgentTaskState task,AgentToolSpec tool){var o=task.options;return (o.intent!="discuss"||!tool.Write)&&(o.approvalPolicy!="read_only"||!tool.Write)&&(AgentCognition.IsControl(tool.Name)||o.allowedTools==null||o.allowedTools.Contains(tool.Name))&&(tool.Name!="search_memory"&&tool.Name!="remember_memory"||o.useMemory)&&(tool.Name!="delegate_task"||o.allowDelegation&&String.IsNullOrEmpty(o.parentTaskId))&&(tool.Name!="run_code"||o.allowSandbox)&&(tool.Module!="mcp"||String.IsNullOrEmpty(o.parentTaskId));}
-  AgentToolSpec[] TaskTools(AgentTaskState task){return AgentRules.Tools.Where(t=>ToolAllowed(task,t)&&ModuleRegistry.Builtins.ToolEnabled(t.Name,normalLibrary)&&(t.Name!="web_search"||task.options.searchEndpoint.Length>0)&&(t.Module!="mcp"||mcp!=null&&mcp.Available&&normalLibrary.ModuleEnabled("mcp"))).ToArray();}
+  AgentToolSpec[] TaskTools(AgentTaskState task){return AgentRules.Tools.Where(t=>ToolAllowed(task,t)&&ModuleRegistry.Builtins.ToolEnabled(t.Name,normalLibrary)&&(t.Name!="web_search"||task.options.searchEndpoint.Length>0)&&((t.Name!="list_folder"&&t.Name!="read_text_file"&&t.Name!="write_text_file"&&t.Name!="run_command")||AgentExecution.Configured(normalLibrary))&&(t.Module!="mcp"||mcp!=null&&mcp.Available&&normalLibrary.ModuleEnabled("mcp"))).ToArray();}
   void EmitSourceStamps(AgentTaskState task,AgentCall call,IEnumerable<string> ids){AgentTaskEngine engine=taskEngine;lock(childrenGate){if(task.id!=taskEngine.State.id)engine=children[task.id];}engine.Emit("tool.sources",new{callId=call.id,sources=normalLibrary.AgentSourceStamps(ids)});}
   async Task<Dictionary<string,object>> PlatformRead(AgentTaskState task,AgentCall call,CancellationToken token){
    if(call.tool=="search_memory"){var rows=Memories.Search(ModuleContext.Text(call.args,"query"),task.options.allowed,5);EmitSourceStamps(task,call,rows.SelectMany(r=>r.ids));return new Dictionary<string,object>{{"memoryRefs",rows.ToDictionary(r=>r.id,r=>r.revision)},{"text","[UNTRUSTED MEMORY]\n"+Library.Json.Serialize(rows.Select(r=>new{r.id,r.title,r.text,sources=r.ids}))}};}
@@ -60,6 +61,9 @@ namespace kok {
    if(action=="agentMemoryUndo"){Memories.Undo(ModuleContext.Text(a,"token"));return true;}
    if(action=="agentSandboxResult")return Sandbox.Complete(ModuleContext.Text(a,"ticket"),Convert.ToBoolean(a["ok"]),ModuleContext.Text(a,"output"));
    if(action=="agentArtifactSave"){var task=LoadTask(ModuleContext.Text(a,"taskId"));var call=task.calls.FirstOrDefault(c=>c.id==ModuleContext.Text(a,"callId")&&c.result!=null&&c.result.ContainsKey("artifact"));if(call==null)throw new InvalidDataException("任务产物已不可用。");return await context.Invoke("createDocument",new Dictionary<string,object>{{"name",ModuleContext.Text(a,"name")},{"format",ModuleContext.Text(a,"format")},{"collection",""},{"text",ResultText(call)}});}
+   if(action=="agentWorkspaceConfig")return AgentExecution.Config(normalLibrary);
+   if(action=="agentWorkspaceSave"){AgentExecution.Save(normalLibrary,a.ContainsKey("enabled")&&Convert.ToBoolean(a["enabled"]),ModuleContext.Text(a,"root"));return AgentExecution.Config(normalLibrary);}
+   if(action=="agentWorkspaceChooseFolder"){using(var dialog=new FolderBrowserDialog{Description="选择 Agent 执行工作目录",ShowNewFolderButton=true}){if(dialog.ShowDialog(context.Owner)!=DialogResult.OK)return AgentExecution.Config(normalLibrary);AgentExecution.Save(normalLibrary,a.ContainsKey("enabled")?Convert.ToBoolean(a["enabled"]):true,dialog.SelectedPath);return AgentExecution.Config(normalLibrary);}}
    throw new InvalidDataException("任务设置无效。");
   }
  }

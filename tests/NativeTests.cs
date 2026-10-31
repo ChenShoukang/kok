@@ -110,6 +110,7 @@ class Tests {
             AgentTaskTests.Run(Path.Combine(temp,"agent-tasks"),Check);
             AgentVisionTests.Run(Path.Combine(temp,"agent-vision"),Check);
             AgentWebTests.Run(Path.Combine(temp,"agent-web"),Check);
+            AgentExecutionTests.Run(Path.Combine(temp,"agent-execution"),Check);
             AgentKernelTests.Run(Path.Combine(temp,"agent-kernel"),Check);
             AgentPlatformTests.Run(Path.Combine(temp,"agent-platform"),Check);
             AgentReliability090Tests.Run(Path.Combine(temp,"agent-090"),Check);

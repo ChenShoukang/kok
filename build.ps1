@@ -104,6 +104,7 @@ if ($Test) {
     $testArgs += Join-Path $root 'tests\AgentTaskTests.cs'
     $testArgs += Join-Path $root 'tests\AgentVisionTests.cs'
     $testArgs += Join-Path $root 'tests\AgentWebTests.cs'
+    $testArgs += Join-Path $root 'tests\AgentExecutionTests.cs'
     $testArgs += Join-Path $root 'tests\AgentKernelTests.cs'
     $testArgs += Join-Path $root 'tests\AgentPlatformTests.cs'
     $testArgs += Join-Path $root 'tests\AgentReliability090Tests.cs'
