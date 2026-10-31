@@ -1,0 +1,39 @@
+{
+  "format": "kok.maintenance.validation",
+  "version": "0.9.0",
+  "date": "2026-10-31",
+  "webView2": {
+    "from": "1.0.4258.31",
+    "to": "1.0.4314.35",
+    "source": "https://api.nuget.org/v3-flatcontainer/microsoft.web.webview2/1.0.4314.35/microsoft.web.webview2.1.0.4314.35.nupkg",
+    "nupkgSha256": "90778DEB1B77E36292828B4B5833C9255C27533F40E0DDD55891AE718944EDC4",
+    "licenseAndNoticeIncluded": true
+  },
+  "acorn": {
+    "from": "8.15.0",
+    "to": "8.19.0",
+    "scope": "devDependency used only by tools/analyze-ui.cjs; not shipped in the desktop ZIP"
+  },
+  "npmAudit": "0 vulnerabilities",
+  "nativeChecks": 426,
+  "desktopSuites": 11,
+  "packageSha256": "51d40988edfdfb097703139aaef2d95f1f342b028cb6529f33d812df18a84bce",
+  "packageBytes": 23159432,
+  "fingerprint": {
+    "source": {
+      "count": 402,
+      "sha256": "8f27a27a4dab86e2f37f0bdde0685e596c88bcd6be7d6bad5a18445e1d0ce24a"
+    },
+    "runtime": {
+      "count": 356,
+      "sha256": "cd5992be2ae149abcb834d232d3113f8d99f1db9cb3c6fbeec25bdf83b4a3b31"
+    },
+    "executableSha256": "ba5a9df592e3f9f06c955aeec0779ba92fc87e7a6ff1d41cc22941e340e1ffa9"
+  },
+  "testHarnessHardening": [
+    "desktop suites wait for the app.kok.local page before connecting and retry the silent window once when it is not exposed within 30 seconds",
+    "agent-quality approval scenario waits for the pending third write to be journaled before asserting the review boundary"
+  ],
+  "publishedReleaseUnchanged": "https://github.com/ChenShoukang/kok/releases/tag/v0.9.0",
+  "note": "Maintenance on main after the v0.9.0 Preview release; the published v0.9.0 assets were not rebuilt."
+}

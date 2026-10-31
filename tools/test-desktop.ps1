@@ -60,12 +60,24 @@ foreach($suite in $Suites){
     $env:KOK_TEST_PROFILE=$profile
     try{
         $ready=$false
-        for($attempt=0;$attempt -lt 120;$attempt++){
-            try{
-                $targets=Invoke-RestMethod -Uri 'http://127.0.0.1:9225/json/list' -TimeoutSec 1
-                if(@($targets | Where-Object { $_.type -eq 'page' -and $_.url -match 'app\.kok\.local' }).Count -gt 0){$ready=$true;break}
-            }catch{}
-            Start-Sleep -Milliseconds 250
+        for($launch=0;$launch -lt 2;$launch++){
+            if($launch -gt 0){
+                if(-not $process.HasExited){Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue}
+                for($attempt=0;$attempt -lt 20;$attempt++){try{Invoke-RestMethod -Uri 'http://127.0.0.1:9225/json/version' -TimeoutSec 1|Out-Null;Start-Sleep -Milliseconds 150}catch{break}}
+                $process=Start-Process -FilePath $executable -ArgumentList @('--debug','--test-silent','--data-dir',('"'+$profile+'"')) -PassThru -WindowStyle Hidden
+                $env:KOK_TEST_NATIVE_PID=[string]$process.Id
+                Write-Output ('Retrying silent test window: '+$suite)
+                Start-Sleep -Milliseconds 300
+            }
+            for($attempt=0;$attempt -lt 100;$attempt++){
+                if($process.HasExited){break}
+                try{
+                    $targets=Invoke-RestMethod -Uri 'http://127.0.0.1:9225/json/list' -TimeoutSec 1
+                    if(@($targets | Where-Object { $_.type -eq 'page' -and $_.url -match 'app\.kok\.local' }).Count -gt 0){$ready=$true;break}
+                }catch{}
+                Start-Sleep -Milliseconds 250
+            }
+            if($ready){break}
         }
         if(-not $ready){throw 'Silent test window did not expose the app page'}
         Push-Location $projectRoot

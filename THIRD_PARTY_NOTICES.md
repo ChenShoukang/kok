@@ -1,6 +1,6 @@
 # Third-party notices
 
-kok uses Microsoft.Web.WebView2 SDK version 1.0.4258.31 from the official
+kok uses Microsoft.Web.WebView2 SDK version 1.0.4314.35 from the official
 NuGet package. Release bundles redistribute:
 
 - Microsoft.Web.WebView2.Core.dll
@@ -11,7 +11,7 @@ These files are governed by the Microsoft WebView2 SDK license, **not** kok's
 MIT license. The original package license is included in binary bundles as
 `WEBVIEW2-LICENSE.txt`, and its NOTICE file as `WEBVIEW2-NOTICE.txt`.
 
-Package: https://www.nuget.org/packages/Microsoft.Web.WebView2/1.0.4258.31
+Package: https://www.nuget.org/packages/Microsoft.Web.WebView2/1.0.4314.35
 Documentation: https://learn.microsoft.com/microsoft-edge/webview2/
 
 The WebView2 browser runtime is installed and updated separately by Microsoft.
@@ -207,7 +207,7 @@ The contextual menu refinement references Radix Context Menu keyboard/focus patt
 https://www.radix-ui.com/primitives/docs/components/context-menu
 https://tiptap.dev/docs/editor/extensions/functionality/bubble-menu
 
-SQLite 3.54.1 (public domain) is bundled as sqlite3.dll for local item/facet/link storage and FTS5 search. The official Windows x64 binary is pinned by URL and SHA-256 in tools/sqlite-source.json. SQLite does not require a license file: https://sqlite.org/copyright.html . Acorn 8.15.0 (MIT) is a development-only parser used for architecture checks and is not bundled with the application.
+SQLite 3.54.1 (public domain) is bundled as sqlite3.dll for local item/facet/link storage and FTS5 search. The official Windows x64 binary is pinned by URL and SHA-256 in tools/sqlite-source.json. SQLite does not require a license file: https://sqlite.org/copyright.html . Acorn 8.19.0 (MIT) is a development-only parser used for architecture checks and is not bundled with the application.
 
 The recipe editor uses n8n's public node/step configuration concepts as a reference. No n8n application code, assets or runtime are bundled. https://docs.n8n.io/build/understand-workflows/workflow-components/work-with-nodes.md
 

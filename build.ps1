@@ -24,13 +24,13 @@ if (-not (Test-Path (Join-Path $root 'ui\vendor\pdfjs\pdf.mjs')) -or -not(Test-P
     & node (Join-Path $root 'tools\vendor.cjs')
     if ($LASTEXITCODE -ne 0) { throw 'PDF.js asset preparation failed.' }
 }
-$version = '1.0.4258.31'
+$version = '1.0.4314.35'
 $sdk = Join-Path $root 'tools\webview2'
 if (-not (Test-Path (Join-Path $sdk 'lib\net462\Microsoft.Web.WebView2.Core.dll'))) {
     $archive = Join-Path $root 'tools\webview2.zip'
     New-Item -ItemType Directory -Force (Join-Path $root 'tools') | Out-Null
     Invoke-WebRequest -Uri "https://api.nuget.org/v3-flatcontainer/microsoft.web.webview2/$version/microsoft.web.webview2.$version.nupkg" -OutFile $archive
-    if ((Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash -ne '56F7F4B8BF9AEE4B8EFEFBBDD4F67D5F74EBD1B100ED0806DA71BF76AF481AA9') { throw 'WebView2 SDK checksum mismatch.' }
+    if ((Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash -ne '90778DEB1B77E36292828B4B5833C9255C27533F40E0DDD55891AE718944EDC4') { throw 'WebView2 SDK checksum mismatch.' }
     Expand-Archive -LiteralPath $archive -DestinationPath $sdk -Force
 }
 if (-not (Test-Path (Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\mscorlib.dll'))) { throw '.NET Framework 4.8 x64 is required to build kok.' }
