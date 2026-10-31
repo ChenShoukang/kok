@@ -8,6 +8,7 @@
 
 | 想做什么 | 从这里开始 |
 | --- | --- |
+| Agent OAuth MCP / PDF 页与视频帧视觉 / AppContainer 沙箱 | [Agent 0.9.2 能力与边界](AGENT_0.9.2.md) · [验证](VALIDATION_0.9.2.md) |
 | Agent 视觉 / 联网 / 受控执行 / 长任务 / 语义记忆 / 并行子代理 / 远程 MCP | [Agent 0.9.1 能力与边界](AGENT_0.9.1.md) · [验证](VALIDATION_0.9.1.md) |
 | 正文 / 语义检索、网页采集、OCR、便携恢复和对外只读 MCP | [v0.9.0 功能指南](LIBRARY_0.9.0.md) · [本次验证](VALIDATION_0.9.0.md) |
 | 导入文件，认识资料库、空间、摘录与智能集合 | [当前使用指南](GUIDE.md) |

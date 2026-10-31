@@ -1,5 +1,13 @@
 # kok changelog
 
+## v0.9.2 · Preview
+
+- Remote MCP OAuth: authorization code + PKCE, protected-resource/authorization-server metadata, dynamic client registration, loopback callback, refresh tokens and one refresh retry on 401; tokens stay DPAPI-encrypted and are never shown in the UI.
+- PDF page and video-frame vision: `read_image` accepts `page` (local PDFium rasterization with bounds) and `time` (optional FFmpeg extraction), with DPAPI frame caches, source-change invalidation and OCR fallback when vision is disabled.
+- Windows AppContainer sandbox: opt-in for approved commands (no network, no user-file access, writes only inside the workspace) and per-server for local stdio MCP; the effective mode is labeled and sandbox failure never silently falls back.
+- New PDFium dependency (BSD-3-Clause) pinned by archive and DLL SHA-256 with a full notice; FFmpeg remains optional.
+- 527 native deterministic checks pass; no additional real-model calls (ledger 150). See [validation](docs/VALIDATION_0.9.2.md) and [Agent limits](docs/AGENT_0.9.2.md).
+
 ## v0.9.1 · Preview
 
 - Scoped vision input via `read_image` with bounded JPEG image messages and Windows OCR fallback; image bytes stay out of the task journal.

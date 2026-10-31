@@ -2,6 +2,10 @@
 
 [中文](ROADMAP.md) · English
 
+## v0.9.2 Preview deliverables
+
+On top of v0.9.1's eight areas, v0.9.2 adds OAuth for remote MCP, direct vision over PDF pages and video frames, and an opt-in Windows AppContainer sandbox for approved commands and local MCP servers. All remain opt-in or approval-gated, sandbox failure never silently falls back, and the real-model ledger stays at 150. See [Agent 0.9.2](docs/AGENT_0.9.2.md) and [validation](docs/VALIDATION_0.9.2.md).
+
 ## v0.9.1 Preview deliverables
 
 On top of the v0.9.0 library and retrieval work, this release focuses on the Agent: vision input, web fetch/search, an opt-in bounded execution workspace, longer tasks and schedules, semantic memory, parallel read-only subagents, larger budgets and remote MCP. All eight remain default-off or explicitly approved. See [Agent 0.9.1](docs/AGENT_0.9.1.md) and [validation](docs/VALIDATION_0.9.1.md). The real-model ledger remains at 150 and no new model success rate is claimed.

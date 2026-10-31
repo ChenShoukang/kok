@@ -4,9 +4,9 @@
 
 Keep videos, photos, music, documents and books in one local library. Organize topics with Spaces, connect sources to notes with Clips, and bring in AI when you want help translating, organizing or writing.
 
-[Download v0.9.1 Preview](https://github.com/ChenShoukang/kok/releases/tag/v0.9.1) · [User guide](docs/GUIDE.en.md) · [中文](README.md) · [Supported formats](docs/FORMATS.en.md)
+[Download v0.9.2 Preview](https://github.com/ChenShoukang/kok/releases/tag/v0.9.2) · [User guide](docs/GUIDE.en.md) · [中文](README.md) · [Supported formats](docs/FORMATS.en.md)
 
-**v0.9.1 Preview** extends the Agent with reviewed vision input, approval-gated web fetch/search, an opt-in bounded workspace, longer tasks with schedules and tray notices, hybrid semantic memory recall, parallel read-only subagents, larger budgets and remote MCP. See [Agent capabilities and limits](docs/AGENT_0.9.1.md), the [library guide](docs/LIBRARY_0.9.0.en.md), [current validation](docs/VALIDATION_0.9.1.md) and the [roadmap](ROADMAP.en.md).
+**v0.9.2 Preview** adds OAuth sign-in for remote MCP, direct vision over PDF pages and video frames, and an opt-in Windows AppContainer sandbox for approved commands and local MCP servers. See [Agent 0.9.2](docs/AGENT_0.9.2.md), [current validation](docs/VALIDATION_0.9.2.md), [v0.9.1 capabilities](docs/AGENT_0.9.1.md) and the [roadmap](ROADMAP.en.md).
 
 ![kok v0.8.1 library using bundled original samples](docs/screenshots/library-081-en.png)
 

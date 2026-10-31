@@ -1,29 +1,21 @@
-# kok v0.9.1 Preview
+# kok v0.9.2 Preview
 
-这一版把 Agent 从"受控知识工作"扩展到**可看、可联网、可执行、可定时、可并行、可语义记忆**的本地工作台，同时保持本地优先、逐次审批和证据可核对。原有媒体、阅读、笔记、空间、创作与检索能力不变。
+这一版在 v0.9.1 的八项 Agent 能力上补齐三个长期缺口：**MCP OAuth、PDF 页/视频帧视觉、Windows AppContainer 沙箱**。本地优先、逐次审批和证据可核对的规则不变。
 
-- **视觉输入**：`read_image` 把库内图片/截图缩放后作为视觉输入交给支持图片的模型，未开启或模型不支持时回退 Windows OCR。默认关闭，可在 AI 设置中开启。
-- **联网读取**：`fetch_url` / `web_search` 逐次审批；HTTPS、拒绝内网与保留地址、重定向/大小/类型限制；SmartReader 抽取正文并返回来源 URL/标题；搜索支持自配 SearXNG 兼容端点。
-- **受控执行环境**：可选工作目录内的文件读取/写入与命令执行，默认关闭、逐次审批；相对路径与大小/超时/输出限制，命令以 Job Object 管理进程树。
-- **长任务与自主**：24 轮 / 24 次请求、64k 上下文档位、128k 上下文设置与 8k 输出；NCrontab cron 计划任务（最多 20 条）与完成托盘通知。
-- **记忆增强**：本机 embedding 语义召回 + 词面融合、DPAPI 加密向量缓存、近似记忆合并、来源失效；记忆仍需用户批准。
-- **并行编排**：`delegate_parallel` 一次审批启动 2–3 个只读子代理，共享父任务预算，不能写/MCP/递归，报告汇总后仍由父任务核对。
-- **上下文与预算**：SharpToken（tiktoken）估算 + 保守安全边际 + 历史校准，checkpoint 压缩与 `recall_result` 精确回查。
-- **远程 MCP**：Streamable HTTP + Bearer 令牌（DPAPI 加密），复用逐工具审批与"结果未知不重放"规则；不含 OAuth。
-- **依赖与许可**：SmartReader、AngleSharp、NCrontab、SharpToken 等开源库已锁定 NuGet/DLL 校验和，随包携带许可与 NOTICE。
+- **MCP OAuth**：远程 HTTP MCP 支持 OAuth 2.1 授权码 + PKCE，包含受保护资源与授权服务器元数据发现、动态客户端注册、本机回环回调、refresh token 与 401 单次刷新重试；令牌以 DPAPI 加密保存，界面不显示明文。设置中新增"认证方式 / OAuth 登录"。
+- **PDF 页与视频帧视觉**：`read_image` 支持 `page`（PDF 页码，PDFium 本机栅格化）与 `time`（视频时间戳，可选的 FFmpeg 组件抽帧）。渲染帧以 DPAPI 加密缓存，源文件变化后失效；任务日志不复制图片字节；无视觉模型时同一帧回退 Windows OCR。
+- **AppContainer 沙箱**：审批命令可开启沙箱——无网络、无用户文件访问、只允许写工作目录；本地 stdio MCP 可逐服务开启同样隔离。结果明确标注 `Sandbox: AppContainer` 或未隔离；沙箱启动失败会报错且不会静默绕过。
+- **依赖与许可**：PDFium（BSD-3-Clause）以 NuGet 之外的 GitHub 归档双重 SHA-256 锁定并随包携带完整 NOTICE；FFmpeg 仍按需安装。
+- **验证**：527 项原生确定性检查 + 11 组桌面套件；未新增真实模型调用（总账仍为 150），没有新的模型成功率结论。
 
-本版通过 **494 项原生确定性检查**与 11 组桌面套件（详见验证页）。**没有新增真实模型调用**，总账仍为 150 次；不把确定性回放换算成模型成功率。
+下载 `kok-0.9.2-win-x64.zip` 并核对随附 SHA-256，完整解压后运行 `kok.exe`。需要 Windows 10/11 x64、.NET Framework 4.8 与 WebView2；运行无需 Node.js。升级前备份 data 与原文件。
 
-下载 `kok-0.9.1-win-x64.zip` 并核对随附 SHA-256，完整解压后运行 `kok.exe`。需要 Windows 10/11 x64、.NET Framework 4.8 与 WebView2；运行无需 Node.js。升级前备份 data 与原文件。
-
-[Agent 能力与边界](AGENT_0.9.1.md) · [验证](VALIDATION_0.9.1.md) · [资料库指南](LIBRARY_0.9.0.md) · [Roadmap](../ROADMAP.md) · [Changelog](../CHANGELOG.md)
+[Agent 能力与边界](AGENT_0.9.2.md) · [验证](VALIDATION_0.9.2.md) · [v0.9.1 能力](AGENT_0.9.1.md) · [Roadmap](../ROADMAP.md) · [Changelog](../CHANGELOG.md)
 
 ## English
 
-kok v0.9.1 extends the local-first Agent with reviewed vision input, approval-gated web fetch/search, an opt-in bounded workspace (files and commands), longer tasks with schedules and tray notices, hybrid semantic memory recall, one-card parallel read-only subagents, tiktoken-based budgets and remote MCP over Streamable HTTP with an encrypted bearer token. All external actions remain explicitly approved or default-off.
+kok v0.9.2 closes three gaps on top of v0.9.1: OAuth 2.1 authorization-code + PKCE for remote MCP (metadata discovery, dynamic registration, loopback callback, refresh-on-401 and DPAPI-encrypted tokens); direct vision over one PDF page (local PDFium rasterization) or one video frame at a timestamp (optional FFmpeg), with encrypted frame caches and OCR fallback; and an opt-in Windows AppContainer sandbox for approved commands and local MCP servers (no network, no user-file access, writes only inside the workspace, explicit unsandboxed labeling, no silent fallback).
 
-Deterministic coverage: 494 native checks and 11 desktop suites. No additional real-model calls were made (ledger stays at 150); no model success-rate claim is made for this build.
+Deterministic coverage: 527 native checks and 11 desktop suites. No additional real-model calls were made (ledger stays at 150); no model success-rate claim is made for this build.
 
-Extract the full ZIP and run kok.exe after checking SHA-256. Requires Windows 10/11 x64, .NET Framework 4.8 and WebView2; no Node.js runtime. Back up data/originals before updating. Commands and external MCP servers run with the current user account; there is no OS-level sandbox. Vision requires a model that accepts image input; web search requires a SearXNG-compatible endpoint.
-
-Unsigned Preview. See [Agent capabilities and limits](AGENT_0.9.1.md) and [validation](VALIDATION_0.9.1.md).
+Extract the full ZIP and run kok.exe after checking SHA-256. Requires Windows 10/11 x64, .NET Framework 4.8 and WebView2. The AppContainer sandbox depends on ACL-grantable program files; some system-installed runtimes may refuse and are never bypassed. See [Agent capabilities and limits](AGENT_0.9.2.md) and [validation](VALIDATION_0.9.2.md).

@@ -1,5 +1,13 @@
 # kok 版本记录
 
+## v0.9.2 · Preview
+
+- 远程 MCP OAuth：授权码 + PKCE、受保护资源/授权服务器元数据、动态客户端注册、回环回调、refresh token、401 单次刷新重试；令牌 DPAPI 加密，界面不显示明文。
+- PDF 页与视频帧视觉：`read_image` 支持 `page`（PDFium 本机栅格化，页码/大小受限）与 `time`（可选 FFmpeg 抽帧）；DPAPI 帧缓存、源变化失效、无视觉模型时同一帧 OCR 回退。
+- Windows AppContainer 沙箱：审批命令 opt-in 后无网络、无用户文件访问、只可写工作目录；本地 stdio MCP 可逐服务启用；结果明确标注模式，沙箱失败不静默回退。
+- 新增 PDFium（BSD-3-Clause）依赖：GitHub 归档 + DLL 双重 SHA-256 锁定，随包携带完整 NOTICE；FFmpeg 仍按需安装。
+- 527 项原生确定性检查通过；未新增真实模型调用（总账 150）。见[验证](docs/VALIDATION_0.9.2.md)与[能力边界](docs/AGENT_0.9.2.md)。
+
 ## v0.9.1 · Preview
 
 - Agent 视觉输入：`read_image` 以受限 JPEG 图文消息交给支持图片的模型，未启用时回退 Windows OCR；图片字节不写入任务日志。

@@ -2,6 +2,10 @@
 
 中文 · [English](ROADMAP.en.md)
 
+## v0.9.2 Preview 交付
+
+在 v0.9.1 八项能力上补齐远程 MCP OAuth、PDF 页/视频帧视觉与 Windows AppContainer 沙箱。三者均保持 opt-in / 逐次审批，AppContainer 失败不静默回退；真实模型总账仍为 150。能力与限制见 [Agent 0.9.2](docs/AGENT_0.9.2.md)，结果见[验证](docs/VALIDATION_0.9.2.md)。
+
 ## v0.9.1 Preview 交付
 
 在 v0.9.0 的资料库与检索基础上，本版集中扩展 Agent：视觉输入、联网读取、受控执行环境、长任务与计划、语义记忆、并行只读子代理、更大上下文/输出与远程 MCP。八项能力均默认关闭或逐次审批，能力与边界见 [Agent 0.9.1](docs/AGENT_0.9.1.md)，实际结果见[验证](docs/VALIDATION_0.9.1.md)。真实模型总账仍为 150，本版不宣称新的模型成功率。
