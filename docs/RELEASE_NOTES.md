@@ -1,21 +1,20 @@
-# kok v0.9.2 Preview
+# kok v0.9.3 Preview
 
-这一版在 v0.9.1 的八项 Agent 能力上补齐三个长期缺口：**MCP OAuth、PDF 页/视频帧视觉、Windows AppContainer 沙箱**。本地优先、逐次审批和证据可核对的规则不变。
+这一版补齐 v0.9.2 留下的三项工作：**可用的本地 MCP AppContainer 沙箱**、**MCP OAuth 设备码**、**PDF/视频批量索引**。本地优先、逐次审批与证据核对规则不变；本版没有新增真实模型调用。
 
-- **MCP OAuth**：远程 HTTP MCP 支持 OAuth 2.1 授权码 + PKCE，包含受保护资源与授权服务器元数据发现、动态客户端注册、本机回环回调、refresh token 与 401 单次刷新重试；令牌以 DPAPI 加密保存，界面不显示明文。设置中新增"认证方式 / OAuth 登录"。
-- **PDF 页与视频帧视觉**：`read_image` 支持 `page`（PDF 页码，PDFium 本机栅格化）与 `time`（视频时间戳，可选的 FFmpeg 组件抽帧）。渲染帧以 DPAPI 加密缓存，源文件变化后失效；任务日志不复制图片字节；无视觉模型时同一帧回退 Windows OCR。
-- **AppContainer 沙箱**：审批命令可开启沙箱——无网络、无用户文件访问、只允许写工作目录（521+ 项确定性检查覆盖）。本地 stdio MCP 也有实验性的逐服务沙箱开关，但脚本宿主在 Server CI 内不稳定，未纳入本版发布门禁。结果明确标注 `Sandbox: AppContainer` 或未隔离；沙箱启动失败会报错且不会静默绕过。
-- **依赖与许可**：PDFium（BSD-3-Clause）以 NuGet 之外的 GitHub 归档双重 SHA-256 锁定并随包携带完整 NOTICE；FFmpeg 仍按需安装。
-- **验证**：522 项原生确定性检查 + 11 组桌面套件；未新增真实模型调用（总账仍为 150），没有新的模型成功率结论。
+- **本地 MCP 沙箱（便携运行时）**：每个 stdio 服务可开启 AppContainer 沙箱并指定便携运行时目录；只授权用户可写目录的只读执行 ACL，Node.js 自动补充 symlink-preservation 标志。系统安装目录/不可授权目录会明确报错，不会静默降级。该路径已纳入原生 CI 门禁（复制 Node 运行时的真实 MCP 握手与批准调用）。
+- **MCP OAuth 设备码**：新增 RFC 8628 设备码流程，支持 user code/验证地址展示、`authorization_pending`/`slow_down`/过期/拒绝处理、DPAPI 令牌与 refresh token；设置中可选择浏览器回调或设备码。
+- **PDF/视频批量索引**：新增两个审批型工具——`index_pdf_pages`（PDFium 文本层，最多 25 页）与 `index_video_frames`（可选 FFmpeg 抽帧 + Windows OCR，最多 12 帧），把有界文本合并进本地内容索引；不调用模型、不修改原文件，源变化自动失效。
+- **验证**：542 项原生确定性检查 + 11 组桌面套件；真实模型总账保持 359，本版没有新增模型调用。
 
-下载 `kok-0.9.2-win-x64.zip` 并核对随附 SHA-256，完整解压后运行 `kok.exe`。需要 Windows 10/11 x64、.NET Framework 4.8 与 WebView2；运行无需 Node.js。升级前备份 data 与原文件。
+下载 `kok-0.9.3-win-x64.zip` 并核对随附 SHA-256，完整解压后运行 `kok.exe`。需要 Windows 10/11 x64、.NET Framework 4.8 与 WebView2；升级前备份 data 与原文件。
 
-[Agent 能力与边界](AGENT_0.9.2.md) · [验证](VALIDATION_0.9.2.md) · [v0.9.1 能力](AGENT_0.9.1.md) · [Roadmap](../ROADMAP.md) · [Changelog](../CHANGELOG.md)
+[Agent 能力与边界](AGENT_0.9.3.md) · [验证](VALIDATION_0.9.3.md) · [v0.9.2 能力](AGENT_0.9.2.md) · [Roadmap](../ROADMAP.md) · [Changelog](../CHANGELOG.md)
 
 ## English
 
-kok v0.9.2 closes three gaps on top of v0.9.1: OAuth 2.1 authorization-code + PKCE for remote MCP (metadata discovery, dynamic registration, loopback callback, refresh-on-401 and DPAPI-encrypted tokens); direct vision over one PDF page (local PDFium rasterization) or one video frame at a timestamp (optional FFmpeg), with encrypted frame caches and OCR fallback; and an opt-in Windows AppContainer sandbox for approved commands and local MCP servers (no network, no user-file access, writes only inside the workspace, explicit unsandboxed labeling, no silent fallback).
+kok v0.9.3 finishes the remaining local MCP sandbox, OAuth and indexing work from v0.9.2: AppContainer sandboxing from an explicitly chosen portable-runtime directory (Node.js gets symlink-preservation flags automatically; only ACL-grantable user-writable directories, explicit failures with no silent fallback, and a native CI gate using a copied Node runtime); the RFC 8628 OAuth device-code flow with pending/slow_down/expiry handling, DPAPI tokens and refresh; and approval-gated `index_pdf_pages` (PDFium text layer, up to 25 pages) and `index_video_frames` (optional FFmpeg + Windows OCR, up to 12 frames) that merge bounded local text into the content index without any model call.
 
-Deterministic coverage: 522 native checks and 11 desktop suites. No additional real-model calls were made (ledger stays at 150); no model success-rate claim is made for this build.
+Deterministic coverage: 542 native checks and 11 desktop suites. The real-model ledger stays at 359; no additional model calls were made for this release.
 
-Extract the full ZIP and run kok.exe after checking SHA-256. Requires Windows 10/11 x64, .NET Framework 4.8 and WebView2. The AppContainer sandbox depends on ACL-grantable program files; some system-installed runtimes may refuse and are never bypassed. See [Agent capabilities and limits](AGENT_0.9.2.md) and [validation](VALIDATION_0.9.2.md).
+Extract the full ZIP and run kok.exe after checking SHA-256. Requires Windows 10/11 x64, .NET Framework 4.8 and WebView2. See [Agent capabilities and limits](AGENT_0.9.3.md) and [validation](VALIDATION_0.9.3.md).

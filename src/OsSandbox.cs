@@ -26,6 +26,8 @@ namespace kok {
         static string packageSidString = "";
         static readonly HashSet<string> grantedDirectories = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         static readonly HashSet<string> grantedFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        static readonly HashSet<string> grantedTrees = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        internal const int MaxTreeFiles = 4096;
 
         internal static bool Supported { get { lock (gate) { Probe(); return supported; } } }
         internal static string Status { get { lock (gate) { Probe(); return supported ? "AppContainer ready (" + packageSidString + ")" : "AppContainer unavailable: " + failure; } } }
@@ -62,6 +64,48 @@ namespace kok {
                 if (!exists) { security.AddAccessRule(rule); Directory.SetAccessControl(full, security); }
                 grantedDirectories.Add(full);
             }
+        }
+
+        // Grants an explicitly chosen portable-runtime directory (and its existing contents) read/execute
+        // access to the AppContainer package. Only user-writable, ACL-modifiable directories can work;
+        // failures are reported instead of silently launching an unsandboxed runtime.
+        internal static void GrantReadTree(string directory) {
+            if (String.IsNullOrWhiteSpace(directory) || !Directory.Exists(directory)) throw new InvalidDataException("便携运行时目录不存在。");
+            string full = Path.GetFullPath(directory).TrimEnd(Path.DirectorySeparatorChar);
+            if (full.Length <= 3 || full.EndsWith(":" + Path.DirectorySeparatorChar)) throw new InvalidDataException("不能把整个磁盘根目录授权给沙箱。");
+            lock (gate) {
+                Probe();
+                if (!supported) throw new InvalidDataException(Status);
+                if (grantedTrees.Contains(full)) return;
+                try { AddTreeRule(full, true); } catch (UnauthorizedAccessException) { throw new InvalidDataException("无法授权该运行时目录；请把便携运行时放在用户可写目录，或关闭该服务的沙箱。"); }
+                int files = 0;
+                var pending = new Queue<string>(); pending.Enqueue(full);
+                while (pending.Count > 0) {
+                    string current = pending.Dequeue();
+                    try { AddTreeRule(current, true); } catch (UnauthorizedAccessException) { throw new InvalidDataException("运行时目录中的文件夹无法授权：" + current); }
+                    foreach (string entry in Directory.EnumerateFileSystemEntries(current)) {
+                        var attributes = File.GetAttributes(entry);
+                        if ((attributes & FileAttributes.ReparsePoint) != 0) continue;
+                        if ((attributes & FileAttributes.Directory) != 0) { pending.Enqueue(entry); continue; }
+                        files++;
+                        if (files > MaxTreeFiles) throw new InvalidDataException("运行时目录包含过多文件，无法安全授权；请缩小目录范围。");
+                        try { AddTreeRule(entry, false); } catch (UnauthorizedAccessException) { throw new InvalidDataException("运行时文件无法授权：" + entry); }
+                    }
+                }
+                grantedTrees.Add(full);
+            }
+        }
+
+        static void AddTreeRule(string path, bool directory) {
+            var security = directory ? (FileSystemSecurity)Directory.GetAccessControl(path) : File.GetAccessControl(path);
+            var identity = new SecurityIdentifier(packageSidString);
+            bool exists = security.GetAccessRules(true, false, typeof(SecurityIdentifier)).Cast<FileSystemAccessRule>().Any(r => r.IdentityReference.Value == packageSidString && (r.FileSystemRights & FileSystemRights.ReadAndExecute) == FileSystemRights.ReadAndExecute && r.AccessControlType == AccessControlType.Allow);
+            if (exists) return;
+            var rule = directory
+                ? new FileSystemAccessRule(identity, FileSystemRights.ReadAndExecute, InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit, PropagationFlags.None, AccessControlType.Allow)
+                : new FileSystemAccessRule(identity, FileSystemRights.ReadAndExecute, AccessControlType.Allow);
+            security.AddAccessRule(rule);
+            if (directory) Directory.SetAccessControl(path, (DirectorySecurity)security); else File.SetAccessControl(path, (FileSecurity)security);
         }
 
         internal static void GrantFile(string file) {

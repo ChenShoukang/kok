@@ -1,5 +1,12 @@
 # kok changelog
 
+## v0.9.3 · Preview
+
+- Local MCP sandbox: each stdio server can use a user-writable portable-runtime directory with AppContainer; the host grants read/execute ACLs, Node.js gets symlink-preservation flags automatically, and non-grantable/system directories fail explicitly with no silent fallback. A native CI gate starts a copied Node runtime and completes an approved MCP call.
+- MCP OAuth device code (RFC 8628): user code/verification URI, authorization_pending/slow_down/expired/denied handling, DPAPI tokens and refresh; browser callback or device code is selectable in settings.
+- PDF/video batch indexing: approval-gated `index_pdf_pages` (PDFium text layer, up to 25 pages) and `index_video_frames` (FFmpeg + Windows OCR, up to 12 frames) merge limited local text into the content index; no model calls, no source modification, source changes invalidate.
+- 542 native checks and 11 desktop suites pass; the real-model ledger remains 359 with no new model calls. See [validation](docs/VALIDATION_0.9.3.md) and [Agent limits](docs/AGENT_0.9.3.md).
+
 ## v0.9.2 · Preview
 
 - Remote MCP OAuth: authorization code + PKCE, protected-resource/authorization-server metadata, dynamic client registration, loopback callback, refresh tokens and one refresh retry on 401; tokens stay DPAPI-encrypted and are never shown in the UI.

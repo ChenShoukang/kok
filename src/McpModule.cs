@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 namespace kok {
  internal static class McpModule {
-  internal static IKokModule Create(){var actionNames=new[]{"mcpState","mcpSave","mcpConnect","mcpApprove","mcpDisconnect","mcpRemove","mcpOAuthStart"};
+  internal static IKokModule Create(){var actionNames=new[]{"mcpState","mcpSave","mcpConnect","mcpApprove","mcpDisconnect","mcpRemove","mcpOAuthStart","mcpOAuthDeviceStart"};
    var actions=actionNames.Select(name=>{bool stop=name=="mcpDisconnect";var schema=name=="mcpState"?CapabilitySchema.Obj():name=="mcpSave"?CapabilitySchema.Obj(CapabilitySchema.Fields("server",CapabilitySchema.Obj(additional:true),"token",CapabilitySchema.Str(4096)),new[]{"server"}):name=="mcpApprove"?CapabilitySchema.Obj(CapabilitySchema.Fields("id",CapabilitySchema.Str(32),"tools",CapabilitySchema.Obj(additional:true)),new[]{"id","tools"}):CapabilitySchema.Obj(CapabilitySchema.Fields("id",CapabilitySchema.Str(32)),new[]{"id"});var action=ModuleDefinitions.Action(name,stop?Need.None:name=="mcpState"?Need.NormalLibrary:Need.Ai|Need.Network|Need.NormalLibrary,name!="mcpState",(c,a)=>c.Agent.HandleMcp(name,a),schema);action.Emergency=stop;return action;}).ToArray();
    var catalogProperties=AgentRules.Props("serverId",AgentRules.Str("Configured server ID, optional",32),"tool",AgentRules.Str("Exact tool name to inspect its approved schema",64));
    var callProperties=AgentRules.Props("serverId",AgentRules.Str("Configured server ID",32),"tool",AgentRules.Str("Approved tool name",64),"arguments",CapabilitySchema.Obj(additional:true));
@@ -27,6 +27,7 @@ namespace kok {
    if(action=="mcpSave")return new{id=Mcp.Configure(AgentTaskState.Get<McpServerConfig>(args,"server"),ModuleContext.Text(args,"token"))};
    if(action=="mcpConnect")await Mcp.Connect(id,context.Token);
     else if(action=="mcpOAuthStart")Mcp.StartOAuth(id);
+    else if(action=="mcpOAuthDeviceStart")return await Mcp.StartDeviceOAuth(id);
    else if(action=="mcpApprove")Mcp.Approve(id,AgentTaskState.Get<Dictionary<string,string>>(args,"tools"));
    else if(action=="mcpRemove")Mcp.Remove(id);
    return Mcp.Snapshot();

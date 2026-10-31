@@ -19,7 +19,7 @@ namespace kok {
   readonly Process process;readonly SemaphoreSlim writer=new SemaphoreSlim(1,1);readonly object gate=new object();readonly Dictionary<string,TaskCompletionSource<Dictionary<string,object>>> pending=new Dictionary<string,TaskCompletionSource<Dictionary<string,object>>>();
   bool closed;int serial;McpPipeProcess pipes;StreamWriter input;string sandboxSpec;public string Protocol {get;private set;}public volatile bool CatalogChanged;bool IMcpClient.CatalogChanged{get{return CatalogChanged;}set{CatalogChanged=value;}}
   public int ProcessId {get{return process.Id;}}public bool Connected {get{try{return !closed&&!process.HasExited;}catch(InvalidOperationException){return false;}}}
-  public McpStdioClient(string executable,List<string> args,Dictionary<string,string> environment,bool sandbox=false){
+  public McpStdioClient(string executable,List<string> args,Dictionary<string,string> environment,bool sandbox=false,string sandboxDirectory=""){
    if(!Path.IsPathRooted(executable)||executable.StartsWith(@"\\",StringComparison.Ordinal)||!File.Exists(executable)||!Path.GetExtension(executable).Equals(".exe",StringComparison.OrdinalIgnoreCase))throw new AgentFailure("mcp_config","请选择已安装的本地 MCP 可执行文件。");
    if(args==null||args.Count>40||args.Any(a=>a==null||a.Length>4000||a.IndexOf('\0')>=0)||environment==null||environment.Count>40||environment.Any(p=>String.IsNullOrWhiteSpace(p.Key)||p.Key.Length>100||p.Key.Contains("=")||p.Value==null||p.Value.Length>8000||p.Value.IndexOf('\0')>=0))throw new AgentFailure("mcp_config","MCP 启动参数无效。");
    var start=new ProcessStartInfo{FileName=Path.GetFullPath(executable),Arguments=String.Join(" ",args.Select(Quote)),UseShellExecute=false,CreateNoWindow=true,RedirectStandardInput=true,RedirectStandardOutput=true,RedirectStandardError=true,StandardOutputEncoding=new UTF8Encoding(false,true),StandardErrorEncoding=new UTF8Encoding(false,true),WorkingDirectory=Path.GetDirectoryName(Path.GetFullPath(executable))};
@@ -27,9 +27,13 @@ namespace kok {
    start.EnvironmentVariables.Clear();foreach(var name in new[]{"SystemRoot","WINDIR","PATH","TEMP","TMP","USERPROFILE","APPDATA","LOCALAPPDATA","PROGRAMDATA","COMSPEC","PATHEXT"}){string value=Environment.GetEnvironmentVariable(name);if(value!=null)start.EnvironmentVariables[name]=value;}foreach(var pair in environment)start.EnvironmentVariables[pair.Key]=pair.Value;start.EnvironmentVariables["PYTHONIOENCODING"]="utf-8";
    if(sandbox){
     if(!OsSandbox.Supported)throw new AgentFailure("mcp_sandbox","AppContainer 沙箱不可用："+OsSandbox.Status);
+    string runtimeDirectory=String.IsNullOrWhiteSpace(sandboxDirectory)?Path.GetDirectoryName(Path.GetFullPath(executable)):Path.GetFullPath(sandboxDirectory);
+    try{OsSandbox.GrantReadTree(runtimeDirectory);}catch(Exception error){throw new AgentFailure("mcp_sandbox","无法授权便携运行时目录："+error.Message+" 请把运行时放在用户可写目录，或关闭该服务的沙箱。");}
     try{OsSandbox.GrantFile(Path.GetFullPath(executable));}catch(UnauthorizedAccessException){}catch(InvalidDataException){}
     foreach(var argument in args)try{if(argument!=null&&argument.Length>0&&argument.Length<1024&&argument.IndexOf('\0')<0&&Path.IsPathRooted(argument)&&File.Exists(argument))OsSandbox.GrantFile(argument);}catch(UnauthorizedAccessException){}catch(InvalidDataException){}
-    sandboxSpec=OsSandbox.WriteSpec(Path.GetFullPath(executable),args,start.WorkingDirectory);
+    var sandboxArgs=new List<string>(args??new List<string>());
+    if(Path.GetFileName(executable).Equals("node.exe",StringComparison.OrdinalIgnoreCase)&&!sandboxArgs.Any(a=>String.Equals(a,"--preserve-symlinks-main",StringComparison.OrdinalIgnoreCase))){sandboxArgs.Insert(0,"--preserve-symlinks-main");sandboxArgs.Insert(1,"--preserve-symlinks");}
+    sandboxSpec=OsSandbox.WriteSpec(Path.GetFullPath(executable),sandboxArgs,start.WorkingDirectory);
     var helper=new ProcessStartInfo{FileName=Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"kok.exe"),Arguments="--sandbox-exec "+Quote(sandboxSpec),WorkingDirectory=start.WorkingDirectory,UseShellExecute=false,CreateNoWindow=true};
     helper.EnvironmentVariables.Clear();foreach(System.Collections.DictionaryEntry pair in start.EnvironmentVariables)helper.EnvironmentVariables[Convert.ToString(pair.Key)]=Convert.ToString(pair.Value);
     start=helper;

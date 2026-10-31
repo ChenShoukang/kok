@@ -1,0 +1,74 @@
+{
+  "format": "kok.audit.agent",
+  "version": "0.9.3",
+  "date": "2026-10-31",
+  "syntheticOnly": true,
+  "nativeChecks": 542,
+  "desktopSuites": 11,
+  "realModelRequests": 359,
+  "additionalRealModelRequests": 0,
+  "newRealModelSuccessRate": null,
+  "dependencies": [
+    {
+      "id": "SmartReader",
+      "version": "0.11.1",
+      "license": "Apache-2.0",
+      "purpose": "web article extraction"
+    },
+    {
+      "id": "AngleSharp",
+      "version": "1.5.2",
+      "license": "MIT",
+      "purpose": "HTML parsing"
+    },
+    {
+      "id": "System.Text.Encoding.CodePages",
+      "version": "10.0.10",
+      "license": "MIT",
+      "purpose": "HTML encoding support"
+    },
+    {
+      "id": "NCrontab",
+      "version": "3.4.0",
+      "license": "Apache-2.0",
+      "purpose": "cron schedules"
+    },
+    {
+      "id": "SharpToken",
+      "version": "2.0.6",
+      "license": "MIT",
+      "purpose": "tiktoken prompt estimation"
+    },
+    {
+      "id": "PDFium",
+      "version": "pdfium-binaries chromium/8125",
+      "license": "BSD-3-Clause",
+      "purpose": "PDF page rasterization and text layer",
+      "notice": "docs/licenses/PDFium-NOTICE.txt"
+    }
+  ],
+  "capabilities": [
+    "portable-runtime AppContainer sandbox for local stdio MCP servers: explicit runtime directory, read/execute ACL grant, Node.js symlink-preservation flags, and a native CI gate with a copied Node runtime and approved tool call",
+    "MCP OAuth RFC 8628 device-code flow with user code/verification URI, authorization_pending/slow_down/expired/denied handling, DPAPI tokens and refresh",
+    "approval-gated index_pdf_pages: PDFium text-layer batch indexing of up to 25 pages merged into the local content index",
+    "approval-gated index_video_frames: optional FFmpeg frame extraction plus Windows OCR of up to 12 timestamped frames into the local content index",
+    "no model calls, no source modification and no silent fallback for sandbox or indexing failures"
+  ],
+  "securityBoundaries": [
+    "MCP sandbox requires ACL-grantable user-writable runtime directories; system-installed runtimes may be refused with an explicit error",
+    "all external actions and index writes remain approval-gated; unexpected external outcomes are never replayed",
+    "OAuth supports authorization-code + PKCE and device code with dynamic registration; no enterprise SSO in this version",
+    "batch indexing is local text only; no visual embeddings, no whole-document/video semantic index, no cloud upload"
+  ],
+  "published": false,
+  "localPackage": {
+    "archive": "kok-0.9.3-win-x64.zip",
+    "bytes": 31741509,
+    "sha256": "b5fa04efbd70251b3ff1861759f18bc291e5ccfcb52dfa9ab3b423713f26d117",
+    "desktopSuitesPassed": 11,
+    "nativePassed": true,
+    "sourceFingerprint": "ccd9fded0dd54a2fdefd8697cd45c2dd5977fbbee5828acb56899ace14ad301d",
+    "runtimeFingerprint": "58e3046e1247f51da2573f56aab40d729e77e06e32b500d270a42eaf87e8d4db",
+    "executableSha256": "1db96f62d701ad840ebdf635269378c2b788e21b6bc264b7d98d8d59b35dc91f"
+  }
+}

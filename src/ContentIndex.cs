@@ -6,7 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 namespace kok {
- public sealed class ContentPage {public int page;public string text;public string method="text";}
+ public sealed class ContentPage {public int page;public double time;public string text;public string method="text";}
  public sealed class ContentHit {public string itemId,chunkId,name,text,kind,clipId;public SourceAnchor anchor;public double score;}
  public partial class Library {
   public Entry[] ContentEntries(){lock(gate)return Db.items.Select(e=>Json.Deserialize<Entry>(Json.Serialize(e))).ToArray();}
@@ -32,7 +32,7 @@ namespace kok {
      if(pages==null){status.state=e.ext=="PDF"?"needs_extraction":"needs_ocr";status.detail=e.ext=="PDF"?"Extract PDF text to index its pages.":"OCR is required for image text.";}
      else{if(pages.Count>2000||pages.Any(p=>p==null||p.page<1||p.text==null)||pages.Sum(p=>(long)p.text.Length)>2000000)throw new InvalidDataException("Extracted text is too large.");foreach(var p in pages)AddChunks(result,e,stamp,e.ext=="PDF"?(p.method=="ocr"?"ocr_page":"page"):"ocr",p.text,new SourceAnchor{page=p.page});if(!pages.Any(p=>!String.IsNullOrWhiteSpace(p.text))){status.state="needs_ocr";status.detail="No text layer was found. Run OCR.";}}
     }else if(e.kind=="video"||e.kind=="music"){
-     var tracks=e.generatedSubtitles!=null?new List<SubtitleTrack>{e.generatedSubtitles}:Subtitles.Discover(e.path);foreach(var cue in tracks.Take(1).SelectMany(t=>t.cues))AddChunks(result,e,stamp,"subtitle",cue.text,new SourceAnchor{time=cue.start,endTime=cue.end});if(!tracks.Any()){status.state="metadata_only";status.detail="No captions available.";}
+     var tracks=e.generatedSubtitles!=null?new List<SubtitleTrack>{e.generatedSubtitles}:Subtitles.Discover(e.path);foreach(var cue in tracks.Take(1).SelectMany(t=>t.cues))AddChunks(result,e,stamp,"subtitle",cue.text,new SourceAnchor{time=cue.start,endTime=cue.end});if(pages!=null){if(pages.Count>2000||pages.Any(p=>p==null||p.text==null)||pages.Sum(p=>(long)p.text.Length)>2000000)throw new InvalidDataException("Extracted frame text is too large.");foreach(var p in pages.Where(p=>!String.IsNullOrWhiteSpace(p.text)))AddChunks(result,e,stamp,"ocr_frame",p.text,new SourceAnchor{time=p.time});if(pages.Any(p=>!String.IsNullOrWhiteSpace(p.text))){status.state="ready";status.detail="OCR frame text indexed.";}else if(!tracks.Any()){status.state="metadata_only";status.detail="No captions or frame text available.";}}else if(!tracks.Any()){status.state="metadata_only";status.detail="No captions available.";}
     }else if(e.ext=="PPTX"){
      int n=0;foreach(var slide in PresentationFiles.Read(e.path,false).slides)AddChunks(result,e,stamp,"slide",slide.title+"\n"+slide.notes+"\n"+String.Join("\n",slide.shapes.Select(s=>s.text)),new SourceAnchor{page=++n});
     }else if(new[]{"TXT","MD","MARKDOWN","CSV","JSON","LOG","HTML","HTM","DOCX","EPUB"}.Contains(e.ext)){

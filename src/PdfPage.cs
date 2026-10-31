@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Text;
 using System.Runtime.InteropServices;
 
 namespace kok {
@@ -22,6 +23,10 @@ namespace kok {
         [DllImport("pdfium.dll", CallingConvention = CallingConvention.Cdecl)] static extern int FPDF_GetLastError();
         [DllImport("pdfium.dll", CallingConvention = CallingConvention.Cdecl)] static extern int FPDF_GetPageCount(IntPtr document);
         [DllImport("pdfium.dll", CallingConvention = CallingConvention.Cdecl)] static extern IntPtr FPDF_LoadPage(IntPtr document, int pageIndex);
+        [DllImport("pdfium.dll", CallingConvention = CallingConvention.Cdecl)] static extern IntPtr FPDFText_LoadPage(IntPtr page);
+        [DllImport("pdfium.dll", CallingConvention = CallingConvention.Cdecl)] static extern void FPDFText_ClosePage(IntPtr textPage);
+        [DllImport("pdfium.dll", CallingConvention = CallingConvention.Cdecl)] static extern int FPDFText_CountChars(IntPtr textPage);
+        [DllImport("pdfium.dll", CallingConvention = CallingConvention.Cdecl)] static extern int FPDFText_GetText(IntPtr textPage, int startIndex, int count, [Out] ushort[] result);
         [DllImport("pdfium.dll", CallingConvention = CallingConvention.Cdecl)] static extern double FPDF_GetPageWidthF(IntPtr page);
         [DllImport("pdfium.dll", CallingConvention = CallingConvention.Cdecl)] static extern double FPDF_GetPageHeightF(IntPtr page);
         [DllImport("pdfium.dll", CallingConvention = CallingConvention.Cdecl)] static extern IntPtr FPDFBitmap_CreateEx(int width, int height, int format, IntPtr firstScan, int stride);
@@ -41,6 +46,37 @@ namespace kok {
             }
         }
         internal static int PageCount(string path) { lock (gate) { Ensure(); return WithDocument(path, document => FPDF_GetPageCount(document)); } }
+
+        internal static string PageText(string path, int pageNumber, out int pageCount) {
+            lock (gate) {
+                Ensure();
+                pageCount = 0;int count = 0;
+                try {
+                    string text = WithDocument(path, document => {
+                        count = FPDF_GetPageCount(document);
+                        if (count < 1 || count > MaxPages) throw new InvalidDataException("The PDF page count is outside the supported range.");
+                        if (pageNumber < 1 || pageNumber > count) throw new InvalidDataException("The PDF page number is outside the document.");
+                        IntPtr page = FPDF_LoadPage(document, pageNumber - 1);
+                        if (page == IntPtr.Zero) throw LastError("The PDF page could not be loaded.");
+                        IntPtr textPage = IntPtr.Zero;
+                        try {
+                            textPage = FPDFText_LoadPage(page);
+                            if (textPage == IntPtr.Zero) throw new InvalidDataException("The PDF page text could not be loaded.");
+                            int length = FPDFText_CountChars(textPage);
+                            if (length < 0 || length > 400000) throw new InvalidDataException("The PDF page text is too large.");
+                            if (length == 0) return "";
+                            var buffer = new ushort[length + 1];
+                            int written = FPDFText_GetText(textPage, 0, length + 1, buffer);
+                            if (written <= 0) return "";
+                            var bytes = new byte[Math.Min(written, buffer.Length) * 2];for (int i = 0; i < bytes.Length / 2; i++) { bytes[i * 2] = (byte)(buffer[i] & 0xFF); bytes[i * 2 + 1] = (byte)(buffer[i] >> 8); }return Encoding.Unicode.GetString(bytes).TrimEnd('\0');
+                        } finally { if (textPage != IntPtr.Zero) FPDFText_ClosePage(textPage); }
+                    });
+                    pageCount = count;
+                    return text;
+                } catch (DllNotFoundException) { throw new InvalidDataException("PDF page rendering is unavailable in this build."); }
+                catch (EntryPointNotFoundException) { throw new InvalidDataException("PDF page rendering is unavailable in this build."); }
+            }
+        }
 
         internal static byte[] RenderJpeg(string path, int pageNumber, out int pageCount) {
             lock (gate) {

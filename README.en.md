@@ -4,9 +4,9 @@
 
 Keep videos, photos, music, documents and books in one local library. Organize topics with Spaces, connect sources to notes with Clips, and bring in AI when you want help translating, organizing or writing.
 
-[Download v0.9.2 Preview](https://github.com/ChenShoukang/kok/releases/tag/v0.9.2) · [User guide](docs/GUIDE.en.md) · [中文](README.md) · [Supported formats](docs/FORMATS.en.md)
+[Download v0.9.3 Preview](https://github.com/ChenShoukang/kok/releases/tag/v0.9.3) · [User guide](docs/GUIDE.en.md) · [中文](README.md) · [Supported formats](docs/FORMATS.en.md)
 
-**v0.9.2 Preview** adds OAuth sign-in for remote MCP, direct vision over PDF pages and video frames, and an opt-in Windows AppContainer sandbox for approved commands and local MCP servers. See [Agent 0.9.2](docs/AGENT_0.9.2.md), [current validation](docs/VALIDATION_0.9.2.md), [v0.9.1 capabilities](docs/AGENT_0.9.1.md) and the [roadmap](ROADMAP.en.md).
+**v0.9.3 Preview** makes local MCP sandboxing usable from a grantable portable-runtime directory, adds MCP OAuth device-code sign-in, and provides approval-gated local batch indexing for PDF pages and video frames. See [Agent 0.9.3](docs/AGENT_0.9.3.md), [current validation](docs/VALIDATION_0.9.3.md), [v0.9.2 capabilities](docs/AGENT_0.9.2.md) and the [roadmap](ROADMAP.en.md).
 
 ![kok v0.8.1 library using bundled original samples](docs/screenshots/library-081-en.png)
 

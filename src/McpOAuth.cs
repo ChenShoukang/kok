@@ -16,6 +16,14 @@ namespace kok {
         public long expires_at;
     }
 
+    public sealed class McpDeviceFlow {
+        public string UserCode { get; internal set; }
+        public string VerificationUri { get; internal set; }
+        public string VerificationUriComplete { get; internal set; }
+        public int ExpiresIn { get; internal set; }
+        public Task<McpOAuthToken> Completion { get; internal set; }
+    }
+
     public sealed class McpOAuthFlow : IDisposable {
         internal TcpListener listener;
         internal Task<McpOAuthToken> completion;
@@ -140,6 +148,105 @@ namespace kok {
             return Encoding.ASCII.GetString(bytes.ToArray());
         }
 
+        internal static async Task<McpDeviceFlow> BeginDevice(McpServerConfig server, Action<McpDeviceFlow> onCode, CancellationToken lifetime) {
+            if (server == null || server.auth != "oauth" || server.oauthFlow != "device_code" || (server.transport ?? "stdio") != "http") throw new AgentFailure("mcp_oauth", "设备码登录只适用于启用 OAuth 的远程 HTTP MCP 服务。");
+            var resource = McpHttpClient.ValidateEndpoint(server.url);
+            var protectedResource = await DiscoverProtectedResource(resource, lifetime);
+            var issuer = FirstString(protectedResource, "authorization_servers");
+            if (String.IsNullOrEmpty(issuer)) throw new AgentFailure("mcp_oauth", "MCP 服务没有公布 OAuth 授权服务器。");
+            var metadata = await DiscoverAuthorizationServer(issuer, lifetime);
+            string deviceEndpoint = Str(metadata, "device_authorization_endpoint"), tokenEndpoint = Str(metadata, "token_endpoint"), registration = Str(metadata, "registration_endpoint");
+            if (deviceEndpoint.Length == 0) throw new AgentFailure("mcp_oauth", "MCP 授权服务器不支持 OAuth 设备码登录。");
+            ValidateEndpoint(deviceEndpoint, "device_authorization_endpoint");
+            ValidateEndpoint(tokenEndpoint, "token_endpoint");
+            string clientId, clientSecret;
+            if (String.IsNullOrEmpty(registration)) throw new AgentFailure("mcp_oauth", "MCP 授权服务器不支持动态客户端注册，0.9.3 暂不支持此服务器。");
+            ValidateEndpoint(registration, "registration_endpoint");
+            RegisterClient(registration, null, out clientId, out clientSecret, lifetime);
+            if (String.IsNullOrEmpty(clientId)) throw new AgentFailure("mcp_oauth", "MCP OAuth 客户端注册失败。");
+            string scope = String.Join(" ", StrList(protectedResource, "scopes_supported"));
+            var form = new List<KeyValuePair<string, string>> { new KeyValuePair<string,string>("client_id", clientId), new KeyValuePair<string,string>("resource", resource.AbsoluteUri) };
+            if (scope.Length > 0) form.Add(new KeyValuePair<string,string>("scope", scope));
+            var response = await DeviceRequest(deviceEndpoint, form, lifetime);
+            string deviceCode = Str(response, "device_code"), userCode = Str(response, "user_code"), verificationUri = Str(response, "verification_uri"), verificationComplete = Str(response, "verification_uri_complete");
+            if (deviceCode.Length == 0 || deviceCode.Length > 8192 || userCode.Length == 0 || userCode.Length > 200 || verificationUri.Length == 0) throw new AgentFailure("mcp_oauth", "OAuth 设备授权响应无效。");
+            ValidateEndpoint(verificationUri, "verification_uri");
+            int expiresIn = 600, interval = 5;
+            int.TryParse(Str(response, "expires_in"), out expiresIn);
+            int.TryParse(Str(response, "interval"), out interval);
+            expiresIn = Math.Max(30, Math.Min(expiresIn, 3600)); interval = Math.Max(1, Math.Min(interval, 60));
+            var flow = new McpDeviceFlow { UserCode = userCode, VerificationUri = verificationUri, VerificationUriComplete = verificationComplete, ExpiresIn = expiresIn };
+            var template = new McpOAuthToken { client_id = clientId, client_secret = clientSecret, issuer = Str(metadata, "issuer"), authorization_endpoint = Str(metadata, "authorization_endpoint"), token_endpoint = tokenEndpoint, registration_endpoint = registration, resource = resource.AbsoluteUri, token_type = "Bearer" };
+            flow.Completion = PollDevice(flow, template, deviceCode, interval, expiresIn, lifetime);
+            if (onCode != null) { try { onCode(flow); } catch { } }
+            return flow;
+        }
+
+        static async Task<McpOAuthToken> PollDevice(McpDeviceFlow flow, McpOAuthToken template, string deviceCode, int interval, int expiresIn, CancellationToken lifetime) {
+            long deadline = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + expiresIn;
+            while (DateTimeOffset.UtcNow.ToUnixTimeSeconds() < deadline) {
+                await Task.Delay(TimeSpan.FromSeconds(interval), lifetime);
+                var form = new List<KeyValuePair<string, string>> {
+                    new KeyValuePair<string,string>("grant_type","urn:ietf:params:oauth:grant-type:device_code"),
+                    new KeyValuePair<string,string>("device_code",deviceCode),
+                    new KeyValuePair<string,string>("client_id",template.client_id),
+                    new KeyValuePair<string,string>("resource",template.resource)
+                };
+                DeviceTokenResult result = await DeviceToken(new Uri(template.token_endpoint), form, template.client_secret, template.client_id, lifetime);
+                if (result.token != null) {
+                    var token = result.token;
+                    token.client_id = template.client_id; token.client_secret = template.client_secret; token.issuer = template.issuer;
+                    token.authorization_endpoint = template.authorization_endpoint; token.token_endpoint = template.token_endpoint;
+                    token.registration_endpoint = template.registration_endpoint; token.resource = template.resource;
+                    if (String.IsNullOrEmpty(token.refresh_token)) token.refresh_token = "";
+                    return token;
+                }
+                if (result.error == "authorization_pending") continue;
+                if (result.error == "slow_down") { interval = Math.Min(60, interval + 5); continue; }
+                if (result.error == "access_denied") throw new AgentFailure("mcp_auth", "OAuth 设备码登录被拒绝。");
+                if (result.error == "expired_token") break;
+                if (!String.IsNullOrEmpty(result.error)) throw new AgentFailure("mcp_oauth", "OAuth 设备码登录失败：" + result.error);
+            }
+            throw new AgentFailure("mcp_oauth_timeout", "OAuth 设备码登录已过期，请重试。");
+        }
+
+        sealed class DeviceTokenResult { public McpOAuthToken token; public string error = ""; }
+        static async Task<DeviceTokenResult> DeviceToken(Uri endpoint, List<KeyValuePair<string,string>> form, string clientSecret, string clientId, CancellationToken token) {
+            using (var request = new HttpRequestMessage(HttpMethod.Post, endpoint)) {
+                request.Content = new FormUrlEncodedContent(form);
+                if (!String.IsNullOrEmpty(clientSecret)) request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes(clientId + ":" + clientSecret)));
+                HttpResponseMessage response;
+                try { response = await http.SendAsync(request, token); } catch (OperationCanceledException) { throw new AgentFailure("mcp_oauth_timeout", "OAuth 设备码请求超时。"); } catch (HttpRequestException) { throw new AgentFailure("mcp_oauth", "无法连接 OAuth 令牌端点。"); }
+                using (response) {
+                    string text = await response.Content.ReadAsStringAsync();
+                    if (text.Length > 1024 * 1024) throw new AgentFailure("mcp_oauth", "OAuth 令牌响应过大。");
+                    Dictionary<string, object> json;
+                    try { json = Library.Json.Deserialize<Dictionary<string, object>>(text); } catch { throw new AgentFailure("mcp_oauth", "OAuth 设备码响应无效。"); }
+                    if (json == null) throw new AgentFailure("mcp_oauth", "OAuth 设备码响应无效。");
+                    if (!response.IsSuccessStatusCode) return new DeviceTokenResult { error = Str(json, "error") };
+                    string access = Str(json, "access_token");
+                    if (access.Length == 0 || access.Length > 8192) return new DeviceTokenResult { error = "invalid_response" };
+                    var result = new McpOAuthToken { access_token = access, refresh_token = Str(json, "refresh_token"), token_type = Str(json, "token_type"), scope = Str(json, "scope") };
+                    long seconds; if (Int64.TryParse(Str(json, "expires_in"), out seconds) && seconds > 0 && seconds < 86400 * 365) result.expires_at = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + seconds;
+                    return new DeviceTokenResult { token = result };
+                }
+            }
+        }
+
+        static async Task<Dictionary<string, object>> DeviceRequest(string endpoint, List<KeyValuePair<string,string>> form, CancellationToken token) {
+            using (var request = new HttpRequestMessage(HttpMethod.Post, endpoint)) {
+                request.Content = new FormUrlEncodedContent(form);
+                HttpResponseMessage response;
+                try { response = await http.SendAsync(request, token); } catch (OperationCanceledException) { throw new AgentFailure("mcp_oauth_timeout", "OAuth 设备授权请求超时。"); } catch (HttpRequestException) { throw new AgentFailure("mcp_oauth", "无法连接 OAuth 设备授权端点。"); }
+                using (response) {
+                    string text = await response.Content.ReadAsStringAsync();
+                    if (!response.IsSuccessStatusCode) throw new AgentFailure("mcp_oauth", "OAuth 设备授权请求被拒绝（HTTP " + (int)response.StatusCode + "）。");
+                    if (text.Length > 1024 * 1024) throw new AgentFailure("mcp_oauth", "OAuth 设备授权响应过大。");
+                    try { var json = Library.Json.Deserialize<Dictionary<string, object>>(text); if (json == null) throw new InvalidDataException(); return json; } catch { throw new AgentFailure("mcp_oauth", "OAuth 设备授权响应无效。"); }
+                }
+            }
+        }
+
         internal static async Task<McpOAuthToken> Exchange(McpOAuthToken template, string code, string redirectUri, string verifier, CancellationToken token) {
             var form = new List<KeyValuePair<string, string>> {
                 new KeyValuePair<string,string>("grant_type","authorization_code"),
@@ -194,10 +301,12 @@ namespace kok {
 
         static void RegisterClient(string registrationEndpoint, string redirectUri, out string clientId, out string clientSecret, CancellationToken token) {
             var body = new Dictionary<string, object> {
-                { "client_name", "kok" }, { "redirect_uris", new[] { redirectUri } },
-                { "grant_types", new[] { "authorization_code", "refresh_token" } }, { "response_types", new[] { "code" } },
+                { "client_name", "kok" },
+                { "grant_types", new[] { "authorization_code", "refresh_token", "urn:ietf:params:oauth:grant-type:device_code" } },
+                { "response_types", new[] { "code" } },
                 { "token_endpoint_auth_method", "none" }, { "application_type", "native" }
             };
+            if (!String.IsNullOrEmpty(redirectUri)) body["redirect_uris"] = new[] { redirectUri };
             var request = new HttpRequestMessage(HttpMethod.Post, registrationEndpoint) { Content = new StringContent(Library.Json.Serialize(body), Encoding.UTF8, "application/json") };
             request.Headers.Accept.ParseAdd("application/json");
             HttpResponseMessage response;

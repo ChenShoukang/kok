@@ -2293,7 +2293,15 @@
     "认证方式": "Authentication",
     "无认证 / 静态令牌": "None / static token",
     "OAuth 登录": "OAuth sign-in",
-    "本地程序使用 AppContainer 沙箱": "Run local programs in the AppContainer sandbox"
+    "本地程序使用 AppContainer 沙箱": "Run local programs in the AppContainer sandbox",
+    "MCP OAuth 登录方式无效。": "The MCP OAuth sign-in method is invalid.",
+    "便携运行时目录必须是已存在的绝对路径。": "The portable runtime directory must be an existing absolute path.",
+    "该服务配置为设备码登录，请使用设备码入口。": "This server uses device-code sign-in; use the device-code entry point.",
+    "该 MCP 服务未启用 OAuth 设备码登录。": "This MCP server does not have OAuth device-code sign-in enabled.",
+    "便携运行时目录（可选）": "Portable runtime directory (optional)",
+    "沙箱需要读取运行时目录；请使用用户可写目录中的便携运行时。": "The sandbox needs to read the runtime directory; use a portable runtime in a user-writable directory.",
+    "OAuth 浏览器回调": "OAuth browser callback",
+    "OAuth 设备码": "OAuth device code"
   },
   "patterns": [
     {

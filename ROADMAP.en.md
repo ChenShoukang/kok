@@ -2,6 +2,10 @@
 
 [中文](ROADMAP.md) · English
 
+## v0.9.3 Preview deliverables
+
+v0.9.3 completes the portable-runtime AppContainer MCP sandbox with a CI gate, the MCP OAuth device-code flow and approval-gated PDF/video batch indexing. All remain local-first and approval-gated, with no new real-model calls (ledger 359). See [Agent 0.9.3](docs/AGENT_0.9.3.md) and [validation](docs/VALIDATION_0.9.3.md).
+
 ## v0.9.2 Preview deliverables
 
 On top of v0.9.1's eight areas, v0.9.2 adds OAuth for remote MCP, direct vision over PDF pages and video frames, and an opt-in Windows AppContainer sandbox for approved commands and local MCP servers. All remain opt-in or approval-gated, sandbox failure never silently falls back, and the real-model ledger stays at 150. See [Agent 0.9.2](docs/AGENT_0.9.2.md) and [validation](docs/VALIDATION_0.9.2.md).

@@ -1,0 +1,33 @@
+﻿{
+    "started":  "2026-10-31T14:21:47.7692909Z",
+    "version":  "0.9.3",
+    "passed":  true,
+    "format":  "kok.package.validation",
+    "archive":  "kok-0.9.3-win-x64.zip",
+    "suites":  [
+                   "ui",
+                   "features",
+                   "agent",
+                   "agent-interactions",
+                   "agent-reliable",
+                   "agent-runtime",
+                   "agent-kernel",
+                   "mcp",
+                   "agent-platform",
+                   "agent-quality",
+                   "library-services"
+               ],
+    "fingerprint":  {
+                        "source":  {
+                                       "count":  429,
+                                       "sha256":  "ccd9fded0dd54a2fdefd8697cd45c2dd5977fbbee5828acb56899ace14ad301d"
+                                   },
+                        "runtime":  {
+                                        "count":  362,
+                                        "sha256":  "58e3046e1247f51da2573f56aab40d729e77e06e32b500d270a42eaf87e8d4db"
+                                    },
+                        "executableSha256":  "1db96f62d701ad840ebdf635269378c2b788e21b6bc264b7d98d8d59b35dc91f"
+                    },
+    "finished":  "2026-10-31T14:24:42.2633147Z",
+    "sha256":  "b5fa04efbd70251b3ff1861759f18bc291e5ccfcb52dfa9ab3b423713f26d117"
+}

@@ -1,5 +1,12 @@
 # kok 版本记录
 
+## v0.9.3 · Preview
+
+- 本地 MCP 沙箱：每个 stdio 服务可指定用户可写便携运行时目录并启用 AppContainer；主程序授权只读执行 ACL，Node.js 自动补充 symlink 标志；系统目录/不可授权目录明确拒绝且不静默降级。新增复制 Node 运行时的原生 CI 门禁。
+- MCP OAuth 设备码（RFC 8628）：user code/验证地址、authorization_pending/slow_down/过期/拒绝处理、DPAPI 令牌与 refresh；设置中可选浏览器回调或设备码。
+- PDF/视频批量索引：审批型 `index_pdf_pages`（PDFium 文本层，最多 25 页）与 `index_video_frames`（FFmpeg + Windows OCR，最多 12 帧）合并进本地内容索引；不调用模型、不改原文件、源变化失效。
+- 542 项原生检查与 11 组桌面套件通过；真实模型总账保持 359，本版未新增模型调用。见[验证](docs/VALIDATION_0.9.3.md)与[能力边界](docs/AGENT_0.9.3.md)。
+
 ## v0.9.2 · Preview
 
 - 远程 MCP OAuth：授权码 + PKCE、受保护资源/授权服务器元数据、动态客户端注册、回环回调、refresh token、401 单次刷新重试；令牌 DPAPI 加密，界面不显示明文。

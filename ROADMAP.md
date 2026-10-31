@@ -2,6 +2,10 @@
 
 中文 · [English](ROADMAP.en.md)
 
+## v0.9.3 Preview 交付
+
+完成便携运行时 MCP AppContainer 沙箱（含 CI 门禁）、MCP OAuth 设备码与 PDF/视频批量索引。三者均保持逐次审批与本地优先，未新增真实模型调用（总账 359）。能力与限制见 [Agent 0.9.3](docs/AGENT_0.9.3.md)，结果见[验证](docs/VALIDATION_0.9.3.md)。
+
 ## v0.9.2 Preview 交付
 
 在 v0.9.1 八项能力上补齐远程 MCP OAuth、PDF 页/视频帧视觉与 Windows AppContainer 沙箱。三者均保持 opt-in / 逐次审批，AppContainer 失败不静默回退；真实模型总账仍为 150。能力与限制见 [Agent 0.9.2](docs/AGENT_0.9.2.md)，结果见[验证](docs/VALIDATION_0.9.2.md)。
