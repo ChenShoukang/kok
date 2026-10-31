@@ -1,0 +1,11 @@
+{
+  "format": "kok.ci.validation",
+  "version": "0.9.0",
+  "commit": "0376d9f0f83c8eda8db8fbe373125a63596a0fbd",
+  "run": "https://github.com/ChenShoukang/kok/actions/runs/41164402201",
+  "windows2022": "425 checks passed",
+  "windows2025": "early rejection passed, but an unauthorized MCP body caused TCP reset during response close",
+  "published": false,
+  "fix": "Send the complete rejection, half-close output, then bounded background discard with an 8 KiB buffer and 500 ms deadline; authentication still precedes body processing",
+  "regression": "40 unauthorized requests with alternating 256/32768-byte payload padding, plus header-only 24 MiB early rejection"
+}

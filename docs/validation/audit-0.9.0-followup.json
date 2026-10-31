@@ -29,22 +29,32 @@
     "automatic read-back batches contain at most 8 source IDs"
   ],
   "packagePassed": true,
-  "packageSha256": "5814dac0272b59b325c81f290d48230735934285c887e9a6fc2ae6163995a1ea",
+  "packageSha256": "8a63243018cc6174f6142653cce55bbbdf9708c8f410d31048ff3c8cc171a8b2",
   "fingerprint": {
     "source": {
       "count": 402,
-      "sha256": "958d12fec704d7057078636f61e4670d3cba06c56bb9d2b8ee964a3ddd7cb933"
+      "sha256": "f924a5792d499bf2cf66646098c87ff4147650aabc4eb1561a514b19ded8d085"
     },
     "runtime": {
       "count": 356,
-      "sha256": "d63b817da714a1df841a7b0a3a24c4c3c0b82a8e4332fd94952c9e9f7fb8b8f1"
+      "sha256": "dd54472aa13e41bff318abd236336abb51b18f6d0297addd82f154f3b5b1a515"
     },
-    "executableSha256": "4d4539af803530e279c54d2c08c8a506d9c55f6a1a99681eba1f9e1a6a910c5d"
+    "executableSha256": "3f00a5e594a3a3dc5f6137f826a3ff2f65112556435abbe52f1ff4e05717a7da"
   },
   "portableVersion": 2,
   "defaultExternalReferenceLayout": "filename",
   "nestedRelativeLayoutRequiresExplicitRoot": true,
   "legacyV1Restore": true,
   "capturePreparationConcurrency": 2,
-  "newRealModelEvaluationRun": false
+  "newRealModelEvaluationRun": false,
+  "earlyRejectResponseRegression": {
+    "requests": 40,
+    "paddingBytes": [
+      256,
+      32768
+    ],
+    "passed": true,
+    "nativeChecks": 425,
+    "packageSuites": 11
+  }
 }
