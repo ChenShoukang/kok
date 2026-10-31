@@ -56,7 +56,7 @@
     "commands and MCP servers run with the current user account; no OS-level sandbox",
     "no OAuth, no video/PDF visual rendering, no cross-platform or cloud sync in this version"
   ],
-  "published": false,
+  "published": true,
   "localPackage": {
     "archive": "kok-0.9.1-win-x64.zip",
     "bytes": 27906974,
@@ -66,5 +66,15 @@
     "sourceFingerprint": "1c3f357daf4eeac2e3f7b9fd1088b5ef00bdac010dfd7b59e605bb7f3411ae2c",
     "runtimeFingerprint": "51bfe0c2512bafe73b9220d20bdf5d346ace00b40fdc32b00793e4c286e0bfcf",
     "executableSha256": "d6d38ec69b0c8e6e8e88f27fc7a0157a800b80e0a6c3abc893a3b888f37682e9"
+  },
+  "cloudRelease": {
+    "release": "https://github.com/ChenShoukang/kok/releases/tag/v0.9.1",
+    "run": "https://github.com/ChenShoukang/kok/actions/runs/41194469834",
+    "tagCommit": "cffdeb387126d0288635831d8a2886223050545b",
+    "publishedAt": "2026-10-31T11:01:01Z",
+    "bytes": 28203332,
+    "sha256": "5ec43c1f05651680583ff5ccb32a0455bbeebe89955cd32c007df37cb693083e",
+    "desktopSuitesPassed": 11,
+    "checksumPassed": true
   }
 }

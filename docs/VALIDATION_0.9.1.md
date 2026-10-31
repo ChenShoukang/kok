@@ -41,7 +41,11 @@ OAuth MCP、视频帧/PDF 页面直接视觉渲染、跨平台/移动端/云同�
 
 ## 发布记录
 
-云端 Windows 2022 / 2025 构建、原生检查、隐私与依赖审计、待发布 ZIP 的 11 组桌面套件必须全部通过后才会发布。本页在云端结果与下载核验完成后追加记录。
+云端 Windows 2022 / 2025 构建、原生检查、隐私与依赖审计、待发布 ZIP 的 11 组桌面套件全部通过后，v0.9.1 已于 2026-10-31T11:01:01Z 发布为 Preview：
+
+- Release：https://github.com/ChenShoukang/kok/releases/tag/v0.9.1（run `41194469834`，tag/commit `cffdeb3`）。
+- 云端 11 / 11 桌面套件通过；云端 ZIP `kok-0.9.1-win-x64.zip` 为 **28,203,332 bytes**，SHA-256 `5ec43c1f05651680583ff5ccb32a0455bbeebe89955cd32c007df37cb693083e`。
+- 独立下载后重新计算 SHA-256、核对随附 `.sha256` 与 GitHub asset digest 均一致（`checksumPassed: true`）；核验记录见 [release-0.9.1-download.json](validation/release-0.9.1-download.json)。
 
 ## English summary
 
