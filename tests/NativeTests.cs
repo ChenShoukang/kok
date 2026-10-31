@@ -112,6 +112,8 @@ class Tests {
             AgentWebTests.Run(Path.Combine(temp,"agent-web"),Check);
             AgentExecutionTests.Run(Path.Combine(temp,"agent-execution"),Check);
             AgentScheduleTests.Run(Path.Combine(temp,"agent-schedules"),Check);
+            AgentMemoryTests.Run(Path.Combine(temp,"agent-memory"),Check);
+            AgentOrchestrationTests.Run(Path.Combine(temp,"agent-orchestration"),Check);
             AgentKernelTests.Run(Path.Combine(temp,"agent-kernel"),Check);
             AgentPlatformTests.Run(Path.Combine(temp,"agent-platform"),Check);
             AgentReliability090Tests.Run(Path.Combine(temp,"agent-090"),Check);

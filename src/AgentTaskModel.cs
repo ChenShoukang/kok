@@ -13,7 +13,7 @@ namespace kok {
         // Try native tools first; fall back once only on an explicit unsupported-tools response.
         string ChooseTaskProtocol(string requested){return requested=="auto"?"tools":requested;}
         Func<string,bool> TaskExists(AgentTaskState t){return id=>t.options.allowed.Contains(id)&&normalLibrary.AgentHas(id);}
-        bool StaleRead(AgentCall c){return c.sources.Count>0&&(AgentRules.ReadTools.Contains(c.tool)||c.tool=="delegate_task")&&Library.Json.Serialize(c.sources)!=Library.Json.Serialize(normalLibrary.AgentSourceStamps(c.sources.Keys));}
+        bool StaleRead(AgentCall c){return c.sources.Count>0&&(AgentRules.ReadTools.Contains(c.tool)||(c.tool=="delegate_task"||c.tool=="delegate_parallel"))&&Library.Json.Serialize(c.sources)!=Library.Json.Serialize(normalLibrary.AgentSourceStamps(c.sources.Keys));}
         static string ResultText(AgentCall c){return c.result!=null&&c.result.ContainsKey("text")?Convert.ToString(c.result["text"])??"":"";}
         string CallOutcome(AgentCall c){
             if(normalLibrary.OperationStatus(c.id)=="undone")return "Applied, then undone by the user.";

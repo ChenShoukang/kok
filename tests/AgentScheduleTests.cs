@@ -27,6 +27,7 @@ static class AgentScheduleTests {
   for(int n=0;n<AgentSchedules.MaxSchedules-savedCount;n++)lib.SaveAgentSchedule(new AgentSchedule{goal="limit "+n,cron="0 8 * * *"});
   bool limit=false;try{lib.SaveAgentSchedule(new AgentSchedule{goal="too many",cron="0 8 * * *"});}catch(InvalidDataException){limit=true;}check(limit,"the number of saved schedules is bounded");
   check(AgentRules.MaxRounds==24,"long tasks allow up to 24 native model rounds");
+  check(AgentTokenBudget.Estimate("hello world")<=4&&AgentTokenBudget.Estimate("中文资料预算测试")>=4,"prompt budgets use the vendored tiktoken encoding with a conservative fallback");
   var schema=ActionSchemas.For("agentTaskStart");var properties=(Dictionary<string,object>)schema["properties"];
   var budget=(Dictionary<string,object>)properties["budget"];var budgetValues=((IEnumerable<int>)budget["enum"]).ToArray();
   var requestLimit=(Dictionary<string,object>)properties["requestLimit"];var contextTokens=(Dictionary<string,object>)properties["contextTokens"];

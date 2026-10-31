@@ -38,5 +38,15 @@
     "license": "Apache-2.0",
     "project": "https://github.com/atifaziz/NCrontab",
     "entry": "lib/netstandard2.0/NCrontab.dll"
+  },
+  {
+    "url": "https://api.nuget.org/v3-flatcontainer/sharptoken/2.0.6/sharptoken.2.0.6.nupkg",
+    "id": "SharpToken",
+    "version": "2.0.6",
+    "sha256": "06a5a36393dc6618d67b7dcfe1f5163041a0d54685a575a81500a1dbc1973c17",
+    "dllSha256": "4bf54384a2b9c0534c8b7348c39c53ae70812d031b425992d4ca4363ed7c98e8",
+    "license": "MIT",
+    "project": "https://github.com/dmitry-brazhenko/SharpToken",
+    "entry": "lib/netstandard2.0/SharpToken.dll"
   }
 ]

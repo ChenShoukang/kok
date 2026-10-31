@@ -72,9 +72,9 @@ namespace kok {
         }
         public KnowledgeContext BuildKnowledgeContext(List<string> ids,string recipe,string question,int budget){
             RequireAiMode();KnowledgeRecipes.Prompt(recipe,question);
-            if(ids==null||ids.Count<1||ids.Count>24||ids.Distinct().Count()!=ids.Count||ids.Any(id=>Find(id)==null)||!new[]{6000,14000,24000}.Contains(budget))throw new InvalidDataException("请选择 1 至 24 份范围内资料。");
+            if(ids==null||ids.Count<1||ids.Count>24||ids.Distinct().Count()!=ids.Count||ids.Any(id=>Find(id)==null)||!new[]{6000,14000,24000,48000,64000}.Contains(budget))throw new InvalidDataException("请选择 1 至 24 份范围内资料。");
             if(recipe=="connect"&&ids.Count<2)throw new InvalidDataException("至少选择两份资料。");
-            var result=new KnowledgeContext{recipe=recipe,question=question,outputTokens=budget==6000?900:budget==14000?1400:2000};
+            var result=new KnowledgeContext{recipe=recipe,question=question,outputTokens=budget<=6000?900:budget<=14000?1400:budget<=24000?2000:budget<=48000?3000:4000};
             var terms=Regex.Matches(question.ToLowerInvariant(),@"[\p{L}\p{N}]{2,20}").Cast<Match>().Select(m=>m.Value).ToArray();
             lock(knowledgeGate){foreach(string id in ids.OrderBy(x=>x,StringComparer.Ordinal)){
                 Entry item;lock(gate){var live=Find(id);if(live==null)throw new FileNotFoundException("资料已移除。");item=Json.Deserialize<Entry>(Json.Serialize(live));}

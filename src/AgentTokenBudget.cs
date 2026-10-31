@@ -1,12 +1,22 @@
 using System;
 using System.Linq;
+using System.Text;
 using System.Globalization;
+using System.Collections.Generic;
+using SharpToken;
 
 namespace kok {
  // A script-aware estimate, not a provider tokenizer. All prompts/tools are included at preflight.
  internal static class AgentTokenBudget {
-  internal const string Method="cjk-aware-v1";
+  internal const string Method="tiktoken-cl100k-v1";
+  static GptEncoding encoder;static readonly object encoderGate=new object();
+  static GptEncoding Encoder(){lock(encoderGate)return encoder??(encoder=GptEncoding.GetEncoding("cl100k_base"));}
   internal static int Estimate(string text){
+   if(String.IsNullOrEmpty(text))return 0;
+   try{var tokens=Encoder().Encode(text,new HashSet<string>(),new HashSet<string>());if(tokens!=null&&tokens.Count>0)return Math.Max(1,(int)Math.Ceiling(tokens.Count*1.4));}catch{}
+   return EstimateFallback(text);
+  }
+  static int EstimateFallback(string text){
    if(String.IsNullOrEmpty(text))return 0;double count=0;int latin=0;
    Action flush=()=>{if(latin>0){count+=Math.Ceiling(latin/3.5d);latin=0;}};
    for(int i=0;i<text.Length;i++){

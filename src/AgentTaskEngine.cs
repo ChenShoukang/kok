@@ -37,7 +37,7 @@ namespace kok {
             await decisions.WaitAsync();try{validate();Cancellation.Token.ThrowIfCancellationRequested();var call=State.calls.FirstOrDefault(c=>c.id==callId);if(!IsRunning||call==null||call.status!="pending")throw new InvalidOperationException("请先继续任务并重新确认操作。");
                 if(State.options.approvalPolicy=="read_only")throw new AgentFailure("approval","只读任务不允许执行修改。");
                 if(!approve){RevokeGrants("rejected");Emit("tool.skipped",new{callId=call.id,reason="user"});Signal();return;}
-                if(new[]{"mcp_call","delegate_task","run_code"}.Contains(call.tool)&&batch)throw new AgentFailure("approval","外部工具需要逐项确认。");
+                if(new[]{"mcp_call","delegate_task","delegate_parallel","run_code"}.Contains(call.tool)&&batch)throw new AgentFailure("approval","外部工具需要逐项确认。");
                 if(grant&&(batch||automatic||!AgentApproval.Eligible(State,call)||automaticAllowed==null||!automaticAllowed()))throw new AgentFailure("approval","此操作不能授予本任务许可。");
                 if(automatic){var permit=AgentApproval.Find(State,call);if(permit==null||!CanAutoApprove(call))return;Emit("approval.used",new{grantId=permit.id,callId=call.id});}
                 if(grant)Emit("approval.granted",new{grant=new AgentApprovalGrant{id=Guid.NewGuid().ToString("N"),tool=call.tool,ids=AgentApproval.Targets(call),steering=State.steerVersion}});

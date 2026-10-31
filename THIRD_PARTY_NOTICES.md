@@ -223,6 +223,10 @@ kok bundles these libraries only to read and extract public web pages that the u
 
 - **NCrontab 3.4.0** (Apache-2.0) - cron expression parsing for the optional Agent schedule list. Schedules only start ordinary Agent tasks, which keep their normal approvals, scope and request limits. Source: https://github.com/atifaziz/NCrontab . License: `docs/licenses/agent/NCrontab-Apache-2.0.txt`.
 
+## Agent token estimation
+
+- **SharpToken 2.0.6** (MIT) - a C# port of OpenAI's tiktoken used to estimate prompt tokens for model requests (cl100k_base encoding, with the script-aware estimate as a fallback). Source: https://github.com/dmitry-brazhenko/SharpToken . License: `docs/licenses/agent/SharpToken-MIT.txt`.
+
 ## QuickJS WebAssembly computation
 
 The offline JavaScript interpreter uses QuickJS Emscripten 0.32.0 (release-sync). QuickJS Emscripten and the QuickJS engine are MIT licensed. The combined Jake Teton-Landis, Fabrice Bellard and Charlie Gordon notices are retained in [QuickJS-Emscripten-MIT.txt](docs/licenses/QuickJS-Emscripten-MIT.txt). Only the browser module, binding helpers and WebAssembly binary are shipped; Node.js and other build dependencies are not included.

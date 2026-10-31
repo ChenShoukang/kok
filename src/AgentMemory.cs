@@ -14,7 +14,7 @@ namespace kok {
  public sealed class AgentMemoryChange {public string id,token;public AgentMemoryRecord before,after;}
  public sealed class AgentMemoryData {public List<AgentMemoryRecord> items=new List<AgentMemoryRecord>();public List<AgentMemoryChange> history=new List<AgentMemoryChange>();}
  // Normal-profile memory is a distinct encrypted store. It is never a source of tool permission.
- public sealed class AgentMemoryStore {
+ public sealed partial class AgentMemoryStore {
   readonly Library library;readonly string file;readonly object gate=new object();
   public AgentMemoryStore(Library library){this.library=library;file=Path.Combine(library.DataDir,"agent-memory.sealed");}
   void Ensure(){if(library.IsPrivate)throw new InvalidOperationException("私密文件夹不使用长期记忆。");}
@@ -28,6 +28,7 @@ namespace kok {
   public AgentMemoryRecord Save(AgentMemoryRecord proposed,string expected){lock(gate){
    Ensure();if(proposed==null||String.IsNullOrWhiteSpace(proposed.title)||proposed.title.Length>100||String.IsNullOrWhiteSpace(proposed.text)||proposed.text.Length>2000||proposed.ids==null||proposed.ids.Count>8||proposed.ids.Any(id=>!AgentJournal.ValidId(id)||library.Find(id)==null)||Regex.IsMatch(proposed.text,@"sk-(?:proj-)?[A-Za-z0-9_-]{16,}|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_|BEGIN .*PRIVATE KEY",RegexOptions.IgnoreCase))throw new InvalidDataException("记忆内容无效，请勿保存密钥或密码。");
    var data=Read();var before=data.items.FirstOrDefault(r=>r.id==proposed.id);if((before==null?"":before.revision)!=(expected??""))throw new AgentConflictException("记忆已被修改，请重新打开后再操作。");
+   if(before==null&&String.IsNullOrEmpty(expected)){var target=data.items.FirstOrDefault(r=>r.id!=proposed.id&&SameSourceSet(r.ids,proposed.ids)&&NearDuplicate(r.text,proposed.text));if(target!=null)before=target;}
    if(before==null&&data.items.Count>=128)throw new InvalidDataException("长期记忆最多保存 128 条，请先整理记录。");
    var next=Clone(proposed);next.id=before==null?(AgentJournal.ValidId(proposed.id)?proposed.id:Guid.NewGuid().ToString("N")):before.id;next.ids=next.ids.Distinct().ToList();next.sources=library.AgentSourceStamps(next.ids);next.revision=Guid.NewGuid().ToString("N");next.updated=DateTime.UtcNow.ToString("o");
    data.items.RemoveAll(r=>r.id==next.id);data.items.Add(next);data.history.Add(new AgentMemoryChange{id=next.id,token=next.revision,before=Clone(before),after=Clone(next)});data.history=data.history.Skip(Math.Max(0,data.history.Count-80)).ToList();Write(data);return Clone(next);

@@ -14,7 +14,7 @@ foreach($dependency in (Get-Content -LiteralPath (Join-Path $PSScriptRoot 'agent
     if((Get-FileHash -LiteralPath $archiveFile -Algorithm SHA256).Hash.ToLowerInvariant() -ne $dependency.sha256){throw 'Agent package checksum mismatch.'}
     $zip=[IO.Compression.ZipFile]::OpenRead($archiveFile)
     try{
-        $entry=$zip.GetEntry($dependency.entry);if(-not $entry -or $entry.Length -gt 8MB){throw 'Invalid Agent library package.'}
+        $entry=$zip.GetEntry($dependency.entry);if(-not $entry -or $entry.Length -gt 16MB){throw 'Invalid Agent library package.'}
         $dll=Join-Path $output ($dependency.id+'.dll')
         [IO.Compression.ZipFileExtensions]::ExtractToFile($entry,$dll,$true)
         if((Get-FileHash -LiteralPath $dll -Algorithm SHA256).Hash.ToLowerInvariant() -ne $dependency.dllSha256){throw 'Agent library checksum mismatch.'}
