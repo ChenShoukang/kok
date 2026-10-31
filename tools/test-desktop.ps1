@@ -60,8 +60,14 @@ foreach($suite in $Suites){
     $env:KOK_TEST_PROFILE=$profile
     try{
         $ready=$false
-        for($attempt=0;$attempt -lt 80;$attempt++){try{Invoke-RestMethod -Uri 'http://127.0.0.1:9225/json/version' -TimeoutSec 1 | Out-Null;$ready=$true;break}catch{Start-Sleep -Milliseconds 250}}
-        if(-not $ready){throw 'Silent test window did not start'}
+        for($attempt=0;$attempt -lt 120;$attempt++){
+            try{
+                $targets=Invoke-RestMethod -Uri 'http://127.0.0.1:9225/json/list' -TimeoutSec 1
+                if(@($targets | Where-Object { $_.type -eq 'page' -and $_.url -match 'app\.kok\.local' }).Count -gt 0){$ready=$true;break}
+            }catch{}
+            Start-Sleep -Milliseconds 250
+        }
+        if(-not $ready){throw 'Silent test window did not expose the app page'}
         Push-Location $projectRoot
         try{if($suite -eq 'large-media'){if(-not $LargeMediaFile){throw 'Large-media checks require -LargeMediaFile.'};& node ('tests/'+$suite+'.cjs') $LargeMediaFile}elseif($suite -eq 'real-files'){if(-not $RealFilesFolder){throw 'Real-file checks require -RealFilesFolder.'};& node ('tests/'+$suite+'.cjs') $RealFilesFolder}else{& node ('tests/'+$suite+'.cjs')};$code=$LASTEXITCODE}finally{Pop-Location}
         $results+=@{suite=$suite;passed=($code -eq 0)}
