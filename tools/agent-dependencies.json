@@ -28,5 +28,15 @@
     "license": "MIT",
     "project": "https://github.com/dotnet/runtime",
     "entry": "lib/net462/System.Text.Encoding.CodePages.dll"
+  },
+  {
+    "url": "https://api.nuget.org/v3-flatcontainer/ncrontab/3.4.0/ncrontab.3.4.0.nupkg",
+    "id": "NCrontab",
+    "version": "3.4.0",
+    "sha256": "3f32916382d3ba2d73a76d3c780233ac616c998ae3cf2d74881db8bdaea8dd9e",
+    "dllSha256": "87c2afff8128687296dcba9a7e231ae9565b8ccc83a64f470d7975d98ce2190e",
+    "license": "Apache-2.0",
+    "project": "https://github.com/atifaziz/NCrontab",
+    "entry": "lib/netstandard2.0/NCrontab.dll"
   }
 ]

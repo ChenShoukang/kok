@@ -183,11 +183,24 @@ namespace kok {
             try { web.CoreWebView2.PostWebMessageAsJson(Library.Json.Serialize(value)); }
             catch(Exception error) { RuntimeLog.Write("message-delivery-error",error); }
         }
+        System.Windows.Forms.NotifyIcon trayIcon;
+        void MaybeNotifyAgent(string name,object value){
+            try{
+                if(name!="agentTaskChanged"||value==null||Environment.GetCommandLineArgs().Any(a=>a=="--test-silent"))return;
+                var data=Library.Json.Deserialize<Dictionary<string,object>>(Library.Json.Serialize(value));
+                string status=data!=null&&data.ContainsKey("status")?Convert.ToString(data["status"]):"";
+                string text=status=="completed"?"任务已完成，请查看结果。":status=="partial"?"任务部分完成，请核对。":status=="needs_input"?"任务需要补充信息。":status=="failed"?"任务失败，请查看原因。":status=="limited"?"已达到本次请求上限。":status=="review_required"?"结果需要重新核对。":"";
+                if(text.Length==0||ContainsFocus)return;
+                if(trayIcon==null){trayIcon=new NotifyIcon{Icon=SystemIcons.Application,Visible=true,Text="kok"};trayIcon.DoubleClick+=(s,e)=>{if(WindowState==FormWindowState.Minimized)WindowState=FormWindowState.Normal;Activate();};}
+                trayIcon.BalloonTipTitle="kok Agent";trayIcon.BalloonTipText=text;trayIcon.ShowBalloonTip(4000);
+            }catch(Exception error){RuntimeLog.Write("agent-notify",error);}
+        }
         void Notify(string name,object value) {
             if(jobs!=null)jobs.Observe(name,value);
             if(name=="privateLocking"&&jobs!=null)jobs.StopScope();
             if(name=="privateLocking")foreach(var preview in previewWindows.ToArray())preview.Hide();
             if(name=="librarySwitched")ClosePreviewWindows();
+            MaybeNotifyAgent(name,value);
             var message=new {eventName=name,data=value};Send(message);
             foreach(var preview in previewWindows.ToArray())if(!preview.IsDisposed&&preview.SessionLibrary==library)SendTo(preview.Browser.CoreWebView2,message);
         }

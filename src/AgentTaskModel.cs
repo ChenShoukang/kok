@@ -75,9 +75,9 @@ namespace kok {
             }
         }
         async Task<AgentModelTurn> RunTaskModel(AgentTaskEngine engine,CancellationToken token){
-            var t=engine.State;ValidateTask(t);await CompactContext(engine,token);string memory=MemoryContext(engine);int output=t.options.budget==6000?900:t.options.budget==14000?1400:2000;
+            var t=engine.State;ValidateTask(t);await CompactContext(engine,token);string memory=MemoryContext(engine);int output=t.options.budget<=6000?900:t.options.budget<=14000?1400:t.options.budget<=24000?2000:t.options.budget<=48000?3000:4000;
             bool english=normalLibrary.Db.settings.ContainsKey("uiLanguage")&&Convert.ToString(normalLibrary.Db.settings["uiLanguage"])=="en";
-            string catalog=normalLibrary.AgentScopedCatalog(t.options.allowed,t.options.budget==6000?20:t.options.budget==14000?40:80,t.options.scope.mode=="selected");
+            string catalog=normalLibrary.AgentScopedCatalog(t.options.allowed,t.options.budget<=6000?20:t.options.budget<=14000?40:80,t.options.scope.mode=="selected");
             var exists=TaskExists(t);var repair=new List<object>();string problem="";int repairs=0;
             while(true){
                 string instructions=t.options.workflowGuidance+"\n"+t.options.instruction+AgentCognition.Instructions(t)+memory+(t.options.intent=="discuss"?"\nDISCUSSION ONLY: read tools only; do not propose changes or open actions.":"");

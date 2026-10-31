@@ -18,7 +18,7 @@ namespace kok {
         public object Schema(){var p=new Dictionary<string,object>(Properties){{"why",AgentRules.Str("One short reason shown to the user",300)}};return new{type="function",function=new{name=Name,description=Description,parameters=new Dictionary<string,object>{{"type","object"},{"properties",p},{"required",Required},{"additionalProperties",false}}}};}
     }
     public static class AgentRules {
-        public const int MaxActions=4,MaxRounds=12,MaxRepairs=2,Version=3;
+        public const int MaxActions=4,MaxRounds=24,MaxRepairs=2,Version=3;
         internal static readonly string[] Kinds={"video","photo","music","document","book"};
         internal static Dictionary<string,object> Str(string d,int max,string[] values=null){var s=new Dictionary<string,object>{{"type","string"},{"description",d},{"maxLength",max}};if(values!=null)s["enum"]=values;return s;}
         internal static Dictionary<string,object> Arr(string d,int max,object items){return new Dictionary<string,object>{{"type","array"},{"description",d},{"maxItems",max},{"items",items}};}
