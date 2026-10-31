@@ -113,6 +113,7 @@ class Tests {
             AgentExecutionTests.Run(Path.Combine(temp,"agent-execution"),Check);
             AgentScheduleTests.Run(Path.Combine(temp,"agent-schedules"),Check);
             AgentMemoryTests.Run(Path.Combine(temp,"agent-memory"),Check);
+            OsSandboxTests.Run(Path.Combine(temp,"os-sandbox"),Check);
             AgentOrchestrationTests.Run(Path.Combine(temp,"agent-orchestration"),Check);
             AgentKernelTests.Run(Path.Combine(temp,"agent-kernel"),Check);
             AgentPlatformTests.Run(Path.Combine(temp,"agent-platform"),Check);
@@ -120,6 +121,7 @@ class Tests {
             McpTests.Run(Path.Combine(temp,"mcp"),Check);
             McpRemoteTests.Run(Path.Combine(temp,"mcp-remote"),Check);
             McpOAuthTests.Run(Path.Combine(temp,"mcp-oauth"),Check);
+            McpSandboxTests.Run(Path.Combine(temp,"mcp-sandbox"),Check);
             ModuleTests.Run(Path.Combine(temp,"modules"),Check);
             WarehouseTests.Run(Path.Combine(temp,"warehouse"),Check);
             ContentServicesTests.Run(Path.Combine(temp,"content-services"),Check);

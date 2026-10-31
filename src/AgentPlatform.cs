@@ -88,8 +88,8 @@ namespace kok {
    if(action=="agentScheduleSave"){var schedule=Library.Json.Deserialize<AgentSchedule>(Library.Json.Serialize(a.ContainsKey("schedule")?a["schedule"]:null));normalLibrary.SaveAgentSchedule(schedule);return AgentSchedules.View(normalLibrary);}
    if(action=="agentScheduleDelete"){normalLibrary.DeleteAgentSchedule(ModuleContext.Text(a,"id"));return AgentSchedules.View(normalLibrary);}
    if(action=="agentWorkspaceConfig")return AgentExecution.Config(normalLibrary);
-   if(action=="agentWorkspaceSave"){AgentExecution.Save(normalLibrary,a.ContainsKey("enabled")&&Convert.ToBoolean(a["enabled"]),ModuleContext.Text(a,"root"));return AgentExecution.Config(normalLibrary);}
-   if(action=="agentWorkspaceChooseFolder"){using(var dialog=new FolderBrowserDialog{Description="选择 Agent 执行工作目录",ShowNewFolderButton=true}){if(dialog.ShowDialog(context.Owner)!=DialogResult.OK)return AgentExecution.Config(normalLibrary);AgentExecution.Save(normalLibrary,a.ContainsKey("enabled")?Convert.ToBoolean(a["enabled"]):true,dialog.SelectedPath);return AgentExecution.Config(normalLibrary);}}
+   if(action=="agentWorkspaceSave"){AgentExecution.Save(normalLibrary,a.ContainsKey("enabled")&&Convert.ToBoolean(a["enabled"]),ModuleContext.Text(a,"root"),a.ContainsKey("sandbox")&&Convert.ToBoolean(a["sandbox"]));return AgentExecution.Config(normalLibrary);}
+   if(action=="agentWorkspaceChooseFolder"){using(var dialog=new FolderBrowserDialog{Description="选择 Agent 执行工作目录",ShowNewFolderButton=true}){if(dialog.ShowDialog(context.Owner)!=DialogResult.OK)return AgentExecution.Config(normalLibrary);AgentExecution.Save(normalLibrary,a.ContainsKey("enabled")?Convert.ToBoolean(a["enabled"]):true,dialog.SelectedPath,AgentExecution.SandboxEnabled(normalLibrary));return AgentExecution.Config(normalLibrary);}}
    throw new InvalidDataException("任务设置无效。");
   }
  }

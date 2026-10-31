@@ -13,6 +13,7 @@ namespace kok {
     internal static class AgentExecution {
         internal const string RootSetting = "agentWorkspaceRoot";
         internal const string EnabledSetting = "agentExecution";
+        internal const string SandboxSetting = "agentSandbox";
         internal const int MaxReadBytes = 262144;
         internal const int MaxWriteChars = 200000;
         internal const int MaxOutputChars = 32000;
@@ -20,16 +21,17 @@ namespace kok {
         internal const int MaxTimeoutSeconds = 120;
 
         internal static bool Enabled(Library library) { return library.AgentExecutionEnabled; }
+        internal static bool SandboxEnabled(Library library) { return library.AgentSandboxEnabled; }
         internal static string Root(Library library) { return library.AgentExecutionRoot; }
         internal static bool Configured(Library library) { var root = Root(library); return Enabled(library) && root.Length > 0 && Directory.Exists(root); }
-        internal static object Config(Library library) { var root = Root(library); return new { enabled = Enabled(library), root = root, exists = root.Length > 0 && Directory.Exists(root), configured = Configured(library) }; }
-        internal static void Save(Library library, bool enabled, string root) {
+        internal static object Config(Library library) { var root = Root(library); return new { enabled = Enabled(library), root = root, exists = root.Length > 0 && Directory.Exists(root), configured = Configured(library), sandbox = SandboxEnabled(library), sandboxSupported = OsSandbox.Supported, sandboxStatus = OsSandbox.Status }; }
+        internal static void Save(Library library, bool enabled, string root, bool sandbox = false) {
             root = (root ?? "").Trim();
             if (root.Length > 0) {
                 if (root.Length > 1000 || root.Any(Char.IsControl)) throw new InvalidDataException("工作目录路径无效。");
                 if (!Path.IsPathRooted(root) || !Directory.Exists(root)) throw new InvalidDataException("工作目录必须是已存在的绝对路径。");
             }
-            library.SaveAgentExecution(enabled, root);
+            library.SaveAgentExecution(enabled, root, sandbox);
         }
 
         internal static AgentToolSpec[] Tools() {
@@ -53,7 +55,7 @@ namespace kok {
                 new AgentToolSpec {
                     Name = "run_command", Title = "运行命令", Requires = Need.NormalLibrary, Write = true, CapabilityId = "agent.run_command",
                     Signature = "run_command{command,args[<=32],cwd?,timeoutSeconds?}",
-                    Description = "PROPOSE running one executable inside the configured execution workspace, with the current user's permissions. The user approves the exact command. No shell is added; provide the program and arguments separately. Output and runtime are bounded.",
+                    Description = "PROPOSE running one executable inside the configured execution workspace. The user approves the exact command. No shell is added; provide the program and arguments separately. Output and runtime are bounded. When the AppContainer sandbox is enabled the command gets no network and cannot read user files or write outside the workspace; otherwise it runs with your full user permissions and the result says so.",
                     Properties = AgentRules.Props(
                         "command", AgentRules.Str("Executable name or absolute path", 260),
                         "args", AgentRules.Arr("Arguments", 32, AgentRules.Str("Argument", 1024)),
@@ -151,8 +153,49 @@ namespace kok {
             if (timeout < 1 || timeout > MaxTimeoutSeconds) throw new InvalidDataException("命令超时设置无效。");
             string cwd = Resolve(library, cwdRelative, true);
             if (!Directory.Exists(cwd)) throw new InvalidDataException("工作目录不存在。");
-            var start = new ProcessStartInfo { FileName = command, WorkingDirectory = cwd, UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true };
-            if (args != null && args.Count > 0) start.Arguments = String.Join(" ", args.Select(QuoteArgument));
+            bool sandbox = SandboxEnabled(library);
+            string output, errorText; int exit; string engine;
+            if (sandbox) {
+                if (!OsSandbox.Supported) throw new InvalidDataException("AppContainer 沙箱不可用：" + OsSandbox.Status);
+                OsSandbox.GrantWorkspace(Root(library));
+                string executable = ResolveExecutable(command);
+                if (executable == null) throw new InvalidDataException("沙箱模式需要可解析的 .exe 可执行文件；请提供完整路径。");
+                try { OsSandbox.GrantFile(executable); } catch (UnauthorizedAccessException) { } catch (InvalidDataException) { }
+                string spec = null;
+                try {
+                    spec = OsSandbox.WriteSpec(executable, args, cwd);
+                    RunProcess(OsSandbox.HelperStart(spec), timeout, token, out output, out errorText, out exit);
+                } finally {
+                    if (spec != null) { try { File.Delete(spec); } catch { } }
+                }
+                engine = "appcontainer";
+            } else {
+                var start = new ProcessStartInfo { FileName = command, WorkingDirectory = cwd, UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true };
+                if (args != null && args.Count > 0) start.Arguments = String.Join(" ", args.Select(QuoteArgument));
+                RunProcess(start, timeout, token, out output, out errorText, out exit);
+                engine = "none";
+            }
+            string text = "Exit code " + exit + "\nSTDOUT:\n" + output + (errorText.Length > 0 ? "\nSTDERR:\n" + errorText : "");
+            if (text.Length > MaxOutputChars * 2) text = text.Substring(0, MaxOutputChars * 2) + "\n[Output truncated]";
+            text += "\nSandbox: " + (sandbox ? "AppContainer (no network, no user-file access, writes only inside the workspace)" : "disabled - the command runs with your full user permissions");
+            return new Dictionary<string,object> { { "text", text }, { "exitCode", exit }, { "stdout", output }, { "stderr", errorText }, { "sandbox", sandbox }, { "engine", engine } };
+        }
+
+        internal static string ResolveExecutable(string command) {
+            if (String.IsNullOrWhiteSpace(command)) return null;
+            if (Path.IsPathRooted(command)) return File.Exists(command) && Path.GetExtension(command).Equals(".exe", StringComparison.OrdinalIgnoreCase) ? Path.GetFullPath(command) : null;
+            string[] names = Path.GetExtension(command).Length == 0 ? new[] { command + ".exe", command } : new[] { command };
+            foreach (var directory in (Environment.GetEnvironmentVariable("PATH") ?? "").Split(';')) {
+                string trimmed = directory.Trim();
+                if (trimmed.Length == 0) continue;
+                foreach (string name in names) {
+                    try { string candidate = Path.Combine(trimmed, name); if (File.Exists(candidate)) return Path.GetFullPath(candidate); } catch { }
+                }
+            }
+            return null;
+        }
+
+        static void RunProcess(ProcessStartInfo start, int timeout, CancellationToken token, out string output, out string errorText, out int exit) {
             using (var group = new DownloadProcessGroup())
             using (var process = new Process { StartInfo = start }) {
                 try { process.Start(); } catch (Exception error) { throw new InvalidDataException("无法启动命令：" + error.Message); }
@@ -162,14 +205,10 @@ namespace kok {
                 var timer = Stopwatch.StartNew();
                 while (!process.WaitForExit(100)) {
                     token.ThrowIfCancellationRequested();
-                    if (timer.Elapsed.TotalSeconds >= timeout) { try { group.Stop(); } catch {} throw new InvalidDataException("命令在 " + timeout + " 秒内未完成，已终止。"); }
+                    if (timer.Elapsed.TotalSeconds >= timeout) { try { group.Stop(); } catch { } throw new InvalidDataException("命令在 " + timeout + " 秒内未完成，已终止。"); }
                 }
                 token.ThrowIfCancellationRequested();
-                string output = stdout.GetAwaiter().GetResult(), errorText = stderr.GetAwaiter().GetResult();
-                int exit = process.ExitCode;
-                string text = "Exit code " + exit + "\nSTDOUT:\n" + output + (errorText.Length > 0 ? "\nSTDERR:\n" + errorText : "");
-                if (text.Length > MaxOutputChars * 2) text = text.Substring(0, MaxOutputChars * 2) + "\n[Output truncated]";
-                return new Dictionary<string,object> { { "text", text }, { "exitCode", exit }, { "stdout", output }, { "stderr", errorText } };
+                output = stdout.GetAwaiter().GetResult(); errorText = stderr.GetAwaiter().GetResult(); exit = process.ExitCode;
             }
         }
 
@@ -199,11 +238,15 @@ namespace kok {
         public string AgentExecutionRoot {
             get { lock (gate) { object value; string root = Db.settings != null && Db.settings.TryGetValue("agentWorkspaceRoot", out value) ? Convert.ToString(value) : ""; return root == null ? "" : root.Trim(); } }
         }
-        public void SaveAgentExecution(bool enabled, string root) {
+        public bool AgentSandboxEnabled {
+            get { lock (gate) { object value; if (Db.settings == null || !Db.settings.TryGetValue("agentSandbox", out value) || value == null) return false; try { return Convert.ToBoolean(value); } catch { return false; } } }
+        }
+        public void SaveAgentExecution(bool enabled, string root, bool sandbox = false) {
             lock (gate) {
                 if (Db.settings == null) Db.settings = new Dictionary<string, object>();
                 Db.settings["agentExecution"] = enabled;
                 Db.settings["agentWorkspaceRoot"] = root ?? "";
+                Db.settings["agentSandbox"] = sandbox;
                 Save(false);
             }
         }

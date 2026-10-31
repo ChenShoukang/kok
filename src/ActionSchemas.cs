@@ -15,7 +15,7 @@ namespace kok {
    if(name=="agentScheduleSave")return O(new[]{"schedule"},"schedule",CapabilitySchema.Obj(additional:true));
    if(name=="agentScheduleDelete")return O(new[]{"id"},"id",S(32));
    if(name=="agentWorkspaceConfig")return CapabilitySchema.Obj();
-   if(name=="agentWorkspaceSave")return O(new[]{"enabled"},"enabled",B(),"root",S(1000));
+   if(name=="agentWorkspaceSave")return O(new[]{"enabled"},"enabled",B(),"root",S(1000),"sandbox",B());
    if(name=="agentWorkspaceChooseFolder")return O(new string[0],"enabled",B());
    if(new[]{"agentRuntimeInfo","agentMemoryList"}.Contains(name))return CapabilitySchema.Obj();
    if(name=="agentMemorySave")return O(new[]{"record"},"record",O(new[]{"title","text","ids"},"id",S(32),"title",S(100),"text",S(2000),"ids",A(8,S(32))),"expected",S(32));

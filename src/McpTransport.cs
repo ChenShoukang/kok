@@ -17,14 +17,23 @@ namespace kok {
  public sealed class McpStdioClient:IDisposable,IMcpClient {
   public const string ModernVersion="2026-07-28";
   readonly Process process;readonly SemaphoreSlim writer=new SemaphoreSlim(1,1);readonly object gate=new object();readonly Dictionary<string,TaskCompletionSource<Dictionary<string,object>>> pending=new Dictionary<string,TaskCompletionSource<Dictionary<string,object>>>();
-  bool closed;int serial;McpPipeProcess pipes;StreamWriter input;public string Protocol {get;private set;}public volatile bool CatalogChanged;bool IMcpClient.CatalogChanged{get{return CatalogChanged;}set{CatalogChanged=value;}}
+  bool closed;int serial;McpPipeProcess pipes;StreamWriter input;string sandboxSpec;public string Protocol {get;private set;}public volatile bool CatalogChanged;bool IMcpClient.CatalogChanged{get{return CatalogChanged;}set{CatalogChanged=value;}}
   public int ProcessId {get{return process.Id;}}public bool Connected {get{try{return !closed&&!process.HasExited;}catch(InvalidOperationException){return false;}}}
-  public McpStdioClient(string executable,List<string> args,Dictionary<string,string> environment){
+  public McpStdioClient(string executable,List<string> args,Dictionary<string,string> environment,bool sandbox=false){
    if(!Path.IsPathRooted(executable)||executable.StartsWith(@"\\",StringComparison.Ordinal)||!File.Exists(executable)||!Path.GetExtension(executable).Equals(".exe",StringComparison.OrdinalIgnoreCase))throw new AgentFailure("mcp_config","请选择已安装的本地 MCP 可执行文件。");
    if(args==null||args.Count>40||args.Any(a=>a==null||a.Length>4000||a.IndexOf('\0')>=0)||environment==null||environment.Count>40||environment.Any(p=>String.IsNullOrWhiteSpace(p.Key)||p.Key.Length>100||p.Key.Contains("=")||p.Value==null||p.Value.Length>8000||p.Value.IndexOf('\0')>=0))throw new AgentFailure("mcp_config","MCP 启动参数无效。");
    var start=new ProcessStartInfo{FileName=Path.GetFullPath(executable),Arguments=String.Join(" ",args.Select(Quote)),UseShellExecute=false,CreateNoWindow=true,RedirectStandardInput=true,RedirectStandardOutput=true,RedirectStandardError=true,StandardOutputEncoding=new UTF8Encoding(false,true),StandardErrorEncoding=new UTF8Encoding(false,true),WorkingDirectory=Path.GetDirectoryName(Path.GetFullPath(executable))};
    // Never inherit API keys/tokens from kok's process environment.
    start.EnvironmentVariables.Clear();foreach(var name in new[]{"SystemRoot","WINDIR","PATH","TEMP","TMP","USERPROFILE","APPDATA","LOCALAPPDATA","PROGRAMDATA","COMSPEC","PATHEXT"}){string value=Environment.GetEnvironmentVariable(name);if(value!=null)start.EnvironmentVariables[name]=value;}foreach(var pair in environment)start.EnvironmentVariables[pair.Key]=pair.Value;start.EnvironmentVariables["PYTHONIOENCODING"]="utf-8";
+   if(sandbox){
+    if(!OsSandbox.Supported)throw new AgentFailure("mcp_sandbox","AppContainer 沙箱不可用："+OsSandbox.Status);
+    try{OsSandbox.GrantFile(Path.GetFullPath(executable));}catch(UnauthorizedAccessException){}catch(InvalidDataException){}
+    foreach(var argument in args)try{if(argument!=null&&argument.Length>0&&argument.Length<1024&&argument.IndexOf('\0')<0&&Path.IsPathRooted(argument)&&File.Exists(argument))OsSandbox.GrantFile(argument);}catch(UnauthorizedAccessException){}catch(InvalidDataException){}
+    sandboxSpec=OsSandbox.WriteSpec(Path.GetFullPath(executable),args,start.WorkingDirectory);
+    var helper=new ProcessStartInfo{FileName=Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"kok.exe"),Arguments="--sandbox-exec "+Quote(sandboxSpec),WorkingDirectory=start.WorkingDirectory,UseShellExecute=false,CreateNoWindow=true};
+    helper.EnvironmentVariables.Clear();foreach(System.Collections.DictionaryEntry pair in start.EnvironmentVariables)helper.EnvironmentVariables[Convert.ToString(pair.Key)]=Convert.ToString(pair.Value);
+    start=helper;
+   }
    try{pipes=new McpPipeProcess(start);process=pipes.Process;input=pipes.Input;Task.Run((Func<Task>)ReadLoop);Task.Run(async()=>{try{char[] chars=new char[1024];while(await pipes.Error.ReadAsync(chars,0,chars.Length)>0){} }catch{}});}catch(Exception error){pipes?.Dispose();if(error is AgentFailure)throw;throw new AgentFailure("mcp_start","MCP 服务启动失败，请检查本地程序和参数。");}
   }
   public static string Quote(string value){var s=new StringBuilder("\"");int slash=0;foreach(char c in value){if(c=='\\'){slash++;continue;}if(c=='\"'){s.Append('\\',slash*2+1);s.Append(c);}else{s.Append('\\',slash);s.Append(c);}slash=0;}s.Append('\\',slash*2);s.Append('"');return s.ToString();}
@@ -59,6 +68,6 @@ namespace kok {
    if(discovery!=null){if(!discovery.ContainsKey("supportedVersions")||!Library.Json.Deserialize<List<string>>(Library.Json.Serialize(discovery["supportedVersions"])).Contains(ModernVersion))throw new AgentFailure("mcp_version","MCP 协议版本不兼容。");Protocol=ModernVersion;}
    if(legacy){Protocol="2025-11-25";var result=await Request("initialize",new Dictionary<string,object>{{"protocolVersion",Protocol},{"capabilities",new Dictionary<string,object>()},{"clientInfo",new{name="kok",version=AppVersion.Current}}},token,15000,false);string version=result.ContainsKey("protocolVersion")?Convert.ToString(result["protocolVersion"]):"";if(!new[]{"2025-11-25","2025-06-18","2025-03-26","2024-11-05"}.Contains(version))throw new AgentFailure("mcp_version","MCP 协议版本不兼容。");Protocol=version;await Send(new{jsonrpc="2.0",method="notifications/initialized"});}
   }
-  public void Dispose(){lock(gate){if(closed)return;closed=true;foreach(var item in pending.Values)item.TrySetException(new AgentFailure("mcp_disconnected","MCP 服务未连接，请重新连接。"));}pipes?.Dispose();}
+  public void Dispose(){lock(gate){if(closed)return;closed=true;foreach(var item in pending.Values)item.TrySetException(new AgentFailure("mcp_disconnected","MCP 服务未连接，请重新连接。"));}pipes?.Dispose();if(!String.IsNullOrEmpty(sandboxSpec)){try{File.Delete(sandboxSpec);}catch{}sandboxSpec=null;}}
  }
 }

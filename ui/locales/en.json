@@ -2280,7 +2280,20 @@
     "远程地址（HTTPS）": "Remote URL (HTTPS)",
     "访问令牌（可选）": "Access token (optional)",
     "搜索服务地址无效。": "The search service URL is invalid.",
-    "搜索服务需要 HTTPS；本机服务可使用 http://localhost 或 127.0.0.1。": "The search service requires HTTPS; local services may use http://localhost or 127.0.0.1."
+    "搜索服务需要 HTTPS；本机服务可使用 http://localhost 或 127.0.0.1。": "The search service requires HTTPS; local services may use http://localhost or 127.0.0.1.",
+    "MCP 认证方式无效。": "The MCP authentication method is invalid.",
+    "OAuth 只适用于远程 HTTP MCP 服务。": "OAuth is only available for remote HTTP MCP servers.",
+    "请先在 MCP 设置中完成 OAuth 登录。": "Complete the OAuth sign-in in MCP settings first.",
+    "MCP OAuth 登录已过期，请重新登录。": "The MCP OAuth sign-in has expired. Sign in again.",
+    "该 MCP 服务未启用 OAuth 登录。": "This MCP server does not have OAuth sign-in enabled.",
+    "AppContainer 沙箱": "AppContainer sandbox",
+    "当前系统不支持 AppContainer。": "AppContainer is not supported on this system.",
+    "已登录": "Signed in",
+    "未登录": "Not signed in",
+    "认证方式": "Authentication",
+    "无认证 / 静态令牌": "None / static token",
+    "OAuth 登录": "OAuth sign-in",
+    "本地程序使用 AppContainer 沙箱": "Run local programs in the AppContainer sandbox"
   },
   "patterns": [
     {
