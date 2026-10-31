@@ -28,7 +28,7 @@
 
 ## 云端发布
 
-云端 Windows 2022 / 2025 构建、原生测试、14 组包级桌面套件、隐私/依赖审计与发布作业以 GitHub Actions 的实际状态为准。发布后的下载校验记录写入 `docs/validation/release-0.9.4-download.json`。
+云端 [run 41225192571](https://github.com/ChenShoukang/kok/actions/runs/41225192571) 通过 Windows 2022 / 2025 构建、原生测试、14 组包级桌面套件、隐私/依赖审计与发布作业。公开 [v0.9.4 Preview Release](https://github.com/ChenShoukang/kok/releases/tag/v0.9.4) 的 `kok-0.9.4-win-x64.zip` 为 **32,222,039 bytes**，SHA-256 `852314319d475aa21b0eff1287817e3e04b79d036bb952f92b6b43cf76abeebb`；独立下载后的哈希、随附 `.sha256` 与 GitHub asset digest 一致。记录见 [release-0.9.4-download.json](validation/release-0.9.4-download.json)。
 
 ## English summary
 

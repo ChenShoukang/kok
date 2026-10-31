@@ -10,7 +10,7 @@ v0.9.4 是一次完整的界面改版，不改变数据格式、原生桥接或 
 
 验证：**542 项原生检查、25 组界面/回归桌面套件、14 组包级门禁**通过；逐页截图 **120 张**，几何越界与运行时错误均为 **0**。真实模型总账保持 **359**，本版**没有新增真实模型调用**。
 
-本机候选 ZIP：`kok-0.9.4-win-x64.zip`，31,832,283 bytes，SHA-256 `6baa9745a90b8afededd76da673180b692799fbb045c561b52a7c5207e53f24d`。云端发布与下载校验以 Release 页面和 [v0.9.4 验证](VALIDATION_0.9.4.md)为准。
+发布 ZIP：`kok-0.9.4-win-x64.zip`，32,222,039 bytes，SHA-256 `852314319d475aa21b0eff1287817e3e04b79d036bb952f92b6b43cf76abeebb`（本机候选为 31,832,283 bytes、SHA-256 `6baa9745a90b8afededd76da673180b692799fbb045c561b52a7c5207e53f24d`）。云端发布与下载校验见 [v0.9.4 验证](VALIDATION_0.9.4.md)。
 
 [扁平界面说明](FLAT_UI.md) · [界面验证](INTERFACE_VALIDATION.md) · [v0.9.4 验证](VALIDATION_0.9.4.md) · [Roadmap](../ROADMAP.md) · [Changelog](../CHANGELOG.md)
 
@@ -18,7 +18,7 @@ v0.9.4 是一次完整的界面改版，不改变数据格式、原生桥接或 
 
 kok v0.9.4 is a UI refresh release with no data format, native bridge or Agent capability changes. It adopts a flat visual system, grouped navigation, unified file cards/lists and consistent reading/media toolbars, plus clearer empty states, creation entries, keyboard navigation, menu focus recovery and reduced-motion support. Saved classic/graphite skin preferences remain readable but render as the flat interface.
 
-Deterministic coverage: **542 native checks, 25 local UI/regression desktop suites and a 14-suite package gate**; **120 reviewed screenshots** with zero geometry or runtime findings. The real-model ledger stays at **359** and this release makes **no new model calls**. Candidate ZIP: `kok-0.9.4-win-x64.zip`, 31,832,283 bytes, SHA-256 `6baa9745a90b8afededd76da673180b692799fbb045c561b52a7c5207e53f24d`. See [flat UI notes](FLAT_UI.md), [interface validation](INTERFACE_VALIDATION.md) and [v0.9.4 validation](VALIDATION_0.9.4.md).
+Deterministic coverage: **542 native checks, 25 local UI/regression desktop suites and a 14-suite package gate**; **120 reviewed screenshots** with zero geometry or runtime findings. The real-model ledger stays at **359** and this release makes **no new model calls**. Published ZIP: `kok-0.9.4-win-x64.zip`, 32,222,039 bytes, SHA-256 `852314319d475aa21b0eff1287817e3e04b79d036bb952f92b6b43cf76abeebb` (the local candidate was 31,832,283 bytes, SHA-256 `6baa9745a90b8afededd76da673180b692799fbb045c561b52a7c5207e53f24d`). See [flat UI notes](FLAT_UI.md), [interface validation](INTERFACE_VALIDATION.md) and [v0.9.4 validation](VALIDATION_0.9.4.md).
 
 ---
 
