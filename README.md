@@ -35,7 +35,7 @@
 
 ## 开始使用
 
-1. 下载 Release 中的 `kok-0.9.0-win-x64.zip`，核对随附 SHA-256，完整解压后运行 `kok.exe`。
+1. 下载 [最新 Release](https://github.com/ChenShoukang/kok/releases/latest) 中的 `kok-0.9.3-win-x64.zip`，核对随附 SHA-256，完整解压后运行 `kok.exe`。后续版本号以 Release 页面为准。
 2. 首次选择**纯净模式**或**智能模式**；不配置 AI 也能使用本地基础功能。
 3. 点击“体验示例”或拖入自己的文件，先浏览资料，再试着创建一个空间或保存一条摘录。
 
