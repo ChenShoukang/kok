@@ -24,7 +24,7 @@ namespace kok {
    string id=ModuleContext.Text(args,"id");
    if(action=="mcpState")return Mcp.Snapshot();
    if(action=="mcpDisconnect"){Mcp.Disconnect(id);return true;}
-   if(action=="mcpSave")return new{id=Mcp.Configure(AgentTaskState.Get<McpServerConfig>(args,"server"))};
+   if(action=="mcpSave")return new{id=Mcp.Configure(AgentTaskState.Get<McpServerConfig>(args,"server"),ModuleContext.Text(args,"token"))};
    if(action=="mcpConnect")await Mcp.Connect(id,context.Token);
    else if(action=="mcpApprove")Mcp.Approve(id,AgentTaskState.Get<Dictionary<string,string>>(args,"tools"));
    else if(action=="mcpRemove")Mcp.Remove(id);

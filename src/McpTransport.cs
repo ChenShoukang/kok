@@ -9,10 +9,15 @@ using System.Collections.Generic;
 
 namespace kok {
  public sealed class McpRpcException:Exception {public readonly int code;public readonly Dictionary<string,object> data;public McpRpcException(int code,Dictionary<string,object> data):base("MCP RPC error "+code){this.code=code;this.data=data;}}
- public sealed class McpStdioClient:IDisposable {
+ public interface IMcpClient:IDisposable {
+  bool Connected{get;}string Protocol{get;}bool CatalogChanged{get;set;}
+  Task Initialize(CancellationToken token);
+  Task<Dictionary<string,object>> Request(string method,Dictionary<string,object> args,CancellationToken token,int timeoutMs=15000,bool metadata=true,bool closeOnTimeout=true);
+ }
+ public sealed class McpStdioClient:IDisposable,IMcpClient {
   public const string ModernVersion="2026-07-28";
   readonly Process process;readonly SemaphoreSlim writer=new SemaphoreSlim(1,1);readonly object gate=new object();readonly Dictionary<string,TaskCompletionSource<Dictionary<string,object>>> pending=new Dictionary<string,TaskCompletionSource<Dictionary<string,object>>>();
-  bool closed;int serial;McpPipeProcess pipes;StreamWriter input;public string Protocol {get;private set;}public volatile bool CatalogChanged;
+  bool closed;int serial;McpPipeProcess pipes;StreamWriter input;public string Protocol {get;private set;}public volatile bool CatalogChanged;bool IMcpClient.CatalogChanged{get{return CatalogChanged;}set{CatalogChanged=value;}}
   public int ProcessId {get{return process.Id;}}public bool Connected {get{try{return !closed&&!process.HasExited;}catch(InvalidOperationException){return false;}}}
   public McpStdioClient(string executable,List<string> args,Dictionary<string,string> environment){
    if(!Path.IsPathRooted(executable)||executable.StartsWith(@"\\",StringComparison.Ordinal)||!File.Exists(executable)||!Path.GetExtension(executable).Equals(".exe",StringComparison.OrdinalIgnoreCase))throw new AgentFailure("mcp_config","请选择已安装的本地 MCP 可执行文件。");
