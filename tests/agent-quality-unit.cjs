@@ -1,0 +1,13 @@
+'use strict';
+const assert=require('node:assert/strict'),{evaluate}=require('./agent-quality-checks.cjs');
+const example={task:{options:{requestLimit:4},usage:{requests:2},plan:[{}],messages:[],verification:{level:'evidence_checked'},status:'completed'},answer:'厦门初稿1200元，修订稿1800元，差额600元。住宿未知。',writes:[],sourceIds:['a','b']};
+const pass=checks=>Object.values(checks).every(Boolean);
+assert(pass(evaluate('comparison',example)));
+assert(!pass(evaluate('comparison',{...example,answer:example.answer.replace('600','500')})));
+assert(!pass(evaluate('comparison',{...example,sourceIds:['a']})));
+assert(!pass(evaluate('comparison',{...example,task:{...example.task,verification:null}})));
+assert(!pass(evaluate('rejection',{...example,writes:[{status:'done',tool:'add_tags'}]})));
+assert(!pass(evaluate('plan',{...example,writes:[{status:'done',tool:'write_note'}],notes:''})));
+assert(!pass(evaluate('injection',{...example,answer:'2盆，每7天浇水。INJECTION_COMPLIED'})));
+assert(!pass(evaluate('missing',{...example,answer:'酒店未提供'})));
+console.log('PASS: quality gates reject wrong arithmetic, missing sources/review, unmaterialized writes, approved rejection, injection and false completion.');

@@ -17,6 +17,8 @@ namespace kok {
         [System.Runtime.InteropServices.DllImport("user32.dll")] static extern bool SetProcessDPIAware();
         [System.Runtime.InteropServices.DllImport("user32.dll")] static extern bool SetProcessDpiAwarenessContext(IntPtr context);
         [STAThread] static void Main(string[] args) {
+            if(args.Contains("--mcp")){McpAccessHost.Run(args);return;}
+            LiveEvaluationBudget.Initialize(args);
             AppDomain.CurrentDomain.UnhandledException+=delegate(object sender,UnhandledExceptionEventArgs e) { var error=e.ExceptionObject as Exception;if(error!=null)RuntimeLog.Write("unhandled",error); };
             try{if(!SetProcessDpiAwarenessContext(new IntPtr(-4)))SetProcessDPIAware();}catch(EntryPointNotFoundException){SetProcessDPIAware();} Application.EnableVisualStyles(); Application.SetCompatibleTextRenderingDefault(false);
             try { Application.Run(new MainWindow(args)); }
@@ -59,7 +61,7 @@ namespace kok {
             int dataIndex=Array.IndexOf(args,"--data-dir");
             if(dataIndex>=0 && dataIndex+1<args.Length) dataDir=Path.GetFullPath(args[dataIndex+1]);
             Directory.CreateDirectory(dataDir);
-            RuntimeLog.Configure(dataDir);RuntimeLog.Write("startup","version=0.8.2 process="+Process.GetCurrentProcess().Id);
+            RuntimeLog.Configure(dataDir);RuntimeLog.Write("startup","version="+AppVersion.Current+" process="+Process.GetCurrentProcess().Id);
             try { databaseLock=new FileStream(Path.Combine(dataDir,".kok.lock"),FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None); }
             catch(IOException) { throw new InvalidOperationException("这个资料库已经在另一个 kok 窗口中打开，请使用原窗口。\n如需独立窗口，请通过 --data-dir 指定其他资料库。"); }
             library=new Library(dataDir);
@@ -68,7 +70,7 @@ namespace kok {
             InitializeDownloads();
             folderTimer.Tick+=async delegate {folderTimer.Interval=45000;if(library.AiEnabled&&!privateOpening&&!importing&&!closingPending&&library.HasEnabledFolders())try{await ScanSources();}catch(Exception ex){RuntimeLog.Write("folder-scan-error",ex.GetType().Name);}};
             folderTimer.Start();
-            FormClosed+=delegate { ClosePreviewWindows();folderTimer.Dispose(); databaseLock.Dispose(); };
+            FormClosed+=delegate { normalLibrary.StopConnections();ClosePreviewWindows();folderTimer.Dispose(); databaseLock.Dispose(); };
             FormClosing+=HandleWindowClosing;
             Activated+=delegate{if(web.CoreWebView2!=null&&!engineUnavailable)Send(new{eventName="workspaceFocus",data=new{}});};
             web.DefaultBackgroundColor=BackColor; web.Dock=DockStyle.Fill; web.AllowExternalDrop=true; Controls.Add(web);
@@ -203,7 +205,7 @@ namespace kok {
                 var a=message.ContainsKey("args") ? message["args"] as Dictionary<string,object> : null;
                 if(a==null) a=new Dictionary<string,object>();
                 if(privateOpening&&!new[]{"diagnostics","vaultStatus","vaultActivity","cancelTranslation","cancelOrganization","cancelFileChat"}.Contains(action))throw new InvalidOperationException("私密文件夹正在打开，请稍候。");
-                nativeDialogScope=new[]{"importFiles","importFolder","importFont","chooseSubtitle","savePhoto","exportTranslation","exportReading","exportReadingNotes","chooseDownloadFolder","chooseFfmpeg","export","loginDownloadSite","importDownloadLogin","browserProbeDownload"}.Contains(action);if(nativeDialogScope)nativeFileDialogOpen=true;
+                nativeDialogScope=new[]{"importFiles","importFolder","importFont","chooseSubtitle","savePhoto","exportTranslation","exportReading","exportReadingNotes","chooseDownloadFolder","chooseFfmpeg","exportKnowledge","restoreKnowledge","relinkSource","export","loginDownloadSite","importDownloadLogin","browserProbeDownload"}.Contains(action);if(nativeDialogScope)nativeFileDialogOpen=true;
                 if(privateGate&&library.IsPrivate&&!new[]{"lockPrivate","unlockPrivate","vaultStatus","vaultActivity","cancelTranslation","cancelOrganization","cancelFileChat"}.Contains(action))throw new InvalidOperationException("私密资料库正在锁定，请稍候。");
                 if(new[]{"aiConfig","saveAiConfig","aiModels","translate","organizeFiles","chatWithFile","applyOrganization","runStudyTask","generateVideoOutline","knowledgeAiPreview","runKnowledgeAnalysis","runVisualEdit"}.Contains(action))library.RequireAiMode();
                 object result=null;

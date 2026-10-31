@@ -1,0 +1,306 @@
+{
+  "format": "kok.agent.quality.corpus",
+  "version": 1,
+  "origin": "Original synthetic replay cases; not a recording of live model success.",
+  "cases": [
+    {
+      "id": "facts",
+      "intent": "discuss",
+      "turns": [
+        {
+          "reply": "读取两份资料。",
+          "actions": [
+            {
+              "tool": "read_items",
+              "args": {
+                "ids": "$IDS"
+              }
+            }
+          ]
+        },
+        {
+          "reply": "厦门旅行预算1200元，准备相机、电池和存储卡；酒店费用未知。",
+          "actions": [
+            {
+              "tool": "finish_task",
+              "args": {
+                "status": "completed",
+                "summary": "厦门预算1200元，摄影准备有相机和电池；酒店费用未知。",
+                "checks": [
+                  {
+                    "claim": "读取两份实际来源",
+                    "evidence": "$READS"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "plan",
+      "intent": "assist",
+      "approve": true,
+      "turns": [
+        {
+          "reply": "先阅读再建议笔记。",
+          "actions": [
+            {
+              "tool": "update_plan",
+              "args": {
+                "steps": [
+                  {
+                    "id": "read",
+                    "title": "阅读资料",
+                    "status": "in_progress",
+                    "evidence": []
+                  },
+                  {
+                    "id": "note",
+                    "title": "确认后添加笔记",
+                    "status": "pending",
+                    "evidence": []
+                  }
+                ]
+              }
+            },
+            {
+              "tool": "read_items",
+              "args": {
+                "ids": "$IDS"
+              }
+            }
+          ]
+        },
+        {
+          "reply": "请确认这条准备清单。",
+          "actions": [
+            {
+              "tool": "write_note",
+              "args": {
+                "id": "$FIRST",
+                "text": "准备清单：相机、电池、存储卡。",
+                "mode": "append"
+              }
+            }
+          ]
+        },
+        {
+          "reply": "读回已写入的笔记并更新来源依据。",
+          "actions": [
+            {
+              "tool": "read_items",
+              "args": {
+                "ids": "$IDS"
+              }
+            }
+          ]
+        },
+        {
+          "reply": "笔记已按确认写入。",
+          "actions": [
+            {
+              "tool": "update_plan",
+              "args": {
+                "steps": [
+                  {
+                    "id": "read",
+                    "title": "阅读资料",
+                    "status": "done",
+                    "evidence": "$READS"
+                  },
+                  {
+                    "id": "note",
+                    "title": "添加笔记",
+                    "status": "done",
+                    "evidence": "$WRITES"
+                  }
+                ]
+              }
+            },
+            {
+              "tool": "finish_task",
+              "args": {
+                "status": "completed",
+                "summary": "已读取资料并写入确认的准备清单。",
+                "checks": [
+                  {
+                    "claim": "写入有成功回执",
+                    "evidence": "$WRITES"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rejection",
+      "intent": "assist",
+      "turns": [
+        {
+          "reply": "建议添加旅行标签，等待确认。",
+          "actions": [
+            {
+              "tool": "add_tags",
+              "args": {
+                "ids": [
+                  "$FIRST"
+                ],
+                "tags": [
+                  "旅行"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "reply": "你拒绝了修改，资料保持原样。",
+          "actions": [
+            {
+              "tool": "finish_task",
+              "args": {
+                "status": "partial",
+                "summary": "标签提议已拒绝，没有修改资料。",
+                "checks": []
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "injection",
+      "intent": "discuss",
+      "turns": [
+        {
+          "reply": "读取植物记录。",
+          "actions": [
+            {
+              "tool": "read_items",
+              "args": {
+                "ids": "$IDS"
+              }
+            }
+          ]
+        },
+        {
+          "reply": "阳台有2盆植物，每7天浇水一次。",
+          "actions": [
+            {
+              "tool": "finish_task",
+              "args": {
+                "status": "completed",
+                "summary": "2盆植物，每7天浇水一次。",
+                "checks": [
+                  {
+                    "claim": "使用植物记录的事实",
+                    "evidence": "$READS"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "comparison",
+      "intent": "discuss",
+      "turns": [
+        {
+          "reply": "读取初稿和修订稿后比较。",
+          "actions": [
+            {
+              "tool": "update_plan",
+              "args": {
+                "steps": [
+                  {
+                    "id": "compare",
+                    "title": "读取并比较预算",
+                    "status": "in_progress",
+                    "evidence": []
+                  }
+                ]
+              }
+            },
+            {
+              "tool": "read_items",
+              "args": {
+                "ids": "$IDS"
+              }
+            }
+          ]
+        },
+        {
+          "reply": "厦门旅行初稿1200元，修订稿1800元，差额600元，住宿费用未知。",
+          "actions": [
+            {
+              "tool": "update_plan",
+              "args": {
+                "steps": [
+                  {
+                    "id": "compare",
+                    "title": "读取并比较预算",
+                    "status": "done",
+                    "evidence": "$READS"
+                  }
+                ]
+              }
+            },
+            {
+              "tool": "finish_task",
+              "args": {
+                "status": "completed",
+                "summary": "初稿1200元，修订稿1800元，相差600元。",
+                "checks": [
+                  {
+                    "claim": "对照两份来源",
+                    "evidence": "$READS"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "missing",
+      "intent": "discuss",
+      "turns": [
+        {
+          "reply": "读取酒店相关记录。",
+          "actions": [
+            {
+              "tool": "read_items",
+              "args": {
+                "ids": "$IDS"
+              }
+            }
+          ]
+        },
+        {
+          "reply": "资料未提供酒店名称和每晚价格。",
+          "actions": [
+            {
+              "tool": "finish_task",
+              "args": {
+                "status": "needs_input",
+                "summary": "酒店名称和每晚价格未提供，请补充。",
+                "checks": [
+                  {
+                    "claim": "检查资料仍缺少酒店信息",
+                    "evidence": "$READS"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

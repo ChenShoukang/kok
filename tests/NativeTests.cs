@@ -10,7 +10,7 @@ class Tests {
     static int count;
     static void Check(bool condition,string name) { if(!condition) throw new Exception("FAIL: "+name); Console.WriteLine("PASS: "+name); count++; }
     static void Entry(ZipArchive zip,string path,string content) { using(var writer=new StreamWriter(zip.CreateEntry(path).Open(),new UTF8Encoding(false))) writer.Write(content); }
-    static int Main() {
+    static int Main(string[] args) {
         string temp=Path.Combine(Path.GetTempPath(),"kok-tests-"+Guid.NewGuid().ToString("N")); Directory.CreateDirectory(temp);
         try {
             string text=Path.Combine(temp,"中文书名.txt"); File.WriteAllText(text,"第一章\n\n你好，世界。",new UTF8Encoding(true));
@@ -110,9 +110,12 @@ class Tests {
             AgentTaskTests.Run(Path.Combine(temp,"agent-tasks"),Check);
             AgentKernelTests.Run(Path.Combine(temp,"agent-kernel"),Check);
             AgentPlatformTests.Run(Path.Combine(temp,"agent-platform"),Check);
+            AgentReliability090Tests.Run(Path.Combine(temp,"agent-090"),Check);
             McpTests.Run(Path.Combine(temp,"mcp"),Check);
             ModuleTests.Run(Path.Combine(temp,"modules"),Check);
             WarehouseTests.Run(Path.Combine(temp,"warehouse"),Check);
+            ContentServicesTests.Run(Path.Combine(temp,"content-services"),Check);
+            LibraryConnectionTests.Run(Path.Combine(temp,"library-connections"),Check);
             File.WriteAllText(lib.StoragePath,"bad sqlite"); bool rejected=false;try{new Library(lib.DataDir);}catch(InvalidDataException){rejected=true;}
             Check(rejected&&File.ReadAllText(lib.StoragePath)=="bad sqlite","corrupt database preserved and reported");
             Console.WriteLine(count+" tests passed.");return 0;

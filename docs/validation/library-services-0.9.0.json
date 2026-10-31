@@ -1,0 +1,12 @@
+{
+  "format": "kok.library-services.validation",
+  "pdf": true,
+  "embeddingFixture": true,
+  "portableButtons": true,
+  "capture": true,
+  "mcpStdio": true,
+  "scope": true,
+  "ocr": true,
+  "localOnly": true,
+  "passed": true
+}

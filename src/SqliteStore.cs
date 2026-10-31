@@ -39,11 +39,11 @@ namespace kok {
  public sealed class ItemRecord {public string id,path,name,kind,ext,added,opened,modified;public long size;public bool favorite;public double progress,position;}
  internal static class ItemShape {
   public static readonly string[] Core={"id","path","name","kind","ext","added","opened","modified","size","favorite","progress","position","chapter","ownedDocument","agentOperationId","width","height","hasCover","coverVersion"};
-  public static readonly Dictionary<string,string[]> Facets=new Dictionary<string,string[]>{{"organization",new[]{"collection","tags","aiCategory","aiSummary","aiFingerprint"}},{"notes",new[]{"notes"}},{"music",new[]{"album","artist","audio"}},{"ai",new[]{"aiChat","aiStudies"}},{"video",new[]{"videoOutline","generatedSubtitles"}},{"editing",new[]{"editDraft"}},{"annotations",new[]{"annotations"}},{"reading",new[]{"chapterTexts","bookmarks"}}};
+  public static readonly Dictionary<string,string[]> Facets=new Dictionary<string,string[]>{{"capture",new[]{"sourceInfo"}},{"organization",new[]{"collection","tags","aiCategory","aiSummary","aiFingerprint"}},{"notes",new[]{"notes"}},{"music",new[]{"album","artist","audio"}},{"ai",new[]{"aiChat","aiStudies"}},{"video",new[]{"videoOutline","generatedSubtitles"}},{"editing",new[]{"editDraft"}},{"annotations",new[]{"annotations"}},{"reading",new[]{"chapterTexts","bookmarks"}}};
   public static Dictionary<string,object> Values(Entry e,IEnumerable<string> fields){return fields.ToDictionary(k=>k,k=>typeof(Entry).GetField(k).GetValue(e));}
   public static void Validate(){var allowed=new HashSet<string>(Core.Concat(Facets.Values.SelectMany(f=>f)));if(typeof(Entry).GetFields().Any(f=>!allowed.Contains(f.Name)))throw new InvalidDataException("资料字段尚未登记存储分面。");}
  }
- public sealed class LibraryStore {
+ public sealed partial class LibraryStore {
   readonly string file;readonly VaultSession vault;DateTime lastBackup=DateTime.MinValue;public string FilePath{get{return file;}}
   public LibraryStore(string directory,VaultSession vault,string overridePath=null){this.vault=vault;file=overridePath??Path.Combine(directory,vault==null?"library.sqlite":"library.vault");}
   SqlDb Open(){return vault==null?new SqlDb(file):new SqlDb(":memory:",File.Exists(file)?vault.Unseal(File.ReadAllBytes(file),"library"):null);}

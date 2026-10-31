@@ -11,7 +11,7 @@ foreach ($file in @('kok.exe','kok.exe.config','Microsoft.Web.WebView2.Core.dll'
     Copy-Item -LiteralPath (Join-Path $source $file) -Destination $stage -Force
 }
 & (Join-Path $root 'tools\copy-runtime-ui.ps1') -Destination (Join-Path $stage 'ui')
-foreach ($folder in @('samples','docs')) { if(Test-Path -LiteralPath (Join-Path $root $folder)){Copy-Item -LiteralPath (Join-Path $root $folder) -Destination $stage -Recurse -Force} }
+foreach ($folder in @('samples','docs','browser-extension')) { if(Test-Path -LiteralPath (Join-Path $root $folder)){Copy-Item -LiteralPath (Join-Path $root $folder) -Destination $stage -Recurse -Force} }
 foreach($dependency in (Get-Content -LiteralPath (Join-Path $root 'tools\youtube-dependencies.json') -Raw | ConvertFrom-Json)){Copy-Item -LiteralPath (Join-Path $source ($dependency.id+'.dll')) -Destination $stage -Force}
 Copy-Item -LiteralPath (Join-Path $source 'TagLibSharp.dll') -Destination $stage -Force
 Copy-Item -LiteralPath (Join-Path $source 'sqlite3.dll') -Destination $stage -Force

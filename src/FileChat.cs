@@ -39,7 +39,7 @@ namespace kok {
             if(String.IsNullOrEmpty(image))messages.Add(new{role="user",content=question});else messages.Add(new{role="user",content=new object[]{new{type="text",text=question},new{type="image_url",image_url=new{url=image,detail="low"}}}});
             var body=new Dictionary<string,object>{{"model",c.model},{"messages",messages},{"stream",true},{"max_tokens",maxTokens}};AddTokenLimit(body,c,maxTokens);if(endpoint.Host.Equals("api.deepseek.com",StringComparison.OrdinalIgnoreCase))body["thinking"]=new{type="disabled"};
             // A UTF-8 byte bound is deliberately conservative, not a claimed token count.
-            if(beforeRequest!=null)beforeRequest(Encoding.UTF8.GetByteCount(Library.Json.Serialize(messages))+512);
+            if(beforeRequest!=null)beforeRequest(title=="kok Agent"?AgentTokenBudget.Estimate(Library.Json.Serialize(body)):Encoding.UTF8.GetByteCount(Library.Json.Serialize(messages))+512);
             using(var handler=handlerFactory!=null?handlerFactory():new HttpClientHandler{AllowAutoRedirect=false,UseProxy=!endpoint.IsLoopback})using(var client=new HttpClient(handler))using(var timeout=CancellationTokenSource.CreateLinkedTokenSource(token))using(var request=new HttpRequestMessage(HttpMethod.Post,endpoint)){
                 client.Timeout=TimeSpan.FromSeconds(185);timeout.CancelAfter(TimeSpan.FromSeconds(180));if(key!="")request.Headers.Authorization=new AuthenticationHeaderValue("Bearer",key);request.Content=new StringContent(Library.Json.Serialize(body),Encoding.UTF8,"application/json");
                 try{using(var reply=await client.SendAsync(request,HttpCompletionOption.ResponseHeadersRead,timeout.Token)){

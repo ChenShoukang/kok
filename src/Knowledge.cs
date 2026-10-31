@@ -43,6 +43,7 @@ namespace kok {
         sealed class KnowledgeBody { public string stamp,text; }
         readonly Dictionary<string,KnowledgeBody> knowledgeBodies=new Dictionary<string,KnowledgeBody>();
         string ReadKnowledgeBody(Entry entry,ref int skipped){
+            if(entry.ext=="PDF"||entry.kind=="photo")return IndexedBody(entry.id);
             if(entry.kind=="video"||entry.kind=="music"){try{var tracks=entry.generatedSubtitles!=null?new List<SubtitleTrack>{entry.generatedSubtitles}:Subtitles.Discover(entry.path);string body=String.Join("\n",tracks.Take(1).SelectMany(t=>t.cues).Select(c=>"["+TimeSpan.FromSeconds(c.start).ToString(@"hh\:mm\:ss")+"] "+c.text));if(body.Length>120000){skipped++;body=body.Substring(0,120000);}return body;}catch{skipped++;return "";}}
             bool readable=new[]{"MD","MARKDOWN","TXT","CSV","JSON","LOG","HTML","HTM","DOCX","EPUB","PPTX"}.Contains(entry.ext);if(!readable)return "";
             try{var info=new FileInfo(entry.path);if(!info.Exists||info.Length>(entry.ext=="PPTX"?32*1024*1024:entry.ext=="DOCX"||entry.ext=="EPUB"?2*1024*1024:1024*1024)){skipped++;return "";}

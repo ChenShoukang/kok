@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace kok {
     public class AgentTaskOptions {
-        public string sessionId,goal,intent="assist",protocol="auto",workflow="",instruction="",workflowGuidance="";
+        public string sessionId,goal,intent="assist",protocol="auto",workflow="",instruction="",workflowGuidance="",approvalPolicy="each";
         public AgentScope scope=new AgentScope();public List<string> allowed=new List<string>();public List<ChatTurn> history=new List<ChatTurn>();
         public bool semanticCompression=true,useMemory,allowDelegation,allowSandbox;public int contextTokens=32000;public List<string> allowedTools;public string parentTaskId="",parentCallId="";public int parentSteering;
         public int budget=14000,requestLimit=6,kernelVersion;public double costLimit,inputRate,outputRate;public AgentHandoff handoff;
@@ -17,21 +17,22 @@ namespace kok {
         public List<AgentChange> changes;public string beforeText,afterText;
         public int sequence,attempt,steering;public bool retryable;public Dictionary<string,string> sources=new Dictionary<string,string>();
     }
-    public class AgentDialogue {public string id,role,text,turnId;public int sequence;public bool meta;public List<string> sourceIds=new List<string>();}
+    public class AgentDialogue {public string id,role,text,turnId,requestId;public int sequence;public bool meta,interrupted;public List<string> sourceIds=new List<string>();}
     public class AgentTaskState {
         public string id,status="created",error="",errorKind="",phase="",protocol="json";public bool retryable,needsModel=true,modelDone,estimated,cancelRequested;
         public AgentTaskOptions options;public int sequence,requests,round,inputTokens,outputTokens,cachedTokens,repairs,steerVersion,replySteering;
         public double cost;public List<AgentCall> calls=new List<AgentCall>();public List<AgentDialogue> dialogue=new List<AgentDialogue>();public List<string> adjustments=new List<string>();
         public List<AgentEvent> events=new List<AgentEvent>();
         public AgentContextCheckpoint checkpoint;
+        public List<AgentApprovalGrant> grants=new List<AgentApprovalGrant>();
         public List<AgentPlanStep> plan=new List<AgentPlanStep>();public AgentVerification verification;public int planSteering;public string planInvalidation="",reviewInvalidation="";
         public bool PlanCurrent {get{return plan.Count==0||planSteering==steerVersion&&planInvalidation=="";}}
         void InvalidateReview(string reason){if(verification!=null){verification=null;reviewInvalidation=reason;if(status=="completed"||status=="partial"){status="review_required";phase="核对已失效，请重新检查结果。";}}if(plan.Count>0)planInvalidation=reason;}
-        void AddInstruction(AgentEvent e){InvalidateReview("instructions");adjustments.Add(Get<string>(e.data,"text"));steerVersion++;dialogue.Add(new AgentDialogue{id=e.id,role="user",text=Get<string>(e.data,"text"),sequence=e.sequence});}
+        void AddInstruction(AgentEvent e){InvalidateReview("instructions");grants.Clear();adjustments.Add(Get<string>(e.data,"text"));steerVersion++;dialogue.Add(new AgentDialogue{id=e.id,role="user",text=Get<string>(e.data,"text"),sequence=e.sequence});}
         public static T Get<T>(Dictionary<string,object> data,string key){return data.ContainsKey(key)?Library.Json.Deserialize<T>(Library.Json.Serialize(data[key])):default(T);}
         public static AgentTaskState Replay(string id,List<AgentEvent> events){var s=new AgentTaskState{id=id};foreach(var e in events)s.Apply(e);return s;}
         public void Apply(AgentEvent e){
-            events.Add(e);sequence=e.sequence;var d=e.data;
+            e=AgentEventContract.Upgrade(e);events.Add(e);sequence=e.sequence;var d=e.data;
             switch(e.kind){
                 case "task.created":options=Get<AgentTaskOptions>(d,"options");protocol=Get<string>(d,"protocol");dialogue.Add(new AgentDialogue{id=e.id,role="user",text=options.goal,sequence=e.sequence});break;
                 case "task.running":status="running";error="";errorKind="";retryable=false;break;
@@ -48,6 +49,10 @@ namespace kok {
                 case "task.continued":AddInstruction(e);status="paused";phase="等待继续";break;
                 case "request.started":requests++;cost+=Get<double>(d,"reserve");break;
                 case "request.usage":cost+=Get<double>(d,"cost")-Get<double>(d,"reserve");inputTokens+=Get<int>(d,"inputTokens");outputTokens+=Get<int>(d,"outputTokens");cachedTokens+=d.ContainsKey("cachedTokens")?Get<int>(d,"cachedTokens"):0;estimated|=Get<bool>(d,"estimated");break;
+                case "assistant.interrupted":dialogue.Add(new AgentDialogue{id=e.id,role="agent",text=Get<string>(d,"text"),requestId=Get<string>(d,"requestId"),sequence=e.sequence,interrupted=true});break;
+                case "approval.granted":grants.Add(Get<AgentApprovalGrant>(d,"grant"));break;
+                case "approval.used":{var g=grants.FirstOrDefault(x=>x.id==Get<string>(d,"grantId"));if(g!=null)g.remaining=Math.Max(0,g.remaining-1);break;}
+                case "approval.revoked":grants.Clear();break;
                 case "assistant.reply":round++;replySteering=Get<int>(d,"steering");modelDone=Get<bool>(d,"done");needsModel=!modelDone;dialogue.Add(new AgentDialogue{id=e.id,role="agent",text=Get<string>(d,"text"),turnId=Get<string>(d,"turnId"),sequence=e.sequence,sourceIds=Get<List<string>>(d,"sources")??new List<string>()});break;
                 case "task.note":dialogue.Add(new AgentDialogue{id=e.id,role="agent",meta=true,text=Get<string>(d,"text"),sequence=e.sequence});break;
                 case "tool.proposed":var c=Get<AgentCall>(d,"call");c.sequence=e.sequence;calls.Add(c);if(!AgentCognition.IsControl(c.tool))verification=null;break;
@@ -55,7 +60,7 @@ namespace kok {
                 case "tool.completed":{var c1=calls.First(c=>c.id==Get<string>(d,"callId"));c1.status="done";c1.result=Get<Dictionary<string,object>>(d,"result");c1.resultEventId=e.id;c1.stamp=Get<string>(d,"stamp");break;}
                 case "tool.reused":{var c1=calls.First(c=>c.id==Get<string>(d,"callId"));var previous=calls.First(c=>c.resultEventId==Get<string>(d,"resultRef")&&c.result!=null);c1.status="done";c1.result=previous.result;c1.resultEventId=previous.resultEventId;break;}
                 case "tool.sources":calls.First(c=>c.id==Get<string>(d,"callId")).sources=Get<Dictionary<string,string>>(d,"sources");break;
-                case "tool.skipped":case "tool.undone":{var c1=calls.First(c=>c.id==Get<string>(d,"callId"));c1.status=e.kind=="tool.skipped"?"skipped":"undone";if(e.kind=="tool.skipped")c1.error=d.ContainsKey("reason")?Get<string>(d,"reason"):"user";else InvalidateReview("undo");break;}
+                case "tool.skipped":case "tool.undone":{var c1=calls.First(c=>c.id==Get<string>(d,"callId"));c1.status=e.kind=="tool.skipped"?"skipped":"undone";grants.Clear();if(e.kind=="tool.skipped")c1.error=d.ContainsKey("reason")?Get<string>(d,"reason"):"user";else InvalidateReview("undo");break;}
                 case "tool.failed":{var c1=calls.First(c=>c.id==Get<string>(d,"callId"));c1.status="failed";c1.error=Get<string>(d,"message");c1.errorKind=Get<string>(d,"kind");c1.retryable=Get<bool>(d,"retryable");c1.result=Get<Dictionary<string,object>>(d,"result");c1.resultEventId=c1.result==null?null:e.id;break;}
                 case "task.waiting":status="waiting";phase="等待确认";break;
                 case "task.cancel_requested":case "task.cancelled":cancelRequested=true;status="cancelled";phase="任务已取消";break;

@@ -1,5 +1,7 @@
 # Modes and the private folder
 
+v0.9.0 adds source indexing, local semantic search, browser capture, Windows OCR and portable export/restore. See the [new workflow guide](LIBRARY_0.9.0.en.md).
+
 [简体中文](MODES.md) · [Documentation](README.en.md)
 
 On first entry, choose Pure or Smart. Existing libraries without a saved choice also see this selector. Two vector symbols, glass cards and gentle animation introduce these modes, with bilingual text, compact layouts and reduced-motion support. Privacy is a folder inside the library, not a third app mode.

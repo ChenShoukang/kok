@@ -17,6 +17,7 @@ namespace kok {
         public bool favorite;
         public bool ownedDocument;
         public string agentOperationId="";
+        public CaptureOrigin sourceInfo;
         public double progress, position;
         public int chapter;
         public string notes = "";

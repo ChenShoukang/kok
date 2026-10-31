@@ -1,4 +1,4 @@
-﻿param([string[]]$Suites=@('ui','features','translation','i18n','minimal','drop','workspaces','video-layout','refinements','menus-covers','compatibility','organizer','companion','private-space','app-modes','recovery','agent','agent-interactions','agent-reliable','agent-runtime','agent-kernel','mcp','agent-platform'),[string]$LargeMediaFile,[string]$RealFilesFolder,[string]$Executable,[string]$AuditDirectory)
+﻿param([string[]]$Suites=@('ui','features','translation','i18n','minimal','drop','workspaces','video-layout','refinements','menus-covers','compatibility','organizer','companion','private-space','app-modes','recovery','agent','agent-interactions','agent-reliable','agent-runtime','agent-kernel','mcp','agent-platform','agent-quality','library-services'),[string]$LargeMediaFile,[string]$RealFilesFolder,[string]$Executable,[string]$AuditDirectory)
 $ErrorActionPreference='Stop'
 $projectRoot=Split-Path $PSScriptRoot -Parent
 $executable=if($Executable){(Resolve-Path -LiteralPath $Executable).Path}else{Join-Path $projectRoot 'dist\kok\kok.exe'}
@@ -53,6 +53,7 @@ foreach($suite in $Suites){
     if($suite -eq 'knowledge'){& node (Join-Path $projectRoot 'tests\knowledge.cjs') --prepare $profile;if($LASTEXITCODE -ne 0){throw 'Knowledge fixture preparation failed.'}}
     if($suite -eq 'graphite'){& node (Join-Path $projectRoot 'tests\graphite.cjs') --prepare $profile;if($LASTEXITCODE -ne 0){throw 'Graphite fixture preparation failed.'}}
     if($suite -eq 'presentations-agent'){& node (Join-Path $projectRoot 'tests\presentations-agent.cjs') --prepare $profile;if($LASTEXITCODE -ne 0){throw 'Presentation fixture preparation failed.'}}
+    if($suite -eq 'agent-live-quality'){if($env:KOK_LIVE_AI -ne '1' -or -not $env:KOK_LIVE_CONFIG){throw 'Explicit live evaluation source configuration is required.'};Copy-Item -LiteralPath $env:KOK_LIVE_CONFIG -Destination (Join-Path $profile 'ai-settings.json')}
     $process=Start-Process -FilePath $executable -ArgumentList @('--debug','--test-silent','--data-dir',('"'+$profile+'"')) -PassThru -WindowStyle Hidden
     $env:KOK_TEST_NATIVE_PID=[string]$process.Id
     $env:KOK_TEST_EXECUTABLE=$executable

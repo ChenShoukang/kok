@@ -50,7 +50,8 @@ jobs:
             dist/kok-*-win-x64.zip
             dist/kok-*-win-x64.zip.sha256
   agent-ui:
-    name: Agent desktop integration
+    name: Release package desktop integration
+    needs: build
     runs-on: windows-2025
     timeout-minutes: 20
     steps:
@@ -62,16 +63,16 @@ jobs:
           node-version: '24'
           cache: npm
       - run: npm ci --omit=optional
-      - name: Compile isolated desktop host
-        shell: pwsh
-        run: ./build.ps1
+      - uses: actions/download-artifact@v4
+        with:
+          name: kok-windows-2025-win-x64
+          path: dist
       - name: Ensure signed Microsoft WebView2 runtime
         shell: pwsh
         run: ./tools/ensure-test-webview.ps1
-      - name: Exercise Agent and MCP with local fixtures
+      - name: Exercise the release ZIP with local fixtures
         shell: pwsh
-        run: |
-          ./tools/test-desktop.ps1 -Suites @('agent','agent-interactions','agent-reliable','agent-runtime','agent-kernel','mcp','agent-platform')
+        run: ./tools/test-package.ps1
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -80,6 +81,9 @@ jobs:
           path: |
             test-output/**/results.json
             test-output/**/run.json
+            test-output/**/archive.json
+            test-output/**/agent-quality.json
+            test-output/**/library-services.json
             test-output/**/failure.png
             test-output/**/kernel-*.png
             test-output/**/mcp-*.png

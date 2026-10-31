@@ -1,5 +1,7 @@
 # Using kok
 
+v0.9.0 adds source indexing, local semantic search, browser capture, Windows OCR and portable export/restore. See the [new workflow guide](LIBRARY_0.9.0.en.md).
+
 [中文](GUIDE.md) · [Project home](../README.en.md) · [Documentation](README.en.md)
 
 kok connects local media, images, documents and books to one workflow for organizing and recording what matters. Use it for playback and reading, or go further with notes, source-linked Clips, topic Spaces and optional AI. This guide describes v0.8.1 Preview; available controls depend on mode, enabled modules and format.

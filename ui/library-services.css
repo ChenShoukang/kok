@@ -1,0 +1,12 @@
+.library-service-actions,.library-service-fields{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:12px 0}
+.library-service-fields>input,.library-service-fields>.form-label{flex:1;min-width:140px}
+.library-service-fields input{max-width:100%;box-sizing:border-box}
+.library-index-status{max-height:260px;overflow:auto;margin:12px 0}
+.library-index-status>div{display:flex;flex-direction:column;padding:8px 0;border-bottom:1px solid var(--line,rgba(128,128,128,.2));overflow-wrap:anywhere}
+.library-index-status small{opacity:.7}
+.knowledge-search-hit{display:block;width:100%;text-align:left;background:transparent;color:inherit;border:1px solid var(--line,rgba(128,128,128,.2));border-radius:10px;padding:12px;margin:8px 0;overflow-wrap:anywhere}
+.knowledge-search-hit>b,.knowledge-search-hit>small{display:block}
+.knowledge-search-hit p{max-height:130px;overflow:auto;white-space:pre-wrap;margin:8px 0 0;line-height:1.5}
+#embedding-config,#knowledge-search,#library-transfer-tools{border-top:1px solid var(--line,rgba(128,128,128,.2));margin-top:20px;padding-top:10px}
+
+.search-mode{font:inherit;border:0;background:transparent;color:inherit;max-width:90px;padding:4px}

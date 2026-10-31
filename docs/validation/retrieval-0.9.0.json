@@ -1,0 +1,1445 @@
+{
+  "format": "kok.retrieval.local-evaluation",
+  "version": 1,
+  "synthetic": true,
+  "model": "embeddinggemma",
+  "endpoint": "http://127.0.0.1:11435",
+  "minimumSimilarity": 0.35,
+  "machine": {
+    "cpu": "AMD Ryzen 7 9700X 8-Core Processor             ",
+    "logicalCpus": 16,
+    "ramGiB": 31
+  },
+  "corpusSha256": "e553b73f415a2fc8a0851bcce81661684da65041941c177673b703e7f28d9637",
+  "queries": [
+    {
+      "type": "exact",
+      "split": "development",
+      "query": "相机电池",
+      "expected": "ee665e2a9b1a40be9babed284b597639",
+      "results": {
+        "lexical": {
+          "ids": [
+            "ee665e2a9b1a40be9babed284b597639"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 113
+        },
+        "semantic": {
+          "ids": [
+            "ee665e2a9b1a40be9babed284b597639"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 422
+        },
+        "hybrid": {
+          "ids": [
+            "ee665e2a9b1a40be9babed284b597639"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 405
+        }
+      }
+    },
+    {
+      "type": "paraphrase",
+      "split": "development",
+      "query": "外出摄影之前要准备哪些供电和存储用品？",
+      "expected": "ee665e2a9b1a40be9babed284b597639",
+      "results": {
+        "lexical": {
+          "ids": [],
+          "recall": 0,
+          "candidateCount": 0,
+          "latencyMs": 100
+        },
+        "semantic": {
+          "ids": [
+            "ee665e2a9b1a40be9babed284b597639",
+            "adfb084156ae4b259b3d2953d60fc33e"
+          ],
+          "recall": 1,
+          "candidateCount": 2,
+          "latencyMs": 349
+        },
+        "hybrid": {
+          "ids": [
+            "ee665e2a9b1a40be9babed284b597639",
+            "adfb084156ae4b259b3d2953d60fc33e"
+          ],
+          "recall": 1,
+          "candidateCount": 2,
+          "latencyMs": 387
+        }
+      }
+    },
+    {
+      "type": "crossLanguage",
+      "split": "development",
+      "query": "What should I pack to keep my camera powered and store photos?",
+      "expected": "ee665e2a9b1a40be9babed284b597639",
+      "results": {
+        "lexical": {
+          "ids": [],
+          "recall": 0,
+          "candidateCount": 0,
+          "latencyMs": 96
+        },
+        "semantic": {
+          "ids": [
+            "ee665e2a9b1a40be9babed284b597639",
+            "adfb084156ae4b259b3d2953d60fc33e"
+          ],
+          "recall": 1,
+          "candidateCount": 2,
+          "latencyMs": 346
+        },
+        "hybrid": {
+          "ids": [
+            "ee665e2a9b1a40be9babed284b597639",
+            "adfb084156ae4b259b3d2953d60fc33e"
+          ],
+          "recall": 1,
+          "candidateCount": 2,
+          "latencyMs": 350
+        }
+      }
+    },
+    {
+      "type": "exact",
+      "split": "development",
+      "query": "咖啡滤纸",
+      "expected": "3ef0a6e31ded49e588051891e5d83469",
+      "results": {
+        "lexical": {
+          "ids": [
+            "3ef0a6e31ded49e588051891e5d83469"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 94
+        },
+        "semantic": {
+          "ids": [
+            "3ef0a6e31ded49e588051891e5d83469"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 357
+        },
+        "hybrid": {
+          "ids": [
+            "3ef0a6e31ded49e588051891e5d83469"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 357
+        }
+      }
+    },
+    {
+      "type": "paraphrase",
+      "split": "development",
+      "query": "怎样在家用滤杯冲出一杯提神饮品？",
+      "expected": "3ef0a6e31ded49e588051891e5d83469",
+      "results": {
+        "lexical": {
+          "ids": [],
+          "recall": 0,
+          "candidateCount": 0,
+          "latencyMs": 92
+        },
+        "semantic": {
+          "ids": [
+            "3ef0a6e31ded49e588051891e5d83469",
+            "f9f8a4dbebdf4efeaa3ba7038de37641"
+          ],
+          "recall": 1,
+          "candidateCount": 2,
+          "latencyMs": 363
+        },
+        "hybrid": {
+          "ids": [
+            "3ef0a6e31ded49e588051891e5d83469",
+            "f9f8a4dbebdf4efeaa3ba7038de37641"
+          ],
+          "recall": 1,
+          "candidateCount": 2,
+          "latencyMs": 368
+        }
+      }
+    },
+    {
+      "type": "crossLanguage",
+      "split": "development",
+      "query": "How do I brew a pour-over coffee with a paper filter?",
+      "expected": "3ef0a6e31ded49e588051891e5d83469",
+      "results": {
+        "lexical": {
+          "ids": [],
+          "recall": 0,
+          "candidateCount": 0,
+          "latencyMs": 105
+        },
+        "semantic": {
+          "ids": [
+            "3ef0a6e31ded49e588051891e5d83469"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 358
+        },
+        "hybrid": {
+          "ids": [
+            "3ef0a6e31ded49e588051891e5d83469"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 352
+        }
+      }
+    },
+    {
+      "type": "exact",
+      "split": "development",
+      "query": "离线备份",
+      "expected": "adebd720d1644997b0f90e12e5f5e05b",
+      "results": {
+        "lexical": {
+          "ids": [
+            "adebd720d1644997b0f90e12e5f5e05b"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 103
+        },
+        "semantic": {
+          "ids": [
+            "adebd720d1644997b0f90e12e5f5e05b"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 349
+        },
+        "hybrid": {
+          "ids": [
+            "adebd720d1644997b0f90e12e5f5e05b"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 359
+        }
+      }
+    },
+    {
+      "type": "paraphrase",
+      "split": "development",
+      "query": "电脑坏掉时，怎样提前留下能找回的资料？",
+      "expected": "adebd720d1644997b0f90e12e5f5e05b",
+      "results": {
+        "lexical": {
+          "ids": [],
+          "recall": 0,
+          "candidateCount": 0,
+          "latencyMs": 94
+        },
+        "semantic": {
+          "ids": [
+            "adebd720d1644997b0f90e12e5f5e05b",
+            "adfb084156ae4b259b3d2953d60fc33e",
+            "ee665e2a9b1a40be9babed284b597639",
+            "a6981e61afb64e3a86caa08a575da68e",
+            "5fbbce74b59d429781fa20f7306f39ab",
+            "984ed71619404a10a5bad11a68bcdb48"
+          ],
+          "recall": 1,
+          "candidateCount": 6,
+          "latencyMs": 343
+        },
+        "hybrid": {
+          "ids": [
+            "adebd720d1644997b0f90e12e5f5e05b",
+            "adfb084156ae4b259b3d2953d60fc33e",
+            "ee665e2a9b1a40be9babed284b597639",
+            "a6981e61afb64e3a86caa08a575da68e",
+            "5fbbce74b59d429781fa20f7306f39ab",
+            "984ed71619404a10a5bad11a68bcdb48"
+          ],
+          "recall": 1,
+          "candidateCount": 6,
+          "latencyMs": 347
+        }
+      }
+    },
+    {
+      "type": "crossLanguage",
+      "split": "development",
+      "query": "How can I keep recoverable copies of my files when the computer fails?",
+      "expected": "adebd720d1644997b0f90e12e5f5e05b",
+      "results": {
+        "lexical": {
+          "ids": [],
+          "recall": 0,
+          "candidateCount": 0,
+          "latencyMs": 97
+        },
+        "semantic": {
+          "ids": [
+            "adebd720d1644997b0f90e12e5f5e05b"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 354
+        },
+        "hybrid": {
+          "ids": [
+            "adebd720d1644997b0f90e12e5f5e05b"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 354
+        }
+      }
+    },
+    {
+      "type": "exact",
+      "split": "development",
+      "query": "绿植浇水",
+      "expected": "f9f8a4dbebdf4efeaa3ba7038de37641",
+      "results": {
+        "lexical": {
+          "ids": [
+            "f9f8a4dbebdf4efeaa3ba7038de37641"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 95
+        },
+        "semantic": {
+          "ids": [
+            "f9f8a4dbebdf4efeaa3ba7038de37641"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 348
+        },
+        "hybrid": {
+          "ids": [
+            "f9f8a4dbebdf4efeaa3ba7038de37641"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 345
+        }
+      }
+    },
+    {
+      "type": "paraphrase",
+      "split": "development",
+      "query": "阳台香草怎么照顾，什么时候补充水分？",
+      "expected": "f9f8a4dbebdf4efeaa3ba7038de37641",
+      "results": {
+        "lexical": {
+          "ids": [],
+          "recall": 0,
+          "candidateCount": 0,
+          "latencyMs": 97
+        },
+        "semantic": {
+          "ids": [
+            "f9f8a4dbebdf4efeaa3ba7038de37641"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 336
+        },
+        "hybrid": {
+          "ids": [
+            "f9f8a4dbebdf4efeaa3ba7038de37641"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 358
+        }
+      }
+    },
+    {
+      "type": "crossLanguage",
+      "split": "development",
+      "query": "When should I water balcony mint and how should its pot drain?",
+      "expected": "f9f8a4dbebdf4efeaa3ba7038de37641",
+      "results": {
+        "lexical": {
+          "ids": [],
+          "recall": 0,
+          "candidateCount": 0,
+          "latencyMs": 99
+        },
+        "semantic": {
+          "ids": [
+            "f9f8a4dbebdf4efeaa3ba7038de37641"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 349
+        },
+        "hybrid": {
+          "ids": [
+            "f9f8a4dbebdf4efeaa3ba7038de37641"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 365
+        }
+      }
+    },
+    {
+      "type": "exact",
+      "split": "development",
+      "query": "阅读摘录",
+      "expected": "984ed71619404a10a5bad11a68bcdb48",
+      "results": {
+        "lexical": {
+          "ids": [
+            "984ed71619404a10a5bad11a68bcdb48"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 95
+        },
+        "semantic": {
+          "ids": [
+            "984ed71619404a10a5bad11a68bcdb48",
+            "77ddabc4e10d493cba2f7e8d2dcbd689",
+            "0dc2a09e952849d9978f3413fe533f29",
+            "cdff2005066842989f43139d17395955",
+            "5a66749874484ce486b061a646401fb7",
+            "436f3c6862e4451a801c5301e26fb632"
+          ],
+          "recall": 1,
+          "candidateCount": 6,
+          "latencyMs": 350
+        },
+        "hybrid": {
+          "ids": [
+            "984ed71619404a10a5bad11a68bcdb48",
+            "77ddabc4e10d493cba2f7e8d2dcbd689",
+            "0dc2a09e952849d9978f3413fe533f29",
+            "cdff2005066842989f43139d17395955",
+            "5a66749874484ce486b061a646401fb7",
+            "436f3c6862e4451a801c5301e26fb632"
+          ],
+          "recall": 1,
+          "candidateCount": 6,
+          "latencyMs": 359
+        }
+      }
+    },
+    {
+      "type": "paraphrase",
+      "split": "development",
+      "query": "如何整理书里重要的句子，以后还能回到原处？",
+      "expected": "984ed71619404a10a5bad11a68bcdb48",
+      "results": {
+        "lexical": {
+          "ids": [],
+          "recall": 0,
+          "candidateCount": 0,
+          "latencyMs": 98
+        },
+        "semantic": {
+          "ids": [
+            "984ed71619404a10a5bad11a68bcdb48"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 352
+        },
+        "hybrid": {
+          "ids": [
+            "984ed71619404a10a5bad11a68bcdb48"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 370
+        }
+      }
+    },
+    {
+      "type": "crossLanguage",
+      "split": "development",
+      "query": "How do I save useful book passages and find their original pages later?",
+      "expected": "984ed71619404a10a5bad11a68bcdb48",
+      "results": {
+        "lexical": {
+          "ids": [],
+          "recall": 0,
+          "candidateCount": 0,
+          "latencyMs": 98
+        },
+        "semantic": {
+          "ids": [
+            "984ed71619404a10a5bad11a68bcdb48",
+            "adebd720d1644997b0f90e12e5f5e05b"
+          ],
+          "recall": 1,
+          "candidateCount": 2,
+          "latencyMs": 362
+        },
+        "hybrid": {
+          "ids": [
+            "984ed71619404a10a5bad11a68bcdb48",
+            "adebd720d1644997b0f90e12e5f5e05b"
+          ],
+          "recall": 1,
+          "candidateCount": 2,
+          "latencyMs": 349
+        }
+      }
+    },
+    {
+      "type": "exact",
+      "split": "development",
+      "query": "密码管理器",
+      "expected": "69af939333d146d1844dc0ee7a080a1e",
+      "results": {
+        "lexical": {
+          "ids": [
+            "69af939333d146d1844dc0ee7a080a1e"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 94
+        },
+        "semantic": {
+          "ids": [
+            "69af939333d146d1844dc0ee7a080a1e"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 342
+        },
+        "hybrid": {
+          "ids": [
+            "69af939333d146d1844dc0ee7a080a1e"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 342
+        }
+      }
+    },
+    {
+      "type": "paraphrase",
+      "split": "development",
+      "query": "不同账号的登录凭据如何避免重复，又不容易忘？",
+      "expected": "69af939333d146d1844dc0ee7a080a1e",
+      "results": {
+        "lexical": {
+          "ids": [],
+          "recall": 0,
+          "candidateCount": 0,
+          "latencyMs": 96
+        },
+        "semantic": {
+          "ids": [
+            "69af939333d146d1844dc0ee7a080a1e",
+            "984ed71619404a10a5bad11a68bcdb48",
+            "adfb084156ae4b259b3d2953d60fc33e"
+          ],
+          "recall": 1,
+          "candidateCount": 3,
+          "latencyMs": 339
+        },
+        "hybrid": {
+          "ids": [
+            "69af939333d146d1844dc0ee7a080a1e",
+            "984ed71619404a10a5bad11a68bcdb48",
+            "adfb084156ae4b259b3d2953d60fc33e"
+          ],
+          "recall": 1,
+          "candidateCount": 3,
+          "latencyMs": 345
+        }
+      }
+    },
+    {
+      "type": "crossLanguage",
+      "split": "development",
+      "query": "How should I manage unique passwords across many accounts?",
+      "expected": "69af939333d146d1844dc0ee7a080a1e",
+      "results": {
+        "lexical": {
+          "ids": [],
+          "recall": 0,
+          "candidateCount": 0,
+          "latencyMs": 100
+        },
+        "semantic": {
+          "ids": [
+            "69af939333d146d1844dc0ee7a080a1e"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 341
+        },
+        "hybrid": {
+          "ids": [
+            "69af939333d146d1844dc0ee7a080a1e"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 346
+        }
+      }
+    },
+    {
+      "type": "exact",
+      "split": "holdout",
+      "query": "衣物洗涤",
+      "expected": "ece33c5f6e05456ca37826573385ae7b",
+      "results": {
+        "lexical": {
+          "ids": [
+            "ece33c5f6e05456ca37826573385ae7b"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 94
+        },
+        "semantic": {
+          "ids": [
+            "ece33c5f6e05456ca37826573385ae7b"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 336
+        },
+        "hybrid": {
+          "ids": [
+            "ece33c5f6e05456ca37826573385ae7b"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 350
+        }
+      }
+    },
+    {
+      "type": "paraphrase",
+      "split": "holdout",
+      "query": "毛衣要怎么洗和晾，才不容易变形？",
+      "expected": "ece33c5f6e05456ca37826573385ae7b",
+      "results": {
+        "lexical": {
+          "ids": [],
+          "recall": 0,
+          "candidateCount": 0,
+          "latencyMs": 92
+        },
+        "semantic": {
+          "ids": [
+            "ece33c5f6e05456ca37826573385ae7b",
+            "f9f8a4dbebdf4efeaa3ba7038de37641",
+            "af9b24d9acb34b5c98ea9937494470a8"
+          ],
+          "recall": 1,
+          "candidateCount": 3,
+          "latencyMs": 358
+        },
+        "hybrid": {
+          "ids": [
+            "ece33c5f6e05456ca37826573385ae7b",
+            "f9f8a4dbebdf4efeaa3ba7038de37641",
+            "af9b24d9acb34b5c98ea9937494470a8"
+          ],
+          "recall": 1,
+          "candidateCount": 3,
+          "latencyMs": 348
+        }
+      }
+    },
+    {
+      "type": "crossLanguage",
+      "split": "holdout",
+      "query": "How should I wash and dry a wool sweater without stretching it?",
+      "expected": "ece33c5f6e05456ca37826573385ae7b",
+      "results": {
+        "lexical": {
+          "ids": [],
+          "recall": 0,
+          "candidateCount": 0,
+          "latencyMs": 101
+        },
+        "semantic": {
+          "ids": [
+            "ece33c5f6e05456ca37826573385ae7b"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 361
+        },
+        "hybrid": {
+          "ids": [
+            "ece33c5f6e05456ca37826573385ae7b"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 392
+        }
+      }
+    },
+    {
+      "type": "exact",
+      "split": "holdout",
+      "query": "自行车补胎",
+      "expected": "a6981e61afb64e3a86caa08a575da68e",
+      "results": {
+        "lexical": {
+          "ids": [
+            "a6981e61afb64e3a86caa08a575da68e"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 92
+        },
+        "semantic": {
+          "ids": [
+            "a6981e61afb64e3a86caa08a575da68e",
+            "ee665e2a9b1a40be9babed284b597639"
+          ],
+          "recall": 1,
+          "candidateCount": 2,
+          "latencyMs": 342
+        },
+        "hybrid": {
+          "ids": [
+            "a6981e61afb64e3a86caa08a575da68e",
+            "ee665e2a9b1a40be9babed284b597639"
+          ],
+          "recall": 1,
+          "candidateCount": 2,
+          "latencyMs": 342
+        }
+      }
+    },
+    {
+      "type": "paraphrase",
+      "split": "holdout",
+      "query": "骑车时轮子瘪了，该用什么步骤修复漏气？",
+      "expected": "a6981e61afb64e3a86caa08a575da68e",
+      "results": {
+        "lexical": {
+          "ids": [],
+          "recall": 0,
+          "candidateCount": 0,
+          "latencyMs": 94
+        },
+        "semantic": {
+          "ids": [
+            "a6981e61afb64e3a86caa08a575da68e"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 335
+        },
+        "hybrid": {
+          "ids": [
+            "a6981e61afb64e3a86caa08a575da68e"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 338
+        }
+      }
+    },
+    {
+      "type": "crossLanguage",
+      "split": "holdout",
+      "query": "How do I patch a punctured bicycle inner tube?",
+      "expected": "a6981e61afb64e3a86caa08a575da68e",
+      "results": {
+        "lexical": {
+          "ids": [],
+          "recall": 0,
+          "candidateCount": 0,
+          "latencyMs": 91
+        },
+        "semantic": {
+          "ids": [
+            "a6981e61afb64e3a86caa08a575da68e"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 332
+        },
+        "hybrid": {
+          "ids": [
+            "a6981e61afb64e3a86caa08a575da68e"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 349
+        }
+      }
+    },
+    {
+      "type": "exact",
+      "split": "holdout",
+      "query": "会议纪要",
+      "expected": "24b8fb06627944489ce77e9add1ebc82",
+      "results": {
+        "lexical": {
+          "ids": [
+            "24b8fb06627944489ce77e9add1ebc82"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 99
+        },
+        "semantic": {
+          "ids": [
+            "24b8fb06627944489ce77e9add1ebc82",
+            "984ed71619404a10a5bad11a68bcdb48",
+            "436f3c6862e4451a801c5301e26fb632",
+            "0564e1c0908a494c893f61c147069aea",
+            "ac1f4beb47564bafa04e6be5968a2fa6",
+            "026186ac652b44139e00e9ecd2a99169",
+            "ef4cb22df0f74489b61d4409a565656d",
+            "8e8b056455c14fdba067bf304af2b320",
+            "fc1cb81b0e8d436694f23286135b1bb1",
+            "7d1997146f0148f59dfdab75243e425c"
+          ],
+          "recall": 1,
+          "candidateCount": 10,
+          "latencyMs": 341
+        },
+        "hybrid": {
+          "ids": [
+            "24b8fb06627944489ce77e9add1ebc82",
+            "984ed71619404a10a5bad11a68bcdb48",
+            "436f3c6862e4451a801c5301e26fb632",
+            "0564e1c0908a494c893f61c147069aea",
+            "ac1f4beb47564bafa04e6be5968a2fa6",
+            "026186ac652b44139e00e9ecd2a99169",
+            "ef4cb22df0f74489b61d4409a565656d",
+            "8e8b056455c14fdba067bf304af2b320",
+            "fc1cb81b0e8d436694f23286135b1bb1",
+            "7d1997146f0148f59dfdab75243e425c"
+          ],
+          "recall": 1,
+          "candidateCount": 10,
+          "latencyMs": 348
+        }
+      }
+    },
+    {
+      "type": "paraphrase",
+      "split": "holdout",
+      "query": "讨论结束后怎样写清楚谁要做什么、何时交付？",
+      "expected": "24b8fb06627944489ce77e9add1ebc82",
+      "results": {
+        "lexical": {
+          "ids": [],
+          "recall": 0,
+          "candidateCount": 0,
+          "latencyMs": 94
+        },
+        "semantic": {
+          "ids": [
+            "24b8fb06627944489ce77e9add1ebc82",
+            "984ed71619404a10a5bad11a68bcdb48",
+            "ac1f4beb47564bafa04e6be5968a2fa6"
+          ],
+          "recall": 1,
+          "candidateCount": 3,
+          "latencyMs": 339
+        },
+        "hybrid": {
+          "ids": [
+            "24b8fb06627944489ce77e9add1ebc82",
+            "984ed71619404a10a5bad11a68bcdb48",
+            "ac1f4beb47564bafa04e6be5968a2fa6"
+          ],
+          "recall": 1,
+          "candidateCount": 3,
+          "latencyMs": 345
+        }
+      }
+    },
+    {
+      "type": "crossLanguage",
+      "split": "holdout",
+      "query": "What should meeting notes say about decisions, owners and deadlines?",
+      "expected": "24b8fb06627944489ce77e9add1ebc82",
+      "results": {
+        "lexical": {
+          "ids": [],
+          "recall": 0,
+          "candidateCount": 0,
+          "latencyMs": 93
+        },
+        "semantic": {
+          "ids": [
+            "24b8fb06627944489ce77e9add1ebc82"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 341
+        },
+        "hybrid": {
+          "ids": [
+            "24b8fb06627944489ce77e9add1ebc82"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 341
+        }
+      }
+    },
+    {
+      "type": "exact",
+      "split": "holdout",
+      "query": "面包发酵",
+      "expected": "af9b24d9acb34b5c98ea9937494470a8",
+      "results": {
+        "lexical": {
+          "ids": [
+            "af9b24d9acb34b5c98ea9937494470a8"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 93
+        },
+        "semantic": {
+          "ids": [
+            "af9b24d9acb34b5c98ea9937494470a8",
+            "3ef0a6e31ded49e588051891e5d83469"
+          ],
+          "recall": 1,
+          "candidateCount": 2,
+          "latencyMs": 331
+        },
+        "hybrid": {
+          "ids": [
+            "af9b24d9acb34b5c98ea9937494470a8",
+            "3ef0a6e31ded49e588051891e5d83469"
+          ],
+          "recall": 1,
+          "candidateCount": 2,
+          "latencyMs": 334
+        }
+      }
+    },
+    {
+      "type": "paraphrase",
+      "split": "holdout",
+      "query": "做烘焙时面团什么时候可以进入下一步整形？",
+      "expected": "af9b24d9acb34b5c98ea9937494470a8",
+      "results": {
+        "lexical": {
+          "ids": [],
+          "recall": 0,
+          "candidateCount": 0,
+          "latencyMs": 93
+        },
+        "semantic": {
+          "ids": [
+            "af9b24d9acb34b5c98ea9937494470a8"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 347
+        },
+        "hybrid": {
+          "ids": [
+            "af9b24d9acb34b5c98ea9937494470a8"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 338
+        }
+      }
+    },
+    {
+      "type": "crossLanguage",
+      "split": "holdout",
+      "query": "When is bread dough ready for shaping after its first rise?",
+      "expected": "af9b24d9acb34b5c98ea9937494470a8",
+      "results": {
+        "lexical": {
+          "ids": [],
+          "recall": 0,
+          "candidateCount": 0,
+          "latencyMs": 95
+        },
+        "semantic": {
+          "ids": [
+            "af9b24d9acb34b5c98ea9937494470a8"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 345
+        },
+        "hybrid": {
+          "ids": [
+            "af9b24d9acb34b5c98ea9937494470a8"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 346
+        }
+      }
+    },
+    {
+      "type": "exact",
+      "split": "holdout",
+      "query": "录音降噪",
+      "expected": "5fbbce74b59d429781fa20f7306f39ab",
+      "results": {
+        "lexical": {
+          "ids": [
+            "5fbbce74b59d429781fa20f7306f39ab"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 101
+        },
+        "semantic": {
+          "ids": [
+            "5fbbce74b59d429781fa20f7306f39ab"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 352
+        },
+        "hybrid": {
+          "ids": [
+            "5fbbce74b59d429781fa20f7306f39ab"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 393
+        }
+      }
+    },
+    {
+      "type": "paraphrase",
+      "split": "holdout",
+      "query": "想把人声录得更干净，开录前要检查什么？",
+      "expected": "5fbbce74b59d429781fa20f7306f39ab",
+      "results": {
+        "lexical": {
+          "ids": [],
+          "recall": 0,
+          "candidateCount": 0,
+          "latencyMs": 93
+        },
+        "semantic": {
+          "ids": [
+            "5fbbce74b59d429781fa20f7306f39ab",
+            "ee665e2a9b1a40be9babed284b597639",
+            "984ed71619404a10a5bad11a68bcdb48",
+            "0dc2a09e952849d9978f3413fe533f29",
+            "24b8fb06627944489ce77e9add1ebc82",
+            "7d1997146f0148f59dfdab75243e425c",
+            "e2f12431084548e1acd9957d30f256db"
+          ],
+          "recall": 1,
+          "candidateCount": 7,
+          "latencyMs": 345
+        },
+        "hybrid": {
+          "ids": [
+            "5fbbce74b59d429781fa20f7306f39ab",
+            "ee665e2a9b1a40be9babed284b597639",
+            "984ed71619404a10a5bad11a68bcdb48",
+            "0dc2a09e952849d9978f3413fe533f29",
+            "24b8fb06627944489ce77e9add1ebc82",
+            "7d1997146f0148f59dfdab75243e425c",
+            "e2f12431084548e1acd9957d30f256db"
+          ],
+          "recall": 1,
+          "candidateCount": 7,
+          "latencyMs": 337
+        }
+      }
+    },
+    {
+      "type": "crossLanguage",
+      "split": "holdout",
+      "query": "How can I reduce background noise before recording a podcast?",
+      "expected": "5fbbce74b59d429781fa20f7306f39ab",
+      "results": {
+        "lexical": {
+          "ids": [],
+          "recall": 0,
+          "candidateCount": 0,
+          "latencyMs": 91
+        },
+        "semantic": {
+          "ids": [
+            "5fbbce74b59d429781fa20f7306f39ab"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 339
+        },
+        "hybrid": {
+          "ids": [
+            "5fbbce74b59d429781fa20f7306f39ab"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 338
+        }
+      }
+    },
+    {
+      "type": "exact",
+      "split": "holdout",
+      "query": "行李清单",
+      "expected": "adfb084156ae4b259b3d2953d60fc33e",
+      "results": {
+        "lexical": {
+          "ids": [
+            "adfb084156ae4b259b3d2953d60fc33e"
+          ],
+          "recall": 1,
+          "candidateCount": 1,
+          "latencyMs": 92
+        },
+        "semantic": {
+          "ids": [
+            "adfb084156ae4b259b3d2953d60fc33e",
+            "fc1cb81b0e8d436694f23286135b1bb1",
+            "ee665e2a9b1a40be9babed284b597639"
+          ],
+          "recall": 1,
+          "candidateCount": 3,
+          "latencyMs": 335
+        },
+        "hybrid": {
+          "ids": [
+            "adfb084156ae4b259b3d2953d60fc33e",
+            "fc1cb81b0e8d436694f23286135b1bb1",
+            "ee665e2a9b1a40be9babed284b597639"
+          ],
+          "recall": 1,
+          "candidateCount": 3,
+          "latencyMs": 344
+        }
+      }
+    },
+    {
+      "type": "paraphrase",
+      "split": "holdout",
+      "query": "去外地工作两天，怎么准备随身物品和离线信息？",
+      "expected": "adfb084156ae4b259b3d2953d60fc33e",
+      "results": {
+        "lexical": {
+          "ids": [],
+          "recall": 0,
+          "candidateCount": 0,
+          "latencyMs": 96
+        },
+        "semantic": {
+          "ids": [
+            "adfb084156ae4b259b3d2953d60fc33e",
+            "adebd720d1644997b0f90e12e5f5e05b",
+            "ee665e2a9b1a40be9babed284b597639"
+          ],
+          "recall": 1,
+          "candidateCount": 3,
+          "latencyMs": 342
+        },
+        "hybrid": {
+          "ids": [
+            "adfb084156ae4b259b3d2953d60fc33e",
+            "adebd720d1644997b0f90e12e5f5e05b",
+            "ee665e2a9b1a40be9babed284b597639"
+          ],
+          "recall": 1,
+          "candidateCount": 3,
+          "latencyMs": 339
+        }
+      }
+    },
+    {
+      "type": "crossLanguage",
+      "split": "holdout",
+      "query": "What should I pack and save offline for a short business trip?",
+      "expected": "adfb084156ae4b259b3d2953d60fc33e",
+      "results": {
+        "lexical": {
+          "ids": [],
+          "recall": 0,
+          "candidateCount": 0,
+          "latencyMs": 91
+        },
+        "semantic": {
+          "ids": [
+            "adfb084156ae4b259b3d2953d60fc33e",
+            "adebd720d1644997b0f90e12e5f5e05b"
+          ],
+          "recall": 1,
+          "candidateCount": 2,
+          "latencyMs": 335
+        },
+        "hybrid": {
+          "ids": [
+            "adfb084156ae4b259b3d2953d60fc33e",
+            "adebd720d1644997b0f90e12e5f5e05b"
+          ],
+          "recall": 1,
+          "candidateCount": 2,
+          "latencyMs": 341
+        }
+      }
+    },
+    {
+      "type": "noAnswer",
+      "split": "development",
+      "query": "ZXQ_998877_UNKNOWN",
+      "expected": null,
+      "results": {
+        "lexical": {
+          "ids": [],
+          "recall": null,
+          "candidateCount": 0,
+          "latencyMs": 95
+        },
+        "semantic": {
+          "ids": [],
+          "recall": null,
+          "candidateCount": 0,
+          "latencyMs": 338
+        },
+        "hybrid": {
+          "ids": [],
+          "recall": null,
+          "candidateCount": 0,
+          "latencyMs": 339
+        }
+      }
+    },
+    {
+      "type": "noAnswer",
+      "split": "development",
+      "query": "How do I schedule a flight to Neptune?",
+      "expected": null,
+      "results": {
+        "lexical": {
+          "ids": [],
+          "recall": null,
+          "candidateCount": 0,
+          "latencyMs": 92
+        },
+        "semantic": {
+          "ids": [],
+          "recall": null,
+          "candidateCount": 0,
+          "latencyMs": 341
+        },
+        "hybrid": {
+          "ids": [],
+          "recall": null,
+          "candidateCount": 0,
+          "latencyMs": 353
+        }
+      }
+    },
+    {
+      "type": "noAnswer",
+      "split": "holdout",
+      "query": "哪份资料记录了公元3100年的月球酒店报价？",
+      "expected": null,
+      "results": {
+        "lexical": {
+          "ids": [],
+          "recall": null,
+          "candidateCount": 0,
+          "latencyMs": 92
+        },
+        "semantic": {
+          "ids": [],
+          "recall": null,
+          "candidateCount": 0,
+          "latencyMs": 341
+        },
+        "hybrid": {
+          "ids": [],
+          "recall": null,
+          "candidateCount": 0,
+          "latencyMs": 358
+        }
+      }
+    },
+    {
+      "type": "noAnswer",
+      "split": "holdout",
+      "query": "编号 ZZZ_NEVER_SAVED 的实验数据",
+      "expected": null,
+      "results": {
+        "lexical": {
+          "ids": [],
+          "recall": null,
+          "candidateCount": 0,
+          "latencyMs": 95
+        },
+        "semantic": {
+          "ids": [
+            "c661e19823484366aa568d7dee64f47c",
+            "3e03b29a8f8a4a549d8dddc3d04928d7",
+            "5a66749874484ce486b061a646401fb7",
+            "d142515c648c495d96027e396ffdffe7",
+            "9d8a79825fdb40dea585de1190d9497c",
+            "dc4a7b6c5bfc4a2c9b97fc06517e67d2",
+            "e45561606dc8478986409c3e48c218f5",
+            "84030131a8e74e058e3e5ef23da64780",
+            "b8caa4a62bfd42dea1659e7b4c59f875",
+            "e2f12431084548e1acd9957d30f256db"
+          ],
+          "recall": null,
+          "candidateCount": 10,
+          "latencyMs": 348
+        },
+        "hybrid": {
+          "ids": [
+            "c661e19823484366aa568d7dee64f47c",
+            "3e03b29a8f8a4a549d8dddc3d04928d7",
+            "5a66749874484ce486b061a646401fb7",
+            "d142515c648c495d96027e396ffdffe7",
+            "9d8a79825fdb40dea585de1190d9497c",
+            "dc4a7b6c5bfc4a2c9b97fc06517e67d2",
+            "e45561606dc8478986409c3e48c218f5",
+            "84030131a8e74e058e3e5ef23da64780",
+            "b8caa4a62bfd42dea1659e7b4c59f875",
+            "e2f12431084548e1acd9957d30f256db"
+          ],
+          "recall": null,
+          "candidateCount": 10,
+          "latencyMs": 362
+        }
+      }
+    }
+  ],
+  "passed": true,
+  "modelRuntime": {
+    "version": "0.40.13"
+  },
+  "models": {
+    "models": [
+      {
+        "name": "embeddinggemma:latest",
+        "model": "embeddinggemma:latest",
+        "modified_at": "2026-10-30T23:44:48.7525806+08:00",
+        "size": 621875917,
+        "digest": "85462619ee721b466c5927d109d4cb765861907d5417b9109caebc4e614679f1",
+        "details": {
+          "parent_model": "embeddinggemma:300m-bf16",
+          "format": "gguf",
+          "family": "gemma3",
+          "families": [
+            "gemma3"
+          ],
+          "parameter_size": "307.58M",
+          "quantization_level": "BF16",
+          "context_length": 2048,
+          "embedding_length": 768,
+          "runner": "ggml"
+        },
+        "capabilities": [
+          "embedding"
+        ]
+      }
+    ]
+  },
+  "embeddingBuild": {
+    "cached": 0,
+    "embedded": 84,
+    "total": 84
+  },
+  "embeddingBuildMs": 1735,
+  "reused": {
+    "cached": 84,
+    "embedded": 0,
+    "total": 84
+  },
+  "scopeLeaks": 0,
+  "metrics": {
+    "development.exact.lexical": 1,
+    "development.exact.semantic": 1,
+    "development.exact.hybrid": 1,
+    "development.nonLexical.lexical": 0,
+    "development.nonLexical.semantic": 1,
+    "development.nonLexical.hybrid": 1,
+    "holdout.exact.lexical": 1,
+    "holdout.exact.semantic": 1,
+    "holdout.exact.hybrid": 1,
+    "holdout.nonLexical.lexical": 0,
+    "holdout.nonLexical.semantic": 1,
+    "holdout.nonLexical.hybrid": 1
+  },
+  "noAnswer": [
+    {
+      "query": "ZXQ_998877_UNKNOWN",
+      "split": "development",
+      "candidates": {
+        "lexical": 0,
+        "semantic": 0,
+        "hybrid": 0
+      }
+    },
+    {
+      "query": "How do I schedule a flight to Neptune?",
+      "split": "development",
+      "candidates": {
+        "lexical": 0,
+        "semantic": 0,
+        "hybrid": 0
+      }
+    },
+    {
+      "query": "哪份资料记录了公元3100年的月球酒店报价？",
+      "split": "holdout",
+      "candidates": {
+        "lexical": 0,
+        "semantic": 0,
+        "hybrid": 0
+      }
+    },
+    {
+      "query": "编号 ZZZ_NEVER_SAVED 的实验数据",
+      "split": "holdout",
+      "candidates": {
+        "lexical": 0,
+        "semantic": 10,
+        "hybrid": 10
+      }
+    }
+  ],
+  "evidence": {
+    "passed": true,
+    "version": "0.9.0",
+    "started": "2026-10-30T15:51:16.1890713Z",
+    "requestedSuites": [
+      "semantic-live"
+    ],
+    "fingerprint": {
+      "source": {
+        "count": 401,
+        "sha256": "c5be329a2bb62a1a61bd7bc1fe4ae2641cac755dc0d09969a801524f6bcf1f7b"
+      },
+      "runtime": {
+        "count": 412,
+        "sha256": "ecb58e1784b9647b406f5a875bbddd97cfc7ed5f7c7976b34b196df242872509"
+      },
+      "executableSha256": "f0b35a7b1333114c8ffc71236f4d13dbb46b488d374cffcf547144e16957b423"
+    },
+    "finished": "2026-10-30T15:52:01.6040457Z"
+  }
+}

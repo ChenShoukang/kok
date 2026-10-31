@@ -1,68 +1,31 @@
-# kok v0.8.2 Preview · 发布草稿
+# kok v0.9.0 Preview
 
-本地开发版本，**尚未发布**。GitHub 当前下载仍为 v0.8.1 Preview。
+这一版把资料的“采集 → 检索 → 有依据的 Agent 操作 → 可带走与恢复”接成可用流程，保留原有媒体、阅读、笔记、空间和创作能力。
 
-这版围绕“选定资料 → 执行 → 审核 → 核对结果”改进 Agent，保留视频、照片、音乐、文档、阅读、空间、摘录与编辑功能。
+- **有来源的检索**：正文 / PDF 文字层 / 字幕 / 摘录统一分块，显示覆盖与失败；编辑后旧片段失效。可选本机 Ollama embedding 与 FTS5 混合检索，搜索和 Agent 共用，模型不可用时明确回到文字匹配。
+- **随手采集**：应用内收件箱，随包 Chrome / Edge 源码扩展保存网页文字、选区与图片；记录来源与时间，相同内容去重。本机 Windows OCR 可把图片或指定 PDF 页的识别文字加入索引。
+- **可以带走、可以恢复**：标准 ZIP 便携资料库，提供 Markdown / JSON、稳定 ID、摘录锚点与空间关系；托管文档必带，其他原件可选。校验附件后恢复到新库，支持根目录映射、原件重连与撤销。
+- **对外只读互通**：默认关闭的 stdio MCP server，明确选择可读资料，提供列表 / 词面搜索 / 摘录读取。采集与读取密钥分开，私密和切库时拒绝访问。
+- **继续改进 Agent 核对**：版本化事件、流式中断正文保留、逐次 / 只读 / 有限任务授权、token 估计校准、精确计算、写入回查与连续修改证据；失效和拒绝回执有明确修复提示。
 
-- **有计划，有完成条件**：多步骤任务显示计划，结束前显式核对工具回执；完成、部分完成、需要信息与请求上限分别显示。撤销或本地依据变化后清除旧核对，更新要求后旧计划显示失效。
-- **错误可以处理**：按错误类型有限重试，尊重取消与预算；只在接口明确拒绝工具参数时切换 JSON。需要信息时可在同一任务补充，选定资料保持选择顺序。
-- **接入本地 MCP**：手动添加可信的 stdio 服务，审核工具定义与参数，每次外部调用单独确认。错误结果可查看并回传模型；外部副作用不提供自动撤销。
-- **上下文与能力可控**：语义检查点、加密记忆、只读子代理、离线 JavaScript/WASM 计算；父子与摘要共用预算，工具权限可收紧，结果可保存为文档。
-- **看得见执行过程**：逐请求 HTTP / 耗时 / token / 费用估算，事件时间线与本地结果入口；诊断 JSON 排除提示词、正文、参数与密钥。
-- **验证按同一份构建留证**：桌面记录包含版本、源码与运行文件指纹；包级检查从 ZIP 解压启动。真实模型评测单独记录，不等同于模拟测试通过。
+下载 `kok-0.9.0-win-x64.zip` 和 SHA-256，核对后完整解压运行 `kok.exe`。需要 Windows 10 / 11 x64、.NET Framework 4.8、WebView2。运行无需 Node.js。升级前备份 data 与原件，保留现有 data 配置。扩展从 `browser-extension` 加载，语义模型另行安装；OCR 需要 Windows OCR 语言。
 
-安装需要 Windows 10 / 11 x64、.NET Framework 4.8 和 WebView2；便携包未签名，运行不需 Node.js。MCP 服务及其运行时由你安装，拥有当前账户权限，**没有系统沙箱**。纯净模式与私密文件夹禁用 AI / MCP。
+这是未签名 Preview。便携包是普通资料快照，不包含私密资料、模型密钥、配对、Agent / 聊天历史或向量索引。没有自动云同步、移动端、扩展商店上架、图片语义搜索或对外写入工具。MCP 使用真实 stdio 客户端子进程验收，未认证所有第三方软件。回执核对不保证全部语义正确，近似检索不保证存在答案。
 
-上下文支持语义检查点，计量仍为保守估算；子代理限一层只读，隔离执行限 JavaScript/WASM。远程 MCP / OAuth、通用 OS 容器和自主目标语义验收尚未提供。工具回执核对不能证明模型的语义判断正确。实现及评测边界见 [Agent 与 MCP](AGENT_0.8.2.md)、[首批验证](VALIDATION_0.8.2.md)与[运行能力验证](VALIDATION_RUNTIME_0.8.2.md)。
-
-## English · v0.8.2 draft
-
-Local development version, not published. GitHub downloads remain v0.8.1 Preview. Adds persisted plans and explicit receipt-based review, review invalidation after undo or changed evidence, task-local supplementary input, typed bounded retries, local stdio MCP with individual approvals, repairable invalid calls, preserved external errors, request metrics and redacted diagnostic export. Existing media, reading, editing, Spaces and Clips remain available.
-
-Desktop evidence binds a single run to source/runtime fingerprints. Package checks start the extracted ZIP. Live model evaluations are recorded separately from fixture tests. Windows 10/11 x64, .NET Framework 4.8 and WebView2 are required; the portable ZIP is unsigned. MCP servers use your account permissions without an OS sandbox. Follow-up development adds budgeted semantic checkpoints, encrypted memory, read-only subagents and JavaScript/WASM isolation. Remote MCP/OAuth, general OS containers and autonomous semantic verification remain outside scope. See [feature guide](AGENT_0.8.2.en.md) and [validation](VALIDATION_0.8.2.md).
-
----
-
-## v0.8.1 Preview · 已发布版本
-
-视频、照片、音乐、文档、电子书放进一个本地仓库，从日常观看与阅读，继续到笔记、摘录和 AI 协作。
-
-## 这版可以怎样用
-
-- **收集与整理**：拖入文件，按类型浏览、分类、收藏和检索；用空间混放同一主题的资料与摘录，切换网格、画布、时间线和图谱；智能集合保存常用筛选条件。
-- **看、听、读和编辑**：视频续播、倍速、全屏与外挂字幕；音乐专辑 / 歌手 / 个人音频；照片自由裁剪、调色与图层；文档自动保存、PDF 批注、电子书分页与护眼、PPTX 基础编辑。
-- **把内容留下来**：划线、高亮、记想法；保存带来源的文字、时间段和照片区域摘录，加入空间、笔记或演示；双向链接、反向链接与图谱帮助回看关系。
-- **按需使用 AI**：文档双语对照、选文解释、多文件对比、笔记回顾和字幕工具。Agent 在指定范围内检索、阅读和提出修改，展示来源与审核卡片；内置指令技能与用量限制。
-- **把步骤接起来**：可编辑配方串联读取、摘要、笔记和演示；“今天”帮助续读续播，“活动”显示后台任务，“历史”查看可审核、可撤销的修改。
-- **选择自己的体验**：纯净 / 智能模式、资料库内的私密文件夹、中英文、主题与玻璃配色、内置字体、模块开关和独立预览窗口。
-
-本版还修复了私密移动的可追踪记录残留、检查器笔记保存同步、长列表检索范围、工具栏焦点与大小窗口交互。模块、SQLite 和任务机制的实际覆盖见[实现范围](WAREHOUSE_0.8.1.md)。
-
-## 安装与范围
-
-下载 `kok-0.8.1-win-x64.zip` 和随附 SHA-256，核对后完整解压并运行 `kok.exe`。需要 Windows 10 / 11 x64、.NET Framework 4.8 和 WebView2；运行不需要 Node.js。升级前备份自己的 `data` 与原文件。
-
-便携包未签名。播放依赖实际编码；扫描 PDF 需外部 OCR，导入文档与 PPTX 的基础编辑不保证复杂版式完整还原。音视频导出和本地语音识别需额外组件，AI 服务及网站下载有各自兼容范围。私密文件夹加密应用记录，**原文件、此前独立 AI 历史和导出不追溯加密**。
-
-本地原生 277 项通过，已完成相关隔离桌面验证；发布前两组 Windows 云端构建、测试和包审计通过。桌面测试尚未进入 CI，真实语音识别未在本轮运行。`--debug` 开启本机 9225 调试端口，密码失败限速在重启后重置。详细范围见[验证记录](VALIDATION_0.8.1.md)。
-
-[从使用指南开始](GUIDE.md) · [格式支持](FORMATS.md) · [AI 配置](AI_PROVIDERS.md) · [私密与备份](MODES.md)
+[完整操作和边界](LIBRARY_0.9.0.md) · [真实模型 / 本地检索 / 安装包验证](VALIDATION_0.9.0.md) · [后续路线](../ROADMAP.md) · [历史版本](../CHANGELOG.md)
 
 ## English
 
-A local home for videos, photos, music, documents and books, connecting everyday playback and reading to notes, Clips and optional AI.
+Connect capture, source-linked retrieval, reviewed Agent work and portable recovery while retaining existing media, reading and editing features.
 
-- **Collect and organize**: drop sources, browse/classify/search, gather files and Clips in Spaces, and reuse filters as smart collections.
-- **Watch, listen, read and edit**: video controls/subtitles, albums and personal audio, crop/color/layer photo editing, document auto-save, PDF annotations, comfortable book layouts and basic PPTX editing.
-- **Keep useful content**: source-linked passages, time ranges and photo regions; thoughts, note links, backlinks and graphs; references in notes and slides.
-- **Use AI by choice**: bilingual translation, selected-text help, source comparison, note review and subtitle tools. Agent uses scoped sources and reviewable proposals, with instruction skills and usage limits.
-- **Connect steps**: editable Recipes join reading, summaries, notes and slides; Today, Activity and History bring resume, progress and reviewable changes together.
-- **Choose your experience**: Pure/Smart, an in-library private folder, Chinese/English, themes/glass, bundled fonts, module switches and independent previews.
+- Incremental body/PDF/subtitle/Clip chunks with source locations, visible failures and stale-content invalidation. Optional local Ollama embeddings plus FTS5 share retrieval between UI and Agent, with explicit lexical fallback.
+- Inbox and a Chrome/Edge source extension for page text, selections and images, with provenance and deduplication. Offline Windows OCR indexes images or selected PDF pages.
+- Standard ZIP libraries with Markdown/JSON, stable IDs, Clips/Spaces, managed/optional originals and checksum-verified new-library restore, root mapping and undoable relinking.
+- Default-off scoped read-only stdio MCP server, separate capture/read credentials and private/transition safeguards.
+- Versioned Agent events, interrupted prose preservation, limited task/read-only approval, token calibration, exact arithmetic, write read-back and actionable stale-receipt review.
 
-Includes targeted private-transfer cleanup, synchronized notes, complete search candidates and viewer/focus/layout fixes. See [implementation scope](WAREHOUSE_0.8.1.en.md).
+Extract the full ZIP and run kok.exe after checking SHA-256. Requires Windows 10/11 x64, .NET Framework 4.8 and WebView2; no Node.js runtime. Back up data/originals before updating. Load the bundled extension as source; install local embedding models/OCR languages separately.
 
-Extract the full ZIP and run `kok.exe`, checking the accompanying SHA-256. Requires Windows 10/11 x64, .NET Framework 4.8 and WebView2; Node.js is not a runtime dependency. Back up your data and originals before upgrading. The portable package is unsigned. Codec, OCR, complex document/slide layouts, optional components and provider/site compatibility have limits. The private folder does not retroactively encrypt originals, independent AI history or exports.
+Unsigned Preview. Portable libraries contain ordinary sources, excluding private data, credentials, pairing, Agent/chat history and embeddings. No automatic cloud sync, mobile app, extension-store release, image semantic search or external writes. Real stdio subprocess tests do not certify all clients; receipt checks do not prove every semantic claim and approximate search may return unrelated candidates.
 
-Passed 277 local native checks, relevant isolated desktop suites and both release Windows build/test/audit jobs. Interactive desktop suites are outside CI; real speech recognition was not run. `--debug` opens local port 9225 and password backoff resets on restart. See [validation](VALIDATION_0.8.1.md#english).
-
-[User guide](GUIDE.en.md) · [Formats](FORMATS.en.md) · [AI setup](AI_PROVIDERS.en.md) · [Privacy and backups](MODES.en.md)
+[Guide](LIBRARY_0.9.0.en.md) · [Validation and limits](VALIDATION_0.9.0.md) · [Roadmap](../ROADMAP.en.md)

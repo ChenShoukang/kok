@@ -1,6 +1,17 @@
 # kok changelog
 
-## v0.8.2 · In development
+## v0.9.0 · Preview
+
+- Versioned source chunks/anchors, incremental PDF/body/subtitle/Clip indexing and visible coverage/failures.
+- Local Ollama embeddings and FTS5 hybrid search shared by UI and Agent, revision-aware caching and explicit lexical fallback.
+- Portable standard ZIP with Markdown/JSON, stable IDs, optional originals, verified new-library restore, root mapping and undoable relinking.
+- Inbox capture, a Chrome/Edge source extension, URL/time/fingerprints, capture deduplication, identical-file checks and offline Windows OCR.
+- Default-off scoped read-only stdio MCP server with separate capture/read credentials and private/transition safeguards.
+- Interrupted streaming prose, versioned Agent events, limited task/read-only approvals, calibrated token estimates, exact arithmetic and continuous approved-write review.
+- Quality replays in checks/CI; separate synthetic live DeepSeek and local retrieval evaluations, preserving failures and fingerprints. Bilingual guidance and consistent runtime/package versions.
+- See [scope](docs/LIBRARY_0.9.0.en.md) and [validation](docs/VALIDATION_0.9.0.md).
+
+## v0.8.2 · Development stage, not independently released
 
 - Semantic checkpoints and exact result recall, versioned encrypted memory, approved read-only subagents, offline QuickJS/WASM computation and saved artifacts.
 - Shared parent/child/summary/retry budgets, native per-task tool permissions, cancellation/recovery, owned child cleanup and bilingual management UI.

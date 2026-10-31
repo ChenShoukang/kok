@@ -21,7 +21,7 @@ function agentRichText(value){
 function agentSourceButtons(ids){return [...new Set(ids||[])].filter(id=>/^[a-f0-9]{32}$/.test(id)&&byId(id)).slice(0,24).map(id=>`<button type="button" class="agent-source" data-agent-open-item="${id}" title="${esc(agentItemName(id))}" data-user-content>${svg(byId(id).kind)}<span>${esc(agentItemName(id))}</span></button>`).join('');}
 function agentAnswer(m){
  const actions=m.meta?'':`<div class="agent-answer-actions"><button type="button" class="text-button" data-agent-copy="${m.id}">${I18n.text('复制')}</button>${m.savedId&&byId(m.savedId)?`<button type="button" class="text-button" data-agent-open-item="${m.savedId}">${I18n.text('打开已保存')}</button>`:`<button type="button" class="text-button" data-agent-save-answer="${m.id}" ${agent.job?'disabled':''}>${I18n.text('保存回答')}</button>`}</div>`;
- return `<div class="agent-msg agent-reply ${m.meta?'agent-meta':''}"><span class="agent-led" aria-hidden="true"></span><div class="agent-answer"><div class="agent-rich-text" data-user-content>${agentRichText(m.text)}</div>${m.sourceIds?.length?`<div class="agent-sources" aria-label="${I18n.text('已读取来源')}"><small>${I18n.text('已读取来源')}</small>${agentSourceButtons(m.sourceIds)}</div>`:''}${actions}</div></div>`;
+ return `<div class="agent-msg agent-reply ${m.meta?'agent-meta':''}"><span class="agent-led" aria-hidden="true"></span><div class="agent-answer"><div class="agent-rich-text" data-user-content>${agentRichText(m.text)}</div>${m.sourceIds?.length?`<div class="agent-sources" aria-label="${I18n.text('已读取来源')}"><small>${I18n.text('已读取来源')}</small>${agentSourceButtons(m.sourceIds)}</div>`:''}${m.interrupted?`<small class="agent-interrupted" role="status">${I18n.text('已中断 · 本轮操作未执行')}</small>`:''}${actions}</div></div>`;
 }
 function agentEntries(){
  for(const m of agent.messages)m.id||=uid();
@@ -106,8 +106,19 @@ const agent={...AgentPlatformUi.defaults,messages:[],context:[],budget:14000,job
 
 AgentPlatformUi.bind(()=>agent,()=>agentPaint({scroll:false}));
 function agentAvailable(){return isSmartMode()&&!state.isPrivate&&Kok.enabled('agent');}
+async function agentPresence(foreground){
+ if(!agent.job?.id||!agentAvailable())return;
+ await native('agentTaskPresence',{taskId:agent.job.id,foreground:foreground??(state.route==='agent'&&!document.hidden&&document.hasFocus())});
+}
+if(!location.search.includes('preview=')){
+ setInterval(()=>agentPresence().catch(()=>{}),8000);
+ window.addEventListener('blur',()=>agentPresence(false).catch(()=>{}));
+ window.addEventListener('focus',()=>agentPresence().catch(()=>{}));
+ document.addEventListener('visibilitychange',()=>agentPresence().catch(()=>{}));
+ Kok.on('*',(_,name)=>{if(['navigated','librarySwitched','modulesChanged'].includes(name))agentPresence(false).catch(()=>{});},{module:'agent'});
+}
 function agentSnapshot(){
- return {semanticCompression:agent.semanticCompression,contextTokens:agent.contextTokens,useMemory:agent.useMemory,allowDelegation:agent.allowDelegation,allowSandbox:agent.allowSandbox,allowedTools:agent.allowedTools,taskId:agent.watch||'',protocol:agent.protocol,handoff:agent.handoff,id:agent.sessionId,title:(agent.messages.find(m=>m.role==='user')?.text||agent.draft||I18n.text('新任务')).slice(0,48),updated:new Date().toISOString(),messages:AgentModel.storedMessages(agent.messages),history:agent.history.slice(-40),draft:agent.draft,context:agent.context.slice(0,24),scope:agent.scope,collection:agent.collection,budget:agent.budget,skill:agent.skill,requestLimit:agent.requestLimit,costLimit:agent.costLimit,inputRate:agent.inputRate,outputRate:agent.outputRate,intent:agent.intent,usage:agent.usage,queue:agent.queue.slice(0,5),lastScope:agent.lastScope};
+ return {approvalPolicy:agent.approvalPolicy,semanticCompression:agent.semanticCompression,contextTokens:agent.contextTokens,useMemory:agent.useMemory,allowDelegation:agent.allowDelegation,allowSandbox:agent.allowSandbox,allowedTools:agent.allowedTools,taskId:agent.watch||'',protocol:agent.protocol,handoff:agent.handoff,id:agent.sessionId,title:(agent.messages.find(m=>m.role==='user')?.text||agent.draft||I18n.text('新任务')).slice(0,48),updated:new Date().toISOString(),messages:AgentModel.storedMessages(agent.messages),history:agent.history.slice(-40),draft:agent.draft,context:agent.context.slice(0,24),scope:agent.scope,collection:agent.collection,budget:agent.budget,skill:agent.skill,requestLimit:agent.requestLimit,costLimit:agent.costLimit,inputRate:agent.inputRate,outputRate:agent.outputRate,intent:agent.intent,usage:agent.usage,queue:agent.queue.slice(0,5),lastScope:agent.lastScope};
 }
 function agentSessionText(){
  const row=agentSnapshot();agent.sessions=[row,...agent.sessions.filter(s=>s.id!==row.id)].slice(0,12);
@@ -138,7 +149,7 @@ function agentRestore(id){
  for(const key of ['draft','collection','skill','lastScope'])agent[key]=String(row[key]||'');
  agent.watch=row.taskId||'';agent.recovery=null;agent.handoff=row.handoff||null;agent.protocol=['auto','tools','json'].includes(row.protocol)?row.protocol:'auto';agent.sessionId=row.id;agent.messages=AgentModel.storedMessages(row.messages||[]);agent.messages.forEach(m=>{if(m.nativeCall)m.undo=agentNativeUndo(m);else if(m.undoChanges)m.undo=()=>agentApply(m.undoChanges);else if(m.undoCreated)m.undo=()=>native('agentUndoCreated',m.undoCreated);});agent.context=(row.context||[]).filter(id=>byId(id)).slice(0,24);agent.history=row.history||[];agent.scope=['all','selected','collection'].includes(row.scope)?row.scope:'all';agent.budget=[6000,14000,24000].includes(row.budget)?row.budget:14000;
  for(const key of ['requestLimit','costLimit','inputRate','outputRate']){const n=Number(row[key]);agent[key]=Number.isFinite(n)&&n>=0&&n<=10000?n:(key==='requestLimit'?6:0);}agent.requestLimit=Math.max(1,Math.min(12,Math.floor(agent.requestLimit)));
- for(const key of ['semanticCompression','contextTokens','useMemory','allowDelegation','allowSandbox','allowedTools'])agent[key]=row[key]??AgentPlatformUi.defaults[key];
+ for(const key of ['approvalPolicy','semanticCompression','contextTokens','useMemory','allowDelegation','allowSandbox','allowedTools'])agent[key]=row[key]??AgentPlatformUi.defaults[key];
  agent.intent=row.intent==='discuss'?'discuss':'assist';agent.usage=row.usage||null;agent.phase='';agent.queue=(row.queue||[]).filter(t=>typeof t==='string'&&t.trim()).map(t=>t.slice(0,2000)).slice(0,5);
 }
 async function agentNew(id){
@@ -181,7 +192,7 @@ function agentMessage(m){
  if(m.role==='thinking')return `<div class="agent-msg agent-thinking" role="status"><span class="agent-led"></span><span id="agent-live-reply" data-user-content>${esc(agent.job?.partial||I18n.text('正在思考'))}</span><i></i><i></i><i></i></div>`;
  if(m.role==='error')return `<div class="agent-msg agent-error" role="alert"><span>${esc(m.text)}</span>${m.retryable&&m.taskId&&!agent.job?`<button type="button" class="text-button" data-agent-continue="${esc(m.taskId)}">${I18n.text('继续任务')}</button>`:''}${m.goal&&!agent.job?`<button type="button" class="text-button" data-agent-edit-request="${m.id}">${I18n.text('修改后重试')}</button>`:''}</div>`;
  const tool=AGENT_TOOLS[m.tool]||{icon:'info',label:m.tool},read=AGENT_READ.includes(m.tool);
- const controls=m.status==='pending'?`<div class="agent-card-actions"><button class="button primary" data-agent-run="${m.id}">${svg('check')}${I18n.text('执行')}</button><button class="button secondary" data-agent-skip="${m.id}">${I18n.text('跳过')}</button></div>`
+ const controls=m.status==='pending'?`${m.grantEligible?`<label class="agent-grant"><input type="checkbox" data-agent-grant="${m.id}">${I18n.text('本任务内允许同类修改（这些资料，后续最多四次）')}</label>`:''}<div class="agent-card-actions"><button class="button primary" data-agent-run="${m.id}">${svg('check')}${I18n.text('执行')}</button><button class="button secondary" data-agent-skip="${m.id}">${I18n.text('跳过')}</button></div>`
   :m.status==='done'?`<div class="agent-card-actions"><span class="agent-status ok">${svg('check')}${I18n.text('已完成')}</span>${m.undo?`<button class="text-button" data-agent-undo="${m.id}">${svg('undo')}${I18n.text('撤销')}</button>`:''}${m.result?.id&&byId(m.result.id)?`<button class="text-button" data-agent-open-item="${esc(m.result.id)}">${svg('external')}${I18n.text('打开')}</button>`:''}</div>`
   :m.status==='skipped'?`<div class="agent-card-actions"><span class="agent-status">${I18n.text('已跳过')}</span></div>`
   :m.status==='undone'?`<div class="agent-card-actions"><span class="agent-status">${I18n.text('已撤销')}</span></div>`
@@ -245,20 +256,20 @@ async function agentPull(taskId){
 }
 function agentFinish(job,snap){
  if(agent.job!==job)return;agent.job=null;
- const reply=[...snap.messages].reverse().find(m=>m.role==='agent'&&!m.meta),calls=snap.messages.filter(m=>m.role==='tool');
+ const reply=[...snap.messages].reverse().find(m=>m.role==='agent'&&!m.meta&&!m.interrupted),calls=snap.messages.filter(m=>m.role==='tool');
  agent.history.push({role:'user',content:job.goal},{role:'assistant',content:I18n.text('任务结果')+': '+(reply?.text||'')+' '+calls.map(c=>c.tool+':'+c.status).join(', ')});agent.history=agent.history.slice(-40);
  agentSetPhase(snap.status==='review_required'?'核对已失效':snap.status==='completed'?'已完成':snap.status==='partial'?'部分完成':snap.status==='needs_input'?'需要补充信息':snap.status==='limited'?'已达到本次请求上限。':snap.status==='cancelled'?'任务已取消':'任务已停止');
  renderNav();agentSave();
  if(snap.status==='completed'&&job.autoQueue!==false&&!job.cancelled&&agentAvailable()&&agent.queue.length){const next=agent.queue.shift();setTimeout(()=>runAgent(next).catch(fail),0);}
 }
 async function agentTrack(job,snap){if(job.cancelled){await native('agentTaskStop',{taskId:snap.id});return;}job.id=snap.id;agent.watch=snap.id;for(const text of job.pendingAdjustments||[])snap=await native('agentTaskAdjust',{taskId:snap.id,text});agentApplySnapshot(snap);return agentPull(snap.id);}
-async function agentDecide(id,run,batch=false){
+async function agentDecide(id,run,batch=false,grant=false){
  const m=agent.messages.find(x=>x.id===id);if(!m||m.status!=='pending')return;
  // A card from a task that is no longer running cannot be approved; resuming re-plans instead of replaying it.
  if(!m.taskId||agent.job?.id!==m.taskId){m.status='skipped';agentPaint({scroll:false});return;}
  if(run&&(!agentAvailable()||batch&&['mcp_call','delegate_task','run_code'].includes(m.tool)))return;
- m.status=run?'running':'skipped';agentPaint({scroll:false});
- try{agentApplySnapshot(await native('agentTaskDecide',{taskId:m.taskId,callId:id,approve:run,batch}));if(run)await refresh();}
+ if(run&&grant)await agentPresence(true);m.status=run?'running':'skipped';agentPaint({scroll:false});
+ try{agentApplySnapshot(await native('agentTaskDecide',{taskId:m.taskId,callId:id,approve:run,batch,grant}));if(run)await refresh();}
  catch(error){fail(error);agentPull(m.taskId);}
 }
 async function agentUndo(id){
@@ -279,7 +290,7 @@ async function runAgent(goal){
  const scope=agentScope();if(scope.mode==='selected'&&!scope.ids.length||scope.mode==='collection'&&!scope.collection){toast('请选择有效的 Agent 资料范围。',true);return;}
  const scopeKey=agentScopeKey();if(agent.lastScope!==scopeKey){agent.history=[];agent.lastScope=scopeKey;}
  const skill=AgentModel.skill(agent.skill,goal,AgentSkills.custom()),preset=!!skill&&AgentModel.presets.includes(skill);
- const options={semanticCompression:agent.semanticCompression,contextTokens:agent.contextTokens,useMemory:agent.useMemory,allowDelegation:agent.allowDelegation,allowSandbox:agent.allowSandbox,...(agent.allowedTools?{allowedTools:agent.allowedTools}:{}),sessionId:agent.sessionId,goal:goal.trim(),intent:agent.intent,protocol:agent.protocol,handoff:agent.handoff,workflow:preset?skill.name:'',instruction:skill&&!preset?('[Skill: '+skill.name+'] '+skill.instructions).slice(0,800):'',scope,history:AgentModel.history(agent.history,Math.min(6000,Math.floor(agent.budget/3))).slice(-10),budget:agent.budget,requestLimit:agent.requestLimit,costLimit:agent.costLimit,inputRate:agent.inputRate,outputRate:agent.outputRate};
+ const options={approvalPolicy:agent.approvalPolicy,semanticCompression:agent.semanticCompression,contextTokens:agent.contextTokens,useMemory:agent.useMemory,allowDelegation:agent.allowDelegation,allowSandbox:agent.allowSandbox,...(agent.allowedTools?{allowedTools:agent.allowedTools}:{}),sessionId:agent.sessionId,goal:goal.trim(),intent:agent.intent,protocol:agent.protocol,handoff:agent.handoff,workflow:preset?skill.name:'',instruction:skill&&!preset?('[Skill: '+skill.name+'] '+skill.instructions).slice(0,800):'',scope,history:AgentModel.history(agent.history,Math.min(6000,Math.floor(agent.budget/3))).slice(-10),budget:agent.budget,requestLimit:agent.requestLimit,costLimit:agent.costLimit,inputRate:agent.inputRate,outputRate:agent.outputRate};
  const job={id:'',goal:goal.trim(),raw:'',partial:'',request:0,cancelled:false};
  agent.handoff=null;agent.recovery=null;agent.job=job;agent.usage=null;agent.draft='';const sent=$('#agent-input');if(sent)sent.value='';
  if(skill&&!preset)agent.messages.push({id:uid(),role:'agent',meta:true,text:I18n.text('使用技能')+' · '+I18n.text(skill.title||skill.name)+' — '+I18n.text(skill.description||'')});
@@ -333,7 +344,7 @@ document.addEventListener('click',event=>{
  if(t.closest('[data-agent-unpin]')){if(agent.job)return;agent.context=agent.context.filter(id=>id!==t.closest('[data-agent-unpin]').dataset.agentUnpin);agentPaint({scroll:false});return;}
  if(t.closest('[data-agent-pick]')){if(!agent.job)agentPickItems();return;}
  if(t.closest('[data-agent-settings]')){$('#settings-button').click();return;}
- if(t.closest('[data-agent-run]'))return agentDecide(t.closest('[data-agent-run]').dataset.agentRun,true);
+ if(t.closest('[data-agent-run]')){const id=t.closest('[data-agent-run]').dataset.agentRun,grant=document.querySelector(`[data-agent-grant="${id}"]`)?.checked||false;return agentDecide(id,true,false,grant);}
  if(t.closest('[data-agent-skip]'))return agentDecide(t.closest('[data-agent-skip]').dataset.agentSkip,false);
  if(t.closest('[data-agent-undo]'))return agentUndo(t.closest('[data-agent-undo]').dataset.agentUndo);
  if(t.closest('[data-agent-stop]'))return stopAgent();
@@ -438,7 +449,7 @@ async function startAgentUi({startup}){
  if(!state.isPrivate){for(const tool of Kok.catalog().tools){if(!tool.write&&!AGENT_READ.includes(tool.name))AGENT_READ.push(tool.name);AGENT_TOOLS[tool.name]||={icon:'info',label:tool.title||tool.name};}if(agent.loaded)await agentAttach();else await agentLoad();}
  if(startup&&!location.search.includes('preview=')&&agentAvailable()&&state.route==='overview'&&(state.settings.startPage||'today')==='agent'){state.route='agent';render();}
 }
-export const AgentUi=Object.freeze({state:agent,available:agentAvailable,open:openAgent,render:agentPaint,stop:stopAgent,save:agentSave,newSession:agentNew,scope:agentScope,updateScroll:agentUpdateScroll,tasks:agentTaskRecords,settings:agentSetupSettings,start:startAgentUi});
+export const AgentUi=Object.freeze({state:agent,presence:agentPresence,available:agentAvailable,open:openAgent,render:agentPaint,stop:stopAgent,save:agentSave,newSession:agentNew,scope:agentScope,updateScroll:agentUpdateScroll,tasks:agentTaskRecords,settings:agentSetupSettings,start:startAgentUi});
 // The legacy shell still needs one named adapter. Implementation helpers remain
 // module-private; there are no global agent/agentPaint/runAgent declarations.
 globalThis.AgentUi=AgentUi;

@@ -100,9 +100,12 @@ if ($Test) {
     $testArgs += Join-Path $root 'tests\AgentTaskTests.cs'
     $testArgs += Join-Path $root 'tests\AgentKernelTests.cs'
     $testArgs += Join-Path $root 'tests\AgentPlatformTests.cs'
+    $testArgs += Join-Path $root 'tests\AgentReliability090Tests.cs'
     $testArgs += Join-Path $root 'tests\McpTests.cs'
     $testArgs += Join-Path $root 'tests\ModuleTests.cs'
     $testArgs += Join-Path $root 'tests\WarehouseTests.cs'
+    $testArgs += Join-Path $root 'tests\ContentServicesTests.cs'
+    $testArgs += Join-Path $root 'tests\LibraryConnectionTests.cs'
     $testArgs += Join-Path $root 'tests\SessionPersistenceTests.cs'
     & $compiler $testArgs
     if ($LASTEXITCODE -ne 0) { throw 'Test compilation failed.' }

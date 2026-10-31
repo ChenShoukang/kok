@@ -117,9 +117,11 @@ function filtered(){
    if(r==='collection'&&i.collection!==state.collection)return false;
    if(state.filter!=='all'&&i.kind!==state.filter)return false;
    const q=state.query.toLocaleLowerCase();
+   if(q&&typeof SearchIndex!=='undefined'&&SearchIndex.mode!=='lexical')return SearchIndex.has(i.id,q);
    return !q||(typeof SearchIndex!=='undefined'&&SearchIndex.has(i.id,q))||[i.name,i.ext,i.notes,i.collection,i.aiSummary,...(i.tags||[])].some(s=>String(s||'').toLocaleLowerCase().includes(q));
  });
  const sort=state.settings.sort||(state.route==='recent'?'opened':'added');
+ if(state.query&&typeof SearchIndex!=='undefined'&&SearchIndex.mode!=='lexical'){const ranks=SearchIndex.ranks.get(SearchIndex.key(state.query));if(ranks)return items.sort((a,b)=>(ranks.get(a.id)??10000)-(ranks.get(b.id)??10000));}
  items.sort((a,b)=>sort==='name'?String(a.name||'').localeCompare(String(b.name||''),'zh-CN'):sort==='size'?(Number(b.size)||0)-(Number(a.size)||0):sort==='opened'?String(b.opened||'').localeCompare(String(a.opened||'')):String(b.added||'').localeCompare(String(a.added||'')));
  return items;
 }

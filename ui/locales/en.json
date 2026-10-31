@@ -2242,7 +2242,15 @@
     "子任务请求": "Subagent request",
     "保守估算，不含固定工具定义。": "Conservative estimate, excluding fixed tool definitions.",
     "资料上下文": "Source context",
-    "请从父任务删除子任务记录。": "Delete subtask records through their parent task."
+    "请从父任务删除子任务记录。": "Delete subtask records through their parent task.",
+    "只读任务不允许执行修改。": "Read-only tasks cannot apply changes.",
+    "此操作不能授予本任务许可。": "This operation cannot receive a task grant.",
+    "中英文 token 估算；服务商实际用量用于校正，费用预检另计工具定义。": "Chinese and English token estimates are calibrated with provider usage; cost preflight also includes tool definitions.",
+    "审批策略": "Approval policy",
+    "同类授权需在卡片中明确授予，限这些资料和后续四次；后台、重启或改要求后失效。代码、MCP、记忆和子任务始终逐项确认。": "A grant must be explicit on a card, applies to these sources for four follow-up calls, and expires in the background, on restart, or after steering. Code, MCP, memory and delegation always require individual approval.",
+    "资料上下文上限（token 估算）": "Source context limit (estimated tokens)",
+    "计算数值": "Calculate",
+    "资料检索与备份": "Search and library data"
   },
   "patterns": [
     {
@@ -2407,5 +2415,18 @@
       "pattern": "^前进 (\\d+) 秒$",
       "replacement": "Forward $1 seconds"
     }
-  ]
+  ],
+  "审批策略": "Approval policy",
+  "逐项确认": "Confirm each action",
+  "本任务同类授权": "Permission within this task",
+  "只读免审": "Read-only, no approval",
+  "同类授权需在卡片中明确授予，限这些资料和后续四次；后台、重启或改要求后失效。代码、MCP、记忆和子任务始终逐项确认。": "Explicitly grant on a card: same sources and tool, up to four later uses. Background, restart or changed instructions revoke it. Code, MCP, memory and delegation always need individual approval.",
+  "资料上下文上限（token 估算）": "Source context limit (estimated tokens)",
+  "已中断 · 本轮操作未执行": "Interrupted · no actions from this reply executed",
+  "本任务内允许同类修改（这些资料，后续最多四次）": "Allow this tool on these sources for up to four later uses in this task",
+  "中英文 token 估算；服务商实际用量用于校正，费用预检另计工具定义。": "CJK-aware token estimate, calibrated by provider usage. Cost preflight also includes tool definitions.",
+  "只读任务不允许执行修改。": "Read-only tasks cannot execute changes.",
+  "此操作不能授予本任务许可。": "This action cannot receive task-level permission.",
+  "任务事件版本不受支持，原记录已保留。请使用兼容版本打开。": "This task event format is unsupported. The original records are preserved; use a compatible app version.",
+  "任务包含不支持的事件，原记录已保留。": "This task contains an unsupported event. The original records are preserved."
 }

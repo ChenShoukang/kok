@@ -4,9 +4,9 @@
 
 把视频、照片、音乐、文档和电子书收进同一个本地资料库；用空间组织主题，用摘录连接原文与笔记，需要时再让 AI 帮你翻译、整理和写作。
 
-[下载 v0.8.1 Preview](https://github.com/ChenShoukang/kok/releases/tag/v0.8.1) · [使用指南](docs/GUIDE.md) · [English](README.en.md) · [格式支持](docs/FORMATS.md)
+[下载 v0.9.0 Preview](https://github.com/ChenShoukang/kok/releases/tag/v0.9.0) · [使用指南](docs/GUIDE.md) · [English](README.en.md) · [格式支持](docs/FORMATS.md)
 
-开发中的 **[v0.8.2](docs/AGENT_0.8.2.md)**：任务计划与结果核对、有限重试、执行追踪、本地 MCP 外部工具。支持撤销后核对失效与同任务补充信息；新增[语义压缩、加密记忆、只读子代理和隔离计算](docs/AGENT_RUNTIME_0.8.2.md)。源码已升级，尚未发布新下载；[本地候选验证](docs/VALIDATION_RUNTIME_0.8.2.md)。
+**v0.9.0 Preview** 补齐可更新的内容索引、本机混合检索、便携导出与新库恢复、浏览器采集、Windows OCR 和限定范围的只读 MCP。Agent 增加版本化事件、中断正文保留、审批策略与精确计算。见[新功能与使用边界](docs/LIBRARY_0.9.0.md)、[本次验证](docs/VALIDATION_0.9.0.md)及[后续路线](ROADMAP.md)。
 
 ![kok v0.8.1 资料库，使用内置原创示例](docs/screenshots/library-081-zh.png)
 
@@ -22,6 +22,7 @@
 | 功能 | 实际用途 |
 | --- | --- |
 | 资料库与空间 | 类型识别、分类、收藏、全文检索；同一个空间混放文件和摘录，切换网格、画布、时间线或图谱；保存筛选条件为自动更新的智能集合 |
+| 检索、采集与可迁移 | PDF / 正文 / 字幕 / 摘录的来源片段；本机 Ollama 语义＋FTS5 混合；网页 / 选区 / 图片收件箱；Windows OCR；Markdown / JSON 便携包、校验恢复与重连；只读 MCP |
 | 视频与音乐 | 视频续播、倍速、无边框全屏、外挂字幕、可配置快捷键；音乐按专辑、歌手和个人音频整理，读取标签 / 封面、联网匹配信息，支持播放队列 |
 | 照片编辑 | 滚轮缩放、自由裁剪、调色、滤镜、文字、画笔、箭头、遮挡和图层，撤销 / 重做后另存 PNG / JPEG |
 | 文档与读书 | 新建 Markdown、DOCX、TXT、PPTX；文档自动保存，PDF 搜索与批注，PPTX 基础编辑；电子书目录、书签、单页 / 双页 / 滚动、护眼与阅读排版 |
@@ -34,7 +35,7 @@
 
 ## 开始使用
 
-1. 下载 Release 中的 `kok-0.8.1-win-x64.zip`，核对随附 SHA-256，完整解压后运行 `kok.exe`。
+1. 下载 Release 中的 `kok-0.9.0-win-x64.zip`，核对随附 SHA-256，完整解压后运行 `kok.exe`。
 2. 首次选择**纯净模式**或**智能模式**；不配置 AI 也能使用本地基础功能。
 3. 点击“体验示例”或拖入自己的文件，先浏览资料，再试着创建一个空间或保存一条摘录。
 
@@ -56,12 +57,12 @@
 
 - **收录不搬动原件，移除记录不删除原件。** 普通索引、笔记和历史使用本地 SQLite；备份索引不等于备份原文件。
 - 私密文件夹保护应用内记录，**不会加密原文件**，也不会追溯加密此前独立 AI 历史、导出或外部备份。密码无法找回。[私密与备份说明](docs/MODES.md)。
-- 播放依赖 WebView2 / 系统支持的实际编码，未内置独立解码器；扫描 PDF 需要外部 OCR，不处理 DRM。[格式清单](docs/FORMATS.md)。
+- 播放依赖 WebView2 / 系统支持的实际编码，未内置独立解码器；扫描 PDF 可按需使用本机 Windows OCR，不处理 DRM。[格式清单](docs/FORMATS.md)。
 - PPTX 与导入文档提供基础编辑；DOCX / EPUB 编辑重建简洁正文，编辑过的 PDF 画布页面导出为图像。音视频导出 / 合并和本地语音识别需要额外组件；网站下载适配也有范围限制。[编辑与组件说明](docs/GUIDE.md#编辑导出与可选组件)。
 
 ## 文档与开发
 
-[使用指南](docs/GUIDE.md) · [文档目录](docs/README.md) · [验证记录](docs/VALIDATION_0.8.1.md) · [实现进度](docs/WAREHOUSE_0.8.1.md) · [反馈](https://github.com/ChenShoukang/kok/issues/new/choose) · [安全报告](SECURITY.md)
+[使用指南](docs/GUIDE.md) · [文档目录](docs/README.md) · [验证记录](docs/VALIDATION_0.9.0.md) · [实现进度](docs/WAREHOUSE_0.8.1.md) · [反馈](https://github.com/ChenShoukang/kok/issues/new/choose) · [安全报告](SECURITY.md)
 
 ```powershell
 npm ci --omit=optional

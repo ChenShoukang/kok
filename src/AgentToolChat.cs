@@ -25,15 +25,15 @@ namespace kok {
         sealed class ToolCallDraft {public string id="",name="";public StringBuilder arguments=new StringBuilder();}
         // OpenAI-compatible function calling (DeepSeek, OpenAI, Qwen, SiliconFlow, OpenRouter, Ollama, LM Studio ...).
         // Messages are built by the host in a stable order so providers with automatic prefix caching can reuse earlier rounds.
-        public async Task<AgentModelTurn> AgentToolChat(List<object> messages,object[] tools,Func<string,bool> exists,CancellationToken token,Action<string> onDelta,Action<ChatUsage> onUsage,Action<int> beforeRequest,int maxTokens,Action<int> onStatus=null){
+        public async Task<AgentModelTurn> AgentToolChat(List<object> messages,object[] tools,Func<string,bool> exists,CancellationToken token,Action<string> onDelta,Action<ChatUsage> onUsage,Action<int> beforeRequest,int maxTokens,Action<int> onStatus=null,bool requireTools=false){
             if(maxTokens<128||maxTokens>3000)throw new ArgumentOutOfRangeException("maxTokens");
             AiConfig c=ConfigSnapshot();if(String.IsNullOrWhiteSpace(c.model))throw new InvalidDataException("请先在设置中配置 AI 翻译接口和模型。");Uri endpoint=Endpoint(c.endpoint);string key=ReadKey(c);
-            var body=new Dictionary<string,object>{{"model",c.model},{"messages",messages},{"tools",tools},{"tool_choice","auto"},{"stream",true}};AddTokenLimit(body,c,maxTokens);
+            var body=new Dictionary<string,object>{{"model",c.model},{"messages",messages},{"tools",tools},{"tool_choice",requireTools?"required":"auto"},{"stream",true}};AddTokenLimit(body,c,maxTokens);
             bool deepseek=endpoint.Host.Equals("api.deepseek.com",StringComparison.OrdinalIgnoreCase),openai=endpoint.Host.Equals("api.openai.com",StringComparison.OrdinalIgnoreCase);
             if(deepseek)body["thinking"]=new{type="disabled"};if(openai)body["stream_options"]=new{include_usage=true};
             string json=Library.Json.Serialize(body);if(json.Length>400000)throw new InvalidDataException("Agent 任务过长或已达到步骤上限，请缩小范围。");
-            // A UTF-8 byte bound is deliberately conservative, not a claimed token count.
-            if(beforeRequest!=null)beforeRequest(Encoding.UTF8.GetByteCount(json));
+            // Estimate the entire serialized request, including tool definitions.
+            if(beforeRequest!=null)beforeRequest(AgentTokenBudget.Estimate(json));
             var text=new StringBuilder();var calls=new SortedDictionary<int,ToolCallDraft>();string finish="";
             using(var handler=handlerFactory!=null?handlerFactory():new HttpClientHandler{AllowAutoRedirect=false,UseProxy=!endpoint.IsLoopback})using(var client=new HttpClient(handler))using(var timeout=CancellationTokenSource.CreateLinkedTokenSource(token))using(var request=new HttpRequestMessage(HttpMethod.Post,endpoint)){
                 client.Timeout=TimeSpan.FromSeconds(185);timeout.CancelAfter(TimeSpan.FromSeconds(180));if(key!="")request.Headers.Authorization=new AuthenticationHeaderValue("Bearer",key);request.Content=new StringContent(json,Encoding.UTF8,"application/json");

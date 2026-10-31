@@ -22,7 +22,7 @@ namespace kok {
   internal static Dictionary<string,object> Run(AgentTaskEngine engine,AgentCall call,Func<AgentCall,bool> current){
    var s=engine.State;
    if(call.steering!=s.steerVersion)throw new AgentFailure("superseded","任务要求已更新，请重新规划和核对。");
-   Action<IEnumerable<string>> evidence=ids=>{if(ids.Any(id=>!AgentJournal.ValidId(id)||!s.calls.Any(c=>c.id==id&&!IsControl(c.tool)&&c.status=="done"&&current(c))))throw new AgentFailure("verification","核对依据不存在、已失效或尚未执行，请重新读取或说明限制。");};
+   Action<IEnumerable<string>> evidence=ids=>{foreach(var id in ids){var receipt=s.calls.FirstOrDefault(c=>c.id==id&&!IsControl(c.tool));if(!AgentJournal.ValidId(id)||receipt==null)throw new AgentFailure("verification","Unknown evidence ID "+id+". Use an actual kok_call_id from the HOST RECEIPT INDEX.");if(receipt.status!="done")throw new AgentFailure("verification","Evidence "+id+" has status "+receipt.status+". Rejected/failed calls cannot be successful evidence, including for partial outcomes. Describe rejection in summary; set that check evidence=[] and finish partial without another proposal.");if(!current(receipt))throw new AgentFailure("verification","Evidence "+id+" is stale. Replace it in EVERY plan step and check with the latest done/current read receipt from HOST RECEIPT INDEX; reread the original ids if none is current.");}};
    if(call.tool=="update_plan"){
     var steps=AgentTaskState.Get<List<AgentPlanStep>>(call.args,"steps");
     if(steps==null||steps.Count<1||steps.Count>8||steps.Any(p=>p==null||String.IsNullOrWhiteSpace(p.id)||p.id.Length>32||String.IsNullOrWhiteSpace(p.title)||p.title.Length>160||!new[]{"tool","reasoning"}.Contains(p.kind)||!new[]{"pending","in_progress","done","blocked"}.Contains(p.status)||p.evidence==null||p.evidence.Count>12)||steps.Select(p=>p.id).Distinct().Count()!=steps.Count||steps.Count(p=>p.status=="in_progress")>1)throw new AgentFailure("validation","任务计划格式无效。");
@@ -35,6 +35,10 @@ namespace kok {
    var operations=s.calls.Where(c=>!IsControl(c.tool)).ToList();
    if(operations.Any(c=>c.status=="queued"||c.status=="running"||c.status=="pending"))throw new AgentFailure("verification","还有未执行或待确认的操作，不能结束任务。");
    if(status=="completed"){
+    foreach(var write in operations.Where(c=>c.status=="done"&&c.changes!=null)){
+     int applied=s.events.Where(e=>e.kind=="tool.completed"&&AgentTaskState.Get<string>(e.data,"callId")==write.id).Select(e=>e.sequence).DefaultIfEmpty(Int32.MaxValue).Max();
+     foreach(var id in write.changes.Select(c=>c.id))if(!operations.Any(c=>c.tool=="read_items"&&c.status=="done"&&c.sources.ContainsKey(id)&&current(c)&&s.events.Any(e=>(e.kind=="tool.completed"||e.kind=="tool.reused")&&AgentTaskState.Get<string>(e.data,"callId")==c.id&&e.sequence>applied)))throw new AgentFailure("verification","Completion requires read-back AFTER each applied metadata write. Call read_items for source "+id+" now, then update the plan using current receipts and finish. A read before approval or a reasoning-only verification step does not count; use partial if not verified.");
+    }
     if(operations.Any(c=>c.status!="done"))throw new AgentFailure("verification","有跳过、失败或撤销的步骤，请补救或明确标为部分完成。");
     if(operations.Count>0&&!checks.Any(c=>c.evidence.Count>0))throw new AgentFailure("verification","任务完成需要引用实际工具结果。");
     if(operations.Count>1&&s.plan.Count==0)throw new AgentFailure("verification","多步骤任务需要先维护计划。");
@@ -45,6 +49,9 @@ namespace kok {
    engine.Emit("task.verified",new{verification=result});return new Dictionary<string,object>{{"text","Task result recorded as "+status+". Evidence references were checked locally; semantic claims remain the model's assessment."}};
   }
   internal static string Instructions(AgentTaskState task){return task.options.kernelVersion<3?"":"\nTASK CONTROL: For multi-step work, call update_plan, then keep it current. Completed tool steps require successful kok_call_id evidence. Pure reasoning steps may use kind=reasoning and empty evidence; they remain model-assessed and never replace actual tool outcomes. Before ending call finish_task to review the original goal, actual tool results, approvals, skips and limitations. A plain reply or done=true does NOT complete a task. Use partial/needs_input if blocked or rejected. "+
+   "After an approved write changes a source, prior read receipts may be stale. Reread ALL ids from the stale read call in one read_items call. In the final update_plan replace EVERY stale evidence reference, including the original read step, with the latest current read ID. Never keep the old read ID just because that step happened earlier. Combine the final plan update and finish in the same response. "+
+   "The host REQUIRES a read_items read-back after applying metadata writes before completed is allowed. A pre-approval read, a write receipt alone or a reasoning-only verification step cannot substitute for this. If read-back is missing, call read_items rather than claiming completion. "+
+   "Use calculate for numerical totals and differences; cite the exact returned value rather than doing mental arithmetic. "+
    "Efficiency: combine an initial plan and independent reads in one response. After results or approvals, send the final update_plan (all completed steps marked done) and finish_task TOGETHER in one response when ready; they execute in that order. Do not waste a separate request only to update the plan or announce the final answer. Never finish while a proposed write is awaiting approval. "+
    "Rejected/failed/undone calls are NOT successful evidence, even for partial/needs_input. Describe them in summary, mark affected steps blocked with evidence=[], and use only successful IDs or checks=[]; never repeat a rejected write without new user permission. "+
    (task.options.allowSandbox?"Use run_code for arithmetic or structured data transformations; use the approved exact result rather than mental calculations. ":"")+

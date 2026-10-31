@@ -1,0 +1,6 @@
+{
+  "format": "kok.retrieval.local-evaluation",
+  "passed": false,
+  "error": "page.evaluate: Error: Local embedding service is unavailable or its model is not installed.\n    at EventTarget.<anonymous> (https://app.kok.local/app.js?v=0.9.0:44:94)\n    at EmbeddedBrowserWebView.<anonymous> (<anonymous>:1:30152)",
+  "explanation": "Validation environment lacked the official llama-server.exe CPU launcher; installed that component and reran without retrieval code or model changes."
+}

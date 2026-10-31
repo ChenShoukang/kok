@@ -15,7 +15,7 @@ namespace kok {
  internal static class SearchContent {
   internal static string Metadata(Entry item){
    object text;string draft=item.ownedDocument&&item.editDraft!=null&&item.editDraft.TryGetValue("text",out text)?Convert.ToString(text):"";
-   return String.Join("\n",new[]{item.notes,item.collection,item.aiSummary,item.album,item.artist,draft,String.Join(" ",item.tags??new List<string>()),String.Join("\n",(item.chapterTexts??new Dictionary<string,string>()).Values),String.Join("\n",(item.annotations??new List<Annotation>()).Select(a=>a.text+" "+a.note)),String.Join("\n",(item.generatedSubtitles==null?new List<Cue>():item.generatedSubtitles.cues).Select(c=>c.text)),String.Join("\n",(item.videoOutline==null?new List<VideoChapter>():item.videoOutline.chapters).Select(c=>c.title+" "+c.summary))});
+   return String.Join("\n",new[]{item.sourceInfo==null?"":item.sourceInfo.url,item.notes,item.collection,item.aiSummary,item.album,item.artist,draft,String.Join(" ",item.tags??new List<string>()),String.Join("\n",(item.chapterTexts??new Dictionary<string,string>()).Values),String.Join("\n",(item.annotations??new List<Annotation>()).Select(a=>a.text+" "+a.note)),String.Join("\n",(item.generatedSubtitles==null?new List<Cue>():item.generatedSubtitles.cues).Select(c=>c.text)),String.Join("\n",(item.videoOutline==null?new List<VideoChapter>():item.videoOutline.chapters).Select(c=>c.title+" "+c.summary))});
   }
  }
 }

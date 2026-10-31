@@ -39,7 +39,7 @@ namespace kok {
             var available=Tools.Where(t=>(predicate==null||predicate(t))&&(external||t.Module!="mcp")&&(library==null||ModuleRegistry.Builtins.ToolEnabled(t.Name,library))).ToArray();
             return Rules(english)+" Return ONLY JSON: {\"reply\":\"short message to the user\",\"actions\":[{\"tool\":\"name\",\"args\":{},\"why\":\"one short reason\"}],\"done\":true|false}. "+
              "Read tools: "+String.Join(", ",available.Where(t=>!t.Write).Select(t=>t.Signature))+". Write tools: "+String.Join(", ",available.Where(t=>t.Write).Select(t=>t.Signature))+". "+
-             "Set done=false only when you need read results to continue; propose writes in the same round as your final reply.";
+             "Use done as a compatibility hint. When finish_task is available, it is the only way to record a completed/partial/needs_input outcome; proposals are not completion.";
         }
         static string Text(Dictionary<string,object> args,string key,int max,bool required){
             object value;string text=args!=null&&args.TryGetValue(key,out value)&&value!=null?Convert.ToString(value).Trim():"";

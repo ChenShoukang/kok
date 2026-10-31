@@ -27,6 +27,8 @@ namespace kok {
    {"runKnowledgeAnalysis",new JobRule{title="图谱分析",resume=false}},
    {"generateVideoOutline",new JobRule{title="视频大纲",resume=false}},
    {"recipeRun",new JobRule{title="运行配方",resume=true}},
+   {"contentIndexBuild",new JobRule{title="Index source content",resume=true}},
+   {"embeddingBuild",new JobRule{title="Build semantic index",resume=true}},
    {"indexLibrary",new JobRule{title="建立全文索引",resume=true}}
    ,{"summarizeContent",new JobRule{title="内容总结",resume=true}}
   };

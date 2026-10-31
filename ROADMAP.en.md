@@ -1,26 +1,26 @@
-# kok roadmap
+# kok development roadmap
 
 [中文](ROADMAP.md) · English
 
-## In development: v0.8.2 · Agent execution and tools
+## v0.9.0 Preview delivery
 
-Follow-up work adds [semantic checkpoints, encrypted memory, read-only subagents and JavaScript/WASM isolation](docs/AGENT_RUNTIME_0.8.2.en.md).
+The original [peer review and acceptance plan](docs/PEER_GAPS_0.9.0.md) is retained as a historical baseline. Current behavior is documented in the [v0.9.0 guide](docs/LIBRARY_0.9.0.en.md); actual results and limits are in [validation](docs/VALIDATION_0.9.0.md).
 
-Plans, explicit outcome review, bounded retries, request traces and local stdio MCP tools are implemented. See [scope](docs/AGENT_0.8.2.en.md) and [validation](docs/VALIDATION_0.8.2.md). Source version updated; automatic publishing is off.
+| Stage | Delivered scope | Remaining boundary |
+| --- | --- | --- |
+| M0 · Quality and versions | Quality replay in default checks/CI; 30-case live-model harness with a persistent ceiling; version contracts; exact arithmetic and continuous write evidence | Report actual live results separately; receipt review does not prove semantic correctness |
+| M1 · Content and anchors | Versioned chunks, PDF text, subtitles, Clips, incremental invalidation, coverage/failure display and original-location links | Capped extraction; unsupported formats are visible; large-library capacity is not certified |
+| M2 · Local hybrid retrieval | Local Ollama embeddings, FTS5 rank fusion, shared UI/Agent retrieval, lexical fallback and model-revision cache | Exact vector scans; no ANN/reranker; no-answer queries may return approximate candidates |
+| M3 · Portability and recovery | Markdown/JSON ZIP contract, managed/optional originals, checked restore into a new library, root mapping and relink/undo | Ordinary sources only; no credentials/private/Agent-history archive or merging |
+| M4 · Capture and OCR | Inbox, browser page/selection/image extension, provenance/dedup, offline Windows OCR and identical-file detection | Source-loaded extension; no store publication, complete webpage mirror or image similarity |
+| M5 · External access and transfer | Explicit-scope read-only stdio MCP, real subprocess client tests, export/copy/restore snapshots | No external writes, remote OAuth, broad client certification, ownership handoff or automatic sync |
 
-## Published: v0.8.1 Preview
+## Next choices
 
-The public download remains [v0.8.1 Preview](https://github.com/ChenShoukang/kok/releases/tag/v0.8.1), including unified dispatch, a native Agent, Operations / Jobs, SQLite, Spaces and Clips. See [implementation scope](docs/WAREHOUSE_0.8.1.en.md).
-
-## Direction: a modern Agent workspace and operating layer
-
-- Reliable execution: broader real-model evaluations, source-linked review and explicit recovery boundaries.
-- External tools: remote MCP, OAuth and finer permissions; evaluate execution isolation separately from process-lifetime control.
-- Controlled memory: editable, deletable Space-scoped memory with provenance, timestamps and expiry.
-- Explicit orchestration: workflow-selected subtasks, evidence references and reviewed merges, without default full-session copying or automatic output merging.
-- A unified workspace connecting sources, Inspector, tasks, change review and recipes while preserving offline Pure mode.
-
-These are further goals. Encrypted memory management and one-level read-only delegation are available; cross-Space memory policies, recursive or concurrent writing agents and autonomous control of the whole computer remain future work. Expand permissions only after execution and data-safety validation. Media compatibility and lightweight distribution remain priorities.
+- Gather real library feedback and tune Chinese/paraphrase retrieval using a separate evaluation set; measure larger datasets before introducing ANN or multimodal search.
+- Validate browser compatibility, OCR languages and actual third-party MCP clients; expand only around concrete workflows.
+- Design explicit single-writer ownership and conflict copies before automatic sync. Portable restore already provides manual device transfer.
+- Signing/automatic updates, mobile capture, structured queries and scheduled review remain separate work. Full marketplaces and real-time collaboration are deferred.
 
 ## Near term: stability and maintenance
 
@@ -28,6 +28,7 @@ These are further goals. Encrypted memory management and one-level read-only del
 - Prioritize startup, imports, playback recovery and reading-data preservation while keeping source files unchanged.
 - Gradually separate shared scripts and native bridge logic by library, playback, reading, AI and private storage; add regression coverage where data safety matters.
 - Keep both languages, themes, keyboard controls, compact windows and reduced motion consistent.
+- Before release, reconcile package / diagnostics / MCP / documentation versions and verify the current package and remote CI. Track signing and automatic updates as separate release work; historical passes do not validate a new candidate.
 
 ## Later: broader playback inside kok
 

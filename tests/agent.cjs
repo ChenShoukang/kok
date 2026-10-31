@@ -27,7 +27,7 @@ const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypt
   await page.locator('#agent-input').fill('给这份笔记打标签并写一份摘要');await page.locator('.agent-send').click();
   await page.waitForSelector('[data-agent-run]');assert.equal(requests.length,2,'one read round then one proposal round');
   const first=JSON.parse(requests[0]),second=JSON.parse(requests[1]);
-  assert(first.tools.some(t=>t.function.name==='read_items')&&first.tool_choice==='auto','Agent requests use native function calling by default');
+  assert(first.tools.some(t=>t.function.name==='read_items')&&first.tool_choice==='required','The modern kernel requires native control or domain calls instead of actionless completion');
   assert(Fixture.toolResults(second).some(m=>m.tool_call_id.startsWith('call_fixture_')&&m.content.includes('ORDER_MATTERS')),'read results return as tool messages paired with the provider call ID');
   assert.equal(JSON.stringify(second.messages[0]),JSON.stringify(first.messages[0]),'the system prefix stays identical between rounds for provider prompt caching');
   assert(!requests.some(b=>b.includes(root.replace(/\\/g,'\\\\'))||b.includes(original.replace(/\\/g,'\\\\'))),'no local paths are sent to the model');

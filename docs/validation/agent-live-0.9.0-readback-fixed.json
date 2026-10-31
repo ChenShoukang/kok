@@ -1,0 +1,95 @@
+{
+  "format": "kok.agent.live-quality",
+  "version": 1,
+  "syntheticSources": true,
+  "caseCount": 1,
+  "perCaseRequestLimit": 4,
+  "cases": [
+    {
+      "id": "plan-4",
+      "type": "plan",
+      "status": "completed",
+      "errorKind": "",
+      "checks": {
+        "budget": true,
+        "reviewed": true,
+        "noOutsideSource": true,
+        "plan": true,
+        "oneAppliedNote": true,
+        "materialized": true,
+        "readBack": true,
+        "outcome": true
+      },
+      "passed": true,
+      "falseCompletion": false,
+      "unauthorizedWrite": false,
+      "summary": "已读取两份资料并为「plan-4 初稿」追加设备准备清单笔记（相机1台、电池2块含机身1块、存储卡1张在用+1张备用），获批后读回核验：初稿正文原样保留，第二份资料未改动。局限：第二份只写「两块电池、备用存储卡」，我将其解读为电池共2块、备用卡1张；两文档均未提供酒店名称与每晚费用，未做任何推测。\n正在查看资料…\n请确认下面的操作。\n正在查看资料…\n正在查看资料…",
+      "tools": [
+        {
+          "tool": "update_plan",
+          "status": "done"
+        },
+        {
+          "tool": "read_items",
+          "status": "done"
+        },
+        {
+          "tool": "write_note",
+          "status": "done"
+        },
+        {
+          "tool": "read_items",
+          "status": "done"
+        },
+        {
+          "tool": "update_plan",
+          "status": "done"
+        },
+        {
+          "tool": "finish_task",
+          "status": "done"
+        }
+      ],
+      "usage": {
+        "cachedTokens": 384,
+        "cost": 0,
+        "estimated": false,
+        "inputTokens": 20484,
+        "outputTokens": 1172,
+        "repairs": 0,
+        "requests": 4
+      },
+      "durationMs": 9367
+    }
+  ],
+  "passed": true,
+  "model": "deepseek-flash",
+  "ledgerBefore": 146,
+  "originalFilesPreserved": true,
+  "successes": 1,
+  "falseCompletions": 0,
+  "unauthorizedWrites": 0,
+  "pricingConfigured": false,
+  "keyCleared": true,
+  "ledgerAfter": 150,
+  "evidence": {
+    "passed": true,
+    "version": "0.9.0",
+    "started": "2026-10-30T16:15:07.9219120Z",
+    "requestedSuites": [
+      "agent-live-quality"
+    ],
+    "fingerprint": {
+      "source": {
+        "count": 401,
+        "sha256": "f4c4d7b8248cc760207565e240d333330e07a1147a1101d61dce2472df723fd6"
+      },
+      "runtime": {
+        "count": 412,
+        "sha256": "c395ae78705108dd1b393f096cf1bb1e345b49e8d8606e09e48958084c9fa722"
+      },
+      "executableSha256": "73219920330205afdaeb334d3b5f068b41bb0b17863fb2b126b6bafb53d8ac78"
+    },
+    "finished": "2026-10-30T16:15:25.4264964Z"
+  }
+}

@@ -1,4 +1,4 @@
-# Format compatibility · kok v0.7.1
+# Format compatibility · kok v0.9.0
 
 [中文](FORMATS.md) · English
 
@@ -12,7 +12,7 @@ Open **Settings → Supported formats** for the same registry in the app. All ex
 | Photos | TIF / TIFF / HEIC / HEIF | External app recommended | Can be imported and organized. Open with a system photo app; built-in preview and editing are not guaranteed. |
 | Music | MP3 / WAV / OGG / OGA / FLAC / M4A / AAC / OPUS | Codec dependent | MP3, PCM WAV, FLAC, Vorbis / Opus and AAC support depends on the actual encoding and WebView2. Containers such as WAV may contain unsupported codecs. |
 | Music | WMA / AIFF / APE | External app recommended | Can be organized into albums. A system player is recommended. |
-| Documents | PDF | Built-in viewer | Built-in PDF preview, text layer, annotations and positioned text. No OCR for scans. Annotations are saved in kok, not written into the original PDF. |
+| Documents | PDF | Built-in viewer | Built-in PDF preview, text layer, annotations and positioned text. Optional Windows OCR indexes scans without creating a PDF text layer. Annotations are saved in kok, not written into the original PDF. |
 | Documents | PPTX | Built-in viewer | Built-in slide preview, notes and basic editing with PPTX copies. Complex masters, charts, animations and embedded objects are not fully reproduced. |
 | Documents | DOCX | Built-in viewer | Extracts body text for reading, insertion and annotation. Original Office layout, images, table layout and macros are not preserved. |
 | Documents | CSV / MD / MARKDOWN / LOG / JSON / HTML / HTM | Built-in viewer | Read as plain text. Markdown / HTML formatting is not rendered, and CSV is not shown as a spreadsheet. Supports UTF-8, UTF-16 and GB18030. |
@@ -27,7 +27,7 @@ Media support depends on the container **and its codecs**, runtime and system. H
 - External text subtitles: **SRT, VTT, ASS, SSA, SUB (MicroDVD only), SBV, LRC, TTML, DFXP, SMI (SAMI)**. Same-name and language-suffix discovery is supported. ASS/SSA render text without effects; TTML/DFXP use basic clock/second/millisecond timing, without full styling or frame/tick timing. No embedded/bitmap subtitle extraction. Optional local Whisper or a separate speech API can generate SRT captions.
 - Subtitle limit: 8 MB, 50,000 cues per file; auto-discovery loads up to 20 tracks.
 - Fonts: TTF / OTF up to 20 MB each. Photo copies: PNG / JPEG. Reading-copy and PDF annotation exports: HTML. Translation copies: DOCX / EPUB / PDF / TXT / Markdown, plus SRT subtitles. PPTX exports rebuild visible basic elements; complex layouts may be lost. See [PPTX scope](PRESENTATION_AGENT_0.7.1.en.md).
-- DOCX/EPUB readers extract text, not the original layout. Markdown/HTML remain plain text; content is not executed. Scanned PDFs need external OCR to select text. Text has a 24 MB limit; EPUB content has a 48 MB total limit and up to 2,000 chapters. No DRM decryption.
+- DOCX/EPUB readers extract text, not the original layout. Markdown/HTML remain plain text; content is not executed. Windows OCR makes scans searchable but does not add a selectable PDF text layer. Text has a 24 MB limit; EPUB content has a 48 MB total limit and up to 2,000 chapters. No DRM decryption.
 
 ## Actual decoding results
 

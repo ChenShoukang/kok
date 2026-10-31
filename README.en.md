@@ -4,9 +4,9 @@
 
 Keep videos, photos, music, documents and books in one local library. Organize topics with Spaces, connect sources to notes with Clips, and bring in AI when you want help translating, organizing or writing.
 
-[Download v0.8.1 Preview](https://github.com/ChenShoukang/kok/releases/tag/v0.8.1) · [User guide](docs/GUIDE.en.md) · [中文](README.md) · [Supported formats](docs/FORMATS.en.md)
+[Download v0.9.0 Preview](https://github.com/ChenShoukang/kok/releases/tag/v0.9.0) · [User guide](docs/GUIDE.en.md) · [中文](README.md) · [Supported formats](docs/FORMATS.en.md)
 
-In development: **[v0.8.2](docs/AGENT_0.8.2.en.md)** adds task plans and outcome review, bounded retries, request tracing and local MCP tools. Undo invalidates prior review and missing information can be supplied within the task. Follow-up development adds [semantic compaction, encrypted memory, read-only subagents and isolated computation](docs/AGENT_RUNTIME_0.8.2.en.md). Source version upgraded; no new download released. [Local candidate validation](docs/VALIDATION_RUNTIME_0.8.2.md).
+**v0.9.0 Preview** adds incremental content indexing, local hybrid search, portable export and restore, browser capture, Windows OCR and scoped read-only MCP. Agent adds versioned events, interrupted prose preservation, approval policies and exact arithmetic. See [features and limits](docs/LIBRARY_0.9.0.en.md), [current validation](docs/VALIDATION_0.9.0.md) and the [roadmap](ROADMAP.en.md).
 
 ![kok v0.8.1 library using bundled original samples](docs/screenshots/library-081-en.png)
 
@@ -22,6 +22,7 @@ In development: **[v0.8.2](docs/AGENT_0.8.2.en.md)** adds task plans and outcome
 | Area | Practical features |
 | --- | --- |
 | Library and Spaces | Type detection, collections, favorites and full-text search; mixed files and Clips in grid, canvas, timeline or graph views; saved filters become automatically updated smart collections |
+| Search, capture and portability | Source-linked PDF/body/subtitle/Clip chunks; local Ollama embeddings plus FTS5; page/selection/image Inbox; Windows OCR; Markdown/JSON archives with checked restore/relink; scoped read-only MCP |
 | Video and music | Resume, playback speed, borderless fullscreen, sidecar subtitles and configurable shortcuts; albums, artists and personal audio, local tags/artwork, online metadata candidates and queues |
 | Photos | Wheel zoom, free crop, color adjustments, filters, text, drawing, arrows, masks, layers, undo/redo and PNG/JPEG copies |
 | Documents and books | Create Markdown, DOCX, TXT and PPTX; document auto-save, PDF search/annotations and basic slide editing; contents, bookmarks, single/spread/scroll layouts, reading colors and typography |
@@ -34,7 +35,7 @@ See the [user guide](docs/GUIDE.en.md) for workflows, editing/export scope and p
 
 ## Get started
 
-1. Download `kok-0.8.1-win-x64.zip`, check the accompanying SHA-256, extract the full ZIP and run `kok.exe`.
+1. Download `kok-0.9.0-win-x64.zip`, check the accompanying SHA-256, extract the full ZIP and run `kok.exe`.
 2. Choose **Pure** or **Smart**. Local essentials work without configuring AI.
 3. Explore the original samples or drop in your own files, then create a Space or save a Clip.
 
@@ -56,12 +57,12 @@ Choose light/dark themes, background and glass colors, bundled Smiley Sans/LXGW 
 
 - **Importing references originals; removing an entry does not delete its file.** The ordinary index, notes and history use local SQLite. An index backup is not a backup of source files.
 - The private folder protects application records; **original files are not encrypted**. Earlier independent AI history, exports and external backups are not retroactively encrypted. Lost passwords cannot be recovered. See [privacy and backups](docs/MODES.en.md).
-- Playback depends on codecs supported by WebView2/the system; no separate decoder engine is bundled. Scanned PDFs need external OCR and DRM is not decrypted. See [formats](docs/FORMATS.en.md).
+- Playback depends on codecs supported by WebView2/the system; no separate decoder engine is bundled. Scanned PDFs support optional offline Windows OCR and DRM is not decrypted. See [formats](docs/FORMATS.en.md).
 - PPTX/imported-document editing is basic. DOCX/EPUB editing rebuilds simple body text; canvas-edited PDF pages export as images. Media export/merging and local speech recognition need extra components; website download coverage has limits. See [editing and components](docs/GUIDE.en.md#editing-exports-and-optional-components).
 
 ## Documentation and development
 
-[User guide](docs/GUIDE.en.md) · [Documentation](docs/README.en.md) · [Validation](docs/VALIDATION_0.8.1.md#english) · [Implementation scope](docs/WAREHOUSE_0.8.1.en.md) · [Issues](https://github.com/ChenShoukang/kok/issues/new/choose) · [Security](SECURITY.en.md)
+[User guide](docs/GUIDE.en.md) · [Documentation](docs/README.en.md) · [Validation](docs/VALIDATION_0.9.0.md) · [Implementation scope](docs/WAREHOUSE_0.8.1.en.md) · [Issues](https://github.com/ChenShoukang/kok/issues/new/choose) · [Security](SECURITY.en.md)
 
 ```powershell
 npm ci --omit=optional
