@@ -1,0 +1,21 @@
+﻿{
+    "passed":  true,
+    "version":  "0.9.0",
+    "started":  "2026-10-31T03:00:45.3239081Z",
+    "requestedSuites":  [
+                            "translation"
+                        ],
+    "fingerprint":  {
+                        "source":  {
+                                       "count":  402,
+                                       "sha256":  "8156bdf20c457f262db1a56faa7ee6b45804cc5034bc6571d7da65565205623b"
+                                   },
+                        "runtime":  {
+                                        "count":  412,
+                                        "sha256":  "760697172ef549e05df45caafe9bc9600460d18b1684cf1c4b36f8ba9ac53422"
+                                    },
+                        "executableSha256":  "1aef6858699b96089e762644c37c6f076a44fbaaf5eeb78fe1af1e776d22910d"
+                    },
+    "finished":  "2026-10-31T03:01:02.4983739Z",
+    "executable":  "D:\\aiwork\\code\\kok\\dist\\kok\\kok.exe"
+}

@@ -25,7 +25,8 @@ const output=path.join(root,'test-output');fs.mkdirSync(output,{recursive:true})
    recorder.stop();await completed;stream.getTracks().forEach(t=>t.stop());
    const bytes=new Uint8Array(await new Blob(chunks,{type:'video/webm'}).arrayBuffer());let s='';for(const b of bytes)s+=String.fromCharCode(b);return btoa(s);
  });
- for(const folder of ['dist/kok/samples'])fs.writeFileSync(path.join(root,folder,'一段安静的时光.webm'),Buffer.from(recording,'base64'));
+ const app=path.dirname(process.env.KOK_TEST_EXECUTABLE||path.join(root,'dist','kok','kok.exe'));
+ fs.writeFileSync(path.join(app,'samples','一段安静的时光.webm'),Buffer.from(recording,'base64'));
  await page.evaluate(()=>native('importSamples'));
  await page.evaluate(()=>refresh());
  const count=await page.evaluate(()=>state.items.length);assert.equal(count,10);console.log('PASS: import all five categories (10 real assets)');

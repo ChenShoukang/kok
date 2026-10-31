@@ -1,0 +1,12 @@
+{
+  "format": "kok.ci.validation",
+  "version": "0.9.0",
+  "commit": "12153dbaf7aa0b65f523fb82a5853cb4ee19c197",
+  "run": "https://github.com/ChenShoukang/kok/actions/runs/41162241108",
+  "build_windows_2022": "passed (404 native checks)",
+  "build_windows_2025": "passed (404 native checks)",
+  "webview2": "155.0.4283.62",
+  "package_integration": "ui fixture failed because it wrote its generated video to the old dist/kok/samples directory instead of the extracted ZIP",
+  "published": false,
+  "fix": "Resolve the fixture sample directory from KOK_TEST_EXECUTABLE, the same executable launched by test-package.ps1"
+}
