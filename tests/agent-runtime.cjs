@@ -9,7 +9,7 @@ const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),
   if(mode==='approve')turn={reply:'Review tag',actions:[{tool:'add_tags',args:{ids:[id],tags:['runtime-test']}}],done:true};
   if(mode==='invalid'){res.end(F.invalid(body));return;}
   res.end(F.payload(body,turn));});});await new Promise(r=>server.listen(0,'127.0.0.1',r));
- async function connect(){browser=await chromium.connectOverCDP('http://127.0.0.1:9225');page=browser.contexts()[0].pages().find(p=>p.url().includes('app.kok.local')&&!p.url().includes('preview='));page.setDefaultTimeout(20000);page.on('pageerror',e=>errors.push(e.message));await page.waitForFunction(()=>!$('#startup'));}
+ async function connect(){for(let n=0;n<120;n++){try{browser=await chromium.connectOverCDP('http://127.0.0.1:9225');}catch{browser=null;}if(browser){const found=browser.contexts().flatMap(c=>c.pages()).find(p=>p.url().includes('app.kok.local')&&!p.url().includes('preview='));if(found){page=found;break;}await browser.close().catch(()=>{});browser=null;}await new Promise(r=>setTimeout(r,250));}assert(page,'app.kok.local window did not become available for CDP');page.setDefaultTimeout(20000);page.on('pageerror',e=>errors.push(e.message));await page.waitForFunction(()=>!$('#startup'));}
  const idle=()=>page.waitForFunction(()=>!AgentUi.state.job);
  // Terminate only the isolated, executable-verified fixture to simulate an unexpected process exit.
  function closeOwned(pid){const safe=exe.replaceAll("'","''");execFileSync('powershell',['-NoProfile','-Command',`$p=Get-Process -Id ${Number(pid)} -ErrorAction SilentlyContinue;if($p -and $p.Path -eq '${safe}'){Stop-Process -Id $p.Id}`],{windowsHide:true});}

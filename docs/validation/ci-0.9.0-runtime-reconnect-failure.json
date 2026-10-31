@@ -1,0 +1,21 @@
+{
+  "format": "kok.ci.validation",
+  "version": "0.9.0",
+  "commit": "f9539a9a2fc17f4c80a5846dfb1c3b89f9032d02",
+  "run": "https://github.com/ChenShoukang/kok/actions/runs/41166651207",
+  "windows2022": "426 checks passed",
+  "windows2025": "426 checks passed",
+  "desktopSuitesPassedBeforeFailure": 5,
+  "qualityCorpusCases": "not reached in this run",
+  "failure": "agent-runtime restarted the app and attached over CDP before the app.kok.local page existed; setDefaultTimeout was called on an undefined page",
+  "fix": "connect() retries bounded CDP attaches until an app.kok.local page is discoverable, closing failed connections between attempts",
+  "published": false,
+  "localFixValidation": {
+    "nativeChecks": 426,
+    "desktopSuites": 11,
+    "packageSha256": "4974035276476af36260fc2834d1a16100de30b51454604b0c0e23a83decbab8",
+    "sourceFingerprint": "34e1952af8f347282463d51166ec54987be17d6689c03077c87d94cc574a89c7"
+  },
+  "extraLocalRegression": "library-services waited for the captured image item in UI state instead of asserting on a stale snapshot",
+  "cloudRevalidation": "pending"
+}
