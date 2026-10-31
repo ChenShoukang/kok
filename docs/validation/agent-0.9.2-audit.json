@@ -61,12 +61,22 @@
     "OAuth supports authorization-code + PKCE + dynamic registration only; no device-code or enterprise SSO in this version",
     "no whole-document/video indexing, no VM-level isolation, no cross-platform or cloud sync"
   ],
-  "published": false,
+  "published": true,
   "localPackage": {
     "archive": "kok-0.9.2-win-x64.zip",
     "bytes": 31717708,
     "sha256": "c8b930e3f58e4dc2e93565fdf6220aa466bd4eeb38e31b95ecc5035cfa9ef87f",
     "desktopSuitesPassed": 11,
     "nativePassed": true
+  },
+  "cloudRelease": {
+    "release": "https://github.com/ChenShoukang/kok/releases/tag/v0.9.2",
+    "run": "https://github.com/ChenShoukang/kok/actions/runs/41202281095",
+    "tagCommit": "544c5b7a0030aa9c90b7203d8f7a75ccb1df7287",
+    "publishedAt": "2026-10-31T12:50:46Z",
+    "bytes": 32100834,
+    "sha256": "596dac062735871394701f9751e922dfb152b5f1030a71e8f709809b6c962571",
+    "desktopSuitesPassed": 11,
+    "checksumPassed": true
   }
 }

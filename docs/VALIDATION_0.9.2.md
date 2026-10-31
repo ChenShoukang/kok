@@ -31,7 +31,12 @@ OAuth 设备码/企业 SSO、虚拟机级隔离、跨平台/移动端/云同步�
 
 ## 发布记录
 
-云端 Windows 2022 / 2025 构建、原生检查、隐私与依赖审计、待发布 ZIP 的 11 组桌面套件全部通过后才会发布。本页在云端结果与下载核验完成后追加记录。
+云端 Windows 2022 / 2025 构建、原生检查、隐私与依赖审计、待发布 ZIP 的 11 组桌面套件全部通过后，v0.9.2 已于 2026-10-31T12:50:46Z 发布为 Preview：
+
+- Release：https://github.com/ChenShoukang/kok/releases/tag/v0.9.2（run `41202281095`，tag/commit `544c5b7`）。
+- 云端 11 / 11 桌面套件通过；云端 ZIP `kok-0.9.2-win-x64.zip` 为 **32,100,834 bytes**，SHA-256 `596dac062735871394701f9751e922dfb152b5f1030a71e8f709809b6c962571`。
+- 独立下载后重新计算 SHA-256、核对随附 `.sha256` 与 GitHub asset digest 均一致（`checksumPassed: true`）；核验记录见 [release-0.9.2-download.json](validation/release-0.9.2-download.json)。
+- 本机验证 ZIP 为 31,717,708 bytes / SHA-256 `c8b930e3f58e4dc2e93565fdf6220aa466bd4eeb38e31b95ecc5035cfa9ef87f`（同样 11/11 通过），与云端 ZIP 字节不同（构建环境差异），两者均记录在案。
 
 ## English summary
 
