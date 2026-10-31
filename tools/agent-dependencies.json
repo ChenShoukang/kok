@@ -1,0 +1,32 @@
+[
+  {
+    "url": "https://api.nuget.org/v3-flatcontainer/smartreader/0.11.1/smartreader.0.11.1.nupkg",
+    "id": "SmartReader",
+    "version": "0.11.1",
+    "sha256": "6a9f80d3e9e48ea12ee8831fb01a01c0bbf28120535ac7f3b239fd09548f9441",
+    "dllSha256": "4fca67b95c66cdc10d5ed13962cb2e152c4ec6aac84f2404687abc3db68fb402",
+    "license": "Apache-2.0",
+    "project": "https://github.com/strumenta/smartreader",
+    "entry": "lib/netstandard2.0/SmartReader.dll"
+  },
+  {
+    "url": "https://api.nuget.org/v3-flatcontainer/anglesharp/1.5.2/anglesharp.1.5.2.nupkg",
+    "id": "AngleSharp",
+    "version": "1.5.2",
+    "sha256": "f35ac3b67c2f4744835cd3549cf8ab5886bbf36830920465cf515bce6db2c307",
+    "dllSha256": "2b02d1ab12f890891f193c853a79e332fb8a1f128cd55c3b0c231a4eb6b7bfa1",
+    "license": "MIT",
+    "project": "https://github.com/AngleSharp/AngleSharp",
+    "entry": "lib/net462/AngleSharp.dll"
+  },
+  {
+    "url": "https://api.nuget.org/v3-flatcontainer/system.text.encoding.codepages/10.0.10/system.text.encoding.codepages.10.0.10.nupkg",
+    "id": "System.Text.Encoding.CodePages",
+    "version": "10.0.10",
+    "sha256": "03c85f607f2976904d5f1c70f526fe66307917b94fbbc34e4b0e1ffe33a066a7",
+    "dllSha256": "e96a06619c5013d2d0ccdc955db536c0b2d5b52ec7ba143f8b3d6da7f2371e36",
+    "license": "MIT",
+    "project": "https://github.com/dotnet/runtime",
+    "entry": "lib/net462/System.Text.Encoding.CodePages.dll"
+  }
+]

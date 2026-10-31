@@ -1,4 +1,4 @@
-param([switch]$Test)
+﻿param([switch]$Test)
 $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
 & node (Join-Path $root 'tools\vendor-sandbox.cjs')
@@ -50,14 +50,17 @@ $core = Join-Path $sdk 'lib\net462\Microsoft.Web.WebView2.Core.dll'
 $forms = Join-Path $sdk 'lib\net462\Microsoft.Web.WebView2.WinForms.dll'
 & (Join-Path $root 'tools\prepare-youtube.ps1')
 & (Join-Path $root 'tools\prepare-media.ps1')
+& (Join-Path $root 'tools\prepare-agent.ps1')
 $tagLibrary=Join-Path $root 'tools\media-source\TagLibSharp.dll'
+$agentLibraries=@((Get-Content -LiteralPath (Join-Path $root 'tools\agent-dependencies.json') -Raw | ConvertFrom-Json) | ForEach-Object {Join-Path $root ('tools\agent-source\lib\'+$_.id+'.dll')})
 $siteLibraries=@((Get-Content -LiteralPath (Join-Path $root 'tools\youtube-dependencies.json') -Raw | ConvertFrom-Json) | ForEach-Object {Join-Path $root ('tools\youtube-source\lib\'+$_.id+'.dll')})
 $references = @('System.dll','System.Core.dll','System.Drawing.dll','System.Windows.Forms.dll','System.Web.Extensions.dll','System.Xml.dll','System.Xml.Linq.dll','System.IO.Compression.dll','System.IO.Compression.FileSystem.dll','System.Net.Http.dll','System.Security.dll',$core,$forms)
 $facade=Join-Path $env:WINDIR 'Microsoft.NET\assembly\GAC_MSIL\netstandard\v4.0_2.0.0.0__cc7b13ffcd2ddd51\netstandard.dll'
 if(-not(Test-Path -LiteralPath $facade)){throw '.NET Framework 4.8 netstandard support is required.'}
 $references += $facade
+$references += $agentLibraries
 $references += $tagLibrary
-$references += @($siteLibraries | Where-Object { [IO.Path]::GetFileName($_) -in @('YoutubeExplode.dll','Microsoft.Bcl.AsyncInterfaces.dll','System.Threading.Tasks.Extensions.dll') })
+$references += @($siteLibraries | Where-Object { [IO.Path]::GetFileName($_) -in @('YoutubeExplode.dll','Microsoft.Bcl.AsyncInterfaces.dll','System.Threading.Tasks.Extensions.dll','System.Memory.dll','System.Buffers.dll','System.Runtime.CompilerServices.Unsafe.dll') })
 $arguments = @('/nologo','/langversion:latest','/nullable:disable','/target:winexe','/platform:x64','/optimize+','/utf8output',('/out:' + (Join-Path $out 'kok.exe')))
 if (Test-Path (Join-Path $root 'ui\kok.ico')) { $arguments += '/win32icon:' + (Join-Path $root 'ui\kok.ico') }
 foreach ($reference in $references) { $arguments += '/reference:' + $reference }
@@ -68,6 +71,7 @@ Copy-Item $core,$forms -Destination $out -Force
 Copy-Item $tagLibrary -Destination $out -Force
 Copy-Item -LiteralPath (Join-Path $root 'tools\sqlite\sqlite3.dll') -Destination $out -Force
 Copy-Item $siteLibraries -Destination $out -Force
+Copy-Item $agentLibraries -Destination $out -Force
 Copy-Item (Join-Path $sdk 'runtimes\win-x64\native\WebView2Loader.dll') -Destination $out -Force
 & (Join-Path $root 'tools\copy-runtime-ui.ps1') -Destination (Join-Path $out 'ui')
 # Remove only known, byte-identical original TTFs left by older local builds.
@@ -99,6 +103,7 @@ if ($Test) {
     $testArgs += Join-Path $root 'tests\AgentTests.cs'
     $testArgs += Join-Path $root 'tests\AgentTaskTests.cs'
     $testArgs += Join-Path $root 'tests\AgentVisionTests.cs'
+    $testArgs += Join-Path $root 'tests\AgentWebTests.cs'
     $testArgs += Join-Path $root 'tests\AgentKernelTests.cs'
     $testArgs += Join-Path $root 'tests\AgentPlatformTests.cs'
     $testArgs += Join-Path $root 'tests\AgentReliability090Tests.cs'
@@ -110,6 +115,7 @@ if ($Test) {
     $testArgs += Join-Path $root 'tests\SessionPersistenceTests.cs'
     & $compiler $testArgs
     if ($LASTEXITCODE -ne 0) { throw 'Test compilation failed.' }
+    Copy-Item (Join-Path $root 'src\kok.exe.config') -Destination ($testExe+'.config') -Force
     & $testExe
     if ($LASTEXITCODE -ne 0) { throw 'Native tests failed.' }
 }

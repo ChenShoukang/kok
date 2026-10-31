@@ -211,6 +211,14 @@ SQLite 3.54.1 (public domain) is bundled as sqlite3.dll for local item/facet/lin
 
 The recipe editor uses n8n's public node/step configuration concepts as a reference. No n8n application code, assets or runtime are bundled. https://docs.n8n.io/build/understand-workflows/workflow-components/work-with-nodes.md
 
+## Agent web content extraction
+
+kok bundles these libraries only to read and extract public web pages that the user explicitly approves through `fetch_url` / the configured search endpoint; they perform no background network requests and their output is treated as untrusted evidence.
+
+- **SmartReader 0.11.1** (Apache-2.0) - a port of Mozilla Readability used to isolate the main article content. Source: https://github.com/strumenta/smartreader . License and NOTICE: `docs/licenses/agent/SmartReader-Apache-2.0.txt`, `SmartReader-NOTICE.md`.
+- **AngleSharp 1.5.2** (MIT) - HTML parser used by SmartReader and as a plain-text fallback. Source: https://github.com/AngleSharp/AngleSharp . License: `docs/licenses/agent/AngleSharp-MIT.txt`.
+- **System.Text.Encoding.CodePages 10.0.10** (MIT, .NET Foundation) - legacy encoding support required by the HTML parser. Source: https://github.com/dotnet/runtime . License: `docs/licenses/agent/System.Text.Encoding.CodePages-MIT.txt`.
+
 ## QuickJS WebAssembly computation
 
 The offline JavaScript interpreter uses QuickJS Emscripten 0.32.0 (release-sync). QuickJS Emscripten and the QuickJS engine are MIT licensed. The combined Jake Teton-Landis, Fabrice Bellard and Charlie Gordon notices are retained in [QuickJS-Emscripten-MIT.txt](docs/licenses/QuickJS-Emscripten-MIT.txt). Only the browser module, binding helpers and WebAssembly binary are shipped; Node.js and other build dependencies are not included.
