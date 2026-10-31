@@ -4,9 +4,9 @@
 
 把视频、照片、音乐、文档和电子书收进同一个本地资料库；用空间组织主题，用摘录连接原文与笔记，需要时再让 AI 帮你翻译、整理和写作。
 
-[下载 v0.9.0 Preview](https://github.com/ChenShoukang/kok/releases/tag/v0.9.0) · [使用指南](docs/GUIDE.md) · [English](README.en.md) · [格式支持](docs/FORMATS.md)
+[下载 v0.9.1 Preview](https://github.com/ChenShoukang/kok/releases/tag/v0.9.1) · [使用指南](docs/GUIDE.md) · [English](README.en.md) · [格式支持](docs/FORMATS.md)
 
-**v0.9.0 Preview** 补齐可更新的内容索引、本机混合检索、便携导出与新库恢复、浏览器采集、Windows OCR 和限定范围的只读 MCP。Agent 增加版本化事件、中断正文保留、审批策略与精确计算。见[新功能与使用边界](docs/LIBRARY_0.9.0.md)、[本次验证](docs/VALIDATION_0.9.0.md)及[后续路线](ROADMAP.md)。
+**v0.9.1 Preview** 在 v0.9.0 的检索、采集与恢复之上，为 Agent 增加视觉输入、联网读取、受控执行环境、长任务与计划任务、语义记忆、并行只读子代理、更大上下文/输出与远程 MCP。见 [Agent 能力与边界](docs/AGENT_0.9.1.md)、[资料库指南](docs/LIBRARY_0.9.0.md)、[当前验证](docs/VALIDATION_0.9.1.md) 与 [路线图](ROADMAP.md)。
 
 ![kok v0.8.1 资料库，使用内置原创示例](docs/screenshots/library-081-zh.png)
 
@@ -62,7 +62,7 @@
 
 ## 文档与开发
 
-[使用指南](docs/GUIDE.md) · [文档目录](docs/README.md) · [验证记录](docs/VALIDATION_0.9.0.md) · [实现进度](docs/WAREHOUSE_0.8.1.md) · [反馈](https://github.com/ChenShoukang/kok/issues/new/choose) · [安全报告](SECURITY.md)
+[使用指南](docs/GUIDE.md) · [文档目录](docs/README.md) · [Agent 能力与边界](docs/AGENT_0.9.1.md) · [验证记录](docs/VALIDATION_0.9.1.md) · [实现进度](docs/WAREHOUSE_0.8.1.md) · [反馈](https://github.com/ChenShoukang/kok/issues/new/choose) · [安全报告](SECURITY.md)
 
 ```powershell
 npm ci --omit=optional

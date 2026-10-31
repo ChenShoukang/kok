@@ -1,5 +1,17 @@
 # kok 版本记录
 
+## v0.9.1 · Preview
+
+- Agent 视觉输入：`read_image` 以受限 JPEG 图文消息交给支持图片的模型，未启用时回退 Windows OCR；图片字节不写入任务日志。
+- Agent 联网读取：`fetch_url` / `web_search` 逐次审批，SmartReader 提取正文，HTTPS/内网/重定向/大小/类型限制，搜索需自备 SearXNG 兼容端点。
+- 受控执行环境：可选工作目录内的文件读写与命令执行，默认关闭、逐次审批，路径穿越/大小/超时/输出限制与 Job Object 进程管理。
+- 长任务与计划：24 轮/请求、48k/64k 档位、128k 上下文设置、8k 输出；NCrontab cron 计划任务与托盘完成通知。
+- 记忆增强：本机 embedding 语义召回、DPAPI 向量缓存、近似记忆合并与来源失效；记忆仍需批准。
+- 并行编排：`delegate_parallel` 单卡启动 2–3 个只读子代理，共享父预算，报告汇总后仍由父任务核对。
+- 预算与依赖：SharpToken（tiktoken）估算 + 保守边际 + 校准；新增 SmartReader/AngleSharp/NCrontab 等锁定依赖与许可。
+- 远程 MCP：Streamable HTTP + DPAPI 加密 Bearer 令牌，复用逐工具审批与不确定结果规则；不含 OAuth。
+- 本版未新增真实模型调用（总账 150），494 项原生检查与 11 组桌面套件见[验证](docs/VALIDATION_0.9.1.md)与[能力边界](docs/AGENT_0.9.1.md)。
+
 ## v0.9.0 · Preview
 
 - 新增版本化内容片段、来源锚点、PDF 文字层 / 字幕 / 独立摘录索引、增量失效与覆盖 / 失败面板。

@@ -2,6 +2,10 @@
 
 [中文](ROADMAP.md) · English
 
+## v0.9.1 Preview deliverables
+
+On top of the v0.9.0 library and retrieval work, this release focuses on the Agent: vision input, web fetch/search, an opt-in bounded execution workspace, longer tasks and schedules, semantic memory, parallel read-only subagents, larger budgets and remote MCP. All eight remain default-off or explicitly approved. See [Agent 0.9.1](docs/AGENT_0.9.1.md) and [validation](docs/VALIDATION_0.9.1.md). The real-model ledger remains at 150 and no new model success rate is claimed.
+
 ## v0.9.0 Preview delivery
 
 The original [peer review and acceptance plan](docs/PEER_GAPS_0.9.0.md) is retained as a historical baseline. Current behavior is documented in the [v0.9.0 guide](docs/LIBRARY_0.9.0.en.md); actual results and limits are in [validation](docs/VALIDATION_0.9.0.md).

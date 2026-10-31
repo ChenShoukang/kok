@@ -1,0 +1,68 @@
+{
+  "format": "kok.audit.agent",
+  "version": "0.9.1",
+  "date": "2026-10-31",
+  "syntheticOnly": true,
+  "nativeChecks": 494,
+  "desktopSuites": 11,
+  "realModelRequests": 150,
+  "additionalRealModelRequests": 0,
+  "newRealModelSuccessRate": null,
+  "dependencies": [
+    {
+      "id": "SmartReader",
+      "version": "0.11.1",
+      "license": "Apache-2.0",
+      "purpose": "web article extraction"
+    },
+    {
+      "id": "AngleSharp",
+      "version": "1.5.2",
+      "license": "MIT",
+      "purpose": "HTML parsing"
+    },
+    {
+      "id": "System.Text.Encoding.CodePages",
+      "version": "10.0.10",
+      "license": "MIT",
+      "purpose": "HTML encoding support"
+    },
+    {
+      "id": "NCrontab",
+      "version": "3.4.0",
+      "license": "Apache-2.0",
+      "purpose": "cron schedules"
+    },
+    {
+      "id": "SharpToken",
+      "version": "2.0.6",
+      "license": "MIT",
+      "purpose": "tiktoken prompt estimation"
+    }
+  ],
+  "capabilities": [
+    "scoped vision input with bounded JPEG attachment and OCR fallback",
+    "approval-gated web fetch/search with SSRF, size, redirect and content-type limits",
+    "opt-in workspace file tools and Job Object bounded commands",
+    "24-round/request tasks, larger budgets, tray notices and NCrontab schedules",
+    "hybrid semantic memory recall with encrypted vector cache and near-duplicate merge",
+    "one-card parallel read-only subagents sharing the parent budget",
+    "tiktoken-based conservative prompt budgets with calibration",
+    "remote MCP over Streamable HTTP with DPAPI-encrypted bearer token"
+  ],
+  "securityBoundaries": [
+    "all external actions default-off or explicitly approved",
+    "tool output remains untrusted evidence; no automatic replay of uncertain external results",
+    "commands and MCP servers run with the current user account; no OS-level sandbox",
+    "no OAuth, no video/PDF visual rendering, no cross-platform or cloud sync in this version"
+  ],
+  "published": false,
+  "localPackage": {
+    "archive": "kok-0.9.1-win-x64.zip",
+    "bytes": 27905651,
+    "sha256": "bf9a52176ada322c5face0a227676c990539c2a41d1029de4ffb021ebb06fbf4",
+    "desktopSuitesPassed": 11,
+    "nativePassed": true,
+    "sourceFingerprint": "fa86193018459ade0d9263869d790905ff26e2fb94589125b31d57beba69bc92"
+  }
+}

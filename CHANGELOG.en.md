@@ -1,5 +1,17 @@
 # kok changelog
 
+## v0.9.1 · Preview
+
+- Scoped vision input via `read_image` with bounded JPEG image messages and Windows OCR fallback; image bytes stay out of the task journal.
+- Approval-gated web fetch/search with SmartReader extraction, HTTPS/SSRF/redirect/size/content-type limits and an optional SearXNG-compatible endpoint.
+- Opt-in workspace: bounded file reads/writes and commands, default-off, per-call approval, traversal/size/timeout/output limits and Job Object process management.
+- Longer tasks: 24 rounds/requests, 48k/64k context budgets, 128k context setting and 8k output; NCrontab schedules and tray completion notices.
+- Semantic memory recall with a DPAPI vector cache, near-duplicate merging and source invalidation; memories still require approval.
+- `delegate_parallel` starts 2-3 read-only subagents from one approval card with the shared parent budget.
+- SharpToken (tiktoken) budgets with a conservative margin and calibration; SmartReader/AngleSharp/NCrontab dependencies are checksum-pinned with licenses.
+- Remote MCP over Streamable HTTP with a DPAPI-encrypted bearer token; no OAuth.
+- No additional real-model calls (ledger 150). See [validation](docs/VALIDATION_0.9.1.md) and [Agent capabilities and limits](docs/AGENT_0.9.1.md).
+
 ## v0.9.0 · Preview
 
 - Versioned source chunks/anchors, incremental PDF/body/subtitle/Clip indexing and visible coverage/failures.
