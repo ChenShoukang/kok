@@ -45,6 +45,12 @@
 
 [追加运行重启连接失败](validation/ci-0.9.0-runtime-reconnect-failure.json)：两组 Windows 构建与桌面套件前 5 组通过；`agent-runtime` 在结束进程并重启应用后，CDP 连接早于 `app.kok.local` 主页面建立，空页面触发 `setDefaultTimeout` TypeError。修复为有限次重连直到发现主页面，失败连接先关闭再重试；本机该套件通过。本机复跑还发现资料服务的图片采集断言早于 UI 刷新，改为等待条目出现后再断言；随后新 ZIP 的 11 组桌面套件全量通过；[修复前包记录](validation/package-0.9.0-before-runtime-reconnect.json)保留。
 
+## 云端发布与下载核验
+
+提交 `5556544` 的云端 [run 41167772561](https://github.com/ChenShoukang/kok/actions/runs/41167772561) 通过 Windows 2022 / 2025 构建（各 426 项）、静态 / 依赖 / 隐私审计、待发布 ZIP 的 11 组桌面套件，以及发布作业。公开 [v0.9.0 Preview Release](https://github.com/ChenShoukang/kok/releases/tag/v0.9.0) 的标签提交即 `5556544`。[云端包级记录](validation/package-0.9.0-cloud.json)保留该 ZIP 的云端 SHA-256 `38f60dd2ee5bd2d51c8aebdd98b25216f242a2ece990fd73b4a82c8cabe10f32`、源码 / 运行指纹与 11 / 11 套件结果。
+
+[下载核验](validation/release-0.9.0-download.json)：从公开 Release 重新下载 ZIP 与 `.sha256`，ZIP 为 23,328,750 字节，SHA-256 `38f60dd2ee5bd2d51c8aebdd98b25216f242a2ece990fd73b4a82c8cabe10f32`，与随附校验文件、GitHub asset digest 以及云端桌面验收使用的 ZIP 完全一致。这是对实际发布产物的核验，不是本机构建哈希。
+
 ## 固定检查与桌面集成
 
 本地原生回归已通过 426 项，包括范围隔离、索引失效、向量缓存与参数校验、便携恢复、附件破坏、采集去重、路径重连及 MCP 授权。固定响应的 `agent-quality` 检查实际计算结果、读取来源、写入回查、拒绝、注入、中断和事件版本；这不是模型成功率。

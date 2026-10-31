@@ -17,5 +17,9 @@
     "sourceFingerprint": "34e1952af8f347282463d51166ec54987be17d6689c03077c87d94cc574a89c7"
   },
   "extraLocalRegression": "library-services waited for the captured image item in UI state instead of asserting on a stale snapshot",
-  "cloudRevalidation": "pending"
+  "cloudRevalidation": {
+    "run": "https://github.com/ChenShoukang/kok/actions/runs/41167772561",
+    "result": "passed",
+    "release": "https://github.com/ChenShoukang/kok/releases/tag/v0.9.0"
+  }
 }

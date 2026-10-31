@@ -17,5 +17,9 @@
     "packageSha256": "f489311d162b479bd42d078c6e4bb12787e86b5bb49a93c8187a32d3d24ea367",
     "sourceFingerprint": "265ca9451da04bf3cad5abdcee764582c00c353fdce918983a17a3ec61745787"
   },
-  "cloudRevalidation": "pending"
+  "cloudRevalidation": {
+    "run": "https://github.com/ChenShoukang/kok/actions/runs/41167772561",
+    "result": "passed",
+    "release": "https://github.com/ChenShoukang/kok/releases/tag/v0.9.0"
+  }
 }

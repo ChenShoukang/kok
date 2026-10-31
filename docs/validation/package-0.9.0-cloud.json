@@ -1,0 +1,35 @@
+{
+    "sha256": "38f60dd2ee5bd2d51c8aebdd98b25216f242a2ece990fd73b4a82c8cabe10f32",
+    "archive": "kok-0.9.0-win-x64.zip",
+    "version": "0.9.0",
+    "format": "kok.package.validation",
+    "suites": [
+        "ui",
+        "features",
+        "agent",
+        "agent-interactions",
+        "agent-reliable",
+        "agent-runtime",
+        "agent-kernel",
+        "mcp",
+        "agent-platform",
+        "agent-quality",
+        "library-services"
+    ],
+    "started": "2026-10-31T04:19:01.1716908Z",
+    "finished": "2026-10-31T04:22:44.6117729Z",
+    "passed": true,
+    "fingerprint": {
+        "source": {
+            "count": 402,
+            "sha256": "eab87a6897661d8e4e561d1900e2331e8550c597f68755208e8aaaed24eb4bbd"
+        },
+        "runtime": {
+            "count": 356,
+            "sha256": "53fb915484759d6765802167cec44413a378a49704c44b45f6d0b2ec59418440"
+        },
+        "executableSha256": "f74f2b559b58c14e5e2f9ff9bb4253afe087b30361742c840f7e7acf5ad9082a"
+    },
+    "run": "https://github.com/ChenShoukang/kok/actions/runs/41167772561",
+    "commit": "5556544695c99b3c928f83100625361bf6081308"
+}
