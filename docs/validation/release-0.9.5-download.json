@@ -1,0 +1,19 @@
+{
+  "format": "kok.release.download",
+  "version": "0.9.5",
+  "tag": "v0.9.5",
+  "release": "https://github.com/ChenShoukang/kok/releases/tag/v0.9.5",
+  "commit": "6831c1c6eef33a6f01010cba3f3a8904e7b1bdd8",
+  "run": "https://github.com/ChenShoukang/kok/actions/runs/41276992031",
+  "archive": "kok-0.9.5-win-x64.zip",
+  "bytes": 32298460,
+  "sha256": "1ec5bc7d009e17479a047a2a3b7c1370367b9b643815ae5b7c7dcf5dc18df4fa",
+  "sha256File": "1ec5bc7d009e17479a047a2a3b7c1370367b9b643815ae5b7c7dcf5dc18df4fa  kok-0.9.5-win-x64.zip",
+  "assetDigest": "sha256:1ec5bc7d009e17479a047a2a3b7c1370367b9b643815ae5b7c7dcf5dc18df4fa",
+  "downloadedSha256": "1ec5bc7d009e17479a047a2a3b7c1370367b9b643815ae5b7c7dcf5dc18df4fa",
+  "verified": true,
+  "cloudPackageSuites": 14,
+  "cloudPackagePassed": true,
+  "publishedAt": "2026-11-01T05:36:39Z",
+  "verifiedAt": "2026-11-01T05:37:50.001220+00:00"
+}

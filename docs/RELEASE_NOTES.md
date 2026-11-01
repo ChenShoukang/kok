@@ -8,7 +8,7 @@ v0.9.5 是紧凑导航与动效质量修正版，不改变数据格式、原生�
 - **动效**：面板在打开动画中途关闭时从当前 transform 继续，不再跳回；导航指示条只动画 transform/opacity（240ms）；减少动效模式下禁用 transition。实测菜单打开最大帧间隔 11ms、预热路由切换 5.7ms。
 - **验证**：**542 项原生检查、25 组界面/回归桌面套件、14 组包级门禁**通过；逐页审计 120 张截图。真实模型总账保持 **359**，本版无新增模型调用。
 
-本机候选 ZIP：`kok-0.9.5-win-x64.zip`，31,912,551 bytes，SHA-256 `fb1fe329ffa05fd91396953ece41955f876da9c668266e771db626f107382e81`。
+发布 ZIP：`kok-0.9.5-win-x64.zip`，32,298,460 bytes，SHA-256 `1ec5bc7d009e17479a047a2a3b7c1370367b9b643815ae5b7c7dcf5dc18df4fa`（本机候选为 31,912,551 bytes、SHA-256 `fb1fe329ffa05fd91396953ece41955f876da9c668266e771db626f107382e81`）。
 
 [扁平界面说明](FLAT_UI.md) · [界面参考](INTERFACE_REFERENCES.md) · [v0.9.5 验证](VALIDATION_0.9.5.md) · [Roadmap](../ROADMAP.md) · [Changelog](../CHANGELOG.md)
 
@@ -22,7 +22,7 @@ kok v0.9.5 is a compact-navigation and motion-quality release with no data forma
 - **Motion**: panel exits continue from the current transform instead of jumping; the navigation indicator animates only transform/opacity (240ms), and reduced-motion disables it. Measured menu-open max frame gap 11ms and warm route transitions 5.7ms.
 - **Validation**: **542 native checks, 25 local UI/regression suites and a 14-suite package gate** pass; 120 reviewed screenshots. The real-model ledger stays at **359** with no new model calls.
 
-Candidate ZIP: `kok-0.9.5-win-x64.zip`, 31,912,551 bytes, SHA-256 `fb1fe329ffa05fd91396953ece41955f876da9c668266e771db626f107382e81`. See [flat UI notes](FLAT_UI.md), [interface references](INTERFACE_REFERENCES.md) and [v0.9.5 validation](VALIDATION_0.9.5.md).
+Published ZIP: `kok-0.9.5-win-x64.zip`, 32,298,460 bytes, SHA-256 `1ec5bc7d009e17479a047a2a3b7c1370367b9b643815ae5b7c7dcf5dc18df4fa` (the local candidate was 31,912,551 bytes, SHA-256 `fb1fe329ffa05fd91396953ece41955f876da9c668266e771db626f107382e81`). See [flat UI notes](FLAT_UI.md), [interface references](INTERFACE_REFERENCES.md) and [v0.9.5 validation](VALIDATION_0.9.5.md).
 
 ---
 
