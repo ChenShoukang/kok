@@ -33,7 +33,7 @@ const {chromium}=require('./browser.cjs'),assert=require('node:assert/strict'),f
   }
   // The same pages with real saved objects, not just empty-state screenshots.
   const docId=await page.evaluate(()=>state.items.find(i=>i.name.startsWith('排版边界')).id);
-  async function approve(){await page.locator('#operation-apply').click();await page.waitForFunction(()=>!$('#small-dialog').open&&!OperationUI.reviewing);}
+  async function approve(){const apply=page.locator('#operation-apply');await apply.waitFor({state:'visible',timeout:30000});await apply.click();await page.waitForFunction(()=>!$('#small-dialog').open&&!OperationUI.reviewing,{timeout:45000});}
   await page.evaluate(()=>navigate('spaces'));await page.locator('[data-warehouse="new-space"]').first().click();
   await page.locator('#workspace-form [name="name"]').fill('阅读与研究 · Research materials');
   await capture('space-create',650,520,'light','#small-dialog');await page.locator('#workspace-form [type="submit"]').click();await approve();
