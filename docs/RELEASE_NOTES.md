@@ -1,4 +1,32 @@
-# kok v0.9.5 Preview
+# kok v0.9.8 Preview
+
+v0.9.8 是界面改版与 Agent 聚焦改版的合并预览版，不改变数据格式；原生桥接接口保持兼容。
+
+- **界面**：统一偏白浅色与微紫深色主题，精简欢迎页；所有窗口宽度保留短侧栏，「更多」改为三列图标面板，收藏、最近打开、分类前置；导航与工具入口使用离线 Phosphor 双层填充图标；菜单、筛选、排序与面板动效从当前帧续接并尊重减少动效。
+- **Agent 首屏**：默认只保留资料、要求、随资料变化的建议操作与发送/停止；技能、用量档位、调用协议和资料范围收进折叠的「高级设置」；选中资料后范围自动按所选执行。
+- **本地任务分流**：新增原生只读动作 `agentLocalPlan`，统计、列表/筛选、分类/标签概览和文件类型分布等显式只读请求零模型请求直接回答；生成、比较、建议类请求仍交给模型。
+- **片段级读取**：同一长文件最多返回 3 个带页码/章节/字幕时间锚点的命中片段（默认 12、上限 24）；`read_items` 报告每份来源的读取覆盖；每轮目录按所选资料与目标相关候选组织，并在任务内固定。
+- **稳定前缀**：工具调用消息的宿主回执与任务状态移到最后一条宿主状态消息，历史保持追加式，便于服务商前缀缓存复用。
+- **成果卡片**：任务结束显示状态、使用资料数、来源引用数以及「打开文档 / 查看来源 / 继续修改」；本地任务显示「本地完成 · 未调用模型」；批量整理先汇总将改动项再确认。
+- **验证**：**608 项原生检查、16 组桌面套件、交付包复验（15 组套件）与 `npm run check`** 通过。用户授权的同批 30 项真实模型前后对比：请求 **100 → 76（−24%）**、输入 token **566,586 → 431,132（−24%）**、保守费用 ¥2.68 → ¥2.11，通过数 26/30 持平；节省主要来自本地任务分流。两轮共 190 次请求，项目请求总账 359 → 549。
+- **发布包**：`kok-0.9.8-win-x64.zip` 由 GitHub Actions 构建，大小与 SHA-256 以 Release 附件及随附 `.sha256` 为准。真实模型评测方法、未达项与边界见[30 项任务评测基线与前后对比](AGENT_TASK_EVAL.md)与[v0.9.8 验证](VALIDATION_0.9.8.md)。
+
+## English
+
+kok v0.9.8 is a combined preview of the interface redesign and the Agent focus redesign, with no data format changes and a compatible native bridge.
+
+- **Interface**: unified near-white and muted purple-dark themes with a minimal welcome screen; a short rail at every width, a three-column launcher with favorites/recent/collections first and pinned offline Phosphor duotone glyphs; menus, filters, sorting and panels continue from the displayed frame and respect reduced motion.
+- **Agent first screen**: material, request, material-aware suggested actions and send/stop stay on the surface; skills, usage profiles, protocol and scope move into a collapsed Advanced panel, and selected material becomes the effective scope automatically.
+- **Local task routing**: read-only `agentLocalPlan` answers explicit count/list/collection/tag/kind requests with zero model requests; generative, comparison and suggestion requests still go to the model.
+- **Fragment-level retrieval**: up to three anchored excerpts per long file (12 snippets by default, max 24); `read_items` reports per-source read coverage; the per-round catalog combines the user's selection with goal-related candidates and stays fixed for the task.
+- **Stable prefix**: host receipts and task state moved to a final host status message while history remains append-only for provider prefix caching.
+- **Result cards**: status, sources used, citations and open/view-sources/continue-editing on every finished task; local answers show a "completed locally, no model call" card; batch changes are summarized before confirmation.
+- **Validation**: **608 native checks, 16 desktop suites, package re-verification (15 suites) and `npm run check`** pass. An authorized before/after run on the same 30 tasks shows requests **100 → 76 (−24%)**, input tokens **566,586 → 431,132 (−24%)** and conservative cost from ¥2.68 to ¥2.11, with 26/30 passed in both rounds; the saving comes mainly from local task routing. Two passes used 190 requests, moving the project request ledger from 359 to 549.
+- **Package**: `kok-0.9.8-win-x64.zip` is built by GitHub Actions; use the size and SHA-256 from the Release assets and the accompanying `.sha256`. See the [30-task baseline with the comparison](AGENT_TASK_EVAL.md) and [v0.9.8 validation](VALIDATION_0.9.8.md).
+
+---
+
+## v0.9.5 Preview（历史 / historical）
 
 v0.9.5 是紧凑导航与动效质量修正版，不改变数据格式、原生桥接或 Agent 能力边界。
 
