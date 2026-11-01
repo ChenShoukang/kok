@@ -42,6 +42,23 @@ const ShellUi=(()=>{
   cards[next]?.querySelector('.file-open').focus({preventScroll:true});cards[next]?.scrollIntoView({block:'nearest'});
  },true);
  document.addEventListener('click',event=>{
+  const more=event.target.closest('[data-nav-more]');if(more){
+   event.preventDefault();
+   const items=[];
+   for(const group of document.querySelectorAll('#main-nav .nav-group,#extra-nav .nav-group')){
+    if(group.dataset.navKey==='library')continue;
+    const rows=[...group.querySelectorAll('.nav-item')].filter(row=>!row.classList.contains('compact-primary')&&!row.classList.contains('nav-more')&&!row.dataset.space&&!(document.body.dataset.appMode==='pure'&&group.closest('#extra-nav')&&!row.hasAttribute('data-open-knowledge')));
+    rows.forEach((row,index)=>items.push({label:row.getAttribute('aria-label')||tr('打开','Open'),icon:row.dataset.navIcon||'folder',selected:row.classList.contains('active'),separatorBefore:index===0&&items.length>0,action:()=>row.click()}));
+   }
+   const collections=[...document.querySelectorAll('#collections-nav .nav-item')];
+   collections.forEach((row,i)=>items.push({label:row.getAttribute('aria-label')||tr('分类','Collection'),icon:'folder',selected:row.classList.contains('active'),separatorBefore:i===0,action:()=>row.click()}));
+   const loose=[...document.querySelectorAll('.sidebar-scroll > .nav-item')].filter(row=>!row.closest('.nav-group')&&!row.classList.contains('nav-more'));
+   loose.forEach((row,i)=>items.push({label:row.getAttribute('aria-label')||tr('打开','Open'),icon:row.id==='private-space-toggle'?'lock':'folder',selected:row.classList.contains('active'),separatorBefore:i===0,action:()=>row.click()}));
+   const addCollection=$('#add-collection');
+   if(addCollection)items.push({label:addCollection.getAttribute('aria-label')||tr('新建分类','New collection'),icon:'plus',separatorBefore:items.length>0,action:()=>addCollection.click()});
+   if(items.length){const box=more.getBoundingClientRect(),rail=document.querySelector('.sidebar')?.getBoundingClientRect(),topbar=document.querySelector('.topbar')?.getBoundingClientRect();GlassMenu.openAt(more,{x:(rail?rail.right:box.right)+8,y:topbar?topbar.bottom+6:16},items,{label:tr('更多','More'),focus:true});}
+   return;
+  }
   const tool=event.target.closest('[data-library-tools]');if(!tool)return;
   const items=[];
   if(isSmartMode()&&Kok.enabled('ai'))items.push({label:tr('多文件对比与笔记回顾','Compare files and review notes'),icon:'spark',action:()=>openStudy('compare')});

@@ -14,7 +14,7 @@ const CalmMotion=(()=>{
   if(!element)return;const side=kind==='drawer',running=active.get(element)?.has('surface'),style=running?getComputedStyle(element):null;return play(element,[{opacity:style?.opacity??0,transform:style?.transform??(side?'translateX(10px)':'translateY(-4px)')},{opacity:1,transform:'none'}],{duration:side?180:140});
  }
  function exit(element,remove=false){
-  if(!element)return Promise.resolve();const style=getComputedStyle(element),animation=play(element,[{opacity:style.opacity,transform:'none'},{opacity:0,transform:'none'}],{duration:100,persist:true});
+  if(!element)return Promise.resolve();const style=getComputedStyle(element),transform=style.transform,animation=play(element,[{opacity:style.opacity,transform},{opacity:0,transform}],{duration:100,persist:true});
   return(animation?.finished.catch(()=>{})||Promise.resolve()).then(()=>{if(remove)element.remove();animation?.cancel();});
  }
  function visibility(element,visible){
@@ -22,7 +22,7 @@ const CalmMotion=(()=>{
   if(presence.get(element)?.visible===visible&&element.inert===!visible&&(visible?!element.classList.contains('hidden'):element.classList.contains('hidden')||running))return running?.finished.catch(()=>{})||Promise.resolve();
   const revision=(presence.get(element)?.revision||0)+1;presence.set(element,{revision,visible});element.inert=!visible;element.setAttribute('aria-hidden',String(!visible));
   if(visible){element.classList.remove('hidden');const animation=enter(element,'drawer');return animation?.finished.catch(()=>{})||Promise.resolve();}
-  const style=getComputedStyle(element),animation=play(element,[{opacity:style.opacity,transform:'none'},{opacity:0,transform:'none'}],{duration:130,persist:true});return(animation?.finished.catch(()=>{})||Promise.resolve()).then(()=>{if(presence.get(element)?.revision===revision)element.classList.add('hidden');animation?.cancel();});
+  const style=getComputedStyle(element),transform=style.transform,animation=play(element,[{opacity:style.opacity,transform},{opacity:0,transform}],{duration:130,persist:true});return(animation?.finished.catch(()=>{})||Promise.resolve()).then(()=>{if(presence.get(element)?.revision===revision)element.classList.add('hidden');animation?.cancel();});
  }
  function snapshot(element){
   const host=element.parentElement;contentGhosts.get(host)?.remove();const ghost=element.cloneNode(true),style=getComputedStyle(element);ghost.removeAttribute('id');ghost.querySelectorAll('[id]').forEach(n=>n.removeAttribute('id'));ghost.classList.add('motion-content-ghost');ghost.inert=true;ghost.setAttribute('aria-hidden','true');

@@ -1,4 +1,32 @@
-# kok v0.9.4 Preview
+# kok v0.9.5 Preview
+
+v0.9.5 是紧凑导航与动效质量修正版，不改变数据格式、原生桥接或 Agent 能力边界。
+
+- **紧凑侧栏**：≤820px 只保留今天、Agent、全部文件、空间和「更多」，加底部设置；图标 20px、点击目标 40px，650×520 下无需滚动。文件类型筛选留在资料库工具栏，避免与侧栏重复。
+- **更多浮层**：从顶部栏下方展开，只显示目的地名称和分隔线；私密文件夹、收藏、最近打开、配方、回顾、知识图谱、新建分类仍可达，当前隐藏入口让「更多」保持活动态。
+- **字体与焦点**：图标提示、搜索模式、侧栏分组标题与计数提升到 12px；菜单首项用整行高亮而非额外外框；补充 `aria-haspopup`，Escape 返回焦点。
+- **动效**：面板在打开动画中途关闭时从当前 transform 继续，不再跳回；导航指示条只动画 transform/opacity（240ms）；减少动效模式下禁用 transition。实测菜单打开最大帧间隔 11ms、预热路由切换 5.7ms。
+- **验证**：**542 项原生检查、25 组界面/回归桌面套件、14 组包级门禁**通过；逐页审计 120 张截图。真实模型总账保持 **359**，本版无新增模型调用。
+
+本机候选 ZIP：`kok-0.9.5-win-x64.zip`，31,912,551 bytes，SHA-256 `fb1fe329ffa05fd91396953ece41955f876da9c668266e771db626f107382e81`。
+
+[扁平界面说明](FLAT_UI.md) · [界面参考](INTERFACE_REFERENCES.md) · [v0.9.5 验证](VALIDATION_0.9.5.md) · [Roadmap](../ROADMAP.md) · [Changelog](../CHANGELOG.md)
+
+## English
+
+kok v0.9.5 is a compact-navigation and motion-quality release with no data format, native bridge or Agent capability changes.
+
+- **Compact rail**: below 820px only Today, Agent, All files, Spaces and one overflow entry remain, plus Settings; 20px icons and 40px targets, no rail scrollbar at 650×520. File-type filters stay in the library toolbar instead of repeating in the rail.
+- **Overflow**: opens below the topbar with destination names and separators only; Private folder, favorites, recent, recipes, review, knowledge graph and New collection remain reachable, and the overflow carries the active state for hidden routes.
+- **Type and focus**: tooltips, search mode, sidebar group labels and counts rise to 12px; the menu's first row uses a row highlight rather than an extra outline; `aria-haspopup` and Escape focus restoration are included.
+- **Motion**: panel exits continue from the current transform instead of jumping; the navigation indicator animates only transform/opacity (240ms), and reduced-motion disables it. Measured menu-open max frame gap 11ms and warm route transitions 5.7ms.
+- **Validation**: **542 native checks, 25 local UI/regression suites and a 14-suite package gate** pass; 120 reviewed screenshots. The real-model ledger stays at **359** with no new model calls.
+
+Candidate ZIP: `kok-0.9.5-win-x64.zip`, 31,912,551 bytes, SHA-256 `fb1fe329ffa05fd91396953ece41955f876da9c668266e771db626f107382e81`. See [flat UI notes](FLAT_UI.md), [interface references](INTERFACE_REFERENCES.md) and [v0.9.5 validation](VALIDATION_0.9.5.md).
+
+---
+
+## v0.9.4 Preview（历史）
 
 v0.9.4 是一次完整的界面改版，不改变数据格式、原生桥接或 Agent 能力边界。新版采用统一的扁平视觉语言、分组导航、统一文件卡片/列表与阅读/媒体工具栏，并补齐空状态、创建入口、键盘导航、菜单焦点恢复与减少动效支持。旧 classic/graphite 皮肤偏好保留可读，但统一渲染为扁平界面。
 
@@ -14,7 +42,7 @@ v0.9.4 是一次完整的界面改版，不改变数据格式、原生桥接或 
 
 [扁平界面说明](FLAT_UI.md) · [界面验证](INTERFACE_VALIDATION.md) · [v0.9.4 验证](VALIDATION_0.9.4.md) · [Roadmap](../ROADMAP.md) · [Changelog](../CHANGELOG.md)
 
-## English
+### English（v0.9.4）
 
 kok v0.9.4 is a UI refresh release with no data format, native bridge or Agent capability changes. It adopts a flat visual system, grouped navigation, unified file cards/lists and consistent reading/media toolbars, plus clearer empty states, creation entries, keyboard navigation, menu focus recovery and reduced-motion support. Saved classic/graphite skin preferences remain readable but render as the flat interface.
 

@@ -2,6 +2,10 @@
 
 [中文](ROADMAP.md) · English
 
+## v0.9.5 Preview deliverables
+
+The compact sidebar now keeps four primary destinations plus one overflow entry, moving file-type filters back to the library toolbar. Tooltips and small labels rise to 12px, targets to 40px, menu focus uses the active row instead of an outline, and interrupted panel animations preserve their current transform. The 25-suite UI/regression matrix and 14-suite package gate pass; the real-model ledger stays at 359. See [validation](docs/VALIDATION_0.9.5.md) and [flat UI notes](docs/FLAT_UI.md).
+
 ## v0.9.4 Preview deliverables
 
 The interface is refreshed with a flat visual system, grouped navigation, unified file cards/lists, consistent reading/media toolbars and keyboard-accessible interactions at compact widths. Saved classic/graphite skin preferences remain readable but render as the flat interface. Validation covers 25 local UI/regression suites and a 14-suite package gate; 120 screenshots were reviewed with no geometry or runtime findings, and the real-model ledger stays at 359. See [flat UI notes](docs/FLAT_UI.md) and [validation](docs/VALIDATION_0.9.4.md).

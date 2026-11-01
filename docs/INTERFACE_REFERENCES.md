@@ -9,11 +9,44 @@ application's appearance. All UI remains local, using kok's existing native brid
 | [Radix Dropdown Menu](https://www.radix-ui.com/primitives/docs/components/dropdown-menu) | Menus anchored to their triggers, arrow/Home/End navigation, Escape dismissal, focus restoration and a single active popover. The existing plain-JavaScript menu is retained rather than introducing a React dependency. |
 | [Zotero quick start](https://www.zotero.org/support/quick_start_guide) | Separate navigation, the file collection and details. Global search/creation are distinct from filters and sorting. The existing inspector provides file details. |
 | [Immich thumbnail implementation](https://github.com/immich-app/immich/blob/main/web/src/lib/components/assets/thumbnail/Thumbnail.svelte) | Quiet thumbnails, contextual selection/actions and keyboard focus movement. Real content is preserved while decorative fallback artwork uses neutral icons. |
+| [VS Code Activity Bar](https://code.visualstudio.com/api/ux-guidelines/activity-bar) and [Views](https://code.visualstudio.com/api/ux-guidelines/views) | The Activity Bar holds a small set of top-level view containers, not every leaf view; one clear icon per container, names on hover/focus, no duplicated icons. Keep views to a minimum. |
+| [tldraw OverflowingToolbar](https://github.com/tldraw/tldraw/blob/main/packages/tldraw/src/lib/ui/components/Toolbar/OverflowingToolbar.tsx) | Cap the main toolbar (min/max items), move the rest into a "More" overflow, and promote the most recently used overflow item back into the main toolbar. Responsive by measured width, not by guessing. |
+| [AFFiNE RootAppSidebar](https://github.com/toeverything/AFFiNE/blob/185b4826fc5ae7dcc1ba8a7c9d315d45b75e1b32/packages/frontend/core/src/components/root-app-sidebar/index.tsx) | A fixed primary region, a separately scrollable secondary region of collapsible sections, and fixed settings entry; avoids growing the icon rail without continuing to add icons. |
+| [Excalidraw Actions](https://github.com/excalidraw/excalidraw/blob/master/packages/excalidraw/components/Actions.tsx) | Related tools share one visible slot and expand through a flyout/popover; the compact surface stays readable while advanced tools remain one step away. |
+| [Radix Dropdown Menu](https://www.radix-ui.com/primitives/docs/components/dropdown-menu) | The active row is communicated with a background highlight; menu focus does not add a second outline ring. |
+| [Material motion](https://m3.material.io/styles/motion/overview) | Animate transform and opacity, avoid layout properties, and respect reduced-motion. |
 
 Lucide is pinned to 0.468.0 and distributed under its ISC license. The source
 URLs and hashes are recorded in `ui/icons/lucide/manifest.json`; the license is
 in `docs/licenses/Lucide-ISC.txt`. No application code was copied from Zotero,
 Immich or Radix. These are design references, not runtime dependencies.
+
+## Compact navigation (≤820 px)
+
+The wide sidebar keeps its labelled groups. Below 820 px the rail now has five visible
+controls: Today, Agent, All files, Spaces and a single overflow entry, plus Settings at
+the bottom. The rail no longer tries to show every destination at once.
+
+- Library type filters (Videos, Photos, Music, Documents, Books) remain in the library
+  toolbar tabs; they are not repeated in the rail or the overflow.
+- The overflow opens a label menu to the right of the rail, with separators for Organize,
+  Quick access, Tools and Collections. It has no extra headings or descriptions.
+- Private folder, collections and New collection stay reachable in the same overflow.
+- When the current destination lives in the overflow, the overflow control carries the
+  active state; primary destinations keep their direct state.
+- The compact rail has no scrollbar at 650×520; the overflow menu scrolls when needed.
+- The pattern follows VS Code's small top-level Activity Bar, tldraw's measured overflow,
+  AFFiNE's fixed-primary/scrollable-secondary split, and Excalidraw's grouped flyouts.
+
+![Compact rail at 650 px](screenshots/compact-rail.png)
+![Overflow menu at 650 px](screenshots/compact-rail-more.png)
+
+## Motion and focus
+
+- Panel exits now start from the panel's current transform rather than forcing it to `none`; interrupting an opening animation therefore continues from the current position instead of jumping back.
+- The navigation indicator only transitions `transform` and `opacity` (240ms), not width/height; reduced-motion disables the transition entirely.
+- The overflow menu uses a row highlight for keyboard focus instead of an additional outline ring; `Escape` restores focus to the overflow trigger.
+- Tooltips are 12px, and the compact rail uses 40px targets with 20px glyphs. Small sidebar labels and counts are 12px.
 
 ## Behavior and layout decisions
 

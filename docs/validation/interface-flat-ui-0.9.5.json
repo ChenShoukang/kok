@@ -1,0 +1,117 @@
+{
+  "format": "kok.interface.validation",
+  "version": "0.9.5",
+  "date": "2026-11-01",
+  "nativeChecks": {
+    "count": 542,
+    "passed": true
+  },
+  "interfaceSuites": [
+    "flat-design",
+    "interface-usage",
+    "interface-audit"
+  ],
+  "regressionSuites": {
+    "requested": 25,
+    "passed": 25,
+    "suites": [
+      "ui",
+      "features",
+      "translation",
+      "i18n",
+      "drop",
+      "workspaces",
+      "video-layout",
+      "menus-covers",
+      "organizer",
+      "companion",
+      "private-space",
+      "agent-interactions",
+      "agent-reliable",
+      "modules",
+      "documents",
+      "warehouse",
+      "viewer-shell",
+      "library-services",
+      "reading-flow",
+      "photo-tools",
+      "presentations-agent",
+      "interface-usage",
+      "flat-design",
+      "interface-audit",
+      "minimal"
+    ]
+  },
+  "compactNavigation": {
+    "visibleRailControls": 5,
+    "targetPx": 40,
+    "iconPx": 20,
+    "tooltipPx": 12,
+    "primary": [
+      "today",
+      "agent",
+      "overview",
+      "spaces"
+    ],
+    "overflow": true,
+    "railScroll": false
+  },
+  "audit": {
+    "screenshots": 120,
+    "geometryFindings": 0,
+    "runtimeFindings": 0,
+    "viewports": [
+      [
+        1440,
+        1000
+      ],
+      [
+        960,
+        720
+      ],
+      [
+        650,
+        520
+      ]
+    ],
+    "themes": [
+      "light",
+      "dark"
+    ]
+  },
+  "motion": {
+    "menuOpen": {
+      "frames": 59,
+      "maxFrameMs": 11,
+      "framesOver20Ms": 0
+    },
+    "warmRouteTransitions": {
+      "maxFrameMs": 5.7,
+      "framesOver20Ms": 0
+    },
+    "firstAgentPaintMs": 38.8,
+    "reducedMotionRunningAnimations": 0,
+    "interruptedPanel": true,
+    "animatedProperties": [
+      "transform",
+      "opacity"
+    ]
+  },
+  "font": {
+    "uiFamily": "Microsoft YaHei UI",
+    "tooltipPx": 12,
+    "menuPx": 13,
+    "smallLabelsPx": 12,
+    "railIconsPx": 20
+  },
+  "modelCalls": 0,
+  "realModelLedger": 359,
+  "artifacts": "Local screenshots and logs live under test-output/ and are not committed.",
+  "packageGate": {
+    "suites": 14,
+    "passed": true,
+    "archive": "kok-0.9.5-win-x64.zip",
+    "bytes": 31912551,
+    "sha256": "fb1fe329ffa05fd91396953ece41955f876da9c668266e771db626f107382e81"
+  }
+}

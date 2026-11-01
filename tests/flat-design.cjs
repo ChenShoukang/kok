@@ -45,6 +45,19 @@ const path=require('node:path');
     await page.screenshot({path:path.join(output,`library-${theme}-${width}.png`),animations:'disabled'});
    }
   }
+  // Compact rail: four primary destinations plus a single overflow entry. The overflow menu keeps
+  // secondary destinations reachable with labels and separators, without shrinking every icon.
+  await page.setViewportSize({width:650,height:520});await page.waitForTimeout(300);
+  const railVisible=await page.locator('.sidebar .nav-item').evaluateAll(items=>items.filter(item=>item.offsetParent!==null&&!item.classList.contains('settings-button')&&!item.classList.contains('nav-more')).length);
+  assert(railVisible<=4,'Compact rail keeps only primary destinations');
+  assert(await page.locator('[data-nav-more]').isVisible(),'Overflow trigger visible in the compact rail');
+  await page.locator('[data-nav-more]').click();await page.locator('.glass-menu:popover-open').waitFor();
+  assert(await page.locator('.glass-menu [role=menuitem]').count()>=8,'Overflow exposes secondary destinations');
+  await page.getByRole('menuitem',{name:'收藏',exact:true}).click();
+  await page.waitForFunction(()=>state.route==='favorites');
+  await page.waitForFunction(()=>document.querySelector('[data-nav-more]')?.classList.contains('active'));
+  assert.equal(await page.locator('.file-card').count(),1);
+  await page.evaluate(()=>navigate('overview'));
   await page.setViewportSize({width:1440,height:1000});
   await page.evaluate(async()=>{await setting({uiLanguage:'en',theme:'light'});I18n.applyLanguage('en');applyTheme();navigate('overview');});
   assert.equal(await page.locator('.nav-group-label').first().innerText(),'Workspace');

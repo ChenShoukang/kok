@@ -24,7 +24,9 @@ uses kok's own components and outline SVGs; no external component code was copie
 - Keyboard focus has a visible outline; view buttons expose their pressed state;
   card menus remain visible and keyboard accessible. Reduced motion is respected.
 
-Validation: `npm run check`, `build.ps1 -Test` (542 native checks), the full 25-suite UI/regression matrix and the 14-suite package gate. See [interface validation](INTERFACE_VALIDATION.md) and [v0.9.4 validation](VALIDATION_0.9.4.md).
+Compact navigation: at ≤820 px the rail shows only Today, Agent, All files, Spaces, one overflow entry and Settings. Library type filters stay in the library toolbar; the overflow exposes secondary destinations with labels and separators, and keeps Private folder, collections and New collection reachable. It follows the small top-level Activity Bar pattern from VS Code, tldraw's measured overflow, AFFiNE's fixed-primary/scrollable-secondary sidebar and Excalidraw's grouped flyouts. Targets are 40px with 20px glyphs; tooltips and small labels are 12px. Interrupted panel exits preserve their current transform, and the navigation indicator animates only transform/opacity. See [interface references](INTERFACE_REFERENCES.md#compact-navigation-820-px).
+
+Validation: `npm run check`, `build.ps1 -Test` (542 native checks), the full 25-suite UI/regression matrix and the 14-suite package gate. See [interface validation](INTERFACE_VALIDATION.md) and [v0.9.5 validation](VALIDATION_0.9.5.md).
 The desktop suite uses an isolated profile and checks saved skin compatibility,
 uniform cards, sorting, view switches, keyboard menus, favorites, document opening,
 light/dark layouts at 1440, 960 and 650 pixels, English, Pure-mode graph access,

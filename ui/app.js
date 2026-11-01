@@ -70,7 +70,7 @@ Kok.define('renderNav',function(){
   updateNavIndicator();
 });
 function updateNavIndicator(){
- const indicator=$('.nav-indicator'),active=$('.sidebar .nav-item.active');if(!indicator)return;
+ const indicator=$('.nav-indicator'),actives=[...document.querySelectorAll('.sidebar .nav-item.active')],active=actives.find(item=>item.getClientRects().length)||actives[0];if(!indicator)return;
  if(!active){indicator.style.opacity='0';return;}
  const box=active.getBoundingClientRect(),side=$('.sidebar').getBoundingClientRect();
  const clip=$('.sidebar-scroll').getBoundingClientRect();if(box.top<clip.top-1||box.bottom>clip.bottom+1){indicator.style.opacity='0';return;}
