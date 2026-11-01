@@ -15,12 +15,14 @@ namespace kok {
         public List<string> ids=new List<string>();
     }
     public class KnowledgeExcerpt { public string id,fileId,name,text; }
+    public class KnowledgeCoverage { public string id,name; public int readChars,totalChars; public bool sampled; }
     public class KnowledgeContext {
-        public string context,fingerprint,recipe,question;
+        public string context,fingerprint,recipe,question,coverageText="";
         public int characters,outputTokens;
         public bool sampled;
         public List<string> ids=new List<string>(),skipped=new List<string>();
         public List<KnowledgeExcerpt> excerpts=new List<KnowledgeExcerpt>();
+        public List<KnowledgeCoverage> coverage=new List<KnowledgeCoverage>();
         public List<ChatReference> references=new List<ChatReference>();
     }
     public class KnowledgeConnection { public string source,target,reason; }
@@ -85,12 +87,27 @@ namespace kok {
                 int allowance=Math.Min(4000,Math.Max(80,budget/ids.Count-120));var chosen=chunks.Select((chunk,n)=>new{chunk,n,score=terms.Sum(t=>chunk.IndexOf(t,StringComparison.OrdinalIgnoreCase)>=0?1:0)}).OrderByDescending(x=>x.score).ThenBy(x=>x.n).Take(Math.Max(1,allowance/700)).OrderBy(x=>x.n).Select(x=>x.chunk).ToArray();
                 string excerpt=String.Join("\n…\n",chosen);if(excerpt.Length>allowance)excerpt=excerpt.Substring(0,allowance);result.sampled=result.sampled||skipped>0||excerpt.Length<text.Length;
                 string source="S"+(result.references.Count+1),name=item.name.Length>80?item.name.Substring(0,80):item.name;
+                int totalChars=text.Length,readChars=Math.Min(excerpt.Length,totalChars);result.coverage.Add(new KnowledgeCoverage{id=id,name=name,readChars=readChars,totalChars=totalChars,sampled=skipped>0||readChars<totalChars});
                 result.ids.Add(id);result.excerpts.Add(new KnowledgeExcerpt{id=source,fileId=id,name=name,text=excerpt});result.references.Add(new ChatReference{id=source,fileId=id,label=name,excerpt=excerpt.Substring(0,Math.Min(280,excerpt.Length))});
             }}
             if(result.ids.Count<(recipe=="connect"?2:1))throw new InvalidDataException("范围内没有足够的可读正文或笔记。");
             result.context=String.Join("\n\n",result.excerpts.Select(e=>"["+e.id+"] ["+e.name+"]\n"+e.text));result.characters=result.context.Length;
             if(result.characters>budget)throw new InvalidDataException("提问或引用内容过长，请缩小范围。");
+            result.coverageText=CoverageText(result,ids.Count);
             result.fingerprint=StudyHash(new{version=KnowledgeRecipes.Version,ids=ids.OrderBy(x=>x).ToArray(),recipe=recipe,question=question,budget=budget,context=result.context});return result;
+        }
+        // Bounded per-source coverage summary: how many characters of each readable source entered
+        // the context and whether the source was sampled. Kept out of `context` so budgets/fingerprints
+        // (knowledge panes, cached reports) are unchanged; read_items appends it to its own text.
+        static string CoverageText(KnowledgeContext context,int requested){
+            var parts=new List<string>();int used=0;
+            foreach(var row in context.coverage){
+                string name=row.name??"";if(name.Length>28){int length=28;if(Char.IsHighSurrogate(name[length-1]))length--;name=name.Substring(0,length)+"…";}
+                string part=row.sampled?name+" sampled "+row.readChars+"/"+row.totalChars+" chars":name+" full";
+                if(used+part.Length+2>700){parts.Add("+"+(context.coverage.Count-parts.Count)+" more");break;}
+                parts.Add(part);used+=part.Length+2;
+            }
+            return "Coverage: "+context.ids.Count+"/"+requested+" sources"+(parts.Count==0?"":"; "+String.Join(", ",parts))+".";
         }
         public KnowledgeReport CachedKnowledgeReport(string fingerprint){lock(gate){try{if(!Db.settings.ContainsKey("knowledgeAiReports"))return null;return Json.Deserialize<List<KnowledgeReport>>(Json.Serialize(Db.settings["knowledgeAiReports"])).FirstOrDefault(r=>r.fingerprint==fingerprint);}catch{return null;}}}
         public void SaveKnowledgeReport(KnowledgeReport report){RequireAiMode();lock(gate){var reports=new List<KnowledgeReport>();try{if(Db.settings.ContainsKey("knowledgeAiReports"))reports=Json.Deserialize<List<KnowledgeReport>>(Json.Serialize(Db.settings["knowledgeAiReports"]));}catch{}reports.RemoveAll(r=>r.fingerprint==report.fingerprint);reports.Insert(0,report);Db.settings["knowledgeAiReports"]=reports.Take(12).ToList();Save();}}

@@ -5,6 +5,12 @@ application's appearance. All UI remains local, using kok's existing native brid
 
 | Reference | Pattern adopted in kok |
 | --- | --- |
+| [oil-ui visual language](https://github.com/oil-oil/oil-ui/blob/main/references/visual-language.md) and [motion](https://github.com/oil-oil/oil-ui/blob/main/references/motion.md) | Continue the selected white/plum direction, remove redundant icon containers, distinguish destination semantics, and verify visible interaction states in screenshots and an independent walkthrough. |
+| [Phosphor Icons](https://github.com/phosphor-icons/core) | A pinned offline duotone subset for navigation, file categories and the launcher. Original 256-unit viewBoxes and geometry are preserved; compact action controls retain Lucide. Source hashes and aliases are in `ui/icons/phosphor/manifest.json`. |
+| [Motion performance guide](https://motion.dev/docs/performance) and [Radix animation lifecycle](https://www.radix-ui.com/primitives/docs/guides/animation) | Compositor-friendly opacity/transform, sampled interruption continuity, a single sliding selection plate, and an exit lifecycle that releases input immediately while the old surface finishes fading. |
+| [csk66.ink](https://csk66.ink/) | Quiet light/dark contrast, adapted to near-white daylight and purple charcoal at night following the requested adjustments. The page, rail and top bar share one background. |
+| [TANCO](https://tancoai.com/) | Color fields and simple geometric composition. In kok, muted teal, rose, blue, violet and amber distinguish preview artwork and launcher icons. The continuous workspace background stays quiet. |
+| [SiYuan dock implementation](https://github.com/siyuan-note/siyuan/blob/master/app/src/layout/dock/index.ts) | A compact icon entry opens the relevant tools on demand instead of keeping every destination visible. kok uses its existing popover and command contracts. |
 | [Lucide specification](https://lucide.dev/contribute/icons/specification) and [source](https://github.com/lucide-icons/lucide/tree/0.468.0/icons) | Consistent 24-unit outline icons with round caps and joins. A pinned offline subset replaces individually drawn paths and object illustrations. Original geometry is preserved, including circles in the ellipsis icon. |
 | [Radix Dropdown Menu](https://www.radix-ui.com/primitives/docs/components/dropdown-menu) | Menus anchored to their triggers, arrow/Home/End navigation, Escape dismissal, focus restoration and a single active popover. The existing plain-JavaScript menu is retained rather than introducing a React dependency. |
 | [Zotero quick start](https://www.zotero.org/support/quick_start_guide) | Separate navigation, the file collection and details. Global search/creation are distinct from filters and sorting. The existing inspector provides file details. |
@@ -21,20 +27,26 @@ URLs and hashes are recorded in `ui/icons/lucide/manifest.json`; the license is
 in `docs/licenses/Lucide-ISC.txt`. No application code was copied from Zotero,
 Immich or Radix. These are design references, not runtime dependencies.
 
-## Compact navigation (≤820 px)
+## Short navigation at every width
 
-The wide sidebar keeps its labelled groups. Below 820 px the rail now has five visible
-controls: Today, Agent, All files, Spaces and a single overflow entry, plus Settings at
-the bottom. The rail no longer tries to show every destination at once.
+The rail has five visible controls at every width: All files, Today, Spaces, Agent
+and a single launcher, plus Settings at the bottom. Unavailable modules remove
+their own entries. The rail is 72px wide, reducing to 64px below 820px.
 
 - Library type filters (Videos, Photos, Music, Documents, Books) remain in the library
   toolbar tabs; they are not repeated in the rail or the overflow.
-- The overflow opens a label menu to the right of the rail, with separators for Organize,
-  Quick access, Tools and Collections. It has no extra headings or descriptions.
-- Private folder, collections and New collection stay reachable in the same overflow.
+- The launcher opens a three-column grid to the right of the rail. Each entry has
+  an icon and one short name, with no headings or descriptions.
+- Private folder remains in the launcher. Collections opens a separate list with
+  saved categories and New collection; categories never extend the main rail.
+- The music filter opens the existing album/audio library. Other file types use
+  their existing routes, with the same type controls available to switch back.
 - When the current destination lives in the overflow, the overflow control carries the
   active state; primary destinations keep their direct state.
 - The compact rail has no scrollbar at 650×520; the overflow menu scrolls when needed.
+- Arrow keys move across and between launcher rows. Escape restores trigger focus.
+  A background navigation refresh retains the trigger and actions resolve live
+  entries, so an open launcher does not disappear or invoke detached buttons.
 - The pattern follows VS Code's small top-level Activity Bar, tldraw's measured overflow,
   AFFiNE's fixed-primary/scrollable-secondary split, and Excalidraw's grouped flyouts.
 
@@ -46,12 +58,14 @@ the bottom. The rail no longer tries to show every destination at once.
 - Panel exits now start from the panel's current transform rather than forcing it to `none`; interrupting an opening animation therefore continues from the current position instead of jumping back.
 - The navigation indicator only transitions `transform` and `opacity` (240ms), not width/height; reduced-motion disables the transition entirely.
 - The overflow menu uses a row highlight for keyboard focus instead of an additional outline ring; `Escape` restores focus to the overflow trigger.
-- Tooltips are 12px, and the compact rail uses 40px targets with 20px glyphs. Small sidebar labels and counts are 12px.
+- Tooltips are 12px, and the compact rail uses 40px targets with 22px glyphs. Small sidebar labels and counts are 12px.
 
 ## Behavior and layout decisions
 
-- Frequent destinations remain visible; secondary tools are in a disclosure that
-  remembers its state during navigation. Current destinations expose `aria-current`.
+- Frequent destinations remain visible; secondary tools open in the launcher.
+  Current destinations expose `aria-current` and a visible selection state.
+  Favorites, Recent and Collections occupy its first row following the operation
+  walkthrough; they remain one step away without lengthening the rail.
 - A single library toolbar owns file-type filters, sorting, view switching and
   additional tools. Comparison and Agent entry points no longer compete beside
   the page title.
@@ -62,9 +76,14 @@ the bottom. The rail no longer tries to show every destination at once.
   the focused file's menu. Enter keeps the existing open/play behavior.
 - Ctrl + F focuses library search; Ctrl + K keeps the existing command palette.
   The visible search shortcut now matches the action.
-- Interaction transitions use 120–180 ms. Menu dismissal is immediate, preventing
-  a stale closing menu from occupying the top layer. Text does not scale during
-  navigation, and reduced motion disables entrance effects.
+- Menus enter over 200ms and leave over 120ms. Logical dismissal and focus return
+  are immediate; a closing surface is inert, hidden from accessibility and cannot
+  intercept input. Reopening replaces any pending exit.
+- A damped spring curve is shared by the rail and animated surfaces. Interrupted
+  transitions sample the current opacity and transform before cancelling.
+  Library filters keep their DOM and focus; sorting moves surviving visible
+  cards in one batch. Same-state rerenders do not restart a route fade.
+- Text does not scale during navigation; reduced motion bypasses transitions.
 - Equal-sized previews preserve global sort order. Format labels, hover prompts
   and per-card commands are not repeated unnecessarily. Audio duration metadata
   belongs inside its preview or list row.
@@ -80,6 +99,11 @@ captures settings, module management, private-folder entry, commands and mode
 selection, including long file names and English layouts.
 
 Screenshots are reviewed visually as well as checked for viewport overflow.
+The oil-ui refinement used an independent screenshot review and an independent
+mouse/keyboard walkthrough (search, reading, repeated favorites and retrieval).
+`tests/motion-quality.cjs` additionally checks interruption continuity, persistent
+filter focus, non-interactive exits, rapid reopening, sorting and reduced motion.
+Review records and real-animation keyframes are under `test-output/oil-ui-refinement`.
 `tools/interface-contact-sheets.cjs` creates local contact sheets for that review.
 The gallery and geometry report are saved under `test-output/interface-audit`.
 Broader existing desktop suites check reading, annotations, media playback,

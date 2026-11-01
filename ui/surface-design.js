@@ -1,7 +1,7 @@
 'use strict';
 // Use the same outline glyphs for navigation and all fallback artwork.
 const libraryObjectFiles={grid:'card_file_box_flat.svg',video:'clapper_board_flat.svg',photo:'framed_picture_flat.svg',music:'musical_note_flat.svg',document:'page_facing_up_flat.svg',book:'blue_book_flat.svg'};
-function libraryObject(kind){return `<span class="flat-object-icon" aria-hidden="true">${svg(kind)}</span>`;}
+function libraryObject(kind){return `<span class="flat-object-icon" aria-hidden="true">${glyph(kind)}</span>`;}
 function navigationIcon(...args){return Kok.invoke('navigationIcon',this,args);}
 Kok.define('navigationIcon',function(kind){return libraryObjectFiles[kind]?`<span class="nav-art nav-art-${kind}" aria-hidden="true">${libraryObject(kind)}</span>`:svg(kind);});
 (() => {

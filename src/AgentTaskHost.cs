@@ -10,7 +10,7 @@ namespace kok {
     public partial class AgentService {
         AgentJournal taskJournal;AgentTaskEngine taskEngine;
         AgentJournal TaskJournal {get{return taskJournal??(taskJournal=new AgentJournal(normalLibrary.DataDir));}}
-        public static readonly string[] AgentTaskActions={"agentTaskStart","agentTaskPresence","agentTaskRead","agentTaskList","agentTaskResume","agentTaskDecide","agentTaskStop","agentTaskAdjust","agentTaskUndo","agentTaskEvents","agentTaskDelete","agentTaskTrace","exportAgentTrace","agentHandoffPreview","agentHandoffPrepare","agentHandoffRead"};
+        public static readonly string[] AgentTaskActions={"agentTaskStart","agentTaskPresence","agentLocalPlan","agentTaskRead","agentTaskList","agentTaskResume","agentTaskDecide","agentTaskStop","agentTaskAdjust","agentTaskUndo","agentTaskEvents","agentTaskDelete","agentTaskTrace","exportAgentTrace","agentHandoffPreview","agentHandoffPrepare","agentHandoffRead"};
         void ValidateTask(AgentTaskState task){if(!String.IsNullOrEmpty(task.options.parentTaskId)&&(taskEngine==null||taskEngine.State.id!=task.options.parentTaskId||taskEngine.State.steerVersion!=task.options.parentSteering||taskEngine.Cancellation.IsCancellationRequested))throw new OperationCanceledException();try{context.Policy.Ensure(Need.Ai|Need.Network|Need.NormalLibrary,"agent");}catch(InvalidOperationException){throw new OperationCanceledException();}}
         void TaskChanged(AgentTaskState task){CancelStaleChildren(task);if(context.Jobs!=null)context.Jobs.Changed();Notify("agentTaskChanged",new{taskId=task.id,sessionId=task.options.sessionId,sequence=task.sequence,status=task.status,running=IsTaskRunning(task.id)});}
         bool EvidenceCurrent(AgentCall call){return EvidenceCurrentFor(call,taskEngine!=null&&taskEngine.State.calls.Contains(call)?taskEngine.State:null);}
@@ -46,6 +46,8 @@ namespace kok {
         public async Task<object> HandleAgentTaskAction(string action,Dictionary<string,object> a){
             if(library.IsPrivate)throw new InvalidOperationException("私密文件夹不启用 AI，请先返回普通资料库。");string id=StringArg(a,"taskId");
             if(PlatformActions.Contains(action))return await HandlePlatform(action,a);
+            // Explicit, deterministic requests are answered locally with zero model requests and no writes.
+            if(action=="agentLocalPlan")return LocalPlan(a);
             if(action=="agentTaskPresence")return TaskPresence(id,a.ContainsKey("foreground")&&Convert.ToBoolean(a["foreground"]));
             if(action=="agentTaskList")return TaskJournal.List().Where(row=>String.IsNullOrEmpty(row.parentTaskId)).OrderByDescending(t=>t.updated,StringComparer.Ordinal).ToList();
             if(action=="agentTaskRead")return TaskSnapshot(LoadTask(id));
@@ -85,6 +87,22 @@ namespace kok {
             if(action=="agentTaskAdjust"){taskEngine.Adjust(StringArg(a,"text"));return TaskSnapshot(task);}
             if(action=="agentTaskDecide"){await taskEngine.Decide(StringArg(a,"callId"),a.ContainsKey("approve")&&Convert.ToBoolean(a["approve"]),a.ContainsKey("batch")&&Convert.ToBoolean(a["batch"]),a.ContainsKey("grant")&&Convert.ToBoolean(a["grant"]));return TaskSnapshot(task);}
             throw new InvalidDataException("任务记录无效。");
+        }
+        // Local-task router: only deterministic, read-only questions over the resolved agent scope.
+        // It keeps the normal agent permission rules (Smart mode required) but needs no API key,
+        // no network and starts no task, so the UI can use it before any model is configured.
+        object LocalPlan(Dictionary<string,object> a) {
+            normalLibrary.RequireAiMode();
+            string goal=StringArg(a,"goal").Trim();
+            if(goal.Length==0||goal.Length>300)throw new InvalidDataException("任务设置无效。");
+            AgentScope scope=null;
+            if(a.ContainsKey("scope")&&a["scope"]!=null)scope=Library.Json.Deserialize<AgentScope>(Library.Json.Serialize(a["scope"]));
+            List<string> allowed=normalLibrary.ResolveAgentScope(scope);
+            scope=scope??new AgentScope();
+            string scopeLabel=scope.mode=="collection"?"分类「"+scope.collection+"」":scope.mode=="selected"?"所选 "+allowed.Count+" 份资料":"整个资料库";
+            AgentLocalTask plan=AgentLocalTasks.Plan(normalLibrary,allowed,scopeLabel,goal);
+            if(!plan.handled)return new{handled=false,local=true,reason=plan.reason};
+            return new{handled=true,local=true,query=new{text=goal,scopeLabel=plan.scopeLabel},kind=plan.kind,title=plan.title,summary=plan.summary,stats=plan.stats,items=plan.items,total=plan.total,truncated=plan.truncated,followups=plan.followups};
         }
     }
 }

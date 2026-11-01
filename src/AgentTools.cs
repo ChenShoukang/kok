@@ -28,7 +28,7 @@ namespace kok {
             if(call.tool=="list_collections")return new Dictionary<string,object>{{"text","Collections: "+String.Join(", ",state.options.allowed.Select(Find).Where(e=>e!=null).Select(e=>e.collection).Distinct())}};
             if(call.tool=="search_library")return Json.Deserialize<Dictionary<string,object>>(Json.Serialize(await AgentSearchCurrent(call.args,state.options.allowed,token)));
             var ids=AgentTaskState.Get<List<string>>(call.args,"ids");string question=call.args.ContainsKey("question")?Convert.ToString(call.args["question"]):"";
-            var result=await Task.Run(()=>BuildKnowledgeContext(ids,"summarize",question,state.options.budget),token);token.ThrowIfCancellationRequested();RequireAiMode();return new Dictionary<string,object>{{"text",result.context},{"references",result.references},{"skipped",result.skipped}};
+            var result=await Task.Run(()=>BuildKnowledgeContext(ids,"summarize",question,state.options.budget),token);token.ThrowIfCancellationRequested();RequireAiMode();string text=String.IsNullOrEmpty(result.coverageText)?result.context:result.context+"\n\n"+result.coverageText;return new Dictionary<string,object>{{"text",text},{"references",result.references},{"skipped",result.skipped},{"coverage",result.coverage}};
         }
         public AgentToolReceipt WriteAgentTool(AgentTaskState state,AgentCall call,CancellationToken token,Operations operations=null){
             if(!ModuleRegistry.Builtins.ToolEnabled(call.tool,this))throw new InvalidOperationException("此模块已停用，请在设置中启用。");

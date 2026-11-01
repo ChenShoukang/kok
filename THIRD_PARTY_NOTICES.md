@@ -236,3 +236,7 @@ kok bundles these libraries only to read and extract public web pages that the u
 The offline JavaScript interpreter uses QuickJS Emscripten 0.32.0 (release-sync). QuickJS Emscripten and the QuickJS engine are MIT licensed. The combined Jake Teton-Landis, Fabrice Bellard and Charlie Gordon notices are retained in [QuickJS-Emscripten-MIT.txt](docs/licenses/QuickJS-Emscripten-MIT.txt). Only the browser module, binding helpers and WebAssembly binary are shipped; Node.js and other build dependencies are not included.
 
 Project: https://github.com/justjake/quickjs-emscripten
+
+## Product and navigation glyphs
+
+A small Phosphor Icons duotone subset (MIT) is pinned to commit `2b75f3ad12b420c9504ef05df8d2564a28f8500e`. Original 256-unit SVG geometry and opacity are preserved. Sources, aliases and local SHA-256 hashes are recorded in `ui/icons/phosphor/manifest.json`; the complete license is in [Phosphor-MIT.txt](docs/licenses/Phosphor-MIT.txt). Existing compact action controls retain the Lucide outline subset.

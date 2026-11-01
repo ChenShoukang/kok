@@ -2,6 +2,12 @@
 
 [中文](ROADMAP.md) · English
 
+## v0.9.8 Preview deliverables
+
+Completed the interface redesign (near-white and muted purple-dark themes, minimal welcome previews, a short rail at every width, a three-column launcher with frequent destinations first, offline Phosphor duotone glyphs, interruptible motion with persistent focus) together with the Agent focus redesign: first-screen defaults with material-aware suggestions, local task routing (`agentLocalPlan`, zero model requests), fragment-level retrieval with read coverage, a cache-friendly stable message prefix, task result cards, and a fixed 30-task sample set with an offline validator plus an opt-in live evaluation entry.
+
+**608 native checks, 16 desktop suites and package re-verification pass**. A before/after comparison on the same 30 tasks shows requests falling 100 → 76 (−24%), input tokens 566,586 → 431,132 (−24%) and conservative cost from ¥2.68 to ¥2.11, with 26/30 passed in both rounds; the saving comes mainly from local task routing. The two passes used 190 requests, moving the project request ledger from 359 to 549. See [validation](docs/VALIDATION_0.9.8.md), [Agent focus](docs/AGENT_FOCUS.md), the [30-task baseline with the comparison](docs/AGENT_TASK_EVAL.md) and [interface notes](docs/FLAT_UI.md).
+
 ## v0.9.5 Preview deliverables
 
 The compact sidebar now keeps four primary destinations plus one overflow entry, moving file-type filters back to the library toolbar. Tooltips and small labels rise to 12px, targets to 40px, menu focus uses the active row instead of an outline, and interrupted panel animations preserve their current transform. The 25-suite UI/regression matrix and 14-suite package gate pass; the real-model ledger stays at 359. See [validation](docs/VALIDATION_0.9.5.md) and [flat UI notes](docs/FLAT_UI.md).

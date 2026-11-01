@@ -1,0 +1,30 @@
+{
+  "format": "kok.live-request-ledger",
+  "version": 1,
+  "model": "deepseek-chat",
+  "date": "2026-11-01",
+  "previousCount": 359,
+  "additionalCount": 190,
+  "totalCount": 549,
+  "authorization": "User authorized real-model baselines for the 30-task sample set on 2026-11-01: one post-change baseline on v0.9.8 and one pre-change baseline on the v0.9.5 package using the same samples, plus harness-validation requests. The credential was supplied by the user and cleared after every run.",
+  "tokenTotals": {
+    "inputTokens": 1087563,
+    "cachedTokens": 754176,
+    "outputTokens": 53710
+  },
+  "costEstimate": {
+    "typicalCny": 1.47,
+    "conservativeUpperBoundCny": 5.21
+  },
+  "keyCleared": true,
+  "record": "docs/validation/agent-live-0.9.8.json",
+  "beforeRecord": "docs/validation/agent-live-0.9.8-before.json",
+  "runs": {
+    "after-smoke": 2,
+    "after-full": 76,
+    "after-opened-metric": 6,
+    "before-probe": 6,
+    "before-full": 100
+  },
+  "notes": "Post-change baseline (v0.9.8): 76 requests. Pre-change baseline (v0.9.5 package, same 30 samples): 100 requests. 14 further requests validated the harness and the corrected opened metric on small subsets."
+}

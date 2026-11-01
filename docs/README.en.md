@@ -8,7 +8,9 @@ Start with the [user guide](GUIDE.en.md). Find help by the task you want to comp
 
 | Goal | Read |
 | --- | --- |
+| v0.9.8 interface redesign and Agent focus | [Validation](VALIDATION_0.9.8.md) · [Agent focus](AGENT_FOCUS.md) · [30-task evaluation](AGENT_TASK_EVAL.md) · [Interface notes](FLAT_UI.md) · [Design references](INTERFACE_REFERENCES.md) |
 | v0.9.5 compact navigation and motion polish | [Flat UI notes](FLAT_UI.md) · [Interface references](INTERFACE_REFERENCES.md) · [Interface validation](INTERFACE_VALIDATION.md) · [Release validation](VALIDATION_0.9.5.md) |
+| Real-model baseline (user-authorized budget) | [v0.9.8 30-task baseline](VALIDATION_0.9.8.md) · [v0.9.2 supplemental validation](VALIDATION_0.9.2_LIVE.md) · [request ledger](validation/live-ledger-0.9.8.json) |
 | Search, browser capture, OCR, portable restore or external read-only MCP | [v0.9.0 guide](LIBRARY_0.9.0.en.md) · [Current validation](VALIDATION_0.9.0.md) |
 | Import sources and understand Library, Spaces, Clips and smart collections | [Current user guide](GUIDE.en.md) |
 | Use kok offline, switch modes, protect records or back up a vault | [Modes, privacy and data boundaries](MODES.en.md) |
@@ -16,6 +18,7 @@ Start with the [user guide](GUIDE.en.md). Find help by the task you want to comp
 | Give Agent a scoped task and review changes | [Agent](AGENT_0.7.2.en.md) · [Evidence and review](AGENT_INTERACTIONS.en.md) · [Task/handoff boundaries](AGENT_BOUNDARIES.en.md) |
 | Use plans, request traces or local MCP tools | [v0.8.2 Agent and MCP](AGENT_0.8.2.en.md) · [Local checks and optional model evaluations](VALIDATION_0.8.2.md) |
 | Use semantic compaction, memory, subagents or sandbox computation | [Agent runtime](AGENT_RUNTIME_0.8.2.en.md) · [Runtime validation](VALIDATION_RUNTIME_0.8.2.md) |
+| Agent first screen, local routing, fragment reads and result cards (Chinese) | [Agent focus](AGENT_FOCUS.md) · [30-task evaluation baseline](AGENT_TASK_EVAL.md) |
 | Check files, codecs, subtitles and export support | [Formats](FORMATS.en.md) |
 | Write linked notes and explore a knowledge graph | [Notes and graphs](KNOWLEDGE_0.6.1.en.md) |
 | Translate documents/subtitles or configure speech captions | [Translation and captions](TRANSLATION_CAPTIONS_0.5.1.md) |
@@ -29,6 +32,7 @@ Start with the [user guide](GUIDE.en.md). Find help by the task you want to comp
 | Document | Contents |
 | --- | --- |
 | [v0.9.0 peer gaps and implementation plan (Chinese)](PEER_GAPS_0.9.0.md) | Workspace review, historical live evaluations, public sources, milestones and acceptance criteria |
+| [30-task Agent evaluation baseline (Chinese)](AGENT_TASK_EVAL.md) | Fixed samples, first real-model baseline results, acceptance criteria and token/cost/time metrics |
 | [v0.8.1 implementation scope](WAREHOUSE_0.8.1.en.md) | Current coverage, unfinished acceptance and compatibility boundaries |
 | [Validation](VALIDATION_0.8.1.md#english) | Native/desktop evidence, reproduction and limits |
 | [Development and tests](DEVELOPMENT.en.md) | Builds, isolated testing and code layout |

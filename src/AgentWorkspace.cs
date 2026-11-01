@@ -16,8 +16,22 @@ namespace kok {
                 return Db.items.Where(e=>scope.mode=="all"||scope.mode=="collection"&&e.collection==scope.collection).Select(e=>e.id).ToList();
             }
         }
-        public string AgentScopedCatalog(List<string> ids,int recent,bool selectionOrder=false) {
-            RequireAiMode();var allowed=new HashSet<string>(ids);lock(gate){var rows=selectionOrder?ids.Distinct().Select(Find).Where(e=>e!=null).ToList():Db.items.Where(e=>allowed.Contains(e.id)).OrderByDescending(e=>e.added,StringComparer.Ordinal).ToList();return "Allowed scope: "+rows.Count+" files. Search tools can search ONLY this scope."+(selectionOrder?" Catalog order is the user's selection order; first/second refer to this order.":"")+"\nCollections: "+String.Join(", ",rows.Select(e=>e.collection).Where(x=>!String.IsNullOrEmpty(x)).Distinct().Take(40))+"\n"+String.Join("\n",rows.Take(recent).Select(AgentLine));}
+        // The catalog keeps a stable goal-aware shape: the user's selection/recent files first, then
+        // local lexical matches for the goal (no model or embedding call), bounded by the recent slots.
+        public string AgentScopedCatalog(List<string> ids,int recent,bool selectionOrder=false,string goal=null) {
+            RequireAiMode();var allowed=new HashSet<string>(ids);lock(gate){
+                var rows=selectionOrder?ids.Distinct().Select(Find).Where(e=>e!=null).ToList():Db.items.Where(e=>allowed.Contains(e.id)).OrderByDescending(e=>e.added,StringComparer.Ordinal).ToList();
+                var shown=rows.Take(recent).ToList();bool relatedShown=false;
+                if(!selectionOrder&&!String.IsNullOrWhiteSpace(goal)){
+                    int quota=Math.Max(1,recent/2);var related=new List<Entry>();
+                    try{
+                        InvalidateChangedContent();var matches=store.MatchContent(goal,allowed,Math.Max(8,quota*4));var taken=new HashSet<string>(shown.Select(e=>e.id));
+                        foreach(var hit in matches){if(related.Count>=quota)break;if(hit==null||taken.Contains(hit.itemId))continue;var entry=Find(hit.itemId);if(entry==null||!allowed.Contains(entry.id))continue;taken.Add(entry.id);related.Add(entry);}
+                    }catch(Exception){related.Clear();}
+                    if(related.Count>0){shown=rows.Take(Math.Max(0,recent-related.Count)).ToList();shown.AddRange(related);relatedShown=true;}
+                }
+                return "Allowed scope: "+rows.Count+" files. Search tools can search ONLY this scope."+(selectionOrder?" Catalog order is the user's selection order; first/second refer to this order.":"")+(relatedShown?" Goal-related files are listed after the recent files.":"")+"\nCollections: "+String.Join(", ",rows.Select(e=>e.collection).Where(x=>!String.IsNullOrEmpty(x)).Distinct().Take(40))+"\n"+String.Join("\n",shown.Select(AgentLine));
+            }
         }
         // Compare every field in the batch before changing any entry. A later manual edit wins.
         public void ApplyAgentChanges(List<AgentChange> changes,string operationId="") {

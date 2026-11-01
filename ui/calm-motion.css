@@ -2,6 +2,8 @@
 .motion-choice-ready{position:relative;isolation:isolate}
 .motion-choice-ready::before{content:"";position:absolute;left:0;top:0;width:var(--motion-choice-w,0px);height:var(--motion-choice-h,0px);transform:translate(var(--motion-choice-x,0px),var(--motion-choice-y,0px));transform-origin:0 0;border-radius:4px;background:var(--view-control,var(--kok-hover));pointer-events:none;z-index:0}
 .motion-choice-ready>button{position:relative;z-index:1}
+body[data-theme][data-app-mode] [data-library-filters].motion-choice-ready::before{border-radius:8px;background:var(--kok-solid)}
+body[data-theme][data-app-mode] [data-library-filters].motion-choice-ready .filter-tab.active{background:transparent}
 .settings-tabs.motion-choice-ready::before{background:var(--ink);border-radius:1px}body[data-app-mode] .settings-tabs.motion-choice-ready [aria-selected=true]{border-bottom-color:transparent!important}
 body[data-theme][data-app-mode] .reading-flow-choices.motion-choice-ready [aria-pressed=true],body[data-app-mode] .settings-tabs.motion-choice-ready [aria-selected=true],body[data-app-mode] .reading-layout-choices.motion-choice-ready [aria-pressed=true],body[data-app-mode] .reading-side-tabs.motion-choice-ready [aria-selected=true]{background:transparent!important}
 .viewer-overflow-menu[data-motion-closing]{pointer-events:none!important}.viewer :is(#viewer-favorite,[data-add-bookmark]) svg{transform-origin:50% 50%;transition:color 140ms ease,fill-opacity 140ms ease}
@@ -32,5 +34,7 @@ body[data-theme][data-app-mode] :is(.agent-answer-actions button,.agent-chip but
 body[data-theme][data-app-mode] .agent-chip{height:30px}
 body[data-theme][data-app-mode] :is(button,a,input,select,textarea):focus-visible{outline:2px solid var(--green);outline-offset:2px}
 .glass-menu::backdrop,.motion-content-ghost,.motion-content-ghost *,.toast-stack,.toast-stack *{pointer-events:none!important}
+.glass-menu-exit,.glass-menu-exit *,.glass-menu-exit::backdrop{pointer-events:none!important}
+@media(prefers-reduced-motion:no-preference){body[data-theme][data-app-mode] :is(.button,.icon-button,.nav-item,.mode-card) .ui-icon{transition:transform 160ms cubic-bezier(.22,1,.36,1)}body[data-theme][data-app-mode] :is(.button,.icon-button,.nav-item,.mode-card):active .ui-icon{transform:scale(.92)}}
 body[data-theme][data-app-mode] #main{view-transition-name:none}
 @media(hover:none){body[data-theme][data-app-mode] .file-grid :is(.card-menu,.card-favorite){opacity:1}}

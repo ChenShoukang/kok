@@ -1,5 +1,47 @@
 {
   "messages": {
+    "高级设置": "Advanced settings",
+    "更多": "More",
+    "范围：整个资料库": "Scope: entire library",
+    "范围：所选": "Scope: selected",
+    "范围：分类": "Scope: collection",
+    "未选择": "not chosen",
+    "已选资料优先，范围按所选执行。": "Selected files take priority; the scope uses them.",
+    "整理最近导入的资料": "Organize recently imported files",
+    "统计资料库构成": "Summarize library contents",
+    "总结一个分类": "Summarize a collection",
+    "总结要点": "Summarize key points",
+    "提取待办": "Extract action items",
+    "生成一页笔记": "Create a one-page note",
+    "看懂这份资料": "Understand this PDF",
+    "提取要点": "Extract key points",
+    "生成演示": "Create a presentation",
+    "比较差异": "Compare differences",
+    "汇总共同观点": "Summarize shared views",
+    "整理成一篇笔记": "Turn into one note",
+    "整理重点与时间点": "Organize highlights and timestamps",
+    "生成字幕摘要": "Summarize subtitles",
+    "整理图片说明": "Write image captions",
+    "将修改": "Will change",
+    "项": "items",
+    "打开文档": "Open document",
+    "查看来源": "View sources",
+    "继续修改": "Continue editing",
+    "继续修改：": "Continue editing: ",
+    "本次任务未引用资料": "No sources were cited in this task.",
+    "本地完成": "Completed locally",
+    "未调用模型": "No model request",
+    "文件夹": "Folder",
+    "已中断 · 本轮操作未执行": "Interrupted · no actions from this reply executed",
+    "本任务内允许同类修改（这些资料，后续最多四次）": "Allow this tool on these sources for up to four later uses in this task",
+    "本地统计": "Local count",
+    "本地筛选": "Local filter",
+    "分类概览": "Collections overview",
+    "标签概览": "Tags overview",
+    "类型分布": "Kind breakdown",
+    "相关资料": "Related sources",
+    "用 AI 深入分析": "Analyze with AI",
+    "用 AI 分析：": "Analyze with AI: ",
     "后台任务已完成": "Background task completed",
     "查看结果": "View result",
     "← 返回": "← Back",
@@ -2482,6 +2524,18 @@
     {
       "pattern": "^前进 (\\d+) 秒$",
       "replacement": "Forward $1 seconds"
+    },
+    {
+      "pattern": "^使用 (\\d+) 份资料 · (\\d+) 处来源引用$",
+      "replacement": "Used $1 sources · $2 citations"
+    },
+    {
+      "pattern": "^仅显示前 (\\d+) 项$",
+      "replacement": "Showing the first $1 items"
+    },
+    {
+      "pattern": "^共 (\\d+) 项$",
+      "replacement": "$1 items in total"
     }
   ],
   "审批策略": "Approval policy",

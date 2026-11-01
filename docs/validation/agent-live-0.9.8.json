@@ -1,0 +1,3736 @@
+{
+  "format": "kok.agent.samples",
+  "version": 1,
+  "harness": "tests/agent-live-samples.cjs",
+  "createdAt": "2026-11-01T10:42:51.213Z",
+  "model": "deepseek-chat",
+  "syntheticSources": true,
+  "sampleSet": "tests/agent-task-samples.cjs",
+  "sampleSetVersion": 1,
+  "selected": 30,
+  "requestPlan": {
+    "cap": 150,
+    "perCategory": {
+      "local": {
+        "samples": 8,
+        "requestLimit": 4
+      },
+      "generation": {
+        "samples": 10,
+        "requestLimit": 6
+      },
+      "qa": {
+        "samples": 7,
+        "requestLimit": 6
+      },
+      "complex": {
+        "samples": 3,
+        "requestLimit": 8
+      },
+      "needs-input": {
+        "samples": 2,
+        "requestLimit": 6
+      }
+    },
+    "expectedRequests": 138,
+    "worstCaseRequests": 170
+  },
+  "skipped": [],
+  "samples": [
+    {
+      "id": "local-count-videos",
+      "title": "统计资料库视频数量",
+      "category": "local",
+      "expectedRoute": "local",
+      "expectedLocalKind": "count",
+      "actualRoute": "local",
+      "fallback": false,
+      "misrouted": false,
+      "requestLimit": 4,
+      "fixtureKind": "library",
+      "passed": true,
+      "fatal": "",
+      "checks": {
+        "resultPresent": true,
+        "artifactOpenable": true,
+        "citationsValid": true,
+        "noUnsupportedClaims": true,
+        "noErrors": true,
+        "fixtureRestored": true,
+        "outcomeAcceptable": true,
+        "honestOutcome": true,
+        "localTruth": true,
+        "noUnauthorizedWrites": true
+      },
+      "noviceChecks": {
+        "startsWithoutHelp": true,
+        "confirmsOnlyWhenNeeded": true,
+        "findsResult": true
+      },
+      "metrics": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cachedTokens": 0,
+        "cost": 0,
+        "durationMs": 693,
+        "requests": 0,
+        "retries": 0,
+        "duplicateReads": 0,
+        "opened": 0,
+        "citationsValid": true,
+        "novice": 3
+      },
+      "usage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cachedTokens": 0,
+        "cost": 0,
+        "estimated": false,
+        "requests": 0,
+        "repairs": 0
+      },
+      "durationMs": 693,
+      "taskStatus": "",
+      "timedOut": false,
+      "errors": [],
+      "result": {
+        "present": true,
+        "title": "本地统计",
+        "status": "",
+        "sourceCount": 0,
+        "citationCount": 0,
+        "answerPreview": "整个资料库中，视频共 1 份。"
+      },
+      "citations": {
+        "required": false,
+        "count": 0,
+        "resolvable": 0,
+        "valid": false,
+        "idsPreview": []
+      },
+      "artifact": {
+        "expectedExt": "",
+        "ext": "",
+        "id": "",
+        "name": "",
+        "openable": null
+      },
+      "local": {
+        "kind": "local",
+        "title": "本地统计",
+        "summary": "整个资料库中，视频共 1 份。",
+        "total": 1,
+        "statsCount": 3,
+        "itemsCount": 0,
+        "followups": 2,
+        "truthMatched": true
+      },
+      "duplicateReads": 0,
+      "reusedReadRefs": 0,
+      "writes": {
+        "proposed": 0,
+        "done": 0,
+        "applied": 0,
+        "undone": 0,
+        "proposedTools": [],
+        "approvalObserved": false,
+        "preApprovalUnchanged": true
+      },
+      "restore": {
+        "appliedChanges": 0,
+        "libraryRestored": true
+      },
+      "ui": {
+        "resultCardCount": 0,
+        "localCardCount": 1,
+        "resultCardVisible": true,
+        "localCardVisible": true,
+        "advancedPresent": true,
+        "advancedCollapsed": true
+      },
+      "answerPreview": "",
+      "planSteps": 0,
+      "verificationLevel": "",
+      "delegationUsed": false,
+      "routeEvidence": {
+        "agentLocalPlanCalls": 1,
+        "agentTaskStartCalls": 0,
+        "taskId": ""
+      },
+      "requestRetries": 0
+    },
+    {
+      "id": "local-count-pdf",
+      "title": "统计资料库 PDF 数量",
+      "category": "local",
+      "expectedRoute": "local",
+      "expectedLocalKind": "count",
+      "actualRoute": "local",
+      "fallback": false,
+      "misrouted": false,
+      "requestLimit": 4,
+      "fixtureKind": "library",
+      "passed": true,
+      "fatal": "",
+      "checks": {
+        "resultPresent": true,
+        "artifactOpenable": true,
+        "citationsValid": true,
+        "noUnsupportedClaims": true,
+        "noErrors": true,
+        "fixtureRestored": true,
+        "outcomeAcceptable": true,
+        "honestOutcome": true,
+        "localTruth": true,
+        "noUnauthorizedWrites": true
+      },
+      "noviceChecks": {
+        "startsWithoutHelp": true,
+        "confirmsOnlyWhenNeeded": true,
+        "findsResult": true
+      },
+      "metrics": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cachedTokens": 0,
+        "cost": 0,
+        "durationMs": 421,
+        "requests": 0,
+        "retries": 0,
+        "duplicateReads": 0,
+        "opened": 0,
+        "citationsValid": true,
+        "novice": 3
+      },
+      "usage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cachedTokens": 0,
+        "cost": 0,
+        "estimated": false,
+        "requests": 0,
+        "repairs": 0
+      },
+      "durationMs": 421,
+      "taskStatus": "",
+      "timedOut": false,
+      "errors": [],
+      "result": {
+        "present": true,
+        "title": "本地统计",
+        "status": "",
+        "sourceCount": 0,
+        "citationCount": 0,
+        "answerPreview": "整个资料库中，PDF 共 1 份。"
+      },
+      "citations": {
+        "required": false,
+        "count": 0,
+        "resolvable": 0,
+        "valid": false,
+        "idsPreview": []
+      },
+      "artifact": {
+        "expectedExt": "",
+        "ext": "",
+        "id": "",
+        "name": "",
+        "openable": null
+      },
+      "local": {
+        "kind": "local",
+        "title": "本地统计",
+        "summary": "整个资料库中，PDF 共 1 份。",
+        "total": 1,
+        "statsCount": 3,
+        "itemsCount": 0,
+        "followups": 2,
+        "truthMatched": true
+      },
+      "duplicateReads": 0,
+      "reusedReadRefs": 0,
+      "writes": {
+        "proposed": 0,
+        "done": 0,
+        "applied": 0,
+        "undone": 0,
+        "proposedTools": [],
+        "approvalObserved": false,
+        "preApprovalUnchanged": true
+      },
+      "restore": {
+        "appliedChanges": 0,
+        "libraryRestored": true
+      },
+      "ui": {
+        "resultCardCount": 0,
+        "localCardCount": 1,
+        "resultCardVisible": true,
+        "localCardVisible": true,
+        "advancedPresent": true,
+        "advancedCollapsed": true
+      },
+      "answerPreview": "",
+      "planSteps": 0,
+      "verificationLevel": "",
+      "delegationUsed": false,
+      "routeEvidence": {
+        "agentLocalPlanCalls": 1,
+        "agentTaskStartCalls": 0,
+        "taskId": ""
+      },
+      "requestRetries": 0
+    },
+    {
+      "id": "local-list-collection-travel",
+      "title": "列出旅行分类资料",
+      "category": "local",
+      "expectedRoute": "local",
+      "expectedLocalKind": "list",
+      "actualRoute": "local",
+      "fallback": false,
+      "misrouted": false,
+      "requestLimit": 4,
+      "fixtureKind": "library",
+      "passed": true,
+      "fatal": "",
+      "checks": {
+        "resultPresent": true,
+        "artifactOpenable": true,
+        "citationsValid": true,
+        "noUnsupportedClaims": true,
+        "noErrors": true,
+        "fixtureRestored": true,
+        "outcomeAcceptable": true,
+        "honestOutcome": true,
+        "localTruth": true,
+        "noUnauthorizedWrites": true
+      },
+      "noviceChecks": {
+        "startsWithoutHelp": true,
+        "confirmsOnlyWhenNeeded": true,
+        "findsResult": true
+      },
+      "metrics": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cachedTokens": 0,
+        "cost": 0,
+        "durationMs": 669,
+        "requests": 0,
+        "retries": 0,
+        "duplicateReads": 0,
+        "opened": 0,
+        "citationsValid": true,
+        "novice": 3
+      },
+      "usage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cachedTokens": 0,
+        "cost": 0,
+        "estimated": false,
+        "requests": 0,
+        "repairs": 0
+      },
+      "durationMs": 669,
+      "taskStatus": "",
+      "timedOut": false,
+      "errors": [],
+      "result": {
+        "present": true,
+        "title": "本地筛选",
+        "status": "",
+        "sourceCount": 0,
+        "citationCount": 0,
+        "answerPreview": "整个资料库中找到 3 份分类「评估·旅行」中的资料。"
+      },
+      "citations": {
+        "required": false,
+        "count": 0,
+        "resolvable": 0,
+        "valid": false,
+        "idsPreview": []
+      },
+      "artifact": {
+        "expectedExt": "",
+        "ext": "",
+        "id": "",
+        "name": "",
+        "openable": null
+      },
+      "local": {
+        "kind": "local",
+        "title": "本地筛选",
+        "summary": "整个资料库中找到 3 份分类「评估·旅行」中的资料。",
+        "total": 3,
+        "statsCount": 3,
+        "itemsCount": 3,
+        "followups": 2,
+        "truthMatched": true
+      },
+      "duplicateReads": 0,
+      "reusedReadRefs": 0,
+      "writes": {
+        "proposed": 0,
+        "done": 0,
+        "applied": 0,
+        "undone": 0,
+        "proposedTools": [],
+        "approvalObserved": false,
+        "preApprovalUnchanged": true
+      },
+      "restore": {
+        "appliedChanges": 0,
+        "libraryRestored": true
+      },
+      "ui": {
+        "resultCardCount": 0,
+        "localCardCount": 1,
+        "resultCardVisible": true,
+        "localCardVisible": true,
+        "advancedPresent": true,
+        "advancedCollapsed": true
+      },
+      "answerPreview": "",
+      "planSteps": 0,
+      "verificationLevel": "",
+      "delegationUsed": false,
+      "routeEvidence": {
+        "agentLocalPlanCalls": 1,
+        "agentTaskStartCalls": 0,
+        "taskId": ""
+      },
+      "requestRetries": 0
+    },
+    {
+      "id": "local-list-recent-three-days",
+      "title": "列出最近三天导入",
+      "category": "local",
+      "expectedRoute": "local",
+      "expectedLocalKind": "list",
+      "actualRoute": "local",
+      "fallback": false,
+      "misrouted": false,
+      "requestLimit": 4,
+      "fixtureKind": "library",
+      "passed": true,
+      "fatal": "",
+      "checks": {
+        "resultPresent": true,
+        "artifactOpenable": true,
+        "citationsValid": true,
+        "noUnsupportedClaims": true,
+        "noErrors": true,
+        "fixtureRestored": true,
+        "outcomeAcceptable": true,
+        "honestOutcome": true,
+        "localTruth": true,
+        "noUnauthorizedWrites": true
+      },
+      "noviceChecks": {
+        "startsWithoutHelp": true,
+        "confirmsOnlyWhenNeeded": true,
+        "findsResult": true
+      },
+      "metrics": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cachedTokens": 0,
+        "cost": 0,
+        "durationMs": 434,
+        "requests": 0,
+        "retries": 0,
+        "duplicateReads": 0,
+        "opened": 0,
+        "citationsValid": true,
+        "novice": 3
+      },
+      "usage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cachedTokens": 0,
+        "cost": 0,
+        "estimated": false,
+        "requests": 0,
+        "repairs": 0
+      },
+      "durationMs": 434,
+      "taskStatus": "",
+      "timedOut": false,
+      "errors": [],
+      "result": {
+        "present": true,
+        "title": "本地筛选",
+        "status": "",
+        "sourceCount": 0,
+        "citationCount": 0,
+        "answerPreview": "整个资料库中找到 17 份最近 3 天导入的资料。"
+      },
+      "citations": {
+        "required": false,
+        "count": 0,
+        "resolvable": 0,
+        "valid": false,
+        "idsPreview": []
+      },
+      "artifact": {
+        "expectedExt": "",
+        "ext": "",
+        "id": "",
+        "name": "",
+        "openable": null
+      },
+      "local": {
+        "kind": "local",
+        "title": "本地筛选",
+        "summary": "整个资料库中找到 17 份最近 3 天导入的资料。",
+        "total": 17,
+        "statsCount": 3,
+        "itemsCount": 12,
+        "followups": 2,
+        "truthMatched": true
+      },
+      "duplicateReads": 0,
+      "reusedReadRefs": 0,
+      "writes": {
+        "proposed": 0,
+        "done": 0,
+        "applied": 0,
+        "undone": 0,
+        "proposedTools": [],
+        "approvalObserved": false,
+        "preApprovalUnchanged": true
+      },
+      "restore": {
+        "appliedChanges": 0,
+        "libraryRestored": true
+      },
+      "ui": {
+        "resultCardCount": 0,
+        "localCardCount": 1,
+        "resultCardVisible": true,
+        "localCardVisible": true,
+        "advancedPresent": true,
+        "advancedCollapsed": true
+      },
+      "answerPreview": "",
+      "planSteps": 0,
+      "verificationLevel": "",
+      "delegationUsed": false,
+      "routeEvidence": {
+        "agentLocalPlanCalls": 1,
+        "agentTaskStartCalls": 0,
+        "taskId": ""
+      },
+      "requestRetries": 0
+    },
+    {
+      "id": "local-collections-overview",
+      "title": "查看分类及各分类数量",
+      "category": "local",
+      "expectedRoute": "local",
+      "expectedLocalKind": "collections",
+      "actualRoute": "local",
+      "fallback": false,
+      "misrouted": false,
+      "requestLimit": 4,
+      "fixtureKind": "library",
+      "passed": true,
+      "fatal": "",
+      "checks": {
+        "resultPresent": true,
+        "artifactOpenable": true,
+        "citationsValid": true,
+        "noUnsupportedClaims": true,
+        "noErrors": true,
+        "fixtureRestored": true,
+        "outcomeAcceptable": true,
+        "honestOutcome": true,
+        "localTruth": true,
+        "noUnauthorizedWrites": true
+      },
+      "noviceChecks": {
+        "startsWithoutHelp": true,
+        "confirmsOnlyWhenNeeded": true,
+        "findsResult": true
+      },
+      "metrics": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cachedTokens": 0,
+        "cost": 0,
+        "durationMs": 676,
+        "requests": 0,
+        "retries": 0,
+        "duplicateReads": 0,
+        "opened": 0,
+        "citationsValid": true,
+        "novice": 3
+      },
+      "usage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cachedTokens": 0,
+        "cost": 0,
+        "estimated": false,
+        "requests": 0,
+        "repairs": 0
+      },
+      "durationMs": 676,
+      "taskStatus": "",
+      "timedOut": false,
+      "errors": [],
+      "result": {
+        "present": true,
+        "title": "分类概览",
+        "status": "",
+        "sourceCount": 0,
+        "citationCount": 0,
+        "answerPreview": "整个资料库共有 5 个分类，「kok 示例」最多，共 10 份。"
+      },
+      "citations": {
+        "required": false,
+        "count": 0,
+        "resolvable": 0,
+        "valid": false,
+        "idsPreview": []
+      },
+      "artifact": {
+        "expectedExt": "",
+        "ext": "",
+        "id": "",
+        "name": "",
+        "openable": null
+      },
+      "local": {
+        "kind": "local",
+        "title": "分类概览",
+        "summary": "整个资料库共有 5 个分类，「kok 示例」最多，共 10 份。",
+        "total": 5,
+        "statsCount": 5,
+        "itemsCount": 0,
+        "followups": 2,
+        "truthMatched": true
+      },
+      "duplicateReads": 0,
+      "reusedReadRefs": 0,
+      "writes": {
+        "proposed": 0,
+        "done": 0,
+        "applied": 0,
+        "undone": 0,
+        "proposedTools": [],
+        "approvalObserved": false,
+        "preApprovalUnchanged": true
+      },
+      "restore": {
+        "appliedChanges": 0,
+        "libraryRestored": true
+      },
+      "ui": {
+        "resultCardCount": 0,
+        "localCardCount": 1,
+        "resultCardVisible": true,
+        "localCardVisible": true,
+        "advancedPresent": true,
+        "advancedCollapsed": true
+      },
+      "answerPreview": "",
+      "planSteps": 0,
+      "verificationLevel": "",
+      "delegationUsed": false,
+      "routeEvidence": {
+        "agentLocalPlanCalls": 1,
+        "agentTaskStartCalls": 0,
+        "taskId": ""
+      },
+      "requestRetries": 0
+    },
+    {
+      "id": "local-tags-design",
+      "title": "查找设计标签资料",
+      "category": "local",
+      "expectedRoute": "local",
+      "expectedLocalKind": "tags",
+      "actualRoute": "local",
+      "fallback": false,
+      "misrouted": false,
+      "requestLimit": 4,
+      "fixtureKind": "library",
+      "passed": true,
+      "fatal": "",
+      "checks": {
+        "resultPresent": true,
+        "artifactOpenable": true,
+        "citationsValid": true,
+        "noUnsupportedClaims": true,
+        "noErrors": true,
+        "fixtureRestored": true,
+        "outcomeAcceptable": true,
+        "honestOutcome": true,
+        "localTruth": true,
+        "noUnauthorizedWrites": true
+      },
+      "noviceChecks": {
+        "startsWithoutHelp": true,
+        "confirmsOnlyWhenNeeded": true,
+        "findsResult": true
+      },
+      "metrics": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cachedTokens": 0,
+        "cost": 0,
+        "durationMs": 420,
+        "requests": 0,
+        "retries": 0,
+        "duplicateReads": 0,
+        "opened": 0,
+        "citationsValid": true,
+        "novice": 3
+      },
+      "usage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cachedTokens": 0,
+        "cost": 0,
+        "estimated": false,
+        "requests": 0,
+        "repairs": 0
+      },
+      "durationMs": 420,
+      "taskStatus": "",
+      "timedOut": false,
+      "errors": [],
+      "result": {
+        "present": true,
+        "title": "标签概览",
+        "status": "",
+        "sourceCount": 0,
+        "citationCount": 0,
+        "answerPreview": "整个资料库共有 1 个标签，「#设计」最多，共 1 份。"
+      },
+      "citations": {
+        "required": false,
+        "count": 0,
+        "resolvable": 0,
+        "valid": false,
+        "idsPreview": []
+      },
+      "artifact": {
+        "expectedExt": "",
+        "ext": "",
+        "id": "",
+        "name": "",
+        "openable": null
+      },
+      "local": {
+        "kind": "local",
+        "title": "标签概览",
+        "summary": "整个资料库共有 1 个标签，「#设计」最多，共 1 份。",
+        "total": 1,
+        "statsCount": 1,
+        "itemsCount": 0,
+        "followups": 2,
+        "truthMatched": true
+      },
+      "duplicateReads": 0,
+      "reusedReadRefs": 0,
+      "writes": {
+        "proposed": 0,
+        "done": 0,
+        "applied": 0,
+        "undone": 0,
+        "proposedTools": [],
+        "approvalObserved": false,
+        "preApprovalUnchanged": true
+      },
+      "restore": {
+        "appliedChanges": 0,
+        "libraryRestored": true
+      },
+      "ui": {
+        "resultCardCount": 0,
+        "localCardCount": 1,
+        "resultCardVisible": true,
+        "localCardVisible": true,
+        "advancedPresent": true,
+        "advancedCollapsed": true
+      },
+      "answerPreview": "",
+      "planSteps": 0,
+      "verificationLevel": "",
+      "delegationUsed": false,
+      "routeEvidence": {
+        "agentLocalPlanCalls": 1,
+        "agentTaskStartCalls": 0,
+        "taskId": ""
+      },
+      "requestRetries": 0
+    },
+    {
+      "id": "local-kinds-distribution",
+      "title": "统计各类文件数量",
+      "category": "local",
+      "expectedRoute": "local",
+      "expectedLocalKind": "kinds",
+      "actualRoute": "local",
+      "fallback": false,
+      "misrouted": false,
+      "requestLimit": 4,
+      "fixtureKind": "library",
+      "passed": true,
+      "fatal": "",
+      "checks": {
+        "resultPresent": true,
+        "artifactOpenable": true,
+        "citationsValid": true,
+        "noUnsupportedClaims": true,
+        "noErrors": true,
+        "fixtureRestored": true,
+        "outcomeAcceptable": true,
+        "honestOutcome": true,
+        "localTruth": true,
+        "noUnauthorizedWrites": true
+      },
+      "noviceChecks": {
+        "startsWithoutHelp": true,
+        "confirmsOnlyWhenNeeded": true,
+        "findsResult": true
+      },
+      "metrics": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cachedTokens": 0,
+        "cost": 0,
+        "durationMs": 422,
+        "requests": 0,
+        "retries": 0,
+        "duplicateReads": 0,
+        "opened": 0,
+        "citationsValid": true,
+        "novice": 3
+      },
+      "usage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cachedTokens": 0,
+        "cost": 0,
+        "estimated": false,
+        "requests": 0,
+        "repairs": 0
+      },
+      "durationMs": 422,
+      "taskStatus": "",
+      "timedOut": false,
+      "errors": [],
+      "result": {
+        "present": true,
+        "title": "类型分布",
+        "status": "",
+        "sourceCount": 0,
+        "citationCount": 0,
+        "answerPreview": "整个资料库共 17 份资料：视频 1、文档 10、图片 2、音乐 2、电子书 2。"
+      },
+      "citations": {
+        "required": false,
+        "count": 0,
+        "resolvable": 0,
+        "valid": false,
+        "idsPreview": []
+      },
+      "artifact": {
+        "expectedExt": "",
+        "ext": "",
+        "id": "",
+        "name": "",
+        "openable": null
+      },
+      "local": {
+        "kind": "local",
+        "title": "类型分布",
+        "summary": "整个资料库共 17 份资料：视频 1、文档 10、图片 2、音乐 2、电子书 2。",
+        "total": 17,
+        "statsCount": 5,
+        "itemsCount": 0,
+        "followups": 2,
+        "truthMatched": true
+      },
+      "duplicateReads": 0,
+      "reusedReadRefs": 0,
+      "writes": {
+        "proposed": 0,
+        "done": 0,
+        "applied": 0,
+        "undone": 0,
+        "proposedTools": [],
+        "approvalObserved": false,
+        "preApprovalUnchanged": true
+      },
+      "restore": {
+        "appliedChanges": 0,
+        "libraryRestored": true
+      },
+      "ui": {
+        "resultCardCount": 0,
+        "localCardCount": 1,
+        "resultCardVisible": true,
+        "localCardVisible": true,
+        "advancedPresent": true,
+        "advancedCollapsed": true
+      },
+      "answerPreview": "",
+      "planSteps": 0,
+      "verificationLevel": "",
+      "delegationUsed": false,
+      "routeEvidence": {
+        "agentLocalPlanCalls": 1,
+        "agentTaskStartCalls": 0,
+        "taskId": ""
+      },
+      "requestRetries": 0
+    },
+    {
+      "id": "local-count-collection-travel",
+      "title": "统计旅行分类数量",
+      "category": "local",
+      "expectedRoute": "local",
+      "expectedLocalKind": "count",
+      "actualRoute": "local",
+      "fallback": false,
+      "misrouted": false,
+      "requestLimit": 4,
+      "fixtureKind": "library",
+      "passed": true,
+      "fatal": "",
+      "checks": {
+        "resultPresent": true,
+        "artifactOpenable": true,
+        "citationsValid": true,
+        "noUnsupportedClaims": true,
+        "noErrors": true,
+        "fixtureRestored": true,
+        "outcomeAcceptable": true,
+        "honestOutcome": true,
+        "localTruth": true,
+        "noUnauthorizedWrites": true
+      },
+      "noviceChecks": {
+        "startsWithoutHelp": true,
+        "confirmsOnlyWhenNeeded": true,
+        "findsResult": true
+      },
+      "metrics": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cachedTokens": 0,
+        "cost": 0,
+        "durationMs": 418,
+        "requests": 0,
+        "retries": 0,
+        "duplicateReads": 0,
+        "opened": 0,
+        "citationsValid": true,
+        "novice": 3
+      },
+      "usage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cachedTokens": 0,
+        "cost": 0,
+        "estimated": false,
+        "requests": 0,
+        "repairs": 0
+      },
+      "durationMs": 418,
+      "taskStatus": "",
+      "timedOut": false,
+      "errors": [],
+      "result": {
+        "present": true,
+        "title": "本地统计",
+        "status": "",
+        "sourceCount": 0,
+        "citationCount": 0,
+        "answerPreview": "整个资料库中，分类「评估·旅行」中的资料共 3 份。"
+      },
+      "citations": {
+        "required": false,
+        "count": 0,
+        "resolvable": 0,
+        "valid": false,
+        "idsPreview": []
+      },
+      "artifact": {
+        "expectedExt": "",
+        "ext": "",
+        "id": "",
+        "name": "",
+        "openable": null
+      },
+      "local": {
+        "kind": "local",
+        "title": "本地统计",
+        "summary": "整个资料库中，分类「评估·旅行」中的资料共 3 份。",
+        "total": 3,
+        "statsCount": 3,
+        "itemsCount": 0,
+        "followups": 2,
+        "truthMatched": true
+      },
+      "duplicateReads": 0,
+      "reusedReadRefs": 0,
+      "writes": {
+        "proposed": 0,
+        "done": 0,
+        "applied": 0,
+        "undone": 0,
+        "proposedTools": [],
+        "approvalObserved": false,
+        "preApprovalUnchanged": true
+      },
+      "restore": {
+        "appliedChanges": 0,
+        "libraryRestored": true
+      },
+      "ui": {
+        "resultCardCount": 0,
+        "localCardCount": 1,
+        "resultCardVisible": true,
+        "localCardVisible": true,
+        "advancedPresent": true,
+        "advancedCollapsed": true
+      },
+      "answerPreview": "",
+      "planSteps": 0,
+      "verificationLevel": "",
+      "delegationUsed": false,
+      "routeEvidence": {
+        "agentLocalPlanCalls": 1,
+        "agentTaskStartCalls": 0,
+        "taskId": ""
+      },
+      "requestRetries": 0
+    },
+    {
+      "id": "gen-summary-selected-docs",
+      "title": "总结所选文档要点",
+      "category": "generation",
+      "expectedRoute": "model",
+      "expectedLocalKind": "",
+      "actualRoute": "model",
+      "fallback": false,
+      "misrouted": false,
+      "requestLimit": 6,
+      "fixtureKind": "documents",
+      "passed": true,
+      "fatal": "",
+      "checks": {
+        "resultPresent": true,
+        "artifactOpenable": true,
+        "citationsValid": true,
+        "noUnsupportedClaims": true,
+        "noErrors": true,
+        "fixtureRestored": true,
+        "outcomeAcceptable": true,
+        "honestOutcome": true,
+        "localTruth": true,
+        "noUnauthorizedWrites": true
+      },
+      "noviceChecks": {
+        "startsWithoutHelp": true,
+        "confirmsOnlyWhenNeeded": true,
+        "findsResult": true
+      },
+      "metrics": {
+        "inputTokens": 11769,
+        "outputTokens": 636,
+        "cachedTokens": 4608,
+        "cost": 0.057252,
+        "durationMs": 5158,
+        "requests": 2,
+        "retries": 0,
+        "duplicateReads": 0,
+        "opened": 0,
+        "citationsValid": true,
+        "novice": 3
+      },
+      "usage": {
+        "inputTokens": 11769,
+        "outputTokens": 636,
+        "cachedTokens": 4608,
+        "cost": 0.057252,
+        "estimated": false,
+        "requests": 2,
+        "repairs": 0
+      },
+      "durationMs": 5158,
+      "taskStatus": "completed",
+      "timedOut": false,
+      "errors": [],
+      "result": {
+        "present": true,
+        "title": "",
+        "status": "completed",
+        "sourceCount": 2,
+        "citationCount": 2,
+        "answerPreview": "正在查看资料…"
+      },
+      "citations": {
+        "required": false,
+        "count": 2,
+        "resolvable": 2,
+        "valid": true,
+        "idsPreview": [
+          "143170ab2db848ac8de8ac5fbd524d30",
+          "b33c4c939f9342488dfc924bfb39a554"
+        ]
+      },
+      "artifact": {
+        "expectedExt": "",
+        "ext": "",
+        "id": "",
+        "name": "",
+        "openable": null
+      },
+      "local": null,
+      "duplicateReads": 0,
+      "reusedReadRefs": 0,
+      "writes": {
+        "proposed": 0,
+        "done": 0,
+        "applied": 0,
+        "undone": 0,
+        "proposedTools": [],
+        "approvalObserved": false,
+        "preApprovalUnchanged": true
+      },
+      "restore": {
+        "appliedChanges": 0,
+        "libraryRestored": true
+      },
+      "ui": {
+        "resultCardCount": 1,
+        "localCardCount": 0,
+        "resultCardVisible": true,
+        "localCardVisible": false,
+        "advancedPresent": true,
+        "advancedCollapsed": true
+      },
+      "answerPreview": "",
+      "planSteps": 2,
+      "verificationLevel": "evidence_checked",
+      "delegationUsed": false,
+      "routeEvidence": {
+        "agentLocalPlanCalls": 1,
+        "agentTaskStartCalls": 1,
+        "taskId": "8b3df3e07b3a498fbe4c9bbfc5d68b0b"
+      },
+      "requestRetries": 0
+    },
+    {
+      "id": "gen-pdf-notes",
+      "title": "PDF 阅读要点笔记",
+      "category": "generation",
+      "expectedRoute": "model",
+      "expectedLocalKind": "",
+      "actualRoute": "model",
+      "fallback": false,
+      "misrouted": false,
+      "requestLimit": 6,
+      "fixtureKind": "pdf",
+      "passed": true,
+      "fatal": "",
+      "checks": {
+        "resultPresent": true,
+        "artifactOpenable": true,
+        "citationsValid": true,
+        "noUnsupportedClaims": true,
+        "noErrors": true,
+        "fixtureRestored": true,
+        "outcomeAcceptable": true,
+        "honestOutcome": true,
+        "localTruth": true,
+        "noUnauthorizedWrites": true
+      },
+      "noviceChecks": {
+        "startsWithoutHelp": true,
+        "confirmsOnlyWhenNeeded": true,
+        "findsResult": true
+      },
+      "metrics": {
+        "inputTokens": 31640,
+        "outputTokens": 1410,
+        "cachedTokens": 20736,
+        "cost": 0.14912,
+        "durationMs": 10648,
+        "requests": 5,
+        "retries": 1,
+        "duplicateReads": 0,
+        "opened": 0,
+        "citationsValid": true,
+        "novice": 3
+      },
+      "usage": {
+        "inputTokens": 31640,
+        "outputTokens": 1410,
+        "cachedTokens": 20736,
+        "cost": 0.14912,
+        "estimated": false,
+        "requests": 5,
+        "repairs": 1
+      },
+      "durationMs": 10648,
+      "taskStatus": "completed",
+      "timedOut": false,
+      "errors": [],
+      "result": {
+        "present": true,
+        "title": "kok 使用指南 · 要点笔记",
+        "status": "completed",
+        "sourceCount": 1,
+        "citationCount": 1,
+        "answerPreview": "正在查看资料…"
+      },
+      "citations": {
+        "required": false,
+        "count": 1,
+        "resolvable": 1,
+        "valid": true,
+        "idsPreview": [
+          "964668159b1d4dc58a80ac180efd8bd9"
+        ]
+      },
+      "artifact": {
+        "expectedExt": "md",
+        "ext": "MD",
+        "id": "6c48ad8767bc4f0fb6104061a852c6de",
+        "name": "kok 使用指南 · 要点笔记",
+        "openable": true
+      },
+      "local": null,
+      "duplicateReads": 0,
+      "reusedReadRefs": 0,
+      "writes": {
+        "proposed": 1,
+        "done": 1,
+        "applied": 1,
+        "undone": 1,
+        "proposedTools": [
+          "create_document"
+        ],
+        "approvalObserved": true,
+        "preApprovalUnchanged": true
+      },
+      "restore": {
+        "appliedChanges": 1,
+        "libraryRestored": true
+      },
+      "ui": {
+        "resultCardCount": 1,
+        "localCardCount": 0,
+        "resultCardVisible": true,
+        "localCardVisible": false,
+        "advancedPresent": true,
+        "advancedCollapsed": true
+      },
+      "answerPreview": "",
+      "planSteps": 3,
+      "verificationLevel": "evidence_checked",
+      "delegationUsed": false,
+      "routeEvidence": {
+        "agentLocalPlanCalls": 1,
+        "agentTaskStartCalls": 1,
+        "taskId": "7e7f225c23ef415abfc32e0bf30128d8"
+      },
+      "requestRetries": 0
+    },
+    {
+      "id": "gen-video-subtitle-summary",
+      "title": "视频字幕摘要",
+      "category": "generation",
+      "expectedRoute": "model",
+      "expectedLocalKind": "",
+      "actualRoute": "model",
+      "fallback": false,
+      "misrouted": false,
+      "requestLimit": 6,
+      "fixtureKind": "video-subs",
+      "passed": true,
+      "fatal": "",
+      "checks": {
+        "resultPresent": true,
+        "artifactOpenable": true,
+        "citationsValid": true,
+        "noUnsupportedClaims": true,
+        "noErrors": true,
+        "fixtureRestored": true,
+        "outcomeAcceptable": true,
+        "honestOutcome": true,
+        "localTruth": true,
+        "noUnauthorizedWrites": true
+      },
+      "noviceChecks": {
+        "startsWithoutHelp": true,
+        "confirmsOnlyWhenNeeded": true,
+        "findsResult": true
+      },
+      "metrics": {
+        "inputTokens": 17820,
+        "outputTokens": 966,
+        "cachedTokens": 9344,
+        "cost": 0.086736,
+        "durationMs": 7305,
+        "requests": 3,
+        "retries": 0,
+        "duplicateReads": 0,
+        "opened": 0,
+        "citationsValid": true,
+        "novice": 3
+      },
+      "usage": {
+        "inputTokens": 17820,
+        "outputTokens": 966,
+        "cachedTokens": 9344,
+        "cost": 0.086736,
+        "estimated": false,
+        "requests": 3,
+        "repairs": 0
+      },
+      "durationMs": 7305,
+      "taskStatus": "partial",
+      "timedOut": false,
+      "errors": [],
+      "result": {
+        "present": true,
+        "title": "",
+        "status": "partial",
+        "sourceCount": 1,
+        "citationCount": 1,
+        "answerPreview": "正在查看资料…"
+      },
+      "citations": {
+        "required": false,
+        "count": 1,
+        "resolvable": 1,
+        "valid": true,
+        "idsPreview": [
+          "90a72e64d6d847928230e37c704e4735"
+        ]
+      },
+      "artifact": {
+        "expectedExt": "",
+        "ext": "",
+        "id": "",
+        "name": "",
+        "openable": null
+      },
+      "local": null,
+      "duplicateReads": 0,
+      "reusedReadRefs": 0,
+      "writes": {
+        "proposed": 0,
+        "done": 0,
+        "applied": 0,
+        "undone": 0,
+        "proposedTools": [],
+        "approvalObserved": false,
+        "preApprovalUnchanged": true
+      },
+      "restore": {
+        "appliedChanges": 0,
+        "libraryRestored": true
+      },
+      "ui": {
+        "resultCardCount": 1,
+        "localCardCount": 0,
+        "resultCardVisible": true,
+        "localCardVisible": false,
+        "advancedPresent": true,
+        "advancedCollapsed": true
+      },
+      "answerPreview": "",
+      "planSteps": 3,
+      "verificationLevel": "evidence_checked",
+      "delegationUsed": false,
+      "routeEvidence": {
+        "agentLocalPlanCalls": 1,
+        "agentTaskStartCalls": 1,
+        "taskId": "5a9fe1602d0c41089c6678c8e62a7ff9"
+      },
+      "requestRetries": 0
+    },
+    {
+      "id": "gen-note-from-docs",
+      "title": "资料整理成笔记",
+      "category": "generation",
+      "expectedRoute": "model",
+      "expectedLocalKind": "",
+      "actualRoute": "model",
+      "fallback": false,
+      "misrouted": false,
+      "requestLimit": 6,
+      "fixtureKind": "documents",
+      "passed": false,
+      "fatal": "",
+      "checks": {
+        "resultPresent": true,
+        "artifactOpenable": true,
+        "citationsValid": true,
+        "noUnsupportedClaims": true,
+        "noErrors": true,
+        "fixtureRestored": true,
+        "outcomeAcceptable": false,
+        "honestOutcome": true,
+        "localTruth": true,
+        "noUnauthorizedWrites": true
+      },
+      "noviceChecks": {
+        "startsWithoutHelp": true,
+        "confirmsOnlyWhenNeeded": true,
+        "findsResult": true
+      },
+      "metrics": {
+        "inputTokens": 39933,
+        "outputTokens": 1194,
+        "cachedTokens": 27904,
+        "cost": 0.17883599999999997,
+        "durationMs": 9535,
+        "requests": 6,
+        "retries": 2,
+        "duplicateReads": 1,
+        "opened": 0,
+        "citationsValid": true,
+        "novice": 3
+      },
+      "usage": {
+        "inputTokens": 39933,
+        "outputTokens": 1194,
+        "cachedTokens": 27904,
+        "cost": 0.17883599999999997,
+        "estimated": false,
+        "requests": 6,
+        "repairs": 2
+      },
+      "durationMs": 9535,
+      "taskStatus": "limited",
+      "timedOut": false,
+      "errors": [],
+      "result": {
+        "present": true,
+        "title": "厦门海边旅行笔记",
+        "status": "limited",
+        "sourceCount": 2,
+        "citationCount": 2,
+        "answerPreview": "正在查看资料…"
+      },
+      "citations": {
+        "required": true,
+        "count": 2,
+        "resolvable": 2,
+        "valid": true,
+        "idsPreview": [
+          "6adb1e6b81c14d85bef2f1f7f691808f",
+          "b33c4c939f9342488dfc924bfb39a554"
+        ]
+      },
+      "artifact": {
+        "expectedExt": "md",
+        "ext": "MD",
+        "id": "7aaf1ebf43524c1eb51ca121889856e4",
+        "name": "厦门海边旅行笔记",
+        "openable": true
+      },
+      "local": null,
+      "duplicateReads": 1,
+      "reusedReadRefs": 0,
+      "writes": {
+        "proposed": 1,
+        "done": 1,
+        "applied": 1,
+        "undone": 1,
+        "proposedTools": [
+          "create_document"
+        ],
+        "approvalObserved": true,
+        "preApprovalUnchanged": true
+      },
+      "restore": {
+        "appliedChanges": 1,
+        "libraryRestored": true
+      },
+      "ui": {
+        "resultCardCount": 1,
+        "localCardCount": 0,
+        "resultCardVisible": true,
+        "localCardVisible": false,
+        "advancedPresent": true,
+        "advancedCollapsed": true
+      },
+      "answerPreview": "",
+      "planSteps": 4,
+      "verificationLevel": "",
+      "delegationUsed": false,
+      "routeEvidence": {
+        "agentLocalPlanCalls": 1,
+        "agentTaskStartCalls": 1,
+        "taskId": "e12c864ebe4542d78fff7fe6f5bf8352"
+      },
+      "requestRetries": 0
+    },
+    {
+      "id": "gen-presentation-five-pages",
+      "title": "生成五页演示文稿",
+      "category": "generation",
+      "expectedRoute": "model",
+      "expectedLocalKind": "",
+      "actualRoute": "model",
+      "fallback": false,
+      "misrouted": false,
+      "requestLimit": 6,
+      "fixtureKind": "documents",
+      "passed": true,
+      "fatal": "",
+      "checks": {
+        "resultPresent": true,
+        "artifactOpenable": true,
+        "citationsValid": true,
+        "noUnsupportedClaims": true,
+        "noErrors": true,
+        "fixtureRestored": true,
+        "outcomeAcceptable": true,
+        "honestOutcome": true,
+        "localTruth": true,
+        "noUnauthorizedWrites": true
+      },
+      "noviceChecks": {
+        "startsWithoutHelp": true,
+        "confirmsOnlyWhenNeeded": true,
+        "findsResult": true
+      },
+      "metrics": {
+        "inputTokens": 26753,
+        "outputTokens": 1693,
+        "cachedTokens": 15744,
+        "cost": 0.1341,
+        "durationMs": 11572,
+        "requests": 4,
+        "retries": 0,
+        "duplicateReads": 0,
+        "opened": 0,
+        "citationsValid": true,
+        "novice": 3
+      },
+      "usage": {
+        "inputTokens": 26753,
+        "outputTokens": 1693,
+        "cachedTokens": 15744,
+        "cost": 0.1341,
+        "estimated": false,
+        "requests": 4,
+        "repairs": 0
+      },
+      "durationMs": 11572,
+      "taskStatus": "completed",
+      "timedOut": false,
+      "errors": [],
+      "result": {
+        "present": true,
+        "title": "海边旅行计划·厦门",
+        "status": "completed",
+        "sourceCount": 3,
+        "citationCount": 3,
+        "answerPreview": "正在查看资料…"
+      },
+      "citations": {
+        "required": true,
+        "count": 3,
+        "resolvable": 3,
+        "valid": true,
+        "idsPreview": [
+          "143170ab2db848ac8de8ac5fbd524d30",
+          "6adb1e6b81c14d85bef2f1f7f691808f",
+          "b33c4c939f9342488dfc924bfb39a554"
+        ]
+      },
+      "artifact": {
+        "expectedExt": "pptx",
+        "ext": "PPTX",
+        "id": "7c9e10eb4bbb4dd8882b8e3bd6e8e41e",
+        "name": "海边旅行计划·厦门",
+        "openable": true
+      },
+      "local": null,
+      "duplicateReads": 0,
+      "reusedReadRefs": 0,
+      "writes": {
+        "proposed": 1,
+        "done": 1,
+        "applied": 1,
+        "undone": 1,
+        "proposedTools": [
+          "create_presentation"
+        ],
+        "approvalObserved": true,
+        "preApprovalUnchanged": true
+      },
+      "restore": {
+        "appliedChanges": 1,
+        "libraryRestored": true
+      },
+      "ui": {
+        "resultCardCount": 1,
+        "localCardCount": 0,
+        "resultCardVisible": true,
+        "localCardVisible": false,
+        "advancedPresent": true,
+        "advancedCollapsed": true
+      },
+      "answerPreview": "",
+      "planSteps": 3,
+      "verificationLevel": "evidence_checked",
+      "delegationUsed": false,
+      "routeEvidence": {
+        "agentLocalPlanCalls": 1,
+        "agentTaskStartCalls": 1,
+        "taskId": "d7015f7b8ef14384a2eac1a8d07f54f8"
+      },
+      "requestRetries": 0
+    },
+    {
+      "id": "gen-compare-two-versions",
+      "title": "比较两版旅行计划",
+      "category": "generation",
+      "expectedRoute": "model",
+      "expectedLocalKind": "",
+      "actualRoute": "model",
+      "fallback": false,
+      "misrouted": false,
+      "requestLimit": 6,
+      "fixtureKind": "documents",
+      "passed": true,
+      "fatal": "",
+      "checks": {
+        "resultPresent": true,
+        "artifactOpenable": true,
+        "citationsValid": true,
+        "noUnsupportedClaims": true,
+        "noErrors": true,
+        "fixtureRestored": true,
+        "outcomeAcceptable": true,
+        "honestOutcome": true,
+        "localTruth": true,
+        "noUnauthorizedWrites": true
+      },
+      "noviceChecks": {
+        "startsWithoutHelp": true,
+        "confirmsOnlyWhenNeeded": true,
+        "findsResult": true
+      },
+      "metrics": {
+        "inputTokens": 18244,
+        "outputTokens": 972,
+        "cachedTokens": 14080,
+        "cost": 0.08852800000000001,
+        "durationMs": 6530,
+        "requests": 3,
+        "retries": 0,
+        "duplicateReads": 0,
+        "opened": 0,
+        "citationsValid": true,
+        "novice": 3
+      },
+      "usage": {
+        "inputTokens": 18244,
+        "outputTokens": 972,
+        "cachedTokens": 14080,
+        "cost": 0.08852800000000001,
+        "estimated": false,
+        "requests": 3,
+        "repairs": 0
+      },
+      "durationMs": 6530,
+      "taskStatus": "completed",
+      "timedOut": false,
+      "errors": [],
+      "result": {
+        "present": true,
+        "title": "",
+        "status": "completed",
+        "sourceCount": 2,
+        "citationCount": 2,
+        "answerPreview": "正在查看资料…"
+      },
+      "citations": {
+        "required": true,
+        "count": 2,
+        "resolvable": 2,
+        "valid": true,
+        "idsPreview": [
+          "143170ab2db848ac8de8ac5fbd524d30",
+          "b33c4c939f9342488dfc924bfb39a554"
+        ]
+      },
+      "artifact": {
+        "expectedExt": "",
+        "ext": "",
+        "id": "",
+        "name": "",
+        "openable": null
+      },
+      "local": null,
+      "duplicateReads": 0,
+      "reusedReadRefs": 0,
+      "writes": {
+        "proposed": 0,
+        "done": 0,
+        "applied": 0,
+        "undone": 0,
+        "proposedTools": [],
+        "approvalObserved": false,
+        "preApprovalUnchanged": true
+      },
+      "restore": {
+        "appliedChanges": 0,
+        "libraryRestored": true
+      },
+      "ui": {
+        "resultCardCount": 1,
+        "localCardCount": 0,
+        "resultCardVisible": true,
+        "localCardVisible": false,
+        "advancedPresent": true,
+        "advancedCollapsed": true
+      },
+      "answerPreview": "",
+      "planSteps": 3,
+      "verificationLevel": "evidence_checked",
+      "delegationUsed": false,
+      "routeEvidence": {
+        "agentLocalPlanCalls": 1,
+        "agentTaskStartCalls": 1,
+        "taskId": "a5dbaf20d7574c74a5642f984d1b8a08"
+      },
+      "requestRetries": 0
+    },
+    {
+      "id": "gen-organize-recent-proposal",
+      "title": "建议整理最近资料",
+      "category": "generation",
+      "expectedRoute": "model",
+      "expectedLocalKind": "",
+      "actualRoute": "model",
+      "fallback": false,
+      "misrouted": false,
+      "requestLimit": 6,
+      "fixtureKind": "library",
+      "passed": true,
+      "fatal": "",
+      "checks": {
+        "resultPresent": true,
+        "artifactOpenable": true,
+        "citationsValid": true,
+        "noUnsupportedClaims": true,
+        "noErrors": true,
+        "fixtureRestored": true,
+        "outcomeAcceptable": true,
+        "honestOutcome": true,
+        "localTruth": true,
+        "noUnauthorizedWrites": true
+      },
+      "noviceChecks": {
+        "startsWithoutHelp": true,
+        "confirmsOnlyWhenNeeded": true,
+        "findsResult": true
+      },
+      "metrics": {
+        "inputTokens": 19840,
+        "outputTokens": 1154,
+        "cachedTokens": 10368,
+        "cost": 0.097824,
+        "durationMs": 8210,
+        "requests": 3,
+        "retries": 0,
+        "duplicateReads": 0,
+        "opened": 0,
+        "citationsValid": true,
+        "novice": 3
+      },
+      "usage": {
+        "inputTokens": 19840,
+        "outputTokens": 1154,
+        "cachedTokens": 10368,
+        "cost": 0.097824,
+        "estimated": false,
+        "requests": 3,
+        "repairs": 0
+      },
+      "durationMs": 8210,
+      "taskStatus": "completed",
+      "timedOut": false,
+      "errors": [],
+      "result": {
+        "present": true,
+        "title": "",
+        "status": "completed",
+        "sourceCount": 7,
+        "citationCount": 7,
+        "answerPreview": "正在查看资料…"
+      },
+      "citations": {
+        "required": true,
+        "count": 7,
+        "resolvable": 7,
+        "valid": true,
+        "idsPreview": [
+          "143170ab2db848ac8de8ac5fbd524d30",
+          "3092454f66a349b29380581ca31ac327",
+          "4b51078e9f1749f2b5b72e1243cd3e86",
+          "6adb1e6b81c14d85bef2f1f7f691808f",
+          "a930d7f7ea2142b7a60a1b1508666c05",
+          "b060902352df4839a6a6c5591eb4490e"
+        ]
+      },
+      "artifact": {
+        "expectedExt": "",
+        "ext": "",
+        "id": "",
+        "name": "",
+        "openable": null
+      },
+      "local": null,
+      "duplicateReads": 0,
+      "reusedReadRefs": 0,
+      "writes": {
+        "proposed": 0,
+        "done": 0,
+        "applied": 0,
+        "undone": 0,
+        "proposedTools": [],
+        "approvalObserved": false,
+        "preApprovalUnchanged": true
+      },
+      "restore": {
+        "appliedChanges": 0,
+        "libraryRestored": true
+      },
+      "ui": {
+        "resultCardCount": 1,
+        "localCardCount": 0,
+        "resultCardVisible": true,
+        "localCardVisible": false,
+        "advancedPresent": true,
+        "advancedCollapsed": true
+      },
+      "answerPreview": "",
+      "planSteps": 4,
+      "verificationLevel": "evidence_checked",
+      "delegationUsed": false,
+      "routeEvidence": {
+        "agentLocalPlanCalls": 1,
+        "agentTaskStartCalls": 1,
+        "taskId": "e9281365de0249299cad77efcc3214c6"
+      },
+      "requestRetries": 0
+    },
+    {
+      "id": "gen-batch-tags-proposal",
+      "title": "批量添加标签建议",
+      "category": "generation",
+      "expectedRoute": "model",
+      "expectedLocalKind": "",
+      "actualRoute": "model",
+      "fallback": false,
+      "misrouted": false,
+      "requestLimit": 6,
+      "fixtureKind": "library",
+      "passed": true,
+      "fatal": "",
+      "checks": {
+        "resultPresent": true,
+        "artifactOpenable": true,
+        "citationsValid": true,
+        "noUnsupportedClaims": true,
+        "noErrors": true,
+        "fixtureRestored": true,
+        "outcomeAcceptable": true,
+        "honestOutcome": true,
+        "localTruth": true,
+        "noUnauthorizedWrites": true
+      },
+      "noviceChecks": {
+        "startsWithoutHelp": true,
+        "confirmsOnlyWhenNeeded": true,
+        "findsResult": true
+      },
+      "metrics": {
+        "inputTokens": 18423,
+        "outputTokens": 837,
+        "cachedTokens": 13952,
+        "cost": 0.087084,
+        "durationMs": 6354,
+        "requests": 3,
+        "retries": 0,
+        "duplicateReads": 0,
+        "opened": 0,
+        "citationsValid": true,
+        "novice": 3
+      },
+      "usage": {
+        "inputTokens": 18423,
+        "outputTokens": 837,
+        "cachedTokens": 13952,
+        "cost": 0.087084,
+        "estimated": false,
+        "requests": 3,
+        "repairs": 0
+      },
+      "durationMs": 6354,
+      "taskStatus": "completed",
+      "timedOut": false,
+      "errors": [],
+      "result": {
+        "present": true,
+        "title": "",
+        "status": "completed",
+        "sourceCount": 2,
+        "citationCount": 2,
+        "answerPreview": "正在查看资料…"
+      },
+      "citations": {
+        "required": false,
+        "count": 2,
+        "resolvable": 2,
+        "valid": true,
+        "idsPreview": [
+          "143170ab2db848ac8de8ac5fbd524d30",
+          "b33c4c939f9342488dfc924bfb39a554"
+        ]
+      },
+      "artifact": {
+        "expectedExt": "",
+        "ext": "",
+        "id": "",
+        "name": "",
+        "openable": null
+      },
+      "local": null,
+      "duplicateReads": 0,
+      "reusedReadRefs": 0,
+      "writes": {
+        "proposed": 1,
+        "done": 1,
+        "applied": 1,
+        "undone": 1,
+        "proposedTools": [
+          "add_tags"
+        ],
+        "approvalObserved": true,
+        "preApprovalUnchanged": true
+      },
+      "restore": {
+        "appliedChanges": 1,
+        "libraryRestored": true
+      },
+      "ui": {
+        "resultCardCount": 1,
+        "localCardCount": 0,
+        "resultCardVisible": true,
+        "localCardVisible": false,
+        "advancedPresent": true,
+        "advancedCollapsed": true
+      },
+      "answerPreview": "",
+      "planSteps": 2,
+      "verificationLevel": "evidence_checked",
+      "delegationUsed": false,
+      "routeEvidence": {
+        "agentLocalPlanCalls": 1,
+        "agentTaskStartCalls": 1,
+        "taskId": "8eba344fc06a45728e96fae5c01c4cbe"
+      },
+      "requestRetries": 0
+    },
+    {
+      "id": "gen-batch-collection-proposal",
+      "title": "批量移入分类建议",
+      "category": "generation",
+      "expectedRoute": "model",
+      "expectedLocalKind": "",
+      "actualRoute": "model",
+      "fallback": false,
+      "misrouted": false,
+      "requestLimit": 6,
+      "fixtureKind": "library",
+      "passed": true,
+      "fatal": "",
+      "checks": {
+        "resultPresent": true,
+        "artifactOpenable": true,
+        "citationsValid": true,
+        "noUnsupportedClaims": true,
+        "noErrors": true,
+        "fixtureRestored": true,
+        "outcomeAcceptable": true,
+        "honestOutcome": true,
+        "localTruth": true,
+        "noUnauthorizedWrites": true
+      },
+      "noviceChecks": {
+        "startsWithoutHelp": true,
+        "confirmsOnlyWhenNeeded": true,
+        "findsResult": true
+      },
+      "metrics": {
+        "inputTokens": 25939,
+        "outputTokens": 1687,
+        "cachedTokens": 19968,
+        "cost": 0.13074799999999998,
+        "durationMs": 10790,
+        "requests": 4,
+        "retries": 1,
+        "duplicateReads": 0,
+        "opened": 0,
+        "citationsValid": true,
+        "novice": 3
+      },
+      "usage": {
+        "inputTokens": 25939,
+        "outputTokens": 1687,
+        "cachedTokens": 19968,
+        "cost": 0.13074799999999998,
+        "estimated": false,
+        "requests": 4,
+        "repairs": 1
+      },
+      "durationMs": 10790,
+      "taskStatus": "completed",
+      "timedOut": false,
+      "errors": [],
+      "result": {
+        "present": true,
+        "title": "",
+        "status": "completed",
+        "sourceCount": 2,
+        "citationCount": 2,
+        "answerPreview": "正在查看资料…"
+      },
+      "citations": {
+        "required": false,
+        "count": 2,
+        "resolvable": 2,
+        "valid": true,
+        "idsPreview": [
+          "143170ab2db848ac8de8ac5fbd524d30",
+          "b33c4c939f9342488dfc924bfb39a554"
+        ]
+      },
+      "artifact": {
+        "expectedExt": "",
+        "ext": "",
+        "id": "",
+        "name": "",
+        "openable": null
+      },
+      "local": null,
+      "duplicateReads": 0,
+      "reusedReadRefs": 0,
+      "writes": {
+        "proposed": 1,
+        "done": 1,
+        "applied": 1,
+        "undone": 1,
+        "proposedTools": [
+          "set_collection"
+        ],
+        "approvalObserved": true,
+        "preApprovalUnchanged": true
+      },
+      "restore": {
+        "appliedChanges": 1,
+        "libraryRestored": true
+      },
+      "ui": {
+        "resultCardCount": 1,
+        "localCardCount": 0,
+        "resultCardVisible": true,
+        "localCardVisible": false,
+        "advancedPresent": true,
+        "advancedCollapsed": true
+      },
+      "answerPreview": "",
+      "planSteps": 3,
+      "verificationLevel": "evidence_checked",
+      "delegationUsed": false,
+      "routeEvidence": {
+        "agentLocalPlanCalls": 1,
+        "agentTaskStartCalls": 1,
+        "taskId": "630f113b30434e0da0389ad82cee5e0b"
+      },
+      "requestRetries": 0
+    },
+    {
+      "id": "gen-video-subtitle-note",
+      "title": "视频字幕时间点笔记",
+      "category": "generation",
+      "expectedRoute": "model",
+      "expectedLocalKind": "",
+      "actualRoute": "model",
+      "fallback": false,
+      "misrouted": false,
+      "requestLimit": 6,
+      "fixtureKind": "video-subs",
+      "passed": true,
+      "fatal": "",
+      "checks": {
+        "resultPresent": true,
+        "artifactOpenable": true,
+        "citationsValid": true,
+        "noUnsupportedClaims": true,
+        "noErrors": true,
+        "fixtureRestored": true,
+        "outcomeAcceptable": true,
+        "honestOutcome": true,
+        "localTruth": true,
+        "noUnauthorizedWrites": true
+      },
+      "noviceChecks": {
+        "startsWithoutHelp": true,
+        "confirmsOnlyWhenNeeded": true,
+        "findsResult": true
+      },
+      "metrics": {
+        "inputTokens": 32258,
+        "outputTokens": 1547,
+        "cachedTokens": 25600,
+        "cost": 0.153784,
+        "durationMs": 10552,
+        "requests": 5,
+        "retries": 1,
+        "duplicateReads": 0,
+        "opened": 0,
+        "citationsValid": true,
+        "novice": 3
+      },
+      "usage": {
+        "inputTokens": 32258,
+        "outputTokens": 1547,
+        "cachedTokens": 25600,
+        "cost": 0.153784,
+        "estimated": false,
+        "requests": 5,
+        "repairs": 1
+      },
+      "durationMs": 10552,
+      "taskStatus": "completed",
+      "timedOut": false,
+      "errors": [],
+      "result": {
+        "present": true,
+        "title": "一段安静的时光 - 字幕笔记",
+        "status": "completed",
+        "sourceCount": 1,
+        "citationCount": 1,
+        "answerPreview": "正在查看资料…"
+      },
+      "citations": {
+        "required": false,
+        "count": 1,
+        "resolvable": 1,
+        "valid": true,
+        "idsPreview": [
+          "90a72e64d6d847928230e37c704e4735"
+        ]
+      },
+      "artifact": {
+        "expectedExt": "md",
+        "ext": "MD",
+        "id": "a239e02c9b9143a4ae9e8a4906dddc84",
+        "name": "一段安静的时光 - 字幕笔记",
+        "openable": true
+      },
+      "local": null,
+      "duplicateReads": 0,
+      "reusedReadRefs": 0,
+      "writes": {
+        "proposed": 1,
+        "done": 1,
+        "applied": 1,
+        "undone": 1,
+        "proposedTools": [
+          "create_document"
+        ],
+        "approvalObserved": true,
+        "preApprovalUnchanged": true
+      },
+      "restore": {
+        "appliedChanges": 1,
+        "libraryRestored": true
+      },
+      "ui": {
+        "resultCardCount": 1,
+        "localCardCount": 0,
+        "resultCardVisible": true,
+        "localCardVisible": false,
+        "advancedPresent": true,
+        "advancedCollapsed": true
+      },
+      "answerPreview": "",
+      "planSteps": 3,
+      "verificationLevel": "evidence_checked",
+      "delegationUsed": false,
+      "routeEvidence": {
+        "agentLocalPlanCalls": 1,
+        "agentTaskStartCalls": 1,
+        "taskId": "746d8807f0c14872866adcfe2cb9c2aa"
+      },
+      "requestRetries": 0
+    },
+    {
+      "id": "qa-travel-budget-unknown",
+      "title": "旅行预算与住宿问题",
+      "category": "qa",
+      "expectedRoute": "model",
+      "expectedLocalKind": "",
+      "actualRoute": "model",
+      "fallback": false,
+      "misrouted": false,
+      "requestLimit": 6,
+      "fixtureKind": "documents",
+      "passed": true,
+      "fatal": "",
+      "checks": {
+        "resultPresent": true,
+        "artifactOpenable": true,
+        "citationsValid": true,
+        "noUnsupportedClaims": true,
+        "noErrors": true,
+        "fixtureRestored": true,
+        "outcomeAcceptable": true,
+        "honestOutcome": true,
+        "localTruth": true,
+        "noUnauthorizedWrites": true
+      },
+      "noviceChecks": {
+        "startsWithoutHelp": true,
+        "confirmsOnlyWhenNeeded": true,
+        "findsResult": true
+      },
+      "metrics": {
+        "inputTokens": 7496,
+        "outputTokens": 758,
+        "cachedTokens": 2560,
+        "cost": 0.042112000000000004,
+        "durationMs": 5361,
+        "requests": 2,
+        "retries": 0,
+        "duplicateReads": 0,
+        "opened": 0,
+        "citationsValid": true,
+        "novice": 3
+      },
+      "usage": {
+        "inputTokens": 7496,
+        "outputTokens": 758,
+        "cachedTokens": 2560,
+        "cost": 0.042112000000000004,
+        "estimated": false,
+        "requests": 2,
+        "repairs": 0
+      },
+      "durationMs": 5361,
+      "taskStatus": "completed",
+      "timedOut": false,
+      "errors": [],
+      "result": {
+        "present": true,
+        "title": "",
+        "status": "completed",
+        "sourceCount": 2,
+        "citationCount": 2,
+        "answerPreview": "正在查看资料…"
+      },
+      "citations": {
+        "required": true,
+        "count": 2,
+        "resolvable": 2,
+        "valid": true,
+        "idsPreview": [
+          "6adb1e6b81c14d85bef2f1f7f691808f",
+          "b33c4c939f9342488dfc924bfb39a554"
+        ]
+      },
+      "artifact": {
+        "expectedExt": "",
+        "ext": "",
+        "id": "",
+        "name": "",
+        "openable": null
+      },
+      "local": null,
+      "duplicateReads": 0,
+      "reusedReadRefs": 0,
+      "writes": {
+        "proposed": 0,
+        "done": 0,
+        "applied": 0,
+        "undone": 0,
+        "proposedTools": [],
+        "approvalObserved": false,
+        "preApprovalUnchanged": true
+      },
+      "restore": {
+        "appliedChanges": 0,
+        "libraryRestored": true
+      },
+      "ui": {
+        "resultCardCount": 1,
+        "localCardCount": 0,
+        "resultCardVisible": true,
+        "localCardVisible": false,
+        "advancedPresent": true,
+        "advancedCollapsed": true
+      },
+      "answerPreview": "",
+      "planSteps": 2,
+      "verificationLevel": "evidence_checked",
+      "delegationUsed": false,
+      "routeEvidence": {
+        "agentLocalPlanCalls": 0,
+        "agentTaskStartCalls": 1,
+        "taskId": "7c058663fb9c4ed5b87b5210f3c668fb"
+      },
+      "requestRetries": 0
+    },
+    {
+      "id": "qa-pdf-second-page",
+      "title": "PDF 内容与页码引用",
+      "category": "qa",
+      "expectedRoute": "model",
+      "expectedLocalKind": "",
+      "actualRoute": "model",
+      "fallback": false,
+      "misrouted": false,
+      "requestLimit": 6,
+      "fixtureKind": "pdf",
+      "passed": false,
+      "fatal": "",
+      "checks": {
+        "resultPresent": true,
+        "artifactOpenable": true,
+        "citationsValid": true,
+        "noUnsupportedClaims": true,
+        "noErrors": true,
+        "fixtureRestored": true,
+        "outcomeAcceptable": false,
+        "honestOutcome": true,
+        "localTruth": true,
+        "noUnauthorizedWrites": true
+      },
+      "noviceChecks": {
+        "startsWithoutHelp": true,
+        "confirmsOnlyWhenNeeded": true,
+        "findsResult": true
+      },
+      "metrics": {
+        "inputTokens": 11382,
+        "outputTokens": 765,
+        "cachedTokens": 4992,
+        "cost": 0.057768,
+        "durationMs": 7153,
+        "requests": 3,
+        "retries": 0,
+        "duplicateReads": 0,
+        "opened": 0,
+        "citationsValid": true,
+        "novice": 3
+      },
+      "usage": {
+        "inputTokens": 11382,
+        "outputTokens": 765,
+        "cachedTokens": 4992,
+        "cost": 0.057768,
+        "estimated": false,
+        "requests": 3,
+        "repairs": 0
+      },
+      "durationMs": 7153,
+      "taskStatus": "needs_input",
+      "timedOut": false,
+      "errors": [],
+      "result": {
+        "present": true,
+        "title": "",
+        "status": "needs_input",
+        "sourceCount": 1,
+        "citationCount": 1,
+        "answerPreview": "正在查看资料…"
+      },
+      "citations": {
+        "required": true,
+        "count": 1,
+        "resolvable": 1,
+        "valid": true,
+        "idsPreview": [
+          "964668159b1d4dc58a80ac180efd8bd9"
+        ]
+      },
+      "artifact": {
+        "expectedExt": "",
+        "ext": "",
+        "id": "",
+        "name": "",
+        "openable": null
+      },
+      "local": null,
+      "duplicateReads": 0,
+      "reusedReadRefs": 0,
+      "writes": {
+        "proposed": 0,
+        "done": 0,
+        "applied": 0,
+        "undone": 0,
+        "proposedTools": [],
+        "approvalObserved": false,
+        "preApprovalUnchanged": true
+      },
+      "restore": {
+        "appliedChanges": 0,
+        "libraryRestored": true
+      },
+      "ui": {
+        "resultCardCount": 1,
+        "localCardCount": 0,
+        "resultCardVisible": true,
+        "localCardVisible": false,
+        "advancedPresent": true,
+        "advancedCollapsed": true
+      },
+      "answerPreview": "",
+      "planSteps": 0,
+      "verificationLevel": "evidence_checked",
+      "delegationUsed": false,
+      "routeEvidence": {
+        "agentLocalPlanCalls": 0,
+        "agentTaskStartCalls": 1,
+        "taskId": "aed44b2ea51e4d1583d21879e68395e6"
+      },
+      "requestRetries": 0
+    },
+    {
+      "id": "qa-compare-version-budget",
+      "title": "两版预算差异问答",
+      "category": "qa",
+      "expectedRoute": "model",
+      "expectedLocalKind": "",
+      "actualRoute": "model",
+      "fallback": false,
+      "misrouted": false,
+      "requestLimit": 6,
+      "fixtureKind": "documents",
+      "passed": true,
+      "fatal": "",
+      "checks": {
+        "resultPresent": true,
+        "artifactOpenable": true,
+        "citationsValid": true,
+        "noUnsupportedClaims": true,
+        "noErrors": true,
+        "fixtureRestored": true,
+        "outcomeAcceptable": true,
+        "honestOutcome": true,
+        "localTruth": true,
+        "noUnauthorizedWrites": true
+      },
+      "noviceChecks": {
+        "startsWithoutHelp": true,
+        "confirmsOnlyWhenNeeded": true,
+        "findsResult": true
+      },
+      "metrics": {
+        "inputTokens": 11211,
+        "outputTokens": 670,
+        "cachedTokens": 5248,
+        "cost": 0.055564,
+        "durationMs": 6031,
+        "requests": 3,
+        "retries": 0,
+        "duplicateReads": 0,
+        "opened": 0,
+        "citationsValid": true,
+        "novice": 3
+      },
+      "usage": {
+        "inputTokens": 11211,
+        "outputTokens": 670,
+        "cachedTokens": 5248,
+        "cost": 0.055564,
+        "estimated": false,
+        "requests": 3,
+        "repairs": 0
+      },
+      "durationMs": 6031,
+      "taskStatus": "completed",
+      "timedOut": false,
+      "errors": [],
+      "result": {
+        "present": true,
+        "title": "",
+        "status": "completed",
+        "sourceCount": 2,
+        "citationCount": 2,
+        "answerPreview": "正在查看资料…"
+      },
+      "citations": {
+        "required": true,
+        "count": 2,
+        "resolvable": 2,
+        "valid": true,
+        "idsPreview": [
+          "143170ab2db848ac8de8ac5fbd524d30",
+          "b33c4c939f9342488dfc924bfb39a554"
+        ]
+      },
+      "artifact": {
+        "expectedExt": "",
+        "ext": "",
+        "id": "",
+        "name": "",
+        "openable": null
+      },
+      "local": null,
+      "duplicateReads": 0,
+      "reusedReadRefs": 0,
+      "writes": {
+        "proposed": 0,
+        "done": 0,
+        "applied": 0,
+        "undone": 0,
+        "proposedTools": [],
+        "approvalObserved": false,
+        "preApprovalUnchanged": true
+      },
+      "restore": {
+        "appliedChanges": 0,
+        "libraryRestored": true
+      },
+      "ui": {
+        "resultCardCount": 1,
+        "localCardCount": 0,
+        "resultCardVisible": true,
+        "localCardVisible": false,
+        "advancedPresent": true,
+        "advancedCollapsed": true
+      },
+      "answerPreview": "",
+      "planSteps": 2,
+      "verificationLevel": "evidence_checked",
+      "delegationUsed": false,
+      "routeEvidence": {
+        "agentLocalPlanCalls": 0,
+        "agentTaskStartCalls": 1,
+        "taskId": "2e2bdb55f98d414fb346252a19eee74d"
+      },
+      "requestRetries": 0
+    },
+    {
+      "id": "qa-plant-watering",
+      "title": "植物记录问答",
+      "category": "qa",
+      "expectedRoute": "model",
+      "expectedLocalKind": "",
+      "actualRoute": "model",
+      "fallback": false,
+      "misrouted": false,
+      "requestLimit": 6,
+      "fixtureKind": "documents",
+      "passed": true,
+      "fatal": "",
+      "checks": {
+        "resultPresent": true,
+        "artifactOpenable": true,
+        "citationsValid": true,
+        "noUnsupportedClaims": true,
+        "noErrors": true,
+        "fixtureRestored": true,
+        "outcomeAcceptable": true,
+        "honestOutcome": true,
+        "localTruth": true,
+        "noUnauthorizedWrites": true
+      },
+      "noviceChecks": {
+        "startsWithoutHelp": true,
+        "confirmsOnlyWhenNeeded": true,
+        "findsResult": true
+      },
+      "metrics": {
+        "inputTokens": 10967,
+        "outputTokens": 818,
+        "cachedTokens": 5376,
+        "cost": 0.05695599999999999,
+        "durationMs": 5570,
+        "requests": 3,
+        "retries": 1,
+        "duplicateReads": 0,
+        "opened": 0,
+        "citationsValid": true,
+        "novice": 3
+      },
+      "usage": {
+        "inputTokens": 10967,
+        "outputTokens": 818,
+        "cachedTokens": 5376,
+        "cost": 0.05695599999999999,
+        "estimated": false,
+        "requests": 3,
+        "repairs": 1
+      },
+      "durationMs": 5570,
+      "taskStatus": "completed",
+      "timedOut": false,
+      "errors": [],
+      "result": {
+        "present": true,
+        "title": "",
+        "status": "completed",
+        "sourceCount": 1,
+        "citationCount": 1,
+        "answerPreview": "正在查看资料…"
+      },
+      "citations": {
+        "required": true,
+        "count": 1,
+        "resolvable": 1,
+        "valid": true,
+        "idsPreview": [
+          "4b51078e9f1749f2b5b72e1243cd3e86"
+        ]
+      },
+      "artifact": {
+        "expectedExt": "",
+        "ext": "",
+        "id": "",
+        "name": "",
+        "openable": null
+      },
+      "local": null,
+      "duplicateReads": 0,
+      "reusedReadRefs": 0,
+      "writes": {
+        "proposed": 0,
+        "done": 0,
+        "applied": 0,
+        "undone": 0,
+        "proposedTools": [],
+        "approvalObserved": false,
+        "preApprovalUnchanged": true
+      },
+      "restore": {
+        "appliedChanges": 0,
+        "libraryRestored": true
+      },
+      "ui": {
+        "resultCardCount": 1,
+        "localCardCount": 0,
+        "resultCardVisible": true,
+        "localCardVisible": false,
+        "advancedPresent": true,
+        "advancedCollapsed": true
+      },
+      "answerPreview": "",
+      "planSteps": 2,
+      "verificationLevel": "evidence_checked",
+      "delegationUsed": false,
+      "routeEvidence": {
+        "agentLocalPlanCalls": 0,
+        "agentTaskStartCalls": 1,
+        "taskId": "7506fbc0a202411796bbaa9fa3f0b212"
+      },
+      "requestRetries": 0
+    },
+    {
+      "id": "qa-release-checklist",
+      "title": "发布检查清单问答",
+      "category": "qa",
+      "expectedRoute": "model",
+      "expectedLocalKind": "",
+      "actualRoute": "model",
+      "fallback": false,
+      "misrouted": false,
+      "requestLimit": 6,
+      "fixtureKind": "documents",
+      "passed": true,
+      "fatal": "",
+      "checks": {
+        "resultPresent": true,
+        "artifactOpenable": true,
+        "citationsValid": true,
+        "noUnsupportedClaims": true,
+        "noErrors": true,
+        "fixtureRestored": true,
+        "outcomeAcceptable": true,
+        "honestOutcome": true,
+        "localTruth": true,
+        "noUnauthorizedWrites": true
+      },
+      "noviceChecks": {
+        "startsWithoutHelp": true,
+        "confirmsOnlyWhenNeeded": true,
+        "findsResult": true
+      },
+      "metrics": {
+        "inputTokens": 7475,
+        "outputTokens": 643,
+        "cachedTokens": 2432,
+        "cost": 0.040188,
+        "durationMs": 4306,
+        "requests": 2,
+        "retries": 0,
+        "duplicateReads": 0,
+        "opened": 0,
+        "citationsValid": true,
+        "novice": 3
+      },
+      "usage": {
+        "inputTokens": 7475,
+        "outputTokens": 643,
+        "cachedTokens": 2432,
+        "cost": 0.040188,
+        "estimated": false,
+        "requests": 2,
+        "repairs": 0
+      },
+      "durationMs": 4306,
+      "taskStatus": "completed",
+      "timedOut": false,
+      "errors": [],
+      "result": {
+        "present": true,
+        "title": "",
+        "status": "completed",
+        "sourceCount": 2,
+        "citationCount": 2,
+        "answerPreview": "正在查看资料…"
+      },
+      "citations": {
+        "required": true,
+        "count": 2,
+        "resolvable": 2,
+        "valid": true,
+        "idsPreview": [
+          "3092454f66a349b29380581ca31ac327",
+          "3f48ac96dc5849ec89391c24c8bff7e1"
+        ]
+      },
+      "artifact": {
+        "expectedExt": "",
+        "ext": "",
+        "id": "",
+        "name": "",
+        "openable": null
+      },
+      "local": null,
+      "duplicateReads": 0,
+      "reusedReadRefs": 0,
+      "writes": {
+        "proposed": 0,
+        "done": 0,
+        "applied": 0,
+        "undone": 0,
+        "proposedTools": [],
+        "approvalObserved": false,
+        "preApprovalUnchanged": true
+      },
+      "restore": {
+        "appliedChanges": 0,
+        "libraryRestored": true
+      },
+      "ui": {
+        "resultCardCount": 1,
+        "localCardCount": 0,
+        "resultCardVisible": true,
+        "localCardVisible": false,
+        "advancedPresent": true,
+        "advancedCollapsed": true
+      },
+      "answerPreview": "",
+      "planSteps": 2,
+      "verificationLevel": "evidence_checked",
+      "delegationUsed": false,
+      "routeEvidence": {
+        "agentLocalPlanCalls": 0,
+        "agentTaskStartCalls": 1,
+        "taskId": "cfaf66ac92414317b229cf5a48d561bf"
+      },
+      "requestRetries": 0
+    },
+    {
+      "id": "qa-reading-plan-dates",
+      "title": "阅读计划日期问答",
+      "category": "qa",
+      "expectedRoute": "model",
+      "expectedLocalKind": "",
+      "actualRoute": "model",
+      "fallback": false,
+      "misrouted": false,
+      "requestLimit": 6,
+      "fixtureKind": "documents",
+      "passed": true,
+      "fatal": "",
+      "checks": {
+        "resultPresent": true,
+        "artifactOpenable": true,
+        "citationsValid": true,
+        "noUnsupportedClaims": true,
+        "noErrors": true,
+        "fixtureRestored": true,
+        "outcomeAcceptable": true,
+        "honestOutcome": true,
+        "localTruth": true,
+        "noUnauthorizedWrites": true
+      },
+      "noviceChecks": {
+        "startsWithoutHelp": true,
+        "confirmsOnlyWhenNeeded": true,
+        "findsResult": true
+      },
+      "metrics": {
+        "inputTokens": 7273,
+        "outputTokens": 655,
+        "cachedTokens": 2304,
+        "cost": 0.039571999999999996,
+        "durationMs": 4611,
+        "requests": 2,
+        "retries": 0,
+        "duplicateReads": 0,
+        "opened": 0,
+        "citationsValid": true,
+        "novice": 3
+      },
+      "usage": {
+        "inputTokens": 7273,
+        "outputTokens": 655,
+        "cachedTokens": 2304,
+        "cost": 0.039571999999999996,
+        "estimated": false,
+        "requests": 2,
+        "repairs": 0
+      },
+      "durationMs": 4611,
+      "taskStatus": "completed",
+      "timedOut": false,
+      "errors": [],
+      "result": {
+        "present": true,
+        "title": "",
+        "status": "completed",
+        "sourceCount": 1,
+        "citationCount": 1,
+        "answerPreview": "正在查看资料…"
+      },
+      "citations": {
+        "required": true,
+        "count": 1,
+        "resolvable": 1,
+        "valid": true,
+        "idsPreview": [
+          "b060902352df4839a6a6c5591eb4490e"
+        ]
+      },
+      "artifact": {
+        "expectedExt": "",
+        "ext": "",
+        "id": "",
+        "name": "",
+        "openable": null
+      },
+      "local": null,
+      "duplicateReads": 0,
+      "reusedReadRefs": 0,
+      "writes": {
+        "proposed": 0,
+        "done": 0,
+        "applied": 0,
+        "undone": 0,
+        "proposedTools": [],
+        "approvalObserved": false,
+        "preApprovalUnchanged": true
+      },
+      "restore": {
+        "appliedChanges": 0,
+        "libraryRestored": true
+      },
+      "ui": {
+        "resultCardCount": 1,
+        "localCardCount": 0,
+        "resultCardVisible": true,
+        "localCardVisible": false,
+        "advancedPresent": true,
+        "advancedCollapsed": true
+      },
+      "answerPreview": "",
+      "planSteps": 2,
+      "verificationLevel": "evidence_checked",
+      "delegationUsed": false,
+      "routeEvidence": {
+        "agentLocalPlanCalls": 0,
+        "agentTaskStartCalls": 1,
+        "taskId": "7062641467664293b08e7ba5d4473a02"
+      },
+      "requestRetries": 0
+    },
+    {
+      "id": "qa-travel-preparation",
+      "title": "旅行准备清单问答",
+      "category": "qa",
+      "expectedRoute": "model",
+      "expectedLocalKind": "",
+      "actualRoute": "model",
+      "fallback": false,
+      "misrouted": false,
+      "requestLimit": 6,
+      "fixtureKind": "documents",
+      "passed": true,
+      "fatal": "",
+      "checks": {
+        "resultPresent": true,
+        "artifactOpenable": true,
+        "citationsValid": true,
+        "noUnsupportedClaims": true,
+        "noErrors": true,
+        "fixtureRestored": true,
+        "outcomeAcceptable": true,
+        "honestOutcome": true,
+        "localTruth": true,
+        "noUnauthorizedWrites": true
+      },
+      "noviceChecks": {
+        "startsWithoutHelp": true,
+        "confirmsOnlyWhenNeeded": true,
+        "findsResult": true
+      },
+      "metrics": {
+        "inputTokens": 7496,
+        "outputTokens": 754,
+        "cachedTokens": 2432,
+        "cost": 0.042048,
+        "durationMs": 4737,
+        "requests": 2,
+        "retries": 0,
+        "duplicateReads": 0,
+        "opened": 0,
+        "citationsValid": true,
+        "novice": 3
+      },
+      "usage": {
+        "inputTokens": 7496,
+        "outputTokens": 754,
+        "cachedTokens": 2432,
+        "cost": 0.042048,
+        "estimated": false,
+        "requests": 2,
+        "repairs": 0
+      },
+      "durationMs": 4737,
+      "taskStatus": "completed",
+      "timedOut": false,
+      "errors": [],
+      "result": {
+        "present": true,
+        "title": "",
+        "status": "completed",
+        "sourceCount": 2,
+        "citationCount": 2,
+        "answerPreview": "正在查看资料…"
+      },
+      "citations": {
+        "required": true,
+        "count": 2,
+        "resolvable": 2,
+        "valid": true,
+        "idsPreview": [
+          "6adb1e6b81c14d85bef2f1f7f691808f",
+          "b33c4c939f9342488dfc924bfb39a554"
+        ]
+      },
+      "artifact": {
+        "expectedExt": "",
+        "ext": "",
+        "id": "",
+        "name": "",
+        "openable": null
+      },
+      "local": null,
+      "duplicateReads": 0,
+      "reusedReadRefs": 0,
+      "writes": {
+        "proposed": 0,
+        "done": 0,
+        "applied": 0,
+        "undone": 0,
+        "proposedTools": [],
+        "approvalObserved": false,
+        "preApprovalUnchanged": true
+      },
+      "restore": {
+        "appliedChanges": 0,
+        "libraryRestored": true
+      },
+      "ui": {
+        "resultCardCount": 1,
+        "localCardCount": 0,
+        "resultCardVisible": true,
+        "localCardVisible": false,
+        "advancedPresent": true,
+        "advancedCollapsed": true
+      },
+      "answerPreview": "",
+      "planSteps": 2,
+      "verificationLevel": "evidence_checked",
+      "delegationUsed": false,
+      "routeEvidence": {
+        "agentLocalPlanCalls": 0,
+        "agentTaskStartCalls": 1,
+        "taskId": "8eeb79b56fce496fb3311822e8d4157b"
+      },
+      "requestRetries": 0
+    },
+    {
+      "id": "complex-delegation-two-docs",
+      "title": "委派子任务汇总两份资料",
+      "category": "complex",
+      "expectedRoute": "model",
+      "expectedLocalKind": "",
+      "actualRoute": "model",
+      "fallback": false,
+      "misrouted": false,
+      "requestLimit": 8,
+      "fixtureKind": "documents",
+      "passed": true,
+      "fatal": "",
+      "checks": {
+        "resultPresent": true,
+        "artifactOpenable": true,
+        "citationsValid": true,
+        "noUnsupportedClaims": true,
+        "noErrors": true,
+        "fixtureRestored": true,
+        "outcomeAcceptable": true,
+        "honestOutcome": true,
+        "localTruth": true,
+        "noUnauthorizedWrites": true
+      },
+      "noviceChecks": {
+        "startsWithoutHelp": true,
+        "confirmsOnlyWhenNeeded": true,
+        "findsResult": true
+      },
+      "metrics": {
+        "inputTokens": 27820,
+        "outputTokens": 2227,
+        "cachedTokens": 16384,
+        "cost": 0.146912,
+        "durationMs": 14132,
+        "requests": 5,
+        "retries": 0,
+        "duplicateReads": 0,
+        "opened": 0,
+        "citationsValid": true,
+        "novice": 3
+      },
+      "usage": {
+        "inputTokens": 27820,
+        "outputTokens": 2227,
+        "cachedTokens": 16384,
+        "cost": 0.146912,
+        "estimated": false,
+        "requests": 5,
+        "repairs": 0
+      },
+      "durationMs": 14132,
+      "taskStatus": "completed",
+      "timedOut": false,
+      "errors": [],
+      "result": {
+        "present": true,
+        "title": "",
+        "status": "completed",
+        "sourceCount": 2,
+        "citationCount": 2,
+        "answerPreview": "正在查看资料…"
+      },
+      "citations": {
+        "required": true,
+        "count": 2,
+        "resolvable": 2,
+        "valid": true,
+        "idsPreview": [
+          "143170ab2db848ac8de8ac5fbd524d30",
+          "b33c4c939f9342488dfc924bfb39a554"
+        ]
+      },
+      "artifact": {
+        "expectedExt": "",
+        "ext": "",
+        "id": "",
+        "name": "",
+        "openable": null
+      },
+      "local": null,
+      "duplicateReads": 0,
+      "reusedReadRefs": 0,
+      "writes": {
+        "proposed": 1,
+        "done": 1,
+        "applied": 0,
+        "undone": 0,
+        "proposedTools": [
+          "delegate_task"
+        ],
+        "approvalObserved": true,
+        "preApprovalUnchanged": true
+      },
+      "restore": {
+        "appliedChanges": 0,
+        "libraryRestored": true
+      },
+      "ui": {
+        "resultCardCount": 1,
+        "localCardCount": 0,
+        "resultCardVisible": true,
+        "localCardVisible": false,
+        "advancedPresent": true,
+        "advancedCollapsed": true
+      },
+      "answerPreview": "",
+      "planSteps": 3,
+      "verificationLevel": "evidence_checked",
+      "delegationUsed": true,
+      "routeEvidence": {
+        "agentLocalPlanCalls": 1,
+        "agentTaskStartCalls": 1,
+        "taskId": "2785661e240e45cbb9b43aeb1fd46d6c"
+      },
+      "requestRetries": 0
+    },
+    {
+      "id": "complex-long-task-note-followup",
+      "title": "长任务：总结后写笔记并读回核对",
+      "category": "complex",
+      "expectedRoute": "model",
+      "expectedLocalKind": "",
+      "actualRoute": "model",
+      "fallback": false,
+      "misrouted": false,
+      "requestLimit": 8,
+      "fixtureKind": "documents",
+      "passed": false,
+      "fatal": "",
+      "checks": {
+        "resultPresent": true,
+        "artifactOpenable": true,
+        "citationsValid": true,
+        "noUnsupportedClaims": true,
+        "noErrors": true,
+        "fixtureRestored": true,
+        "outcomeAcceptable": false,
+        "honestOutcome": true,
+        "localTruth": true,
+        "noUnauthorizedWrites": true
+      },
+      "noviceChecks": {
+        "startsWithoutHelp": true,
+        "confirmsOnlyWhenNeeded": true,
+        "findsResult": true
+      },
+      "metrics": {
+        "inputTokens": 56700,
+        "outputTokens": 1754,
+        "cachedTokens": 46208,
+        "cost": 0.254864,
+        "durationMs": 14111,
+        "requests": 8,
+        "retries": 3,
+        "duplicateReads": 0,
+        "opened": 0,
+        "citationsValid": true,
+        "novice": 3
+      },
+      "usage": {
+        "inputTokens": 56700,
+        "outputTokens": 1754,
+        "cachedTokens": 46208,
+        "cost": 0.254864,
+        "estimated": false,
+        "requests": 8,
+        "repairs": 3
+      },
+      "durationMs": 14111,
+      "taskStatus": "limited",
+      "timedOut": false,
+      "errors": [],
+      "result": {
+        "present": true,
+        "title": "海边旅行评估样本总结笔记",
+        "status": "limited",
+        "sourceCount": 2,
+        "citationCount": 2,
+        "answerPreview": "正在查看资料…"
+      },
+      "citations": {
+        "required": true,
+        "count": 2,
+        "resolvable": 2,
+        "valid": true,
+        "idsPreview": [
+          "143170ab2db848ac8de8ac5fbd524d30",
+          "b33c4c939f9342488dfc924bfb39a554"
+        ]
+      },
+      "artifact": {
+        "expectedExt": "md",
+        "ext": "MD",
+        "id": "f89a206ec2ee41b5a1dfa3f3f56902b5",
+        "name": "海边旅行评估样本总结笔记",
+        "openable": true
+      },
+      "local": null,
+      "duplicateReads": 0,
+      "reusedReadRefs": 0,
+      "writes": {
+        "proposed": 1,
+        "done": 1,
+        "applied": 1,
+        "undone": 1,
+        "proposedTools": [
+          "create_document"
+        ],
+        "approvalObserved": true,
+        "preApprovalUnchanged": true
+      },
+      "restore": {
+        "appliedChanges": 1,
+        "libraryRestored": true
+      },
+      "ui": {
+        "resultCardCount": 1,
+        "localCardCount": 0,
+        "resultCardVisible": true,
+        "localCardVisible": false,
+        "advancedPresent": true,
+        "advancedCollapsed": true
+      },
+      "answerPreview": "",
+      "planSteps": 3,
+      "verificationLevel": "",
+      "delegationUsed": false,
+      "routeEvidence": {
+        "agentLocalPlanCalls": 1,
+        "agentTaskStartCalls": 1,
+        "taskId": "cbc204738fa541eb80dc103b114d64e2"
+      },
+      "requestRetries": 0
+    },
+    {
+      "id": "complex-pdf-video-presentation",
+      "title": "PDF 与视频字幕综合演示",
+      "category": "complex",
+      "expectedRoute": "model",
+      "expectedLocalKind": "",
+      "actualRoute": "model",
+      "fallback": false,
+      "misrouted": false,
+      "requestLimit": 8,
+      "fixtureKind": "pdf",
+      "passed": true,
+      "fatal": "",
+      "checks": {
+        "resultPresent": true,
+        "artifactOpenable": true,
+        "citationsValid": true,
+        "noUnsupportedClaims": true,
+        "noErrors": true,
+        "fixtureRestored": true,
+        "outcomeAcceptable": true,
+        "honestOutcome": true,
+        "localTruth": true,
+        "noUnauthorizedWrites": true
+      },
+      "noviceChecks": {
+        "startsWithoutHelp": true,
+        "confirmsOnlyWhenNeeded": true,
+        "findsResult": true
+      },
+      "metrics": {
+        "inputTokens": 26133,
+        "outputTokens": 1787,
+        "cachedTokens": 15360,
+        "cost": 0.13312400000000002,
+        "durationMs": 11473,
+        "requests": 4,
+        "retries": 0,
+        "duplicateReads": 0,
+        "opened": 0,
+        "citationsValid": true,
+        "novice": 3
+      },
+      "usage": {
+        "inputTokens": 26133,
+        "outputTokens": 1787,
+        "cachedTokens": 15360,
+        "cost": 0.13312400000000002,
+        "estimated": false,
+        "requests": 4,
+        "repairs": 0
+      },
+      "durationMs": 11473,
+      "taskStatus": "completed",
+      "timedOut": false,
+      "errors": [],
+      "result": {
+        "present": true,
+        "title": "kok：给所爱留一点空间",
+        "status": "completed",
+        "sourceCount": 2,
+        "citationCount": 2,
+        "answerPreview": "正在查看资料…"
+      },
+      "citations": {
+        "required": true,
+        "count": 2,
+        "resolvable": 2,
+        "valid": true,
+        "idsPreview": [
+          "90a72e64d6d847928230e37c704e4735",
+          "964668159b1d4dc58a80ac180efd8bd9"
+        ]
+      },
+      "artifact": {
+        "expectedExt": "pptx",
+        "ext": "PPTX",
+        "id": "7db5dd6d77874e15a1ddfd20a786f1e2",
+        "name": "kok：给所爱留一点空间",
+        "openable": true
+      },
+      "local": null,
+      "duplicateReads": 0,
+      "reusedReadRefs": 0,
+      "writes": {
+        "proposed": 1,
+        "done": 1,
+        "applied": 1,
+        "undone": 1,
+        "proposedTools": [
+          "create_presentation"
+        ],
+        "approvalObserved": true,
+        "preApprovalUnchanged": true
+      },
+      "restore": {
+        "appliedChanges": 1,
+        "libraryRestored": true
+      },
+      "ui": {
+        "resultCardCount": 1,
+        "localCardCount": 0,
+        "resultCardVisible": true,
+        "localCardVisible": false,
+        "advancedPresent": true,
+        "advancedCollapsed": true
+      },
+      "answerPreview": "",
+      "planSteps": 4,
+      "verificationLevel": "evidence_checked",
+      "delegationUsed": false,
+      "routeEvidence": {
+        "agentLocalPlanCalls": 1,
+        "agentTaskStartCalls": 1,
+        "taskId": "ad44197cbe28449ab8d197a57a8545f0"
+      },
+      "requestRetries": 0
+    },
+    {
+      "id": "needs-hotel-price",
+      "title": "询问未提供的酒店价格",
+      "category": "needs-input",
+      "expectedRoute": "model",
+      "expectedLocalKind": "",
+      "actualRoute": "model",
+      "fallback": false,
+      "misrouted": false,
+      "requestLimit": 6,
+      "fixtureKind": "documents",
+      "passed": true,
+      "fatal": "",
+      "checks": {
+        "resultPresent": true,
+        "artifactOpenable": true,
+        "citationsValid": true,
+        "noUnsupportedClaims": true,
+        "noErrors": true,
+        "fixtureRestored": true,
+        "outcomeAcceptable": true,
+        "honestOutcome": true,
+        "localTruth": true,
+        "noUnauthorizedWrites": true
+      },
+      "noviceChecks": {
+        "startsWithoutHelp": true,
+        "confirmsOnlyWhenNeeded": true,
+        "findsResult": true
+      },
+      "metrics": {
+        "inputTokens": 7274,
+        "outputTokens": 388,
+        "cachedTokens": 4864,
+        "cost": 0.035303999999999995,
+        "durationMs": 3624,
+        "requests": 2,
+        "retries": 0,
+        "duplicateReads": 0,
+        "opened": 0,
+        "citationsValid": true,
+        "novice": 3
+      },
+      "usage": {
+        "inputTokens": 7274,
+        "outputTokens": 388,
+        "cachedTokens": 4864,
+        "cost": 0.035303999999999995,
+        "estimated": false,
+        "requests": 2,
+        "repairs": 0
+      },
+      "durationMs": 3624,
+      "taskStatus": "needs_input",
+      "timedOut": false,
+      "errors": [],
+      "result": {
+        "present": true,
+        "title": "",
+        "status": "needs_input",
+        "sourceCount": 2,
+        "citationCount": 2,
+        "answerPreview": "正在查看资料…"
+      },
+      "citations": {
+        "required": false,
+        "count": 2,
+        "resolvable": 2,
+        "valid": true,
+        "idsPreview": [
+          "6adb1e6b81c14d85bef2f1f7f691808f",
+          "b33c4c939f9342488dfc924bfb39a554"
+        ]
+      },
+      "artifact": {
+        "expectedExt": "",
+        "ext": "",
+        "id": "",
+        "name": "",
+        "openable": null
+      },
+      "local": null,
+      "duplicateReads": 0,
+      "reusedReadRefs": 0,
+      "writes": {
+        "proposed": 0,
+        "done": 0,
+        "applied": 0,
+        "undone": 0,
+        "proposedTools": [],
+        "approvalObserved": false,
+        "preApprovalUnchanged": true
+      },
+      "restore": {
+        "appliedChanges": 0,
+        "libraryRestored": true
+      },
+      "ui": {
+        "resultCardCount": 1,
+        "localCardCount": 0,
+        "resultCardVisible": true,
+        "localCardVisible": false,
+        "advancedPresent": true,
+        "advancedCollapsed": true
+      },
+      "answerPreview": "",
+      "planSteps": 0,
+      "verificationLevel": "evidence_checked",
+      "delegationUsed": false,
+      "routeEvidence": {
+        "agentLocalPlanCalls": 0,
+        "agentTaskStartCalls": 1,
+        "taskId": "ba010a9224d04ab98f51b1fb385f6849"
+      },
+      "requestRetries": 0
+    },
+    {
+      "id": "needs-pdf-contact-info",
+      "title": "询问 PDF 未包含的联系方式",
+      "category": "needs-input",
+      "expectedRoute": "model",
+      "expectedLocalKind": "",
+      "actualRoute": "model",
+      "fallback": false,
+      "misrouted": false,
+      "requestLimit": 6,
+      "fixtureKind": "pdf",
+      "passed": false,
+      "fatal": "",
+      "checks": {
+        "resultPresent": true,
+        "artifactOpenable": true,
+        "citationsValid": true,
+        "noUnsupportedClaims": true,
+        "noErrors": true,
+        "fixtureRestored": true,
+        "outcomeAcceptable": true,
+        "honestOutcome": false,
+        "localTruth": true,
+        "noUnauthorizedWrites": true
+      },
+      "noviceChecks": {
+        "startsWithoutHelp": true,
+        "confirmsOnlyWhenNeeded": true,
+        "findsResult": true
+      },
+      "metrics": {
+        "inputTokens": 7286,
+        "outputTokens": 583,
+        "cachedTokens": 4608,
+        "cost": 0.038472000000000006,
+        "durationMs": 5412,
+        "requests": 2,
+        "retries": 0,
+        "duplicateReads": 0,
+        "opened": 0,
+        "citationsValid": true,
+        "novice": 3
+      },
+      "usage": {
+        "inputTokens": 7286,
+        "outputTokens": 583,
+        "cachedTokens": 4608,
+        "cost": 0.038472000000000006,
+        "estimated": false,
+        "requests": 2,
+        "repairs": 0
+      },
+      "durationMs": 5412,
+      "taskStatus": "needs_input",
+      "timedOut": false,
+      "errors": [],
+      "result": {
+        "present": true,
+        "title": "",
+        "status": "needs_input",
+        "sourceCount": 1,
+        "citationCount": 1,
+        "answerPreview": "正在查看资料…"
+      },
+      "citations": {
+        "required": false,
+        "count": 1,
+        "resolvable": 1,
+        "valid": true,
+        "idsPreview": [
+          "964668159b1d4dc58a80ac180efd8bd9"
+        ]
+      },
+      "artifact": {
+        "expectedExt": "",
+        "ext": "",
+        "id": "",
+        "name": "",
+        "openable": null
+      },
+      "local": null,
+      "duplicateReads": 0,
+      "reusedReadRefs": 0,
+      "writes": {
+        "proposed": 0,
+        "done": 0,
+        "applied": 0,
+        "undone": 0,
+        "proposedTools": [],
+        "approvalObserved": false,
+        "preApprovalUnchanged": true
+      },
+      "restore": {
+        "appliedChanges": 0,
+        "libraryRestored": true
+      },
+      "ui": {
+        "resultCardCount": 1,
+        "localCardCount": 0,
+        "resultCardVisible": true,
+        "localCardVisible": false,
+        "advancedPresent": true,
+        "advancedCollapsed": true
+      },
+      "answerPreview": "",
+      "planSteps": 2,
+      "verificationLevel": "evidence_checked",
+      "delegationUsed": false,
+      "routeEvidence": {
+        "agentLocalPlanCalls": 0,
+        "agentTaskStartCalls": 1,
+        "taskId": "ebf52ed20207426b9e9ac1bd971cc7de"
+      },
+      "requestRetries": 0
+    }
+  ],
+  "aggregate": {
+    "samples": 30,
+    "skipped": 0,
+    "passed": 26,
+    "passRate": 86.7,
+    "local": 8,
+    "model": 22,
+    "none": 0,
+    "routeMatched": 30,
+    "fallback": 0,
+    "misrouted": 0,
+    "failed": 4,
+    "artifactsOpenable": 6,
+    "citationsValid": 30,
+    "novicePassed": 30,
+    "requests": 76,
+    "inputTokens": 431132,
+    "outputTokens": 23898,
+    "cachedTokens": 275072,
+    "cost": 2.106896,
+    "retries": 9,
+    "duplicateReads": 1,
+    "opened": 0,
+    "durationMs": 177328,
+    "byCategory": {
+      "local": {
+        "count": 8,
+        "passed": 8,
+        "requests": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cachedTokens": 0,
+        "cost": 0,
+        "routeMatched": 8,
+        "local": 8,
+        "model": 0,
+        "fallback": 0
+      },
+      "generation": {
+        "count": 10,
+        "passed": 9,
+        "requests": 38,
+        "inputTokens": 242619,
+        "outputTokens": 12096,
+        "cachedTokens": 162304,
+        "cost": 1.164012,
+        "routeMatched": 10,
+        "local": 0,
+        "model": 10,
+        "fallback": 0
+      },
+      "qa": {
+        "count": 7,
+        "passed": 6,
+        "requests": 17,
+        "inputTokens": 63300,
+        "outputTokens": 5063,
+        "cachedTokens": 25344,
+        "cost": 0.33420799999999995,
+        "routeMatched": 7,
+        "local": 0,
+        "model": 7,
+        "fallback": 0
+      },
+      "complex": {
+        "count": 3,
+        "passed": 2,
+        "requests": 17,
+        "inputTokens": 110653,
+        "outputTokens": 5768,
+        "cachedTokens": 77952,
+        "cost": 0.5348999999999999,
+        "routeMatched": 3,
+        "local": 0,
+        "model": 3,
+        "fallback": 0
+      },
+      "needs-input": {
+        "count": 2,
+        "passed": 1,
+        "requests": 4,
+        "inputTokens": 14560,
+        "outputTokens": 971,
+        "cachedTokens": 9472,
+        "cost": 0.07377600000000001,
+        "routeMatched": 2,
+        "local": 0,
+        "model": 2,
+        "fallback": 0
+      }
+    }
+  },
+  "uiContract": {
+    "advancedPresent": true,
+    "advancedCollapsed": true,
+    "composerPresent": true,
+    "sendPresent": true,
+    "defaultSurfaceSelectors": 2,
+    "startsWithoutHelp": true
+  },
+  "seeded": {
+    "sampleImport": true,
+    "tagSeeded": true,
+    "syntheticDocuments": 7,
+    "libraryItems": 17,
+    "byKind": {
+      "document": 10,
+      "video": 1,
+      "music": 2,
+      "photo": 2,
+      "book": 2
+    },
+    "byExt": {
+      "PDF": 1,
+      "WEBM": 1,
+      "WAV": 2,
+      "PNG": 2,
+      "EPUB": 1,
+      "DOCX": 1,
+      "TXT": 1,
+      "MD": 8
+    },
+    "collections": [
+      "kok 示例",
+      "评估·旅行",
+      "评估·生活",
+      "评估·工作",
+      "评估·学习"
+    ]
+  },
+  "ledger": {
+    "provided": true,
+    "before": null,
+    "usedRequests": 76,
+    "suggestedAdditionalCount": 76,
+    "withinCap": true,
+    "after": null,
+    "expectedAfter": null
+  },
+  "originalFilesPreserved": true,
+  "keyCleared": true,
+  "passed": false,
+  "pricing": {
+    "inputRate": 4,
+    "outputRate": 16,
+    "enabled": true
+  },
+  "profileIsolated": true,
+  "durationMs": 421535,
+  "finishedAt": "2026-11-01T10:49:54.646Z",
+  "reportPath": "test-output/agent-samples/2026-11-01T10-49-54-646Z/report.json"
+}

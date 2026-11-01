@@ -4,9 +4,9 @@
 
 把视频、照片、音乐、文档和电子书收进同一个本地资料库；用空间组织主题，用摘录连接原文与笔记，需要时再让 AI 帮你翻译、整理和写作。
 
-[下载 v0.9.5 Preview](https://github.com/ChenShoukang/kok/releases/tag/v0.9.5) · [使用指南](docs/GUIDE.md) · [English](README.en.md) · [格式支持](docs/FORMATS.md)
+[下载已发布版本](https://github.com/ChenShoukang/kok/releases) · [使用指南](docs/GUIDE.md) · [English](README.en.md) · [格式支持](docs/FORMATS.md)
 
-**v0.9.5 Preview** 把窄窗口侧栏收敛为 4 个主入口 +「更多」浮层，补齐 40px 点击目标、12px 工具提示、菜单焦点和动画中断处理：面板退出不再跳变，常用入口更安静、更清楚。本版不改变数据格式，也没有新增真实模型调用（总账 359）。见 [扁平界面说明](docs/FLAT_UI.md)、[界面参考](docs/INTERFACE_REFERENCES.md)、[当前验证](docs/VALIDATION_0.9.5.md) 与 [路线图](ROADMAP.md)。
+**v0.9.8 Preview** 统一偏白浅色与微紫深色主题、精简欢迎页与侧栏，采用离线 Phosphor 双层填充图标；同时把 Agent 收敛成「选资料 → 说要求 → 可核对成果」的路径：首屏只保留资料、要求与建议操作，显式的统计与筛选请求由本地直接回答（零模型请求），检索返回带页码 / 章节 / 字幕时间锚点的片段并报告读取覆盖，工具调用消息保持稳定前缀，任务结束给出可打开的成果卡片。本版不改变数据格式。同批 30 项真实模型评测中，请求由 100 降至 76（−24%）、输入 token 由 566,586 降至 431,132（−24%），节省主要来自本地任务分流；两轮评测共 190 次请求，项目请求总账 359 → 549。见 [Agent 聚焦](docs/AGENT_FOCUS.md)、[30 项任务评测基线与前后对比](docs/AGENT_TASK_EVAL.md)、[界面说明](docs/FLAT_UI.md)、[本次验证](docs/VALIDATION_0.9.8.md) 与 [路线图](ROADMAP.md)。
 
 ![kok v0.9.4 扁平界面资料库，使用内置原创示例](docs/screenshots/overview-flat-zh.jpg)
 
@@ -35,7 +35,7 @@
 
 ## 开始使用
 
-1. 下载 [最新 Release](https://github.com/ChenShoukang/kok/releases/latest) 中的 `kok-0.9.5-win-x64.zip`，核对随附 SHA-256，完整解压后运行 `kok.exe`。后续版本号以 Release 页面为准。
+1. 本地 v0.9.8 改版包为 `dist/kok-0.9.8-win-x64.zip`；公开版本可从 [Releases](https://github.com/ChenShoukang/kok/releases) 下载。核对随附 SHA-256，完整解压后运行 `kok.exe`，公开版本号以 Release 页面为准。
 2. 首次选择**纯净模式**或**智能模式**；不配置 AI 也能使用本地基础功能。
 3. 点击“体验示例”或拖入自己的文件，先浏览资料，再试着创建一个空间或保存一条摘录。
 
@@ -62,7 +62,7 @@
 
 ## 文档与开发
 
-[使用指南](docs/GUIDE.md) · [文档目录](docs/README.md) · [Agent 能力与边界](docs/AGENT_0.9.3.md) · [验证记录](docs/VALIDATION_0.9.5.md) · [实现进度](docs/WAREHOUSE_0.8.1.md) · [反馈](https://github.com/ChenShoukang/kok/issues/new/choose) · [安全报告](SECURITY.md)
+[使用指南](docs/GUIDE.md) · [文档目录](docs/README.md) · [Agent 能力与边界](docs/AGENT_0.9.3.md) · [验证记录](docs/VALIDATION_0.9.8.md) · [实现进度](docs/WAREHOUSE_0.8.1.md) · [反馈](https://github.com/ChenShoukang/kok/issues/new/choose) · [安全报告](SECURITY.md)
 
 ```powershell
 npm ci --omit=optional

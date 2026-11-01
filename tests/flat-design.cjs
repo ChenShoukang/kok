@@ -11,7 +11,7 @@ const path=require('node:path');
   await page.evaluate(async()=>{await native('importSamples');await refresh();await setting({fontFamily:'system',theme:'light',skin:'classic',view:'grid'});applyTheme();await applyFont();navigate('overview');});
   await page.setViewportSize({width:1440,height:1000});
   assert.equal(await page.locator('body').getAttribute('data-skin'),'flat','Saved classic preferences must use the new presentation');
-  assert(await page.locator('.nav-group-label').count()>=3);
+  assert.equal(await page.locator('.nav-primary .nav-item').count(),4);
   assert.equal(await page.locator('.nav-item[aria-current="page"]').count(),1);
   assert.equal(await page.locator('.flat-library-grid .file-card').count(),await page.evaluate(()=>state.items.length));
   assert.equal(await page.locator('img[src*="icons/fluent/"],.graphite-disc,.private-vault,.graphite-book').count(),0,'Application placeholders must use outline icons');
@@ -32,7 +32,7 @@ const path=require('node:path');
   await page.keyboard.press('Enter');await page.locator('.file-action-menu:popover-open').waitFor();await page.keyboard.press('Escape');await page.waitForFunction(()=>!GlassMenu.isOpen);
   const id=await page.locator('.file-card').first().getAttribute('data-id');
   await page.locator(`.file-card [data-favorite="${id}"]`).click();await page.waitForFunction(id=>byId(id).favorite,id);
-  await page.locator('#extra-nav [data-route="favorites"]').click();assert.equal(await page.locator('.file-card').count(),1);
+  await page.locator('[data-nav-more]').click();await page.getByRole('menuitem',{name:'收藏',exact:true}).click();assert.equal(await page.locator('.file-card').count(),1);
   await page.locator('#main-nav [data-route="overview"]').click();
   const doc=await page.evaluate(()=>state.items.find(i=>i.kind==='document'&&i.ext==='md')?.id);
   if(doc){await page.locator(`[data-open="${doc}"]`).click();await page.waitForFunction(()=>document.querySelector('#viewer').open);await page.locator('#close-viewer').click();}
@@ -42,7 +42,15 @@ const path=require('node:path');
     await page.setViewportSize({width,height});await page.waitForTimeout(350);
     assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'No page overflow');
     assert(await page.evaluate(()=>{const r=document.querySelector('#settings-button').getBoundingClientRect();return r.bottom<=innerHeight+1;}),'Settings stays reachable');
+    assert.equal(await page.locator('.sidebar .compact-primary').evaluateAll(items=>items.filter(item=>item.getClientRects().length).length),4,'The same short rail is used at every width');
+    const surfaces=await page.evaluate(()=>['body','.sidebar','.topbar'].map(s=>getComputedStyle(document.querySelector(s)).backgroundColor));
+    assert.equal(new Set(surfaces).size,1,'Workspace chrome shares one background');
     await page.screenshot({path:path.join(output,`library-${theme}-${width}.png`),animations:'disabled'});
+    if(width===1440){
+     await page.evaluate(()=>showModeChooser(true));
+     await page.screenshot({path:path.join(output,`welcome-${theme}.png`),animations:'disabled'});
+     await page.evaluate(()=>modeDialog().close());
+    }
    }
   }
   // Compact rail: four primary destinations plus a single overflow entry. The overflow menu keeps
@@ -60,10 +68,12 @@ const path=require('node:path');
   await page.evaluate(()=>navigate('overview'));
   await page.setViewportSize({width:1440,height:1000});
   await page.evaluate(async()=>{await setting({uiLanguage:'en',theme:'light'});I18n.applyLanguage('en');applyTheme();navigate('overview');});
-  assert.equal(await page.locator('.nav-group-label').first().innerText(),'Workspace');
+  assert.equal(await page.locator('.nav-primary [data-route="overview"]').getAttribute('aria-label'),'All files');
   await page.evaluate(()=>navigate('overview'));
   await page.evaluate(async()=>{await setting({appMode:'pure'});applyAppMode();render();});
-  assert(await page.locator('#extra-nav [data-open-knowledge]').isVisible(),'Pure mode keeps the existing local graph entry');
+  await page.locator('[data-nav-more]').click();
+  assert(await page.getByRole('menuitem',{name:'Knowledge graph',exact:true}).isVisible(),'Pure mode keeps the local graph in the launcher');
+  await page.keyboard.press('Escape');
   await page.evaluate(async()=>{await setting({appMode:'smart'});applyAppMode();render();});
   await page.screenshot({path:path.join(output,'library-en.png'),animations:'disabled'});
   await page.locator('#main-nav [data-route="agent"]').click();await page.screenshot({path:path.join(output,'agent-light.png'),animations:'disabled'});

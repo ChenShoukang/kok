@@ -19,6 +19,7 @@ const paths={
 };
 const $=s=>document.querySelector(s);
 const svg=name=>`<svg class="ui-icon" data-lucide="${Object.hasOwn(KokIcons,name)?name:'document'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${KokIcons[name]||KokIcons.document}</svg>`;
+const glyph=name=>Object.hasOwn(KokGlyphs,name)?`<svg class="ui-icon product-glyph" data-glyph="${name}" viewBox="0 0 256 256" fill="currentColor" stroke="none" aria-hidden="true" focusable="false">${KokGlyphs[name]}</svg>`:svg(name);
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function hydrate(root=document){root.querySelectorAll('[data-icon]').forEach(el=>{el.innerHTML=svg(el.dataset.icon);});}
 const kinds=[['video','视频','光影与故事'],['photo','照片','定格的小美好'],['music','音乐','生活的背景音'],['document','文档','灵感与思考'],['book','读书','字里行间的世界']];
@@ -91,7 +92,7 @@ function fileCollection(items,includePrivate=false){
  return shortcuts+(visible.length?'<div class="file-grid flat-library-grid">'+visible.map(card).join('')+'</div>':'')+more;
 }
 
-function libraryFilters(){return '<div class="filter-tabs" role="group" aria-label="'+(I18n.language==='en'?'File type':'文件类型')+'">'+[['all','全部'],...kinds.map(k=>[k[0],k[1]])].map(([key,label])=>'<button class="filter-tab '+(state.filter===key?'active':'')+'" data-filter="'+key+'" aria-pressed="'+(state.filter===key)+'">'+I18n.text(label)+'</button>').join('')+'</div>';}
+function libraryFilters(){const selected=state.filter!=='all'?state.filter:!state.isPrivate&&labels[state.route]?state.route:'all';return '<div class="filter-tabs" data-library-filters role="group" aria-label="'+(I18n.language==='en'?'File type':'文件类型')+'">'+[['all','全部'],...kinds.map(k=>[k[0],k[1]])].map(([key,label])=>'<button class="filter-tab '+(selected===key?'active':'')+'" data-filter="'+key+'" aria-pressed="'+(selected===key)+'" aria-label="'+I18n.text(label)+'" title="'+I18n.text(label)+'">'+glyph(key==='all'?'grid':key)+'<span class="filter-label">'+I18n.text(label)+'</span></button>').join('')+'</div>';}
 function overview(){
  const items=filtered();
  return '<div class="collection-heading">'+heading('资料库',items.length+' 个文件')+'</div><div class="library-toolbar">'+libraryFilters()+viewOptions()+'</div>'+fileCollection(items)+(items.length?'':empty('导入你的第一份文件','拖入文件，或点击导入。',true));
@@ -128,7 +129,7 @@ function filtered(){
 function collection(){
  const route=state.route,items=filtered();
  const title=state.query?`搜索结果`:labels[route]||({favorites:'收藏',recent:'最近打开',all:'全部文件',collection:state.collection})[route]||'资料库';
- const showTabs=!labels[route]&&route!=='recent';
+ const showTabs=route!=='recent';
  return `<div class="collection-heading">${heading(title,`${items.length} 个文件`)}</div><div class="library-toolbar">${showTabs?libraryFilters():''}${viewOptions(state.settings.sort||(route==='recent'?'opened':'added'))}</div>`+(items.length?fileCollection(items):empty(state.query?'没有找到相关文件':route==='favorites'?'还没有收藏':route==='recent'?'还没有打开记录':'这个分类导入你的第一份文件',state.query?'试试文件名、格式或笔记里的关键词。':route==='favorites'?'点击文件上的爱心即可收藏。':'导入文件，或在文件菜单中更改分类。'));
 }
 let pageAnimation=null,pageTransition=null,renderSequence=0;
@@ -136,18 +137,17 @@ async function dismissElement(element){if(!element)return;element.style.pointerE
 
 function render(...args){return Kok.invoke('render',this,args);}
 Kok.define('render',function(){
- renderNav();if(!state.isPrivate&&!state.query&&Kok.renderRoute(state.route))return;
- const html=state.isPrivate?privateFolderView():state.route==='downloads'&&isSmartMode()?downloadWorkspace():state.route==='organize'&&!state.query&&typeof renderOrganizer==='function'?renderOrganizer():state.route==='overview'&&!state.query?overview():state.route==='music'&&!state.query&&typeof renderMusic==='function'?renderMusic():collection();
  const key=state.route+'|'+(state.musicAlbum||'')+'|'+(state.musicMode||'');
  const changed=render.previousKey!==key&&!state.query;render.previousKey=key;
+ renderNav();if(!state.isPrivate&&!state.query&&Kok.renderRoute(state.route)){if(changed&&!document.body.classList.contains('booting')&&typeof CalmMotion!=='undefined')CalmMotion.play($('#main'),[{opacity:.86},{opacity:1}],{duration:kokMotion.panel,channel:'route'});return;}
+ const html=state.isPrivate?privateFolderView():state.route==='downloads'&&isSmartMode()?downloadWorkspace():state.route==='organize'&&!state.query&&typeof renderOrganizer==='function'?renderOrganizer():state.route==='overview'&&!state.query?overview():state.route==='music'&&!state.query&&typeof renderMusic==='function'?renderMusic():collection();
  const sequence=++renderSequence;
- if(pageAnimation)pageAnimation.cancel();
  if(pageTransition){pageTransition.skipTransition();pageTransition=null;}
- const update=()=>{if(sequence===renderSequence)$('#main').innerHTML=html;};
+ const update=()=>{if(sequence!==renderSequence)return;const root=$('#main'),filters=root.querySelector('[data-library-filters]'),filterFocus=filters?.contains(document.activeElement)?document.activeElement:null,positions=!changed&&typeof CalmMotion!=='undefined'?CalmMotion.captureLayout(root):null;root.innerHTML=html;if(typeof CalmMotion!=='undefined'){CalmMotion.restoreFilters(root,filters);if(filterFocus?.isConnected)filterFocus.focus({preventScroll:true});CalmMotion.prepare(root);CalmMotion.layoutFrom(root,positions);}};
  // Commit state and its live click targets together. An async view-transition callback can otherwise
  // replace a newer Agent route after the user has already clicked into it.
  update();
- if(changed&&!document.body.classList.contains('booting')&&!reducedMotion())pageAnimation=typeof CalmMotion!=='undefined'?CalmMotion.play($('#main'),[{opacity:.75},{opacity:1}],{duration:kokMotion.panel,channel:'route'}):animateIn($('#main'));
+ if(changed&&!document.body.classList.contains('booting')&&!reducedMotion())pageAnimation=typeof CalmMotion!=='undefined'?CalmMotion.play($('#main'),[{opacity:.86},{opacity:1}],{duration:kokMotion.panel,channel:'route'}):animateIn($('#main'));
 });
 function navigate(route){const navigation=Kok.beforeNavigate(route);if(navigation.handled)return;route=navigation.route;if(state.isPrivate)return lockPrivateSpace().then(()=>navigate(route));if(route==='organize'&&!isSmartMode())route='overview';state.route=route;state.filter='all';state.limit=60;state.query='';state.musicAlbum=null;$('#search').value='';render();if(route==='organize')loadOrganizer().catch(fail);window.scrollTo(0,0);}
 async function importItems(action,additionalObjects){
@@ -282,7 +282,7 @@ document.addEventListener('click',async e=>{
   if(el.dataset.menu){fileMenu(el.dataset.menu,el);return;}
   if(el.dataset.native){await native(el.dataset.native,{id:el.dataset.id});return;}
   if(el.dataset.remove){const item=byId(el.dataset.remove);await native('remove',{id:item.id});if(state.track?.id===item.id)$('#close-player').click();state.items=state.items.filter(i=>i.id!==item.id);state.queue=state.queue.filter(i=>i.id!==item.id);await closeSmall();render();toast('已从资料库移除，原文件已保留。');return;}
-  if(el.dataset.filter){state.filter=el.dataset.filter;state.limit=60;render();return;}
+  if(el.dataset.filter){const key=el.dataset.filter;if(!state.isPrivate&&!state.query&&(state.route==='overview'||labels[state.route])){navigate(key==='all'?'overview':key);}else{if(labels[state.route])state.route='overview';state.filter=key;state.limit=60;render();}return;}
   if(el.dataset.view){await setting({view:el.dataset.view});render();return;}
   if(el.dataset.photo){await photoAction(el.dataset.photo);return;}
   if(el.hasAttribute('data-chapter')){await changeChapter(Number(el.dataset.chapter));return;}

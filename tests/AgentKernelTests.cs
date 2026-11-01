@@ -42,8 +42,69 @@ static class AgentKernelTests {
   var unknownLib=new Library(Path.Combine(root,"interrupted-external"));unknownLib.SetAppMode("smart",true);var unknownJournal=new AgentJournal(unknownLib.DataDir);var unknown=Seed(unknownJournal);var unknownEngine=new AgentTaskEngine(unknown,unknownJournal,()=>{},planned,read,write,Prepare,()=>{});var external=new AgentCall{id=Guid.NewGuid().ToString("N"),tool="mcp_call",status="pending",args=new Dictionary<string,object>()};unknownEngine.Emit("tool.proposed",new{call=external});unknownEngine.Emit("tool.started",new{callId=external.id});unknownEngine.Emit("task.stopped",new{});
   var unknownService=new AgentService(new ModuleContext(unknownLib,new TranslationService(unknownLib.DataDir),new ModulePolicy(unknownLib),null,CancellationToken.None,null,new Operations(unknownLib,null),null,appDirectory:AppDomain.CurrentDomain.BaseDirectory));var paused=Library.Json.Deserialize<Dictionary<string,object>>(Library.Json.Serialize(await unknownService.HandleAgentTaskAction("agentTaskRead",new Dictionary<string,object>{{"taskId",unknown.id}})));check(!Convert.ToBoolean(paused["resumable"])&&Convert.ToString(paused["errorKind"])=="uncertain_external"&&Library.Json.Serialize(paused["messages"]).Contains("uncertain_external"),"an interrupted external call shows an explicit warning instead of offering a blind resume");
   var orderedLibrary=new Library(Path.Combine(root,"selection-order"));orderedLibrary.SetAppMode("smart",true);var first=orderedLibrary.CreateDocument("First selected","md","","first");var second=orderedLibrary.CreateDocument("Second selected","md","","second");var orderedIds=new List<string>{first.id,second.id};string orderedCatalog=orderedLibrary.AgentScopedCatalog(orderedLibrary.ResolveAgentScope(new AgentScope{mode="selected",ids=orderedIds}),20,true);check(orderedCatalog.IndexOf(first.id,StringComparison.Ordinal)<orderedCatalog.IndexOf(second.id,StringComparison.Ordinal),"selected source ordinals follow user selection order rather than newest-file ordering");
+  await RetrievalUplift(Path.Combine(root,"retrieval-uplift")); // retrieval tests
+  MessagePrefix(Path.Combine(root,"message-prefix"));
   await EvidenceTrajectories(Path.Combine(root,"evidence-trajectories"),check);
   await ProviderCases(Path.Combine(root,"http"),check);
+   // Fragment-level retrieval and read coverage: one long file must yield several anchored snippets,
+   // while the default search keeps one hit per file, and read_items must expose per-source coverage.
+   async Task RetrievalUplift(string retrievalRoot){
+    Directory.CreateDirectory(retrievalRoot);
+    var library=new Library(Path.Combine(retrievalRoot,"library"));library.SetAppMode("smart",true);
+    var body=new StringBuilder();Action<int> padTo=target=>{int n=0;while(body.Length<target){body.Append("neutral filler line ").Append(n++).Append(" with ordinary words for padding\n");}};Action marker=()=>{for(int n=0;n<8;n++)body.Append("CANARYTERM ");body.Append('\n');};
+    marker();padTo(16500);marker();padTo(33200);marker();padTo(34000);body.Append('\n');
+    Entry document=library.CreateDocument("Long evidence","md","",body.ToString()),shortNote=library.CreateDocument("Short note","md","","Brief local note about the topic."),longReport=library.CreateDocument("Long report","md","",new string('x',48000));
+    library.IndexContentSource(document.id);
+    var retrievalState=Seed(new AgentJournal(library.DataDir));retrievalState.options.allowed=new List<string>{document.id};
+    var single=library.SearchKnowledge("CANARYTERM",new[]{document.id},"lexical",12,CancellationToken.None).GetAwaiter().GetResult();
+    var fragments=library.SearchKnowledge("CANARYTERM",new[]{document.id},"lexical",12,CancellationToken.None,null,null,3).GetAwaiter().GetResult();
+    check(single.hits.Count==1&&single.ids.Count==1,"default knowledge search keeps one hit per file for knowledge panes and MCP");
+    check(fragments.hits.Count==3&&fragments.hits.All(hit=>hit.itemId==document.id&&hit.kind=="chapter")&&fragments.hits.Select(hit=>hit.chunkId).Distinct().Count()==3&&fragments.hits.Select(hit=>hit.anchor==null?-1:hit.anchor.chapter).Distinct().Count()>=2,"fragment-level search returns multiple anchored content excerpts from one long file");
+    var search=await library.ReadAgentTool(retrievalState,new AgentCall{id=Guid.NewGuid().ToString("N"),tool="search_library",args=new Dictionary<string,object>{{"query","CANARYTERM"}},sources=new Dictionary<string,string>()},CancellationToken.None);
+    string searchText=Convert.ToString(search["text"]);var searchIds=Library.Json.Deserialize<List<string>>(Library.Json.Serialize(search["ids"]));var searchRefs=Library.Json.Deserialize<List<ChatReference>>(Library.Json.Serialize(search["references"]));
+    check(searchIds.Count==1&&searchRefs.Count==3&&searchRefs.Select(reference=>reference.id).SequenceEqual(new[]{"S1","S2","S3"})&&searchRefs.All(reference=>reference.fileId==document.id&&reference.excerpt.Length<=240),"search results keep one reference per fragment with deduplicated file ids");
+    check(searchIds.Count==1&&searchText.Contains("snippet 2/3")&&searchText.Contains("snippet 3/3")&&searchText.Contains("chapter ")&&searchText.Contains("More snippets:")&&searchText.Contains("Long evidence")&&searchRefs.Select(reference=>reference.chapter).Distinct().Count()>=2,"search text labels each fragment with file, kind, chapter anchor and snippet marker");
+    var context=library.BuildKnowledgeContext(new List<string>{shortNote.id,longReport.id},"summarize","",6000);
+    KnowledgeCoverage shortCoverage=context.coverage.First(row=>row.id==shortNote.id),longCoverage=context.coverage.First(row=>row.id==longReport.id);
+    check(context.coverage.Count==2&&context.sampled&&!shortCoverage.sampled&&shortCoverage.readChars==shortCoverage.totalChars&&shortCoverage.totalChars>0,"read context records full coverage for a short readable source");
+    check(longCoverage.sampled&&longCoverage.readChars<longCoverage.totalChars&&longCoverage.totalChars>=48000,"read context records sampled characters against the extractable size of a long source");
+    check(context.coverageText.StartsWith("Coverage: 2/2 sources")&&context.coverageText.Contains("full")&&context.coverageText.Contains("sampled")&&context.coverageText.Length<800&&!context.context.Contains(context.coverageText),"bounded coverage summary names full and sampled sources without entering the model context");
+    retrievalState.options.allowed=new List<string>{shortNote.id,longReport.id};
+    var readResult=await library.ReadAgentTool(retrievalState,new AgentCall{id=Guid.NewGuid().ToString("N"),tool="read_items",args=new Dictionary<string,object>{{"ids",new List<string>{shortNote.id,longReport.id}}},sources=new Dictionary<string,string>()},CancellationToken.None);
+    string readText=Convert.ToString(readResult["text"]);var readCoverage=Library.Json.Deserialize<List<KnowledgeCoverage>>(Library.Json.Serialize(readResult["coverage"]));
+    check(readCoverage.Count==2&&readCoverage.Any(row=>row.id==shortNote.id&&!row.sampled)&&readCoverage.Any(row=>row.id==longReport.id&&row.sampled&&row.readChars<row.totalChars)&&!Library.Json.Serialize(readCoverage).Contains("Brief local note"),"read_items exposes per-source coverage numbers without source content");
+    check(readText.Contains("Coverage: 2/2 sources")&&readText.Contains("full")&&readText.Contains("sampled"),"read_items text appends the bounded coverage summary");
+    var catalogLibrary=new Library(Path.Combine(retrievalRoot,"catalog"));catalogLibrary.SetAppMode("smart",true);
+    Entry archive=catalogLibrary.CreateDocument("Old archive","md","","Legacy archive notes about ANCIENT_GOAL_TERM provenance.");
+    for(int n=0;n<6;n++)catalogLibrary.CreateDocument("Recent "+n,"md","","Recent neutral note "+n);
+    var catalogIds=catalogLibrary.Db.items.Select(item=>item.id).ToList();foreach(var item in catalogLibrary.ContentEntries())catalogLibrary.IndexContentSource(item.id);
+    string plainCatalog=catalogLibrary.AgentScopedCatalog(catalogIds,4),goalCatalog=catalogLibrary.AgentScopedCatalog(catalogIds,4,false,"ANCIENT_GOAL_TERM");
+    check(!plainCatalog.Contains(archive.id)&&goalCatalog.Contains(archive.id),"goal-aware catalog adds lexically relevant older files inside the scope");
+    check(goalCatalog.Contains("Goal-related files are listed after the recent files.")&&!plainCatalog.Contains("Goal-related")&&goalCatalog.Split('\n').Length==plainCatalog.Split('\n').Length,"goal-aware catalog stays bounded by the recent parameter");
+   }
+   // Prompt caching: the first messages must stay byte-identical between rounds of one task and only
+   // the single host-status tail message may change; the per-task catalog must not be recomputed.
+   void MessagePrefix(string prefixRoot){
+    var library=new Library(prefixRoot);library.SetAppMode("smart",true);library.CreateDocument("Catalog prefix source","md","","CATALOG_BODY_CANARY");
+    var prefixJournal=new AgentJournal(library.DataDir);var prefixState=Seed(prefixJournal);prefixState.options.allowed=library.Db.items.Select(item=>item.id).ToList();
+    var service=new AgentService(new ModuleContext(library,new TranslationService(library.DataDir),new ModulePolicy(library),null,CancellationToken.None,null,new Operations(library,null),null,appDirectory:AppDomain.CurrentDomain.BaseDirectory));
+    var flags=System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Instance;
+    var messagesMethod=typeof(AgentService).GetMethod("TaskMessages",flags);var catalogMethod=typeof(AgentService).GetMethod("TaskCatalog",flags);
+    var prefixEngine=new AgentTaskEngine(prefixState,prefixJournal,()=>{},null,(s,c,t)=>Task.FromResult(new Dictionary<string,object>{{"text","fixture"}}),(s,c,t)=>Task.FromResult(new AgentToolReceipt{result=new Dictionary<string,object>{{"text","changed"}}}),Prepare,()=>{});
+    Func<object[]> argumentList=()=>new object[]{prefixState,"CATALOG_NAME_CANARY","GUIDANCE_CANARY","INSTRUCTIONS_CANARY",false};
+    var initial=(List<object>)messagesMethod.Invoke(service,argumentList());
+    var call=new AgentCall{id=Guid.NewGuid().ToString("N"),tool="read_items",status="done",sources=new Dictionary<string,string>()};
+    prefixEngine.Emit("tool.proposed",new{call=call});prefixEngine.Emit("tool.completed",new{callId=call.id,result=new{text="read"}});
+    var advanced=(List<object>)messagesMethod.Invoke(service,argumentList());
+    var firstMessages=Library.Json.Deserialize<List<Dictionary<string,object>>>(Library.Json.Serialize(initial));var secondMessages=Library.Json.Deserialize<List<Dictionary<string,object>>>(Library.Json.Serialize(advanced));
+    string firstTail=Convert.ToString(firstMessages.Last()["content"]),secondTail=Convert.ToString(secondMessages.Last()["content"]),guidance=Convert.ToString(firstMessages[2]["content"]);
+    check(firstMessages.Count==5&&Library.Json.Serialize(firstMessages.Take(4))==Library.Json.Serialize(secondMessages.Take(4))&&firstTail!=secondTail,"task messages keep system, catalog, guidance and prior rounds byte-identical while only the tail changes");
+    check(guidance.Contains("GUIDANCE_CANARY")&&!guidance.Contains("INSTRUCTIONS_CANARY")&&!guidance.Contains("HOST RECEIPT INDEX")&&firstTail.Contains("HOST RECEIPT INDEX")&&firstTail.Contains("INSTRUCTIONS_CANARY")&&firstTail.IndexOf("INSTRUCTIONS_CANARY",StringComparison.Ordinal)<firstTail.IndexOf("HOST RECEIPT INDEX",StringComparison.Ordinal)&&secondTail.Contains(call.id),"the dynamic tail carries instructions before the receipt index after the dialogue");
+    string catalog=(string)catalogMethod.Invoke(service,new object[]{prefixState});
+    var added=library.CreateDocument("Newest file canary","md","","NEWEST_FILE_CANARY");prefixState.options.allowed.Add(added.id);
+    string catalogAgain=(string)catalogMethod.Invoke(service,new object[]{prefixState});
+    check(catalog==catalogAgain&&catalog.Contains("Catalog prefix source")&&!catalog.Contains("Newest file canary"),"the per-task catalog is computed once so new files cannot reshuffle the cacheable prefix");
+   }
  }
  static async Task EvidenceTrajectories(string root,Action<bool,string> check){
   foreach(bool manual in new[]{true,false}){

@@ -56,15 +56,7 @@ body[data-app-mode] .app-mode-setting-name img{width:30px;height:30px}
 body[data-app-mode] :is(.ai-advanced,.ai-privacy){border-top:1px solid var(--line);margin:16px 0 0;padding-top:12px}
 body[data-app-mode] :is(.ai-advanced,.ai-privacy)>summary{font-size:11px;color:var(--muted);cursor:pointer}
 body[data-app-mode] .ai-disclosure{font-size:10px;line-height:1.8}
-/* Short, quiet onboarding; consent remains visible. */
-body[data-app-mode] .mode-intro h1{font-size:clamp(28px,4vw,42px);line-height:1.35}
-body[data-app-mode] .mode-card{border-radius:8px;padding:24px;background:linear-gradient(160deg,var(--material-top),var(--material-bottom));border:1px solid var(--material-edge);box-shadow:inset 0 1px 0 var(--material-glint),0 4px 14px var(--material-shadow)}
-body[data-app-mode] .mode-card-art{height:100px}
-body[data-app-mode] .mode-card-art img{width:82px;height:82px;filter:none}
-body[data-app-mode] .mode-card-description{font-size:12px;line-height:1.8;min-height:0}
-body[data-app-mode] .mode-aurora{display:none}
-body[data-app-mode] .mode-notice-glass{border-radius:8px;background:var(--kok-panel);border-color:var(--material-edge);box-shadow:inset 0 1px 0 var(--material-glint)}
-body[data-app-mode] .mode-notice-hero h1{font-size:28px}
+/* Mode page layout is owned by app-modes.css. */
 /* AI is a tool alongside the file: context on demand, text first. */
 body[data-app-mode] .viewer{--chat-width:350px}
 body[data-theme][data-app-mode] .file-assistant{background:var(--kok-panel);color:var(--ink);border-color:var(--line);box-shadow:-1px 0 0 var(--material-glint);backdrop-filter:blur(18px)}

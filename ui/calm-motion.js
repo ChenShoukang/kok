@@ -2,19 +2,25 @@
 // Scoped, interruptible WAAPI motion. No framework or global list observer is required.
 const CalmMotion=(()=>{
  const active=new Map(),choices=new Map(),presence=new WeakMap(),contentGhosts=new WeakMap(),ease=kokMotion.ease;
- const groupSelector='.reading-flow-choices,.settings-tabs,.reading-layout-choices,.reading-side-tabs,.note-context-tabs';
+ const groupSelector='.reading-flow-choices,.settings-tabs,.reading-layout-choices,.reading-side-tabs,.note-context-tabs,[data-library-filters]';
  const allowed=()=>!reducedMotion()&&!document.hidden&&!document.body.classList.contains('window-interacting')&&!(typeof isWindowInteracting==='function'&&isWindowInteracting())&&!viewer.classList.contains('opening-preview');
- function play(element,keyframes,{duration=170,channel='surface',pseudoElement,persist=false}={}){
-  if(!element?.isConnected)return;let channels=active.get(element);const previous=channels?.get(channel);previous?.cancel();if(!allowed())return;
-  const animation=element.animate(keyframes,{duration,easing:ease,fill:'both',...(pseudoElement?{pseudoElement}:{})});if(!channels){channels=new Map();active.set(element,channels);}channels.set(channel,animation);
+ function play(element,keyframes,{duration=200,channel='surface',pseudoElement,persist=false,easing=ease}={}){
+  if(!element?.isConnected)return;let channels=active.get(element);const previous=channels?.get(channel);
+  // Read the displayed frame before cancelling. Reversing an interaction must
+  // not jump back to the caller's nominal starting opacity or transform.
+  if(previous&&!pseudoElement&&Array.isArray(keyframes)&&keyframes.length&&previous.playState!=='idle'){
+   const style=getComputedStyle(element),first={...keyframes[0]};for(const property of ['opacity','transform'])if(property in first)first[property]=style[property];keyframes=[first,...keyframes.slice(1)];
+  }
+  previous?.cancel();if(!allowed())return;
+  const animation=element.animate(keyframes,{duration,easing,fill:'both',...(pseudoElement?{pseudoElement}:{})});if(!channels){channels=new Map();active.set(element,channels);}channels.set(channel,animation);
   animation.finished.catch(()=>{}).finally(()=>{if(channels.get(channel)===animation){channels.delete(channel);if(!channels.size)active.delete(element);}if(!persist)animation.cancel();});return animation;
  }
  function finishAll(){for(const channels of [...active.values()])for(const animation of [...channels.values()])try{animation.finish();}catch{animation.cancel();}}
  function enter(element,kind='menu'){
-  if(!element)return;const side=kind==='drawer',running=active.get(element)?.has('surface'),style=running?getComputedStyle(element):null;return play(element,[{opacity:style?.opacity??0,transform:style?.transform??(side?'translateX(10px)':'translateY(-4px)')},{opacity:1,transform:'none'}],{duration:side?180:140});
+  if(!element)return;const side=kind==='drawer',running=active.get(element)?.has('surface'),style=running?getComputedStyle(element):null;return play(element,[{opacity:style?.opacity??0,transform:style?.transform??(side?'translateX(12px)':'translateY(-5px)')},{opacity:1,transform:'none'}],{duration:side?260:200});
  }
  function exit(element,remove=false){
-  if(!element)return Promise.resolve();const style=getComputedStyle(element),transform=style.transform,animation=play(element,[{opacity:style.opacity,transform},{opacity:0,transform}],{duration:100,persist:true});
+  if(!element)return Promise.resolve();const style=getComputedStyle(element),transform=style.transform,animation=play(element,[{opacity:style.opacity,transform},{opacity:0,transform}],{duration:kokMotion.exit,easing:kokMotion.exitEase,persist:true});
   return(animation?.finished.catch(()=>{})||Promise.resolve()).then(()=>{if(remove)element.remove();animation?.cancel();});
  }
  function visibility(element,visible){
@@ -22,7 +28,7 @@ const CalmMotion=(()=>{
   if(presence.get(element)?.visible===visible&&element.inert===!visible&&(visible?!element.classList.contains('hidden'):element.classList.contains('hidden')||running))return running?.finished.catch(()=>{})||Promise.resolve();
   const revision=(presence.get(element)?.revision||0)+1;presence.set(element,{revision,visible});element.inert=!visible;element.setAttribute('aria-hidden',String(!visible));
   if(visible){element.classList.remove('hidden');const animation=enter(element,'drawer');return animation?.finished.catch(()=>{})||Promise.resolve();}
-  const style=getComputedStyle(element),transform=style.transform,animation=play(element,[{opacity:style.opacity,transform},{opacity:0,transform}],{duration:130,persist:true});return(animation?.finished.catch(()=>{})||Promise.resolve()).then(()=>{if(presence.get(element)?.revision===revision)element.classList.add('hidden');animation?.cancel();});
+  const style=getComputedStyle(element),transform=style.transform,animation=play(element,[{opacity:style.opacity,transform},{opacity:0,transform:'translateX(12px)'}],{duration:160,easing:kokMotion.exitEase,persist:true});return(animation?.finished.catch(()=>{})||Promise.resolve()).then(()=>{if(presence.get(element)?.revision===revision)element.classList.add('hidden');animation?.cancel();});
  }
  function snapshot(element){
   const host=element.parentElement;contentGhosts.get(host)?.remove();const ghost=element.cloneNode(true),style=getComputedStyle(element);ghost.removeAttribute('id');ghost.querySelectorAll('[id]').forEach(n=>n.removeAttribute('id'));ghost.classList.add('motion-content-ghost');ghost.inert=true;ghost.setAttribute('aria-hidden','true');
@@ -52,18 +58,34 @@ const CalmMotion=(()=>{
   const underline=group.classList.contains('settings-tabs'),rect={x:selected.offsetLeft,y:selected.offsetTop+(underline?selected.offsetHeight-2:0),w:selected.offsetWidth,h:underline?2:selected.offsetHeight},key=[rect.x,rect.y,rect.w,rect.h].join('|');if(state.key===key)return;
   const old=getComputedStyle(group,'::before'),matrix=new DOMMatrixReadOnly(old.transform==='none'?undefined:old.transform),oldW=parseFloat(old.width)||rect.w,oldH=parseFloat(old.height)||rect.h,from=`translate(${matrix.e}px,${matrix.f}px) scale(${matrix.a*oldW/rect.w},${matrix.d*oldH/rect.h})`,ready=!!state.key;
   state.key=key;for(const [key,value]of [['x',rect.x],['y',rect.y],['w',rect.w],['h',rect.h]])group.style.setProperty('--motion-choice-'+key,value+'px');group.classList.add('motion-choice-ready');
-  if(ready&&animate&&allowed())play(group,[{transform:from},{transform:`translate(${rect.x}px,${rect.y}px) scale(1)`}],{duration:190,channel:'choice',pseudoElement:'::before'});else try{active.get(group)?.get('choice')?.finish();}catch{}
+  if(ready&&animate&&allowed())play(group,[{transform:from},{transform:`translate(${rect.x}px,${rect.y}px) scale(1)`}],{duration:240,channel:'choice',pseudoElement:'::before'});else try{active.get(group)?.get('choice')?.finish();}catch{}
  }
  function prepare(root=document){
   for(const [group,state]of choices)if(!group.isConnected){state.mutations.disconnect();state.resize.disconnect();cancelAnimationFrame(state.frame);choices.delete(group);}
   for(const group of root.querySelectorAll(groupSelector))if(!choices.has(group)){
-   const state={key:'',frame:0},schedule=animate=>{cancelAnimationFrame(state.frame);state.frame=requestAnimationFrame(()=>updateChoice(group,animate));};
+   const state={key:'',frame:0,animate:false},schedule=animate=>{state.animate=state.animate||animate;if(state.frame)return;state.frame=requestAnimationFrame(()=>{state.frame=0;const animate=state.animate;state.animate=false;updateChoice(group,animate);});};
    state.mutations=new MutationObserver(()=>schedule(true));state.mutations.observe(group,{subtree:true,attributes:true,attributeFilter:['aria-selected','aria-pressed']});state.resize=new ResizeObserver(()=>schedule(false));state.resize.observe(group);choices.set(group,state);updateChoice(group,false);
   }
  }
+ function captureLayout(root){
+  if(!allowed())return null;const positions=new Map();
+  for(const element of root.querySelectorAll('.file-card[data-id]')){const box=element.getBoundingClientRect();if(box.bottom<0||box.top>innerHeight||box.width===0)continue;positions.set(element.dataset.id,{x:box.x,y:box.y});active.get(element)?.get('layout')?.cancel();if(positions.size===24)break;}
+  return positions;
+ }
+ function layoutFrom(root,positions){
+  if(!positions?.size||!allowed())return;
+  const moves=[];for(const element of root.querySelectorAll('.file-card[data-id]')){const from=positions.get(element.dataset.id);if(!from)continue;const box=element.getBoundingClientRect(),x=from.x-box.x,y=from.y-box.y;if(box.bottom<0||box.top>innerHeight||Math.abs(x)+Math.abs(y)<1||Math.abs(y)>innerHeight)continue;moves.push({element,x,y});}
+  for(const {element,x,y} of moves)play(element,[{transform:`translate(${x}px,${y}px)`},{transform:'none'}],{duration:240,channel:'layout'});
+ }
+ function restoreFilters(root,previous){
+  const fresh=root.querySelector('[data-library-filters]');if(!fresh||!previous)return;
+  const buttons=new Map([...previous.querySelectorAll('[data-filter]')].map(button=>[button.dataset.filter,button]));
+  for(const replacement of fresh.querySelectorAll('[data-filter]')){const button=buttons.get(replacement.dataset.filter);if(!button)continue;button.className=replacement.className;for(const attribute of ['aria-pressed','aria-label','title'])button.setAttribute(attribute,replacement.getAttribute(attribute));const label=button.querySelector('.filter-label'),next=replacement.querySelector('.filter-label');if(label&&next&&label.textContent!==next.textContent)label.textContent=next.textContent;}
+  fresh.replaceWith(previous);
+ }
  function refresh(){prepare();for(const group of choices.keys())updateChoice(group,false);}
  const query=matchMedia('(prefers-reduced-motion: reduce)');query.addEventListener('change',()=>{finishAll();refresh();});document.addEventListener('visibilitychange',()=>{if(document.hidden)finishAll();});
- return{allowed,play,enter,exit,visibility,replaceContent,switchPanels,toggleNotes,feedback,prepare,refresh,finishAll,get activeCount(){return[...active.values()].reduce((sum,channels)=>sum+channels.size,0);}};
+ return{allowed,play,enter,exit,visibility,replaceContent,switchPanels,toggleNotes,feedback,prepare,refresh,finishAll,captureLayout,layoutFrom,restoreFilters,get activeCount(){return[...active.values()].reduce((sum,channels)=>sum+channels.size,0);}};
 })();
 
 Kok.extend('core','calm-motion.js:animateBeforeCalm','animateIn',animateBeforeCalm=>function(element){

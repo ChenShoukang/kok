@@ -1,0 +1,136 @@
+{
+  "commit": "2b75f3ad12b420c9504ef05df8d2564a28f8500e",
+  "source": "https://raw.githubusercontent.com/phosphor-icons/core/2b75f3ad12b420c9504ef05df8d2564a28f8500e/",
+  "license": "docs/licenses/Phosphor-MIT.txt",
+  "aliases": {
+    "grid": "squares-four",
+    "video": "film-strip",
+    "photo": "image",
+    "music": "music-notes",
+    "document": "file-text",
+    "book": "book-open",
+    "folder": "folder-simple",
+    "calendar": "calendar-dots",
+    "agent": "sparkle",
+    "spark": "sparkle",
+    "heart": "heart",
+    "clock": "clock-counter-clockwise",
+    "edit": "note-pencil",
+    "layers": "stack",
+    "network": "graph",
+    "search": "magnifying-glass",
+    "download": "download-simple",
+    "undo": "arrow-u-up-left",
+    "list": "list-checks",
+    "lock": "lock-key",
+    "home": "house",
+    "bookmark": "bookmark-simple"
+  },
+  "files": [
+    {
+      "name": "arrow-u-up-left",
+      "url": "https://raw.githubusercontent.com/phosphor-icons/core/2b75f3ad12b420c9504ef05df8d2564a28f8500e/assets/duotone/arrow-u-up-left-duotone.svg",
+      "sha256": "287774546690b73c0adabf539878b0f792e2fde925d287ef48ec7ccdec7f25d6"
+    },
+    {
+      "name": "book-open",
+      "url": "https://raw.githubusercontent.com/phosphor-icons/core/2b75f3ad12b420c9504ef05df8d2564a28f8500e/assets/duotone/book-open-duotone.svg",
+      "sha256": "ed4f731cb4272cf5cedd9226577ba4bb1b36154f70cbee6fc50dfb947722bbc7"
+    },
+    {
+      "name": "bookmark-simple",
+      "url": "https://raw.githubusercontent.com/phosphor-icons/core/2b75f3ad12b420c9504ef05df8d2564a28f8500e/assets/duotone/bookmark-simple-duotone.svg",
+      "sha256": "61490ef128031504fc176eb05b3823b8738076db3d5fe89ce98e071dbbf84bd8"
+    },
+    {
+      "name": "calendar-dots",
+      "url": "https://raw.githubusercontent.com/phosphor-icons/core/2b75f3ad12b420c9504ef05df8d2564a28f8500e/assets/duotone/calendar-dots-duotone.svg",
+      "sha256": "709d8c283e3e891bed81cf7a343861edc8c82bedb70d10f0e5ccae277622abb6"
+    },
+    {
+      "name": "clock-counter-clockwise",
+      "url": "https://raw.githubusercontent.com/phosphor-icons/core/2b75f3ad12b420c9504ef05df8d2564a28f8500e/assets/duotone/clock-counter-clockwise-duotone.svg",
+      "sha256": "163cb36b10af6e1298258453b35500a76847c36c425b2fbed518638b7dc9c932"
+    },
+    {
+      "name": "download-simple",
+      "url": "https://raw.githubusercontent.com/phosphor-icons/core/2b75f3ad12b420c9504ef05df8d2564a28f8500e/assets/duotone/download-simple-duotone.svg",
+      "sha256": "48f0c312cfbe2020c4cb57f07b94e320b4f94410d66e4ae5ac3207c0078aae72"
+    },
+    {
+      "name": "file-text",
+      "url": "https://raw.githubusercontent.com/phosphor-icons/core/2b75f3ad12b420c9504ef05df8d2564a28f8500e/assets/duotone/file-text-duotone.svg",
+      "sha256": "2843d192111fa60ef4d54457d51fbdefb2fcbeb73f02e794a10965fef62efe1a"
+    },
+    {
+      "name": "film-strip",
+      "url": "https://raw.githubusercontent.com/phosphor-icons/core/2b75f3ad12b420c9504ef05df8d2564a28f8500e/assets/duotone/film-strip-duotone.svg",
+      "sha256": "8a20228d475e1829cca55460168d14a31c941b90246bbebc773f43a2b88ef3da"
+    },
+    {
+      "name": "folder-simple",
+      "url": "https://raw.githubusercontent.com/phosphor-icons/core/2b75f3ad12b420c9504ef05df8d2564a28f8500e/assets/duotone/folder-simple-duotone.svg",
+      "sha256": "51dd87fa4b2d4901ce66057901180dbf96009da1ff02767613bebed30ee03eb9"
+    },
+    {
+      "name": "graph",
+      "url": "https://raw.githubusercontent.com/phosphor-icons/core/2b75f3ad12b420c9504ef05df8d2564a28f8500e/assets/duotone/graph-duotone.svg",
+      "sha256": "9566260ccb3d0d4fd83a0f26205505313ed4b42ba697d9cea709efd644bd48cf"
+    },
+    {
+      "name": "heart",
+      "url": "https://raw.githubusercontent.com/phosphor-icons/core/2b75f3ad12b420c9504ef05df8d2564a28f8500e/assets/duotone/heart-duotone.svg",
+      "sha256": "fb9379fe8d2a6d35f0853b7906584fd26456d8bf149463dcdd14edb40870d65e"
+    },
+    {
+      "name": "house",
+      "url": "https://raw.githubusercontent.com/phosphor-icons/core/2b75f3ad12b420c9504ef05df8d2564a28f8500e/assets/duotone/house-duotone.svg",
+      "sha256": "8ef72773ff7d2bfec6bf9d9de8543ff520ad50dbaef6bbbb50a1fcc5024bcc45"
+    },
+    {
+      "name": "image",
+      "url": "https://raw.githubusercontent.com/phosphor-icons/core/2b75f3ad12b420c9504ef05df8d2564a28f8500e/assets/duotone/image-duotone.svg",
+      "sha256": "338a7433d5fdaeebddd95e96ff7641509455ea5b2cd665d7c62e97dddf8e9f5c"
+    },
+    {
+      "name": "list-checks",
+      "url": "https://raw.githubusercontent.com/phosphor-icons/core/2b75f3ad12b420c9504ef05df8d2564a28f8500e/assets/duotone/list-checks-duotone.svg",
+      "sha256": "630240bc4b9b36000d7691d693d0cca762a180fdcf88ebf9bda340faaf83e11e"
+    },
+    {
+      "name": "lock-key",
+      "url": "https://raw.githubusercontent.com/phosphor-icons/core/2b75f3ad12b420c9504ef05df8d2564a28f8500e/assets/duotone/lock-key-duotone.svg",
+      "sha256": "7c2bd1e07605773460d133f5fa0d3b75795a8996e72056e6f1083aadac001a93"
+    },
+    {
+      "name": "magnifying-glass",
+      "url": "https://raw.githubusercontent.com/phosphor-icons/core/2b75f3ad12b420c9504ef05df8d2564a28f8500e/assets/duotone/magnifying-glass-duotone.svg",
+      "sha256": "4d4805b059b49add1e3424b53b05ba8f5bd6031ca551540b32b0a61cfb0ec7d9"
+    },
+    {
+      "name": "music-notes",
+      "url": "https://raw.githubusercontent.com/phosphor-icons/core/2b75f3ad12b420c9504ef05df8d2564a28f8500e/assets/duotone/music-notes-duotone.svg",
+      "sha256": "7139d4f72e91551454209ae159391bcc1ab47e1d570369cbe102459206aa9bee"
+    },
+    {
+      "name": "note-pencil",
+      "url": "https://raw.githubusercontent.com/phosphor-icons/core/2b75f3ad12b420c9504ef05df8d2564a28f8500e/assets/duotone/note-pencil-duotone.svg",
+      "sha256": "15119880bc71f747abb8a6d7683ba3463e8ec295638576afc77e807394e85724"
+    },
+    {
+      "name": "sparkle",
+      "url": "https://raw.githubusercontent.com/phosphor-icons/core/2b75f3ad12b420c9504ef05df8d2564a28f8500e/assets/duotone/sparkle-duotone.svg",
+      "sha256": "58d4dd3ac08fb6f434e38dbb4e7ccc8826af255bfd8972060e5f9a730987bf1e"
+    },
+    {
+      "name": "squares-four",
+      "url": "https://raw.githubusercontent.com/phosphor-icons/core/2b75f3ad12b420c9504ef05df8d2564a28f8500e/assets/duotone/squares-four-duotone.svg",
+      "sha256": "e11fb9427fdfa1bbd175a751a0fc494e1e6494174f70cae283aef3686d2bad0c"
+    },
+    {
+      "name": "stack",
+      "url": "https://raw.githubusercontent.com/phosphor-icons/core/2b75f3ad12b420c9504ef05df8d2564a28f8500e/assets/duotone/stack-duotone.svg",
+      "sha256": "2cbddbd673858904550216c535e7b719fdc416392e7cac93cbd4d7b55885fba4"
+    }
+  ]
+}

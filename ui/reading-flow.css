@@ -5,9 +5,9 @@ body[data-theme] .viewer .viewer-actions{flex:0 0 auto!important;max-width:calc(
 .viewer-extra-actions,.viewer-pinned-actions,.viewer-system-actions{display:flex;align-items:center;flex:0 0 auto;gap:3px;min-width:0}
 body[data-theme] .viewer :is(.viewer-actions .icon-button,#viewer-favorite){box-sizing:border-box;display:grid;place-items:center;flex:0 0 32px;width:32px!important;min-width:32px!important;height:32px;padding:6px!important;overflow:visible;line-height:1}
 body[data-theme] .viewer #close-viewer{position:static;order:initial;background:transparent!important}
-body[data-theme] .viewer #viewer-favorite.selected{color:#d49aaa!important;background:#986b7926!important}
+body[data-theme] .viewer #viewer-favorite.selected{color:var(--tone-rose,#b1697d)!important;background:var(--tone-rose-bg,#f8edf0)!important}
 body[data-theme] :is(.card-favorite,.track-row [data-favorite],#track-favorite){box-sizing:border-box;display:grid;place-items:center;padding:5px!important;line-height:1;flex-shrink:0;overflow:visible}
-body[data-theme] :is(.card-favorite,.track-row [data-favorite],#track-favorite,#viewer-favorite) svg{display:block;width:18px!important;height:18px!important;min-width:18px;flex-shrink:0;overflow:visible;transform:none!important;fill:none}
+body[data-theme] :is(.card-favorite,.track-row [data-favorite],#track-favorite,#viewer-favorite) svg{display:block;width:18px!important;height:18px!important;min-width:18px;flex-shrink:0;overflow:visible;transform:none;fill:none}
 body[data-theme] :is(.card-favorite,.track-row [data-favorite],#track-favorite,#viewer-favorite)[aria-pressed=true] svg{fill:currentColor}
 :is(.viewer-overflow-menu,.viewer-overflow-ghost){position:absolute;right:12px;top:calc(var(--viewer-head-height,56px) + 4px);width:230px;max-width:calc(100% - 24px);max-height:calc(100% - 80px);overflow:auto;z-index:40;padding:5px;border:1px solid var(--view-line);border-radius:6px;background:var(--view-panel);color:var(--view-text);box-shadow:0 8px 28px #0003}
 :is(.viewer-overflow-menu,.viewer-overflow-ghost) button{display:flex;align-items:center;gap:10px;width:100%;padding:10px 9px;border-radius:4px;background:transparent;color:inherit;text-align:left;font:12px/1.5 var(--user-font);white-space:normal}

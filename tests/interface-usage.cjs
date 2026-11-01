@@ -41,8 +41,21 @@ const {chromium}=require('./browser.cjs'),assert=require('node:assert/strict'),f
   await page.keyboard.press('Control+f');assert(await page.locator('#search').evaluate(e=>e===document.activeElement));
   await page.locator('#search').fill('no-such-file-918273');await page.locator('.empty-state').waitFor();assert.equal(await page.locator('.file-card').count(),0);
   await page.evaluate(()=>navigate('overview'));await page.locator('[data-view="grid"]').click();await page.locator('.flat-library-grid').waitFor();
-  const tools=page.locator('details[data-nav-group]').first();assert(!await tools.evaluate(e=>e.open));await tools.locator('summary').click();
-  await page.locator('#main-nav [data-route="photo"]').click();assert(await page.locator('details[data-nav-group]').first().evaluate(e=>e.open));
+  await page.locator('[data-nav-more]').click();await page.locator('.nav-launcher:popover-open').waitFor();
+  const launcher=page.locator('.nav-launcher [role=menuitem]');
+  await page.evaluate(()=>renderNav());assert(await page.locator('.nav-launcher:popover-open').isVisible(),'A background navigation refresh keeps the launcher usable');
+  await page.screenshot({path:path.join(output,'launcher-light.png'),animations:'disabled'});
+  await page.keyboard.press('Home');await page.keyboard.press('ArrowRight');assert(await launcher.nth(1).evaluate(e=>e===document.activeElement));
+  await page.keyboard.press('ArrowDown');assert(await launcher.nth(4).evaluate(e=>e===document.activeElement));
+  await page.keyboard.press('Escape');assert(await page.locator('[data-nav-more]').evaluate(e=>e===document.activeElement));
+  await page.locator('[data-nav-more]').click();await page.getByRole('menuitem',{name:'分类',exact:true}).click();
+  await page.getByRole('menuitem',{name:'新建分类',exact:true}).click();await page.locator('#collection-name').fill('界面检查分类');
+  await page.locator('[data-save-collection="new"]').click();await page.waitForFunction(()=>state.collections.includes('界面检查分类')&&!$('#small-dialog').open);
+  await page.locator('[data-nav-more]').click();await page.getByRole('menuitem',{name:'分类',exact:true}).click();
+  await page.getByRole('menuitem',{name:'界面检查分类',exact:true}).click();await page.waitForFunction(()=>state.route==='collection'&&state.collection==='界面检查分类');
+  assert(await page.locator('[data-nav-more]').evaluate(e=>e.classList.contains('active')),'Collections keep a visible navigation state');
+  await page.locator('.nav-primary [data-route="overview"]').click();
+  await page.locator('[data-filter="photo"]').click();assert.equal(await page.evaluate(()=>state.route),'photo');
   await page.evaluate(()=>navigate('overview'));await page.locator('[data-library-tools]').click();await page.locator('.glass-menu:popover-open').waitFor();
   await page.screenshot({path:path.join(output,'library-tools.png'),animations:'disabled'});
   await page.getByRole('menuitem',{name:'多文件对比与笔记回顾'}).click();await page.locator('#study-dialog[open]').waitFor();await page.evaluate(()=>closeStudy());
@@ -55,6 +68,9 @@ const {chromium}=require('./browser.cjs'),assert=require('node:assert/strict'),f
    await page.locator('.card-menu').last().scrollIntoViewIfNeeded();await page.locator('.card-menu').last().click();await page.waitForTimeout(160);
    assert(await page.locator('.file-action-menu').evaluate(e=>{const r=e.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight;}));
    await page.screenshot({path:path.join(output,`compact-menu-${theme}.png`),animations:'disabled'});await page.keyboard.press('Escape');
+   await page.locator('[data-nav-more]').click();await page.locator('.nav-launcher:popover-open').waitFor();
+   assert(await page.locator('.nav-launcher').evaluate(e=>{const r=e.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight;}));
+   await page.screenshot({path:path.join(output,`launcher-${theme}-650.png`),animations:'disabled'});await page.keyboard.press('Escape');
   }
   await page.setViewportSize({width:1440,height:1000});await page.evaluate(()=>navigate('overview'));
   for(let n=0;n<8;n++){await page.locator('.card-menu').first().click();await page.keyboard.press('Escape');}
@@ -62,6 +78,6 @@ const {chromium}=require('./browser.cjs'),assert=require('node:assert/strict'),f
   await page.emulateMedia({reducedMotion:'reduce'});await page.locator('.card-menu').first().click();
   assert.equal(await page.locator('.file-action-menu').evaluate(e=>e.getAnimations().length),0);await page.keyboard.press('Escape');
   assert.deepEqual(errors,[]);
-  console.log('PASS: fresh right-click, arrow/range/space selection, keyboard and anchored menus, focus recovery, filters, list, Ctrl+F, search-empty, persistent tool disclosure, compare/settings, viewport boundaries, rapid menu cleanup and reduced motion.');
+  console.log('PASS: fresh right-click, file selection, anchored menus/focus, filters, list/search, launcher arrows and refresh, nested collections, compare/settings, viewport boundaries, rapid menu cleanup and reduced motion.');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exit(1);});

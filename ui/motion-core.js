@@ -18,7 +18,8 @@ motionPreference.addEventListener('change',()=>{if(reducedMotion())finishSurface
 document.addEventListener('visibilitychange',()=>{if(document.hidden)finishSurfaceMotions();});
 // Consistent surface timing, continuous interruptions and held exit frames.
 // Dialog text is translated/faded rather than rescaled.
-const kokMotion={enter:180,panel:140,feedback:120,exit:100,ease:'cubic-bezier(.2,0,0,1)',exitEase:'cubic-bezier(.4,0,1,1)'};
+const kokMotion={enter:220,panel:200,feedback:160,exit:120,ease:MotionClock.curve(),exitEase:'cubic-bezier(.4,0,1,1)'};
+document.documentElement.style.setProperty('--motion-spring',kokMotion.ease);
 const dialogBackdrops=new WeakMap();
 function animateDialogBackdrop(element,visible){
  if(element?.tagName!=='DIALOG'||!element.open)return;

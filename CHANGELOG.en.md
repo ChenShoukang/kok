@@ -1,5 +1,17 @@
 # kok changelog
 
+## v0.9.8 · Preview
+
+- Interface redesign: unified near-white and muted purple-dark themes, removed promotional welcome copy and redundant labels; kept a short rail at every width with file categories in the library toolbar; the three-column launcher puts Favorites, Recent and Collections first; pinned offline Phosphor duotone destination glyphs with original geometry and MIT license, while compact actions retain Lucide.
+- Interrupted transitions continue from the displayed frame. Menus enter over 200ms and exit over 120ms while releasing input immediately; filters retain focus, sorting translates cards, exits preserve surface geometry, and reduced-motion preferences are respected.
+- The Agent first screen now defaults to material, the request, suggestions derived from that material and send/stop; skills, usage profiles, protocol and scope live in a collapsed Advanced panel, and selected material becomes the effective scope automatically.
+- New read-only native action `agentLocalPlan`: explicit read-only requests such as counts, filtered lists, collection/tag overviews and kind distributions are answered locally with zero model requests, no network and no writes, even before an API key is configured; generative, comparison and suggestion requests still go to the model.
+- Fragment-level retrieval: one long file can return up to three anchored excerpts (page/chapter/subtitle time, 12 snippets in total by default, max 24), and `read_items` reports per-source read coverage plus a bounded summary. The per-round catalog combines the user's selection with locally matched goal-related candidates and stays fixed for the task. Knowledge panes and MCP keep one hit per file.
+- Tool-call messages now use a stable prefix plus a dynamic tail: the receipt index, checkpoint and task guidance moved to the final host status message while history and prior rounds remain append-only; the JSON fallback protocol is unchanged.
+- Every finished task ends with a durable result card (status, sources used, citations, open artifact / view sources / continue editing); local answers show a "completed locally, no model call" card with an AI follow-up entry; batch changes are summarized before confirmation.
+- Added a fixed 30-task sample set, an offline validator and an opt-in live evaluation entry. No real-model evaluation was executed in this round, so no savings claim is made. See [Agent focus](docs/AGENT_FOCUS.md) and [evaluation baseline](docs/AGENT_TASK_EVAL.md).
+- Validation: **608 native checks**, **16 desktop suites** and **package re-verification** pass. An authorized before/after comparison on the same 30 tasks shows requests falling **100 → 76 (−24%)**, input tokens **566,586 → 431,132 (−24%)**, conservative cost from ¥2.68 to ¥2.11, and 26/30 passed in both rounds, with the saving driven by local task routing; the two passes used 190 requests, moving the project request ledger from 359 to **549**. Application, package metadata and browser-extension versions are synchronized. See [validation scope, usage and boundaries](docs/VALIDATION_0.9.8.md) and the [evaluation baseline](docs/AGENT_TASK_EVAL.md).
+
 ## v0.9.3 · Preview
 
 - Local MCP sandbox: each stdio server can use a user-writable portable-runtime directory with AppContainer; the host grants read/execute ACLs, Node.js gets symlink-preservation flags automatically, and non-grantable/system directories fail explicitly with no silent fallback. A native CI gate starts a copied Node runtime and completes an approved MCP call.

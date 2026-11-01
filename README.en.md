@@ -4,9 +4,9 @@
 
 Keep videos, photos, music, documents and books in one local library. Organize topics with Spaces, connect sources to notes with Clips, and bring in AI when you want help translating, organizing or writing.
 
-[Download v0.9.5 Preview](https://github.com/ChenShoukang/kok/releases/tag/v0.9.5) · [User guide](docs/GUIDE.en.md) · [中文](README.md) · [Supported formats](docs/FORMATS.en.md)
+[Published releases](https://github.com/ChenShoukang/kok/releases) · [User guide](docs/GUIDE.en.md) · [中文](README.md) · [Supported formats](docs/FORMATS.en.md)
 
-**v0.9.5 Preview** reduces the compact sidebar to four primary destinations plus one overflow entry, with 40px targets, 12px tooltips, calmer menu focus and interruption-safe motion: closing a panel mid-animation no longer jumps. No data format changes and no additional real-model calls (ledger stays at 359). See [flat UI notes](docs/FLAT_UI.md), [interface references](docs/INTERFACE_REFERENCES.md), [current validation](docs/VALIDATION_0.9.5.md) and the [roadmap](ROADMAP.en.md).
+**v0.9.8 Preview** unifies near-white and muted purple-dark themes, simplifies the welcome screen and rail, and adds offline Phosphor duotone glyphs. It also reshapes Agent into "pick material → state the result → check openable output": the first screen keeps only material, the request and suggestions; explicit count/filter requests are answered locally with zero model requests; retrieval returns anchored page/chapter/subtitle snippets plus read coverage; tool-call messages keep a stable prefix; and every finished task ends with an openable result card. No data format changes. On the same 30-task sample set, requests fell from 100 to 76 (−24%) and input tokens from 566,586 to 431,132 (−24%), with the saving coming from local task routing; the two evaluation passes used 190 requests in total, moving the project request ledger from 359 to 549. See [Agent focus](docs/AGENT_FOCUS.md), the [30-task baseline and before/after comparison](docs/AGENT_TASK_EVAL.md), [interface notes](docs/FLAT_UI.md), [validation](docs/VALIDATION_0.9.8.md) and the [roadmap](ROADMAP.en.md).
 
 ![kok v0.9.4 flat library using bundled original samples](docs/screenshots/overview-en.jpg)
 
@@ -35,7 +35,7 @@ See the [user guide](docs/GUIDE.en.md) for workflows, editing/export scope and p
 
 ## Get started
 
-1. Download `kok-0.9.5-win-x64.zip` from the [latest Release](https://github.com/ChenShoukang/kok/releases/latest), check the accompanying SHA-256, extract the full ZIP and run `kok.exe`. Use the version shown on the Release page for later releases.
+1. The local v0.9.8 build is `dist/kok-0.9.8-win-x64.zip`; public builds are available from [Releases](https://github.com/ChenShoukang/kok/releases). Check the accompanying SHA-256, extract the full ZIP and run `kok.exe`. Use the version shown on the Release page for public builds.
 2. Choose **Pure** or **Smart**. Local essentials work without configuring AI.
 3. Explore the original samples or drop in your own files, then create a Space or save a Clip.
 
@@ -62,7 +62,7 @@ Choose light/dark themes, background and glass colors, bundled Smiley Sans/LXGW 
 
 ## Documentation and development
 
-[User guide](docs/GUIDE.en.md) · [Documentation](docs/README.en.md) · [Validation](docs/VALIDATION_0.9.5.md) · [Implementation scope](docs/WAREHOUSE_0.8.1.en.md) · [Issues](https://github.com/ChenShoukang/kok/issues/new/choose) · [Security](SECURITY.en.md)
+[User guide](docs/GUIDE.en.md) · [Documentation](docs/README.en.md) · [Validation](docs/VALIDATION_0.9.8.md) · [Implementation scope](docs/WAREHOUSE_0.8.1.en.md) · [Issues](https://github.com/ChenShoukang/kok/issues/new/choose) · [Security](SECURITY.en.md)
 
 ```powershell
 npm ci --omit=optional

@@ -8,11 +8,13 @@
 
 | 想做什么 | 从这里开始 |
 | --- | --- |
+| v0.9.8 界面改版与 Agent 聚焦 | [本次验证](VALIDATION_0.9.8.md) · [Agent 聚焦](AGENT_FOCUS.md) · [30 项任务评测](AGENT_TASK_EVAL.md) · [界面说明](FLAT_UI.md) · [设计参考](INTERFACE_REFERENCES.md) |
 | v0.9.5 紧凑导航与动效修正 | [扁平界面说明](FLAT_UI.md) · [界面参考](INTERFACE_REFERENCES.md) · [界面验证](INTERFACE_VALIDATION.md) · [发布验证](VALIDATION_0.9.5.md) |
-| 真实模型补充验证（用户授权 API 预算） | [v0.9.2 真实模型验证](VALIDATION_0.9.2_LIVE.md) · [请求总账](validation/live-ledger-0.9.2.json) |
+| 真实模型基线（用户授权 API 预算） | [v0.9.8 30 项基线](VALIDATION_0.9.8.md) · [v0.9.2 补充验证](VALIDATION_0.9.2_LIVE.md) · [请求总账](validation/live-ledger-0.9.8.json) |
 | Agent MCP 便携运行时沙箱 / OAuth 设备码 / PDF 视频批量索引 | [Agent 0.9.3 能力与边界](AGENT_0.9.3.md) · [验证](VALIDATION_0.9.3.md) |
 | Agent OAuth MCP / PDF 页与视频帧视觉 / AppContainer 沙箱 | [Agent 0.9.2 能力与边界](AGENT_0.9.2.md) · [验证](VALIDATION_0.9.2.md) |
 | Agent 视觉 / 联网 / 受控执行 / 长任务 / 语义记忆 / 并行子代理 / 远程 MCP | [Agent 0.9.1 能力与边界](AGENT_0.9.1.md) · [验证](VALIDATION_0.9.1.md) |
+| Agent 首页简化、本地任务分流、片段级读取与成果卡片 | [Agent 聚焦与成本路径](AGENT_FOCUS.md) · [30 项任务评测基线](AGENT_TASK_EVAL.md) |
 | 正文 / 语义检索、网页采集、OCR、便携恢复和对外只读 MCP | [v0.9.0 功能指南](LIBRARY_0.9.0.md) · [本次验证](VALIDATION_0.9.0.md) |
 | 导入文件，认识资料库、空间、摘录与智能集合 | [当前使用指南](GUIDE.md) |
 | 离线使用、切换模式、建立私密文件夹和备份 | [模式、私密与数据边界](MODES.md) |
@@ -33,6 +35,7 @@
 | 文档 | 内容 |
 | --- | --- |
 | [v0.9.0 同类差距与实施路线](PEER_GAPS_0.9.0.md) | 当前工作区复核、历史真实评测、公开来源、分阶段任务与验收条件 |
+| [Agent 30 项任务评测基线](AGENT_TASK_EVAL.md) | 固定样本、首次真实基线结果、验收口径与 token / 费用 / 耗时度量 |
 | [v0.8.1 实现范围](WAREHOUSE_0.8.1.md) | 当前覆盖与未完成的整体验收，区分功能、规划与兼容层 |
 | [验证记录](VALIDATION_0.8.1.md) | 原生 / 桌面证据、复现方式与未验证边界 |
 | [开发与测试](DEVELOPMENT.md) | 构建、隔离测试、代码目录 |
