@@ -6,7 +6,7 @@
 
 一级入口按使用场景组织为 Agent、我的作品和资料库，文件类型和工具留在各自区域内部。见[Agent 首页与交互](docs/AGENT_HOME_UI.md)和[功能结构](docs/CREATION_PRODUCT_FLOW.md)。
 
-[下载已发布版本](https://github.com/ChenShoukang/kok/releases) · [使用指南](docs/GUIDE.md) · [English](README.en.md) · [格式支持](docs/FORMATS.md)
+[下载已发布版本](https://github.com/ChenShoukang/kok/releases) · [帮助中心](docs/help/index.md) · [使用指南](docs/GUIDE.md) · [English](README.en.md) · [格式支持](docs/FORMATS.md)
 
 **v0.10.1 Preview** 把一级入口按使用场景收敛为 **Agent、我的作品、资料库**：Agent 仍是主要协作入口，新增的“我的作品”承载新建、继续编辑、项目空间、摘录、配方与已有媒体的剪辑入口，“资料库”保留独立的观看、收听、阅读，并在首页提供继续观看与阅读、收藏、最近打开、分类和资料库工具。文件类型与工具不再占据一级入口，`今天/空间/摘录/智能集合/配方/回顾/下载/智能整理/知识图谱` 等旧页面仍可通过区域内部入口和路由访问。本版不改变数据格式；小说章节与设定管理、音视频从零生成仍分阶段接入。见 [Agent 首页与交互](docs/AGENT_HOME_UI.md)、[功能结构](docs/CREATION_PRODUCT_FLOW.md)、[本次验证](docs/VALIDATION_0.10.1.md) 与 [路线图](ROADMAP.md)。
 
@@ -34,7 +34,7 @@
 | 我的作品 | 新建文档 / 演示文稿；继续编辑在 kok 中新建或修改过的内容；进入项目空间、素材摘录、创作配方；从已有视频、音频、PDF、文档开始剪辑或页面整理；成品导出后仍在资料库直接欣赏 |
 | 视频下载 | Bilibili / YouTube / 抖音适配、通用网页与直链；资源选择、队列、续传、登录会话与下载后入库，分轨 / 流媒体合并使用可选组件 |
 
-完整操作、编辑导出范围和常见使用场景见[使用指南](docs/GUIDE.md)。
+完整操作、编辑导出范围和常见使用场景见[kok 帮助中心](docs/help/index.md)与[使用指南](docs/GUIDE.md)。
 
 ## 开始使用
 
@@ -65,7 +65,7 @@
 
 ## 文档与开发
 
-[使用指南](docs/GUIDE.md) · [文档目录](docs/README.md) · [Agent 能力与边界](docs/AGENT_0.9.3.md) · [验证记录](docs/VALIDATION_0.10.1.md) · [功能结构](docs/CREATION_PRODUCT_FLOW.md) · [实现进度](docs/WAREHOUSE_0.8.1.md) · [反馈](https://github.com/ChenShoukang/kok/issues/new/choose) · [安全报告](SECURITY.md)
+[帮助中心](docs/help/index.md) · [使用指南](docs/GUIDE.md) · [文档目录](docs/README.md) · [Agent 能力与边界](docs/AGENT_0.9.3.md) · [验证记录](docs/VALIDATION_0.10.1.md) · [功能结构](docs/CREATION_PRODUCT_FLOW.md) · [实现进度](docs/WAREHOUSE_0.8.1.md) · [反馈](https://github.com/ChenShoukang/kok/issues/new/choose) · [安全报告](SECURITY.md)
 
 ```powershell
 npm ci --omit=optional

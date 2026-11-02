@@ -1,5 +1,9 @@
 # Using kok
 
+For a topic-based manual (setup, the three areas, Agent, library, settings and reference), see the
+[kok help center (Chinese)](help/index.md). This page is the fuller historical guide; some details may lag the
+current version.
+
 v0.9.0 adds source indexing, local semantic search, browser capture, Windows OCR and portable export/restore. See the [new workflow guide](LIBRARY_0.9.0.en.md).
 
 [中文](GUIDE.md) · [Project home](../README.en.md) · [Documentation](README.en.md)

@@ -6,7 +6,7 @@ Start with an idea and let Agent help plan, organize, write and create editable 
 
 The top level is organized by what you are doing — Agent, My works and Library — while file types and tools live inside those areas. See [Agent home and interactions](docs/AGENT_HOME_UI.md) and [the product structure](docs/CREATION_PRODUCT_FLOW.md).
 
-[Published releases](https://github.com/ChenShoukang/kok/releases) · [User guide](docs/GUIDE.en.md) · [中文](README.md) · [Supported formats](docs/FORMATS.en.md)
+[Published releases](https://github.com/ChenShoukang/kok/releases) · [Help center (Chinese)](docs/help/index.md) · [User guide](docs/GUIDE.en.md) · [中文](README.md) · [Supported formats](docs/FORMATS.en.md)
 
 **v0.10.1 Preview** reorganizes the top level by what you are doing: **Agent, My works and Library**. Agent remains the main collaboration entry; the new My works area holds new work, continue-editing, project spaces, clips, recipes and existing-media editing tools; Library keeps independent watching, listening and reading, with continue rows, favorites, recent items, collections and library tools on its home page. File types and tools no longer occupy the top level; older destinations (Today, Spaces, Clips, smart collections, Recipes, Review, downloads, smart organize, knowledge graph) remain reachable inside the areas and through their routes. No data format changes; novel-level chapters/settings and from-scratch audio/video generation stay staged for later releases. See [Agent home and interactions](docs/AGENT_HOME_UI.md), [the product structure](docs/CREATION_PRODUCT_FLOW.md), [validation](docs/VALIDATION_0.10.1.md) and the [roadmap](ROADMAP.en.md).
 
@@ -34,7 +34,7 @@ The top level is organized by what you are doing — Agent, My works and Library
 | My works | Create documents or presentations; continue editing content created or modified in kok; open project spaces, saved clips and creative recipes; start editing existing videos, audio, PDFs or documents; exported results remain playable in the library |
 | Video downloads | Bilibili/YouTube/Douyin adapters, generic pages and direct links, source selection, queues, resume, sign-in sessions and import; optional components merge split tracks and streams |
 
-See the [user guide](docs/GUIDE.en.md) for workflows, editing/export scope and practical examples.
+See the [kok help center (Chinese)](docs/help/index.md) and the [user guide](docs/GUIDE.en.md) for workflows, editing/export scope and practical examples.
 
 ## Get started
 
@@ -65,7 +65,7 @@ Choose light/dark themes, background and glass colors, bundled Smiley Sans/LXGW 
 
 ## Documentation and development
 
-[User guide](docs/GUIDE.en.md) · [Documentation](docs/README.en.md) · [Validation](docs/VALIDATION_0.10.1.md) · [Product structure](docs/CREATION_PRODUCT_FLOW.md) · [Implementation scope](docs/WAREHOUSE_0.8.1.en.md) · [Issues](https://github.com/ChenShoukang/kok/issues/new/choose) · [Security](SECURITY.en.md)
+[Help center (Chinese)](docs/help/index.md) · [User guide](docs/GUIDE.en.md) · [Documentation](docs/README.en.md) · [Validation](docs/VALIDATION_0.10.1.md) · [Product structure](docs/CREATION_PRODUCT_FLOW.md) · [Implementation scope](docs/WAREHOUSE_0.8.1.en.md) · [Issues](https://github.com/ChenShoukang/kok/issues/new/choose) · [Security](SECURITY.en.md)
 
 ```powershell
 npm ci --omit=optional

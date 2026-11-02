@@ -8,6 +8,7 @@ Start with the [user guide](GUIDE.en.md). Find help by the task you want to comp
 
 | Goal | Read |
 | --- | --- |
+| First time here, or a structured overview | [**kok help center** (Chinese)](help/index.md): setup, modes, interface, the three areas, settings and reference |
 | v0.10.1 scenario top level (Agent / My works / Library) | [Validation](VALIDATION_0.10.1.md) · [Product structure](CREATION_PRODUCT_FLOW.md) · [Agent home and interactions](AGENT_HOME_UI.md) |
 | v0.9.8 interface redesign and Agent focus | [Validation](VALIDATION_0.9.8.md) · [Agent focus](AGENT_FOCUS.md) · [30-task evaluation](AGENT_TASK_EVAL.md) · [Interface notes](FLAT_UI.md) · [Design references](INTERFACE_REFERENCES.md) |
 | v0.9.5 compact navigation and motion polish | [Flat UI notes](FLAT_UI.md) · [Interface references](INTERFACE_REFERENCES.md) · [Interface validation](INTERFACE_VALIDATION.md) · [Release validation](VALIDATION_0.9.5.md) |
