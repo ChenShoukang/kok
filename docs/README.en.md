@@ -8,6 +8,7 @@ Start with the [user guide](GUIDE.en.md). Find help by the task you want to comp
 
 | Goal | Read |
 | --- | --- |
+| v0.10.1 scenario top level (Agent / My works / Library) | [Validation](VALIDATION_0.10.1.md) · [Product structure](CREATION_PRODUCT_FLOW.md) · [Agent home and interactions](AGENT_HOME_UI.md) |
 | v0.9.8 interface redesign and Agent focus | [Validation](VALIDATION_0.9.8.md) · [Agent focus](AGENT_FOCUS.md) · [30-task evaluation](AGENT_TASK_EVAL.md) · [Interface notes](FLAT_UI.md) · [Design references](INTERFACE_REFERENCES.md) |
 | v0.9.5 compact navigation and motion polish | [Flat UI notes](FLAT_UI.md) · [Interface references](INTERFACE_REFERENCES.md) · [Interface validation](INTERFACE_VALIDATION.md) · [Release validation](VALIDATION_0.9.5.md) |
 | Real-model baseline (user-authorized budget) | [v0.9.8 30-task baseline](VALIDATION_0.9.8.md) · [v0.9.2 supplemental validation](VALIDATION_0.9.2_LIVE.md) · [request ledger](validation/live-ledger-0.9.8.json) |

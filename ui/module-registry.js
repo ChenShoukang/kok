@@ -20,17 +20,18 @@ const Kok=(()=>{
  function beforeNavigate(route){for(const m of modules.values()){if(!enabled(m.id))continue;const answer=m.beforeNavigate?.(route);if(answer)return answer;}return {route};}
  function descriptors(key,context){return [...modules.values()].filter(m=>enabled(m.id)).flatMap(m=>(typeof m[key]==='function'?m[key](context):(m[key]||[])).filter(d=>!d.when||d.when(context)).map(d=>({...d,module:m.id}))).sort((a,b)=>(a.order||0)-(b.order||0));}
  function nav(){
-  const moreButton=$('#main-nav [data-nav-more]');
-  const focused=document.activeElement?.closest('#main-nav .nav-item'),focusKey=focused?.hasAttribute('data-nav-more')?'[data-nav-more]':focused?.dataset.route?`[data-route="${CSS.escape(focused.dataset.route)}"]`:null;
-  const primaryOrder=['overview','today','spaces','agent'],compactPrimary=new Set(primaryOrder);
+  const focused=document.activeElement?.closest('#main-nav .nav-item'),focusKey=focused?.dataset.route?`[data-route="${CSS.escape(focused.dataset.route)}"]`:null;
+  const primaryOrder=isSmartMode()&&enabled('agent')?['agent','works','overview']:['works','overview'],compactPrimary=new Set(primaryOrder);
+  const libraryRoutes=['overview','video','photo','music','document','book','favorites','recent','collection','queries','review','organize','downloads'],worksRoutes=['works','spaces','clips','recipes'];
+  const brand=$('.sidebar .brand'),home=isSmartMode()&&enabled('agent')?'agent':'overview';if(brand){brand.dataset.route=home;brand.href='#'+home;}
   const group=d=>d.spaceId||['spaces','clips','queries','review','recipes'].includes(d.id)?'organize':['overview','video','photo','music','document','book'].includes(d.id)?'library':['today','agent'].includes(d.id)?'work':['favorites','recent'].includes(d.id)?'quick':'tools';
   const groups=[['work','工作台','Workspace'],['library','资料库','Library'],['organize','组织','Organize'],['quick','快捷访问','Quick access'],['tools','更多工具','More tools']];
   for(const place of ['main','extra']){
    const parent=$('#'+place+'-nav');if(!parent)continue;
-   const entries=descriptors('nav').filter(d=>(d.place||'main')===place&&(!state.isPrivate||d.allowPrivate));
+   const entries=descriptors('nav').filter(d=>(d.place||'main')===place&&compactPrimary.has(d.id)&&(!state.isPrivate||d.allowPrivate));
    const entry=d=>{
     const badge=d.badge?.(),count=d.count?.(),iconName=d.id==='review'?'book':d.id==='queries'?'bookmark':d.icon,icon=glyph(iconName);
-    const active=d.spaceId?state.route==='spaces'&&Warehouse.activeSpace===d.spaceId:d.route===state.route;
+    const active=d.route===state.route||(d.id==='overview'&&libraryRoutes.includes(state.route))||(d.id==='works'&&worksRoutes.includes(state.route));
     const primary=!d.spaceId&&compactPrimary.has(d.id),libraryChild=d.id==='overview'&&['video','photo','music','document','book'].includes(state.route);
     return `<button class="nav-item ${active||libraryChild?'active':''} ${primary?'compact-primary':''} ${d.className||''}" data-nav-icon="${esc(iconName||'folder')}" ${active?'aria-current="page"':''} ${d.spaceId?`data-space="${esc(d.spaceId)}" data-space-drop="${esc(d.spaceId)}"`:d.route?`data-route="${esc(d.route)}"`:d.command?`data-kok-command="${esc(d.command)}"`:''} ${d.id==='knowledge'?'data-open-knowledge':''} aria-label="${esc(d.userContent?d.label:I18n.text(d.label))}" ${d.userContent?'data-user-content':''}>${icon}<span class="nav-label">${esc(d.userContent?d.label:I18n.text(d.label))}</span>${badge?`<span class="count agent-busy" aria-label="${esc(I18n.text('正在处理'))}"></span>`:count?`<span class="count">${esc(count)}</span>`:''}</button>`;
    };
@@ -40,13 +41,7 @@ const Kok=(()=>{
     const label=I18n.language==='en'?en:zh,disclosure=key==='tools'&&isSmartMode(),activeGroup=rows.some(d=>d.route&&d.route===state.route);
     return (disclosure?`<details class="nav-group" data-nav-group="${place}-${key}" data-nav-key="${key}" ${activeGroup?'open':''}><summary class="nav-group-label">${svg('more')}<span>${label}</span>${svg('chevronDown')}</summary>`:`<div class="nav-group" data-nav-key="${key}" role="group" aria-label="${label}"><div class="nav-group-label">${label}</div>`)+rows.map(entry).join('')+(disclosure?'</details>':'</div>');
    }).join('');
-   if(place==='main'){
-    if(moreButton){moreButton.setAttribute('aria-label',I18n.language==='en'?'More':'更多');moreButton.querySelector('.nav-label').textContent=I18n.language==='en'?'More':'更多';parent.append(moreButton);}
-    else parent.insertAdjacentHTML('beforeend',`<button class="nav-item nav-more" data-nav-more aria-haspopup="menu" aria-label="${I18n.language==='en'?'More':'更多'}" aria-expanded="false">${svg('more')}<span class="nav-label">${I18n.language==='en'?'More':'更多'}</span></button>`);
-   }
   }
-  const more=$('#main-nav [data-nav-more]');
-  if(more)more.classList.toggle('active',state.route==='collection'||!!document.querySelector('#main-nav .nav-group:not([data-nav-key=library]) .nav-item.active,#extra-nav .nav-item.active'));
   if(focusKey&&document.activeElement!==focused)$('#main-nav '+focusKey)?.focus({preventScroll:true});
  }
 

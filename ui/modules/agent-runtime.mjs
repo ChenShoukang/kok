@@ -105,7 +105,7 @@ const AGENT_TOOLS={
 };
 const AGENT_READ=['search_library','read_items','list_collections'];
 const AGENT_SUGGESTIONS={
- library:[['整理最近导入的资料','layers'],['统计资料库构成','list'],['总结一个分类','list']],
+ library:[['帮我把一个想法整理成可执行的方案','edit','整理思路'],['帮我制定一份计划','list','制定计划'],['制作一份演示文稿','slide','制作演示']],
  document:[['总结要点','document'],['提取待办','check'],['生成一页笔记','edit']],
  pdf:[['看懂这份资料','document'],['提取要点','list'],['生成演示','slide']],
  files:[['比较差异','layers'],['汇总共同观点','list'],['整理成一篇笔记','edit']],
@@ -276,8 +276,15 @@ function agentMessage(m){
 }
 function agentEmpty(){
  const suggestions=agentSuggestions();
- return `<div class="agent-empty"><div class="agent-mark" aria-hidden="true"><span></span></div><h1>${I18n.text('今天想做点什么？')}</h1><p>${I18n.text('选定资料，说出要求，修改由你确认。')}</p>
- <div class="agent-starters">${suggestions.map(([text,icon])=>`<button type="button" data-agent-starter="${esc(I18n.text(text))}">${svg(icon)}<span>${I18n.text(text)}</span></button>`).join('')}</div>${Kok.enabled('mcp')?`<div class="agent-tools-row"><button type="button" class="text-button" data-mcp-settings>${I18n.text('外部工具 MCP')}</button></div>`:''}</div>`;
+ return `<div class="agent-empty"><h1>${I18n.text('有什么想法？')}</h1>
+ <div class="agent-starters">${suggestions.map(([text,icon,label])=>`<button type="button" data-agent-starter="${esc(I18n.text(text))}">${glyph(icon)}<span>${I18n.text(label||text)}</span></button>`).join('')}</div></div>`;
+}
+function agentMore(anchor){
+ GlassMenu.open(anchor,[
+  {key:'tasks',label:I18n.text('任务记录'),icon:'list',action:()=>agentTaskRecords()},
+  {key:'memory',label:I18n.text('长期记忆'),icon:'bookmark',action:()=>AgentPlatformUi.memories()},
+  {key:'schedules',label:I18n.text('计划任务'),icon:'calendar',disabled:!!agent.job,action:()=>AgentPlatformUi.schedules()}
+ ],{label:I18n.text('更多'),focus:true});
 }
 function agentView(){
  if(!agentAvailable())return `<section class="agent-page agent-off"><div class="agent-empty"><h1>${I18n.text('Agent 需要智能模式')}</h1><p>${I18n.text('纯净模式和私密文件夹不会发送任何 AI 请求。切换到智能模式并配置 AI 服务后即可使用。')}</p><button class="button primary" data-agent-settings>${I18n.text('切换到智能模式')}</button></div></section>`;
@@ -290,27 +297,33 @@ function agentView(){
   <div class="agent-advanced-row"><label class="agent-advanced-field"><span>${I18n.text('任务方式')}</span><select id="agent-intent" aria-label="${I18n.text('任务方式')}" ${busy?'disabled':''}><option value="assist" ${agent.intent==='assist'?'selected':''}>${I18n.text('协作修改')}</option><option value="discuss" ${agent.intent==='discuss'?'selected':''}>${I18n.text('仅讨论')}</option></select></label><label class="agent-advanced-field"><span>${I18n.text('技能')}</span><select id="agent-skill" aria-label="${I18n.text('技能')}" ${busy?'disabled':''}><option value="auto" ${agent.skill==='auto'?'selected':''}>${I18n.text('自动选择技能')}</option><option value="" ${!agent.skill?'selected':''}>${I18n.text('不使用技能')}</option>${skills.map(s=>`<option value="${esc(s.name)}" ${agent.skill===s.name?'selected':''}>${esc(I18n.text(s.title||s.name))}</option>`).join('')}</select></label></div>
   <div class="agent-advanced-row"><label class="agent-advanced-field"><span>${I18n.text('用量')}</span><select id="agent-budget" aria-label="${I18n.text('用量')}" ${busy?'disabled':''}>${[[6000,'省用量'],[14000,'均衡'],[24000,'更多上下文'],[48000,'长任务'],[64000,'超长任务']].map(([v,l])=>`<option value="${v}" ${agent.budget===v?'selected':''}>${I18n.text(l)}</option>`).join('')}</select></label><button type="button" class="text-button" data-agent-limits aria-expanded="${agent.options}" ${busy?'disabled':''}>${I18n.text('用量设置')}</button></div>
   <div class="agent-limits" ${agent.options?'':'hidden'}><label>${I18n.text('调用协议')}<select id="agent-protocol" ${busy?'disabled':''}>${[['auto','自动'],['tools','原生工具调用'],['json','兼容 JSON']].map(([v,l])=>`<option value="${v}" ${agent.protocol===v?'selected':''}>${I18n.text(l)}</option>`).join('')}</select></label>${[['requestLimit','请求上限',1,24,1],['inputRate','每百万输入 token 单价',0,10000,'any'],['outputRate','每百万输出 token 单价',0,10000,'any'],['costLimit','本次费用上限',0,10000,'any']].map(([k,l,min,max,step])=>`<label>${I18n.text(l)}<input data-agent-limit="${k}" type="number" min="${min}" max="${max}" step="${step}" value="${agent[k]}" ${busy?'disabled':''}></label>`).join('')}<small>${I18n.text('单价与额度使用同一货币，0 表示关闭费用限制；按保守额度拦截下一轮，实际费用以服务商为准。')}</small></div>
- </div></details>`;
- return `<section class="agent-page"><div class="agent-main">
- <div class="agent-toolbar">${AgentPlatformUi.button()}<span class="agent-progress" id="agent-progress" role="status" data-busy="${busy}">${I18n.text(agent.phase||'就绪')}</span><button type="button" class="text-button" data-agent-sessions ${busy?'disabled':''}>${svg('clock')}${I18n.text('会话')}</button><button type="button" class="text-button" data-agent-task-records>${I18n.text('任务记录')}</button></div>
+ ${Kok.enabled('mcp')?`<div class="agent-tools-row"><button type="button" class="text-button" data-mcp-settings>${I18n.text('外部工具 MCP')}</button></div>`:''}</div></details>`;
+ return `<section class="agent-page${agent.messages.length?'':' is-empty'}"><div class="agent-main">
+ <div class="agent-toolbar"><div class="agent-heading">${glyph('agent')}<strong>Agent</strong></div><span class="agent-progress" id="agent-progress" role="status" data-busy="${busy}">${I18n.text(agent.phase||'就绪')}</span><div class="agent-toolbar-actions"><button type="button" class="icon-button" data-agent-new aria-label="${I18n.text('新任务')}" title="${I18n.text('新任务')}" ${busy?'disabled':''}>${svg('plus')}</button><button type="button" class="icon-button" data-agent-sessions aria-label="${I18n.text('会话')}" title="${I18n.text('会话')}" ${busy?'disabled':''}>${svg('clock')}</button>${AgentPlatformUi.button()}<button type="button" class="icon-button" data-agent-more aria-label="${I18n.text('更多')}" title="${I18n.text('更多')}" aria-haspopup="menu" aria-expanded="false">${svg('more')}</button></div></div>
  <div class="agent-recovery">${agentRecoveryBar()}</div>${AgentOperations.view(agent.recovery&&(!agent.job||agent.job.id===agent.recovery.id)?agent.recovery:null)}<div class="agent-stream" id="agent-stream" aria-live="polite">${agent.messages.length?agentEntries():agentEmpty()}</div><div class="agent-review">${agentBatch()}</div>
  <button type="button" class="agent-latest text-button" data-agent-latest hidden>${I18n.text('回到最新')}${svg('arrow')}</button><form class="agent-composer" id="agent-form"><div class="agent-context">${agentContextChips()}<button type="button" class="agent-chip agent-add" data-agent-pick ${busy?'disabled':''}>${svg('plus')}<b>${I18n.text('添加资料')}</b></button><button type="button" class="agent-chip agent-scope-chip" data-agent-scope-summary title="${esc(I18n.text('资料范围'))}">${svg('folder')}<b>${esc(agentScopeLabel())}</b></button></div>
- <textarea id="agent-input" rows="2" maxlength="2000" placeholder="${esc(I18n.text(busy?'补充当前要求，或加入待办…':'让 Agent 整理、总结、写笔记或做演示文稿…  输入 / 使用技能'))}" aria-label="${esc(I18n.text('给 Agent 的要求'))}">${esc(agent.draft)}</textarea>
- <div class="agent-controls">${busy?`<button type="submit" class="button secondary">${I18n.text('补充要求')}</button><button type="button" class="text-button" data-agent-queue>${I18n.text('稍后执行')}</button><button type="button" class="button secondary agent-send" data-agent-stop>${svg('stop')}${I18n.text('停止')}</button>`:`<button type="button" class="text-button" data-agent-new>${I18n.text('新任务')}</button><button type="submit" class="button primary agent-send">${svg('send')}${I18n.text(agent.recovery?.respondable?'补充并继续':'发送')}</button>`}</div>
+ <textarea id="agent-input" rows="2" maxlength="2000" placeholder="${esc(I18n.text(busy?'补充当前要求，或加入待办…':'告诉我，你想完成什么…'))}" aria-label="${esc(I18n.text('给 Agent 的要求'))}">${esc(agent.draft)}</textarea>
+ <div class="agent-controls">${busy?`<button type="submit" class="button secondary">${I18n.text('补充要求')}</button><button type="button" class="text-button" data-agent-queue>${I18n.text('稍后执行')}</button><button type="button" class="button secondary agent-send" data-agent-stop>${svg('stop')}${I18n.text('停止')}</button>`:`<button type="submit" class="button primary agent-send" aria-label="${I18n.text(agent.recovery?.respondable?'补充并继续':'发送')}" title="${I18n.text(agent.recovery?.respondable?'补充并继续':'发送')}">${svg('arrow')}<span>${I18n.text(agent.recovery?.respondable?'补充并继续':'发送')}</span></button>`}</div>
  ${advanced}
- <div class="agent-footnote"><small id="agent-usage" data-user-content>${esc(used)}</small><small id="agent-queue-count">${agent.queue.length?I18n.text('待办')+' · '+agent.queue.length:''}</small>${agent.queue.length&&!busy?`<button type="button" class="text-button" data-agent-next>${I18n.text('继续待办')}</button><button type="button" class="text-button" data-agent-clear-queue>${I18n.text('清空待办')}</button>`:''}</div></form></div></section>`;
+ <div class="agent-footnote" ${usage||agent.queue.length?'':'hidden'}><small id="agent-usage" data-user-content>${esc(used)}</small><small id="agent-queue-count">${agent.queue.length?I18n.text('待办')+' · '+agent.queue.length:''}</small>${agent.queue.length&&!busy?`<button type="button" class="text-button" data-agent-next>${I18n.text('继续待办')}</button><button type="button" class="text-button" data-agent-clear-queue>${I18n.text('清空待办')}</button>`:''}</div></form></div></section>`;
 }
 function agentPaint({scroll=true}={}){
  agentSaveSoon();if(state.route!=='agent'||state.isPrivate)return;
  const previousFocus=document.activeElement;const root=$('#main'),stream=$('#agent-stream'),wasNear=!stream||stream.scrollHeight-stream.scrollTop-stream.clientHeight<90;
+ const wasEmpty=root.querySelector('.agent-page')?.classList.contains('is-empty'),composerBox=root.querySelector('.agent-composer')?.getBoundingClientRect();
  const template=document.createElement('template');template.innerHTML=agentView();
  if(!stream||!agentAvailable()){root.replaceChildren(template.content);I18n.localize(root);return;}
- const next=template.content;
+ const next=template.content;root.querySelector('.agent-page').classList.toggle('is-empty',!agent.messages.length);
  for(const selector of ['.agent-toolbar','.agent-recovery','.agent-mission','.agent-context','.agent-controls','#agent-advanced','.agent-limits','.agent-footnote','.agent-review']){
   const old=root.querySelector(selector),fresh=next.querySelector(selector);if(!old||!fresh)continue;
   if(selector==='.agent-limits'&&old.contains(document.activeElement))continue;
   if(selector==='#agent-advanced'&&old.contains(document.activeElement)&&document.activeElement?.matches?.('[data-agent-limit]'))continue;
   if(agentChromeEqual(old,fresh))continue;
+  if(selector==='.agent-toolbar'){
+   const status=old.querySelector('.agent-progress'),nextStatus=fresh.querySelector('.agent-progress');status.textContent=nextStatus.textContent;status.dataset.busy=nextStatus.dataset.busy;
+   const buttons=[...fresh.querySelectorAll('button')];old.querySelectorAll('button').forEach((button,index)=>{button.disabled=buttons[index].disabled;for(const attr of ['aria-label','title'])if(buttons[index].hasAttribute(attr))button.setAttribute(attr,buttons[index].getAttribute(attr));});
+   continue;
+  }
   if(selector==='.agent-mission')AgentOperations.preserve(old,fresh);
   else old.replaceWith(fresh);
  }
@@ -319,6 +332,10 @@ function agentPaint({scroll=true}={}){
  for(const node of [...incoming.children]){const existing=node.dataset.entry?stream.querySelector(`[data-entry="${node.dataset.entry}"]`):null;if(!existing)stream.append(node);else if(existing.innerHTML!==node.innerHTML){const opened=[...existing.querySelectorAll('details')].map(d=>d.open);existing.innerHTML=node.innerHTML;existing.querySelectorAll('details').forEach((d,i)=>{if(!d.matches('.agent-tool-group'))d.open=!!opened[i];});existing.classList.add('agent-entry-updated');}}
  const input=$('#agent-input');if(input&&document.activeElement!==input)input.value=agent.draft;
  I18n.localize(root);if(scroll&&wasNear)stream.scrollTop=stream.scrollHeight;agentUpdateScroll();agentRestoreFocus(previousFocus);
+ if(wasEmpty!==!agent.messages.length&&composerBox&&typeof CalmMotion!=='undefined'){
+  const composer=root.querySelector('.agent-composer'),box=composer.getBoundingClientRect();
+  CalmMotion.play(composer,[{transform:`translate(${composerBox.x-box.x}px,${composerBox.y-box.y}px)`},{transform:'none'}],{duration:280,channel:'layout'});
+ }
 }
 // The native task engine owns the loop, tool execution, approvals and the encrypted journal. This page renders
 // its snapshots and forwards decisions, adjustments and stops; it never schedules model turns itself.
@@ -441,18 +458,24 @@ function openAgent({ids=[],prompt=''}={}){
  setTimeout(()=>{const input=$('#agent-input');if(input){input.focus();input.setSelectionRange(input.value.length,input.value.length);}},60);
 }
 function agentPickItems(){
- const rows=state.items.slice().sort((a,b)=>String(b.added).localeCompare(String(a.added))),selected=new Set(agent.context);
- showSmall(`<h2>${I18n.text('添加资料到 Agent')}</h2><input id="agent-pick-search" type="search" placeholder="${esc(I18n.text('搜索名称'))}" autocomplete="off"><div class="agent-pick-list" id="agent-pick-list"></div><small>${I18n.text('最多选择 24 份资料，搜索全部文件。')}</small><div class="document-form-actions"><button type="button" class="text-button" data-close-small>${I18n.text('取消')}</button><button type="button" class="button primary" id="agent-pick-done">${I18n.text('添加')}</button></div>`);
- const list=$('#agent-pick-list');const paint=()=>{const q=$('#agent-pick-search').value.trim().toLowerCase();list.innerHTML=rows.filter(i=>!q||i.name.toLowerCase().includes(q)).slice(0,200).map(i=>`<label><input type="checkbox" value="${esc(i.id)}" ${selected.has(i.id)?'checked':''}>${svg(i.kind)}<span data-user-content>${esc(i.name)}</span><small>${esc(i.ext)}</small></label>`).join('');};
+ const selected=new Set(agent.context);
+ showSmall(`<div class="agent-pick-heading"><h2>${I18n.text('添加资料到 Agent')}</h2><button type="button" class="button secondary" id="agent-pick-import">${svg('plus')}${I18n.text('导入文件')}</button></div><input id="agent-pick-search" type="search" placeholder="${esc(I18n.text('搜索名称'))}" autocomplete="off"><div class="agent-pick-list" id="agent-pick-list"></div><small>${I18n.text('最多选择 24 份资料，搜索全部文件。')}</small><div class="document-form-actions"><button type="button" class="text-button" data-close-small>${I18n.text('取消')}</button><button type="button" class="button primary" id="agent-pick-done">${I18n.text('添加')}</button></div>`);
+ const list=$('#agent-pick-list');const paint=()=>{const q=$('#agent-pick-search').value.trim().toLowerCase();list.innerHTML=state.items.slice().sort((a,b)=>String(b.added).localeCompare(String(a.added))).filter(i=>!q||i.name.toLowerCase().includes(q)).slice(0,200).map(i=>`<label><input type="checkbox" value="${esc(i.id)}" ${selected.has(i.id)?'checked':''}>${svg(i.kind)}<span data-user-content>${esc(i.name)}</span><small>${esc(i.ext)}</small></label>`).join('');};
  paint();I18n.localize($('#small-dialog'));$('#agent-pick-search').focus();$('#agent-pick-search').oninput=paint;
  list.onchange=event=>{const input=event.target;if(input.type!=='checkbox')return;if(input.checked&&selected.size>=24){input.checked=false;toast('最多选择 24 份资料，搜索全部文件。',true);return;}input.checked?selected.add(input.value):selected.delete(input.value);};
- $('#agent-pick-done').onclick=()=>{agent.scope='selected';agent.context=[...selected];closeSmall();agentPaint({scroll:false});};
+ $('#agent-pick-import').onclick=async event=>{
+  const button=event.currentTarget,before=new Set(state.items.map(item=>item.id));button.disabled=true;
+  try{await importItems('importFiles');if(!list.isConnected||!agentAvailable())return;const added=state.items.filter(item=>!before.has(item.id));for(const item of added)if(selected.size<24)selected.add(item.id);if(added.length){$('#agent-pick-search').value='';if(added.some(item=>!selected.has(item.id)))toast('最多选择 24 份资料，搜索全部文件。',true);}paint();}
+  catch(error){fail(error);}finally{if(button.isConnected)button.disabled=false;}
+ };
+ $('#agent-pick-done').onclick=()=>{agent.scope=selected.size?'selected':'all';agent.context=[...selected];closeSmall();agentPaint({scroll:false});};
 }
 
 document.addEventListener('click',event=>{
  const t=event.target;
  if(t.closest('[data-agent-launch]')){event.preventDefault();openAgent({ids:typeof libraryDrag!=='undefined'?[...libraryDrag.selected]:[]});return;}
  if(t.closest('[data-agent-starter]')){const input=$('#agent-input');input.value=t.closest('[data-agent-starter]').dataset.agentStarter;agent.draft=input.value;agentSaveSoon();input.focus();return;}
+ if(t.closest('[data-agent-more]')){agentMore(t.closest('[data-agent-more]'));return;}
  if(t.closest('[data-agent-scope-summary]')){agent.advancedOpen=true;agentPaint({scroll:false});const select=$('#agent-scope');if(select){select.focus({preventScroll:true});select.scrollIntoView({block:'nearest'});}return;}
  if(t.closest('#agent-advanced>summary')){agent.advancedOpen=!t.closest('#agent-advanced').open;return;}
  if(t.closest('[data-agent-result-continue]')){agentContinueResult(agent.messages.find(m=>m.id===t.closest('[data-agent-result-continue]').dataset.agentResultContinue));return;}
@@ -498,8 +521,8 @@ async function agentSessionPicker(){
 // Settings: choose whether Smart mode opens on Agent or on the library.
 function agentSetupSettings(){
  const ai=$('[data-ai-settings]')?.closest('.setting-row');
- if(ai&&!$('#start-page-select'))ai.insertAdjacentHTML('beforebegin',`<div class="setting-row smart-settings-row"><div>${I18n.text('启动页')}<small>${I18n.text('智能模式下打开 kok 时显示')}</small></div><select id="start-page-select" aria-label="${esc(I18n.text('启动页'))}"><option value="today">${I18n.text('今天')}</option><option value="agent">Agent</option><option value="overview">${I18n.text('资料库')}</option></select></div>`);
- const select=$('#start-page-select');if(select)select.value=state.settings.startPage||'today';
+ if(ai&&!$('#start-page-select'))ai.insertAdjacentHTML('beforebegin',`<div class="setting-row smart-settings-row"><div>${I18n.text('启动页')}<small>${I18n.text('智能模式下打开 kok 时显示')}</small></div><select id="start-page-select" aria-label="${esc(I18n.text('启动页'))}"><option value="agent">Agent</option><option value="overview">${I18n.text('资料库')}</option></select></div>`);
+ const select=$('#start-page-select');if(select)select.value=state.settings.startPage==='overview'?'overview':'agent';
 }
 document.addEventListener('change',event=>{if(event.target.id==='start-page-select')setting({startPage:event.target.value}).catch(fail);});
 // The viewer's Agent panel answers about the open file; "交给 Agent" carries the file to the Agent page for actions.
@@ -564,7 +587,7 @@ document.addEventListener('click',event=>{
 // explicit UI contract instead of depending on top-level function declarations.
 async function startAgentUi({startup}){
  if(!state.isPrivate){for(const tool of Kok.catalog().tools){if(!tool.write&&!AGENT_READ.includes(tool.name))AGENT_READ.push(tool.name);AGENT_TOOLS[tool.name]||={icon:'info',label:tool.title||tool.name};}if(agent.loaded)await agentAttach();else await agentLoad();}
- if(startup&&!location.search.includes('preview=')&&agentAvailable()&&state.route==='overview'&&(state.settings.startPage||'today')==='agent'){state.route='agent';render();}
+ if(startup&&!location.search.includes('preview=')&&agentAvailable()&&state.route==='overview'&&(state.settings.startPage||'agent')==='agent'){state.route='agent';render();}
 }
 export const AgentUi=Object.freeze({state:agent,presence:agentPresence,available:agentAvailable,open:openAgent,render:agentPaint,stop:stopAgent,save:agentSave,newSession:agentNew,scope:agentScope,updateScroll:agentUpdateScroll,tasks:agentTaskRecords,settings:agentSetupSettings,start:startAgentUi});
 // The legacy shell still needs one named adapter. Implementation helpers remain

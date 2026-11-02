@@ -1,4 +1,4 @@
-﻿param([string[]]$Suites=@('ui','features','translation','i18n','minimal','drop','workspaces','video-layout','refinements','menus-covers','compatibility','organizer','companion','private-space','app-modes','recovery','agent','agent-interactions','agent-reliable','agent-runtime','agent-kernel','mcp','agent-platform','agent-quality','library-services'),[string]$LargeMediaFile,[string]$RealFilesFolder,[string]$Executable,[string]$AuditDirectory)
+﻿param([string[]]$Suites=@('ui','features','translation','i18n','minimal','drop','workspaces','video-layout','refinements','menus-covers','compatibility','organizer','companion','private-space','app-modes','recovery','agent','agent-interactions','agent-reliable','agent-runtime','agent-kernel','mcp','agent-platform','agent-quality','library-services','works-navigation','agent-home-layout'),[string]$LargeMediaFile,[string]$RealFilesFolder,[string]$Executable,[string]$AuditDirectory)
 $ErrorActionPreference='Stop'
 $projectRoot=Split-Path $PSScriptRoot -Parent
 $executable=if($Executable){(Resolve-Path -LiteralPath $Executable).Path}else{Join-Path $projectRoot 'dist\kok\kok.exe'}
@@ -17,6 +17,7 @@ foreach($suite in $Suites){
     New-Item -ItemType Directory -Path $profile -Force | Out-Null
     $preferences=@{appMode='smart';smartModeNoticeSeen=$true;theme='light';uiLanguage='zh';startPage='overview';skin='graphite'}
     if($suite -eq 'app-modes'){$preferences=@{}}
+    if($suite -eq 'agent-home-layout' -or $suite -eq 'works-navigation'){$preferences.Remove('startPage')}
     $sources=@()
     if($suite -eq 'organizer'){
         $files=Join-Path $projectRoot 'test-output\organizer-ui\我的资料';New-Item -ItemType Directory -Path $files -Force | Out-Null

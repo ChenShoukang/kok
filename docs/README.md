@@ -8,7 +8,8 @@
 
 | 想做什么 | 从这里开始 |
 | --- | --- |
-| v0.9.8 界面改版与 Agent 聚焦 | [本次验证](VALIDATION_0.9.8.md) · [Agent 聚焦](AGENT_FOCUS.md) · [30 项任务评测](AGENT_TASK_EVAL.md) · [界面说明](FLAT_UI.md) · [设计参考](INTERFACE_REFERENCES.md) |
+| v0.10.1 三区域入口（Agent / 我的作品 / 资料库） | [本次验证](VALIDATION_0.10.1.md) · [功能结构](CREATION_PRODUCT_FLOW.md) · [Agent 首页与交互](AGENT_HOME_UI.md) |
+| v0.9.8 界面改版与 Agent 聚焦 | [验证](VALIDATION_0.9.8.md) · [Agent 聚焦](AGENT_FOCUS.md) · [30 项任务评测](AGENT_TASK_EVAL.md) · [界面说明](FLAT_UI.md) · [设计参考](INTERFACE_REFERENCES.md) |
 | v0.9.5 紧凑导航与动效修正 | [扁平界面说明](FLAT_UI.md) · [界面参考](INTERFACE_REFERENCES.md) · [界面验证](INTERFACE_VALIDATION.md) · [发布验证](VALIDATION_0.9.5.md) |
 | 真实模型基线（用户授权 API 预算） | [v0.9.8 30 项基线](VALIDATION_0.9.8.md) · [v0.9.2 补充验证](VALIDATION_0.9.2_LIVE.md) · [请求总账](validation/live-ledger-0.9.8.json) |
 | Agent MCP 便携运行时沙箱 / OAuth 设备码 / PDF 视频批量索引 | [Agent 0.9.3 能力与边界](AGENT_0.9.3.md) · [验证](VALIDATION_0.9.3.md) |

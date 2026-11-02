@@ -1,0 +1,40 @@
+/* 我的作品: creation area layout. Surfaces, lines and radii reuse the shared tokens; #main keeps its width. */
+.works-page{min-width:0}
+.works-heading .page-heading{min-width:0;flex-wrap:wrap;gap:6px 14px}
+.works-new-button{flex:none}
+.works-continue,.works-tools{margin:0 0 34px;min-width:0}
+.works-continue>h2,.works-tools>h2{margin:0 0 16px;font:600 17px/1.4 var(--user-font);letter-spacing:-.2px}
+.works-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;min-width:0}
+.work-card{display:flex;align-items:center;gap:12px;min-width:0;padding:13px 14px;border:1px solid var(--line);border-radius:var(--radius-md);background:var(--surface);color:var(--ink);text-align:left;cursor:pointer;transition:background-color var(--motion-fast,160ms) ease,border-color var(--motion-fast,160ms) ease}
+.work-card:hover{background:var(--kok-hover);border-color:var(--muted)}
+.work-card-icon{display:grid;place-items:center;flex:none;width:38px;height:38px;border-radius:var(--radius-md);background:var(--kok-hover);color:var(--muted)}
+.work-card-icon .ui-icon{width:19px;height:19px}
+.work-card-main{display:flex;flex:1;flex-direction:column;gap:3px;min-width:0}
+.work-card-main b,.work-card-main small{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.work-card-main b{font:550 13px/1.45 var(--user-font);color:var(--ink)}
+.work-card-main small{font-size:11px;color:var(--muted)}
+.work-card-status{flex:none;padding:3px 7px;border-radius:999px;background:var(--kok-hover);color:var(--muted);font-size:10px;line-height:1.5;white-space:nowrap}
+.work-card-status.is-draft{background:var(--green-soft);color:var(--ink)}
+.works-empty{display:flex;flex-direction:column;align-items:center;gap:10px;min-width:0;margin:0 0 34px;padding:42px 24px;border:1px dashed var(--line);border-radius:var(--radius-md);background:var(--surface);text-align:center}
+.works-empty-icon{display:grid;place-items:center;width:52px;height:52px;border-radius:50%;background:var(--kok-hover);color:var(--muted)}
+.works-empty-icon .ui-icon{width:25px;height:25px}
+.works-empty h2{margin:2px 0 0;font:600 17px/1.4 var(--user-font)}
+.works-empty p{max-width:44ch;margin:0;color:var(--muted);font:12px/1.75 var(--user-font)}
+.works-empty small{max-width:44ch;color:var(--muted);font:11px/1.7 var(--user-font)}
+.works-empty .button{margin-top:6px}
+.works-tool-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;min-width:0}
+.works-tool{display:flex;align-items:center;gap:10px;min-width:0;padding:13px 14px;border:1px solid var(--line);border-radius:var(--radius-md);background:transparent;color:var(--ink);text-align:left;font:12px/1.5 var(--user-font);cursor:pointer;transition:background-color var(--motion-fast,160ms) ease,border-color var(--motion-fast,160ms) ease}
+.works-tool:hover{background:var(--kok-hover);border-color:var(--muted)}
+.works-tool .ui-icon{flex:none;width:17px;height:17px;color:var(--muted)}
+.works-tool span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.works-tool small{flex:none;color:var(--muted);font-size:11px;font-variant-numeric:tabular-nums}
+.works-source-search{display:block;width:100%;margin:16px 0 0;padding:9px 11px;border:1px solid var(--line);border-radius:var(--radius-md);background:var(--bg);color:var(--ink);font:12px/1.5 var(--user-font)}
+.works-source-list{display:flex;flex-direction:column;margin:12px 0 0;max-height:min(52vh,420px);overflow-y:auto;border-top:1px solid var(--line)}
+.works-source{display:flex;align-items:center;gap:10px;width:100%;min-width:0;padding:11px 8px;border:0;border-bottom:1px solid var(--line);border-radius:var(--radius-sm);background:transparent;color:var(--ink);text-align:left;cursor:pointer}
+.works-source:hover{background:var(--kok-hover)}
+.works-source .ui-icon{flex:none;width:16px;height:16px;color:var(--muted)}
+.works-source span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
+.works-source small{flex:none;color:var(--muted);font-size:10px;letter-spacing:.04em}
+.works-source-empty{margin:0;padding:30px 12px;border-bottom:1px solid var(--line);color:var(--muted);font-size:12px;text-align:center}
+@media(max-width:720px){.works-grid,.works-tool-grid{grid-template-columns:minmax(0,1fr)}.works-continue>h2,.works-tools>h2{font-size:16px}.works-empty{padding:32px 16px}}
+@media(prefers-reduced-motion:reduce){.work-card,.works-tool{transition:none}}

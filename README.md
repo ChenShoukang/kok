@@ -1,14 +1,16 @@
-# kok · 本地媒体与知识仓库
+# kok · 个人 AI Agent 工作台
 
-**看、听、读、记，再把资料变成自己的内容。**
+**说出目标，交给 Agent。**
 
-把视频、照片、音乐、文档和电子书收进同一个本地资料库；用空间组织主题，用摘录连接原文与笔记，需要时再让 AI 帮你翻译、整理和写作。
+从一个想法开始，让 Agent 帮你规划、整理、写作并生成可继续编辑的成果；在“我的作品”里继续草稿、项目与素材；也可以在资料库独立看视频、听音乐、阅读文档和电子书，保留进度与收藏。
+
+一级入口按使用场景组织为 Agent、我的作品和资料库，文件类型和工具留在各自区域内部。见[Agent 首页与交互](docs/AGENT_HOME_UI.md)和[功能结构](docs/CREATION_PRODUCT_FLOW.md)。
 
 [下载已发布版本](https://github.com/ChenShoukang/kok/releases) · [使用指南](docs/GUIDE.md) · [English](README.en.md) · [格式支持](docs/FORMATS.md)
 
-**v0.9.8 Preview** 统一偏白浅色与微紫深色主题、精简欢迎页与侧栏，采用离线 Phosphor 双层填充图标；同时把 Agent 收敛成「选资料 → 说要求 → 可核对成果」的路径：首屏只保留资料、要求与建议操作，显式的统计与筛选请求由本地直接回答（零模型请求），检索返回带页码 / 章节 / 字幕时间锚点的片段并报告读取覆盖，工具调用消息保持稳定前缀，任务结束给出可打开的成果卡片。本版不改变数据格式。同批 30 项真实模型评测中，请求由 100 降至 76（−24%）、输入 token 由 566,586 降至 431,132（−24%），节省主要来自本地任务分流；两轮评测共 190 次请求，项目请求总账 359 → 549。见 [Agent 聚焦](docs/AGENT_FOCUS.md)、[30 项任务评测基线与前后对比](docs/AGENT_TASK_EVAL.md)、[界面说明](docs/FLAT_UI.md)、[本次验证](docs/VALIDATION_0.9.8.md) 与 [路线图](ROADMAP.md)。
+**v0.10.1 Preview** 把一级入口按使用场景收敛为 **Agent、我的作品、资料库**：Agent 仍是主要协作入口，新增的“我的作品”承载新建、继续编辑、项目空间、摘录、配方与已有媒体的剪辑入口，“资料库”保留独立的观看、收听、阅读，并在首页提供继续观看与阅读、收藏、最近打开、分类和资料库工具。文件类型与工具不再占据一级入口，`今天/空间/摘录/智能集合/配方/回顾/下载/智能整理/知识图谱` 等旧页面仍可通过区域内部入口和路由访问。本版不改变数据格式；小说章节与设定管理、音视频从零生成仍分阶段接入。见 [Agent 首页与交互](docs/AGENT_HOME_UI.md)、[功能结构](docs/CREATION_PRODUCT_FLOW.md)、[本次验证](docs/VALIDATION_0.10.1.md) 与 [路线图](ROADMAP.md)。
 
-![kok v0.9.4 扁平界面资料库，使用内置原创示例](docs/screenshots/overview-flat-zh.jpg)
+![kok v0.10.1 我的作品，使用内置原创示例](docs/screenshots/works-zh.png)
 
 ## 不只是把文件放在一起
 
@@ -29,13 +31,14 @@
 | 笔记、摘录与图谱 | 划线、高亮、想法、`[[双向链接]]`、反向链接、标签、大纲、待办与模板；摘录可跳回段落、时间点或照片区域 |
 | AI 翻译与内容助手 | 选词解释、文档左右对照 / 仅译文、对应格式副本、多文件对比、笔记回顾；视频字幕翻译与字幕目录，也可配置语音识别生成字幕 |
 | Agent 与配方 | 限定资料范围后检索、阅读、整理、写笔记或创建文档 / 演示；修改先审核。内置指令技能与用量限制；配方串联读取、摘要、笔记和演示，活动与历史展示进度和可撤销修改 |
+| 我的作品 | 新建文档 / 演示文稿；继续编辑在 kok 中新建或修改过的内容；进入项目空间、素材摘录、创作配方；从已有视频、音频、PDF、文档开始剪辑或页面整理；成品导出后仍在资料库直接欣赏 |
 | 视频下载 | Bilibili / YouTube / 抖音适配、通用网页与直链；资源选择、队列、续传、登录会话与下载后入库，分轨 / 流媒体合并使用可选组件 |
 
 完整操作、编辑导出范围和常见使用场景见[使用指南](docs/GUIDE.md)。
 
 ## 开始使用
 
-1. 本地 v0.9.8 改版包为 `dist/kok-0.9.8-win-x64.zip`；公开版本可从 [Releases](https://github.com/ChenShoukang/kok/releases) 下载。核对随附 SHA-256，完整解压后运行 `kok.exe`，公开版本号以 Release 页面为准。
+1. 本地 v0.10.1 预览包为 `dist/kok-0.10.1-win-x64.zip`；公开版本可从 [Releases](https://github.com/ChenShoukang/kok/releases) 下载。核对随附 SHA-256，完整解压后运行 `kok.exe`，公开版本号以 Release 页面为准。
 2. 首次选择**纯净模式**或**智能模式**；不配置 AI 也能使用本地基础功能。
 3. 点击“体验示例”或拖入自己的文件，先浏览资料，再试着创建一个空间或保存一条摘录。
 
@@ -62,7 +65,7 @@
 
 ## 文档与开发
 
-[使用指南](docs/GUIDE.md) · [文档目录](docs/README.md) · [Agent 能力与边界](docs/AGENT_0.9.3.md) · [验证记录](docs/VALIDATION_0.9.8.md) · [实现进度](docs/WAREHOUSE_0.8.1.md) · [反馈](https://github.com/ChenShoukang/kok/issues/new/choose) · [安全报告](SECURITY.md)
+[使用指南](docs/GUIDE.md) · [文档目录](docs/README.md) · [Agent 能力与边界](docs/AGENT_0.9.3.md) · [验证记录](docs/VALIDATION_0.10.1.md) · [功能结构](docs/CREATION_PRODUCT_FLOW.md) · [实现进度](docs/WAREHOUSE_0.8.1.md) · [反馈](https://github.com/ChenShoukang/kok/issues/new/choose) · [安全报告](SECURITY.md)
 
 ```powershell
 npm ci --omit=optional

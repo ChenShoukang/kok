@@ -1,4 +1,31 @@
-# kok v0.9.8 Preview
+# kok v0.10.1 Preview
+
+v0.10.1 是按使用场景重组入口的预览版：一级入口为 Agent、我的作品、资料库，文件类型和工具进入各自区域；
+观看、收听、阅读保持独立可用。本版不改变数据格式，原生桥接接口保持兼容。
+
+- **入口**：Agent、我的作品、资料库构成一级入口；私密文件夹和设置固定在侧栏底部。旧页面仍可通过区域内部入口和路由访问，避免打断已有习惯。
+- **我的作品**：新建文档 / 演示文稿沿用现有流程；继续编辑在 kok 中新建或修改过的文档与演示；提供项目空间、素材摘录、创作配方，以及从已有视频、音频、PDF、文档进入剪辑或页面整理的入口。
+- **资料库**：首页集中继续观看与阅读、收藏、最近打开、分类和资料库工具；类型筛选留在资料库内，观看、收听、阅读、字幕、书签和播放队列保持独立。
+- **Agent 与播放共存**：后台播放时播放条为输入区留出空间，通知避开发送按钮；空白任务与对话布局、附件导入和更多菜单沿用上一轮实现。
+- **分阶段**：小说作品级章节与设定管理、从零生成可播放的音乐 / 视频仍待后续接入；本版只整理已有创作与欣赏能力。
+- **验证**：静态检查、原生用例、桌面回归与交付包复验的结果与运行记录见 [v0.10.1 验证](VALIDATION_0.10.1.md)。
+
+## English
+
+kok v0.10.1 is a preview that reorganizes the top level by what you are doing: Agent, My works and Library,
+with file types and tools living inside those areas. Watching, listening and reading remain independent.
+No data format changes; the native bridge stays compatible.
+
+- **Top level**: Agent, My works and Library are the three destinations; the private folder and Settings stay at the bottom of the rail. Legacy pages remain reachable inside the areas and through their routes.
+- **My works**: create documents or presentations through the existing flow; continue editing documents and presentations created or modified in kok; open project spaces, saved clips and creative recipes; start editing existing videos, audio, PDFs or documents.
+- **Library**: the home page gathers continue-watching/reading, favorites, recent items, collections and library tools; type filters stay in the library, and watching, listening, reading, subtitles, bookmarks and playback queues remain independent.
+- **Agent with background playback**: the player bar leaves room for the composer and notices avoid the send control; empty/conversation layouts, attachment import and the More menu carry over.
+- **Staged**: novel-level chapters and settings, and from-scratch playable audio/video generation remain future work; this release organizes existing creation and viewing capabilities.
+- **Validation**: see [v0.10.1 validation](VALIDATION_0.10.1.md) for checks, native tests, desktop regression and package re-verification.
+
+---
+
+## v0.9.8 Preview（历史 / historical）
 
 v0.9.8 是界面改版与 Agent 聚焦改版的合并预览版，不改变数据格式；原生桥接接口保持兼容。
 

@@ -1,0 +1,162 @@
+'use strict';
+// Scenario navigation: exactly Agent / 我的作品 / 资料库, the works area, the library home and Pure-mode reduction.
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),{chromium}=require('./browser.cjs');
+(async()=>{
+ const browser=await chromium.connectOverCDP('http://127.0.0.1:9225');
+ try{
+  const page=browser.contexts()[0].pages().find(p=>p.url().startsWith('https://app.kok.local')),errors=[];
+  page.on('pageerror',e=>errors.push(e.stack||e.message));
+  const output=path.resolve('test-output/works-navigation');fs.mkdirSync(output,{recursive:true});
+  const shot=async name=>{await page.screenshot({path:path.join(output,name+'.png'),animations:'disabled'});};
+  const rail=()=>page.evaluate(()=>[...document.querySelectorAll('.nav-primary [data-route]')].map(button=>[button.dataset.route,button.getAttribute('aria-label')]));
+  const backToLibrary=async()=>{await page.locator('[data-library-home]').first().click();await page.waitForFunction(()=>state.route==='overview');};
+  await page.setViewportSize({width:1440,height:1000});await page.emulateMedia({reducedMotion:'no-preference'});
+  await page.waitForFunction(()=>!document.querySelector('#startup')&&globalThis.AgentUi&&state.route==='agent');
+  // Smart mode starts on the Agent and the top-level rail exposes only the three scenario destinations.
+  assert.deepEqual(await rail(),[['agent','Agent'],['works','我的作品'],['overview','资料库']],'Smart mode shows exactly Agent, 我的作品 and 资料库');
+  assert.equal(await page.locator('[data-nav-more]').count(),0,'The rail has no More button');
+  assert.equal(await page.locator('#main-nav .nav-group').count(),0,'The rail has no grouped secondary destinations');
+  assert.equal(await page.evaluate(()=>document.querySelector('#extra-nav').children.length),0,'The quick-access nav stays empty');
+  for(const route of ['video','photo','music','document','book','today','spaces','clips','queries','recipes','review','favorites','recent','downloads','organize','knowledge','history','activity'])assert.equal(await page.locator('#main-nav [data-route="'+route+'"]').count(),0,'Type and tool route '+route+' is not a top-level destination');
+  assert.equal(await page.locator('#private-space-toggle').count(),1,'The private folder keeps its own lock entry');
+  assert(await page.locator('#private-space-toggle').isVisible(),'The private lock entry is visible in the rail');
+  assert(await page.locator('#settings-button').isVisible(),'Settings stays in the rail');
+  await page.waitForFunction(()=>{const active=document.querySelector('.nav-primary .nav-item.active'),indicator=document.querySelector('.nav-indicator');if(!active||!indicator||getComputedStyle(indicator).opacity!=='1')return false;const a=active.getBoundingClientRect(),i=indicator.getBoundingClientRect();return Math.abs(a.x-i.x)<1.5&&Math.abs(a.y-i.y)<1.5&&Math.abs(a.width-i.width)<1.5&&Math.abs(a.height-i.height)<1.5;});
+  await shot('agent-default-1440');
+  await page.evaluate(async()=>{await native('importSamples');await refresh();});
+  // 我的作品: the primary create action reuses the document chooser; the continue section starts empty.
+  await page.evaluate(()=>navigate('works'));
+  await page.waitForFunction(()=>state.route==='works');
+  assert.equal((await page.locator('#main h1').innerText()).trim(),'我的作品','The works page paints its heading');
+  assert(await page.locator('.nav-primary [data-route="works"]').evaluate(button=>button.classList.contains('active')&&button.getAttribute('aria-current')==='page'),'The works destination receives the active state');
+  assert.equal(await page.locator('.works-empty').count(),1,'The empty continue state is rendered');
+  assert(await page.locator('.works-empty').isVisible());
+  assert.equal(await page.locator('.works-continue [data-work-open]').count(),0);
+  assert(await page.locator('[data-works-new]').first().isVisible(),'The primary create action is visible');
+  await shot('works-empty');
+  await page.locator('[data-works-new]').first().click();
+  await page.waitForSelector('#small-dialog[open]');
+  assert(await page.locator('#small-dialog [data-document-format]').count()>=2,'新建作品 reuses the document format chooser');
+  await shot('works-new-dialog');
+  await page.evaluate(()=>closeSmall());await page.waitForFunction(()=>!document.querySelector('#small-dialog').open);
+  const workId=await page.evaluate(async()=>{const item=await native('createDocument',{name:'导航验收草稿',format:'md',collection:'',text:'# 导航验收\n\n从我的作品继续编辑。'});await refresh();return item.id;});
+  await page.evaluate(()=>navigate('works'));
+  await page.waitForSelector('.works-continue [data-work-open="'+workId+'"]');
+  const workCard=page.locator('.works-continue [data-work-open="'+workId+'"]');
+  assert.match(await workCard.innerText(),/导航验收草稿/,'A managed document appears in 继续创作');
+  assert.match(await workCard.innerText(),/已创建|草稿/,'A work card shows its status word');
+  await shot('works-continue');
+  await workCard.click();
+  await page.waitForSelector('#creative-dialog[open]');
+  await page.evaluate(()=>closeCreative());await page.waitForFunction(()=>!document.querySelector('#creative-dialog')?.open);
+  // The works tools keep the existing routes reachable and the media pickers reuse the creative editor.
+  for(const [tool,label]of [['spaces','项目空间'],['clips','素材摘录'],['recipes','创作配方']]){const button=page.locator('[data-works-tool="'+tool+'"]');assert.equal(await button.count(),1,'Works tool '+tool+' exists');assert.match(await button.innerText(),new RegExp(label));}
+  await page.locator('[data-works-tool="spaces"]').click();
+  await page.waitForFunction(()=>state.route==='spaces');
+  await page.evaluate(()=>navigate('works'));
+  await page.waitForSelector('[data-works-media="video"]');
+  assert.equal(await page.locator('[data-works-media]').count()>=3,true,'Media editing entries are available while the editing module is enabled');
+  await page.locator('[data-works-media="video"]').click();
+  await page.waitForSelector('#small-dialog[open]');await page.waitForSelector('#works-source-search');
+  assert(await page.locator('.works-source-list').isVisible(),'The video edit picker lists sources');
+  const videoIds=await page.evaluate(()=>state.items.filter(item=>item.kind==='video').map(item=>item.id));
+  assert(videoIds.length>0,'Sample videos are imported');
+  const listed=await page.locator('.works-source-list [data-works-source]').evaluateAll(rows=>rows.map(row=>row.dataset.worksSource));
+  assert(listed.length>0,'The picker offers sample videos');
+  assert(listed.every(id=>videoIds.includes(id)),'The video picker only offers video items');
+  await shot('works-video-picker');
+  await page.locator('.works-source-list [data-works-source]').first().click();
+  await page.waitForFunction(()=>!document.querySelector('#small-dialog').open);
+  await page.waitForSelector('#creative-dialog[open]');
+  await shot('works-video-editor');
+  await page.evaluate(()=>closeCreative());await page.waitForFunction(()=>!document.querySelector('#creative-dialog')?.open);
+  // 资料库: quick links, a resumable continue row, type tabs, collections and the tools menu.
+  await page.evaluate(()=>navigate('overview'));
+  await page.waitForFunction(()=>state.route==='overview');
+  assert.equal((await page.locator('#main h1').innerText()).trim(),'资料库','The library home paints its heading');
+  for(const quick of ['favorites','recent']){assert.equal(await page.locator('[data-library-quick="'+quick+'"]').count(),1,'Library quick link '+quick+' exists');assert(await page.locator('[data-library-quick="'+quick+'"]').isVisible());}
+  await page.locator('[data-library-quick="favorites"]').click();
+  await page.waitForFunction(()=>state.route==='favorites');
+  assert(await page.locator('[data-library-home]').isVisible(),'A collection page offers a way back to the library');
+  await backToLibrary();
+  const videoId=await page.evaluate(async()=>{const id=state.items.find(item=>item.kind==='video').id;await native('update',{id,patch:{progress:.42,opened:new Date().toISOString()}});await refresh();return id;});
+  await page.waitForSelector('.library-continue [data-open="'+videoId+'"]');
+  assert.match(await page.locator('.library-continue [data-open="'+videoId+'"]').innerText(),/42%/,'The continue row shows progress');
+  await shot('library-home');
+  await page.locator('[data-filter="music"]').click();
+  await page.waitForFunction(()=>state.route==='music');
+  await page.evaluate(()=>navigate('overview'));
+  assert.equal(await page.locator('#add-collection').count(),1,'The library home owns the single add-collection entry');
+  await page.locator('#add-collection').click();
+  await page.waitForSelector('#collection-name');
+  await page.locator('#collection-name').fill('导航验收分类');
+  await page.locator('[data-save-collection="new"]').click();
+  await page.waitForFunction(()=>!document.querySelector('#small-dialog').open&&state.collections.includes('导航验收分类'));
+  assert.equal(await page.locator('[data-collection="导航验收分类"]').count(),1,'Collections render as chips in the library home');
+  await page.locator('[data-collection="导航验收分类"]').click();
+  await page.waitForFunction(()=>state.route==='collection'&&state.collection==='导航验收分类');
+  await backToLibrary();
+  await page.locator('[data-library-tools]').click();
+  await page.locator('.glass-menu:popover-open').waitFor();
+  const toolLabels=await page.locator('.glass-menu [role=menuitem]').evaluateAll(rows=>rows.map(row=>row.textContent.trim()));
+  const toolOrder=['智能整理','视频下载','知识图谱','智能集合','回顾','操作历史','活动','资料检索与备份'];
+  for(const label of toolOrder)assert(toolLabels.includes(label),'Library tools menu contains '+label);
+  const positions=toolOrder.map(label=>toolLabels.indexOf(label));
+  assert(positions.every((position,index)=>position>=0&&(index===0||position>positions[index-1])),'Library tools keep their declared order');
+  await shot('library-tools');
+  await page.keyboard.press('Escape');
+  await page.waitForFunction(()=>!GlassMenu.isOpen);
+  assert(await page.evaluate(()=>document.querySelector('[data-library-tools]')===document.activeElement),'Escape returns focus to the library tools trigger');
+  // Pure mode removes the Agent destination but keeps 我的作品 and the library tools reachable.
+  await page.evaluate(async()=>{await native('setAppMode',{mode:'pure'});await refresh();});
+  assert.notEqual(await page.evaluate(()=>state.route),'agent','Pure mode leaves the Agent page');
+  assert.deepEqual(await rail(),[['works','我的作品'],['overview','资料库']],'Pure mode shows exactly 我的作品 and 资料库');
+  assert.equal(await page.locator('#main-nav [data-route="agent"]').count(),0,'Pure mode has no Agent destination');
+  await page.evaluate(()=>navigate('works'));
+  assert.equal((await page.locator('#main h1').innerText()).trim(),'我的作品','The works page still opens in Pure mode');
+  await page.evaluate(()=>navigate('overview'));
+  await page.locator('[data-library-tools]').click();
+  await page.locator('.glass-menu:popover-open').waitFor();
+  const pureLabels=await page.locator('.glass-menu [role=menuitem]').evaluateAll(rows=>rows.map(row=>row.textContent.trim()));
+  assert(pureLabels.includes('资料检索与备份'),'Library tools remain reachable in Pure mode');
+  assert(!pureLabels.includes('智能整理'),'The Smart-only organizer entry is absent in Pure mode');
+  assert(!pureLabels.includes('视频下载'),'The Smart-only download entry is absent in Pure mode');
+  await shot('library-pure');
+  await page.keyboard.press('Escape');await page.waitForFunction(()=>!GlassMenu.isOpen);
+  await page.evaluate(async()=>{await native('setAppMode',{mode:'smart',acknowledged:true});await refresh();});
+  // English: rail labels and the works/library headings are translated.
+  await page.evaluate(async()=>{await setting({uiLanguage:'en'});I18n.applyLanguage('en');await refresh();});
+  assert.deepEqual((await rail()).map(row=>row[1]),['Agent','My works','Library'],'English rail labels');
+  await page.evaluate(()=>navigate('works'));
+  await page.waitForFunction(()=>state.route==='works');
+  const worksHeading=(await page.locator('#main h1').innerText()).trim();
+  assert(!/[\u3400-\u9fff]/.test(worksHeading),'The works heading is translated');
+  assert.match(worksHeading,/work/i);
+  await page.evaluate(()=>navigate('overview'));
+  const libraryHeading=(await page.locator('#main h1').innerText()).trim();
+  assert(!/[\u3400-\u9fff]/.test(libraryHeading),'The library heading is translated');
+  assert.match(libraryHeading,/library/i);
+  await shot('library-en');
+  await page.evaluate(async()=>{await setting({uiLanguage:'zh'});I18n.applyLanguage('zh');await refresh();});
+  // Compact and medium windows keep the rail, the page grid and the brand usable.
+  await page.evaluate(()=>navigate('overview'));
+  for(const [width,height]of [[960,800],[650,800]]){
+   await page.setViewportSize({width,height});await page.waitForTimeout(320);
+   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'No horizontal page scroll at '+width);
+   assert(await page.evaluate(()=>{const main=document.querySelector('#main');return main.scrollWidth<=main.clientWidth+1;}),'No horizontal content overflow at '+width);
+   assert.deepEqual(await page.evaluate(()=>[...document.querySelectorAll('.nav-primary [data-route]')].filter(button=>button.getClientRects().length).map(button=>button.dataset.route)),['agent','works','overview'],'The rail keeps three destinations at '+width);
+   assert(await page.evaluate(()=>[...document.querySelectorAll('.nav-primary [data-route] svg')].every(icon=>icon.getClientRects().length>0)),'Rail icons stay visible at '+width);
+   assert(await page.evaluate(()=>[...document.querySelectorAll('.nav-primary .nav-label')].every(label=>getComputedStyle(label).display==='none'||label.scrollWidth<=label.clientWidth+1)),'Rail labels do not overflow at '+width);
+   assert(await page.evaluate(()=>{const heading=document.querySelector('#main h1');return !heading||heading.getBoundingClientRect().right<=innerWidth+1;}),'Headings stay inside the window at '+width);
+   await shot('library-'+width);
+  }
+  await page.evaluate(()=>navigate('overview'));
+  await page.locator('.sidebar .brand').click();
+  await page.waitForFunction(()=>state.route==='agent');
+  assert(await page.locator('.agent-page').count()>0,'The brand returns to the Agent in Smart mode');
+  await page.setViewportSize({width:1440,height:1000});
+  assert.deepEqual(errors,[]);
+  console.log('PASS: three scenario destinations, works page create/continue/tools/media, library quick links/continue/collections/tools, Pure-mode reduction, English rail and compact windows. No page errors.');
+  console.log('Screenshots: '+output);
+ }finally{await browser.close();}
+})().catch(e=>{console.error(e);process.exit(1)});

@@ -10,3 +10,45 @@
 #embedding-config,#knowledge-search,#library-transfer-tools{border-top:1px solid var(--line,rgba(128,128,128,.2));margin-top:20px;padding-top:10px}
 
 .search-mode{font:inherit;border:0;background:transparent;color:inherit;max-width:90px;padding:4px}
+
+/* Library home: quick links, continue rows and collection chips. */
+.library-quick{display:flex;flex-wrap:wrap;gap:8px;min-width:0;margin:0 0 22px}
+.library-quick>.quick-link{display:flex;align-items:center;gap:9px;max-width:100%;min-width:0;min-height:38px;padding:7px 14px;border:1px solid var(--line);border-radius:var(--radius-md);background:var(--surface);color:var(--ink);font:13px/20px var(--user-font)}
+.library-quick>.quick-link:hover{background:var(--kok-hover);border-color:var(--muted)}
+.library-quick>.quick-link>.ui-icon{flex:none;width:17px;height:17px;color:var(--muted)}
+.library-quick>.quick-link>small{color:var(--muted);font-size:11px;font-variant-numeric:tabular-nums}
+.library-continue{min-width:0;margin:0 0 24px}
+.library-section-title{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:0 0 10px}
+.library-section-title h2{margin:0;color:var(--ink);font:600 15px/1.5 var(--user-font);letter-spacing:-.2px}
+.library-continue-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr));gap:10px;min-width:0}
+.continue-row{display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-rows:auto auto;align-items:center;column-gap:12px;row-gap:3px;width:100%;min-width:0;padding:10px 12px;border:1px solid var(--line);border-radius:var(--radius-md);background:var(--surface);color:var(--ink);text-align:left;font:inherit;cursor:pointer}
+.continue-row:hover{background:var(--kok-hover)}
+.continue-kind{grid-row:1/3;display:grid;place-items:center;flex:none;width:34px;height:34px;border-radius:var(--radius-sm);color:var(--muted);background:var(--kok-solid)}
+.continue-kind>.ui-icon{width:18px;height:18px;stroke-width:1.7}
+.continue-info{display:flex;flex-direction:column;min-width:0}
+.continue-info b{display:block;min-width:0;overflow:hidden;color:var(--ink);font:500 13px/20px var(--user-font);white-space:nowrap;text-overflow:ellipsis}
+.continue-info small{display:flex;align-items:center;gap:5px;min-width:0;overflow:hidden;color:var(--muted);font:11px/17px var(--user-font);white-space:nowrap}
+#main .continue-progress{position:static;inset:auto;grid-column:2;display:block;width:100%;height:3px;margin-top:2px;border-radius:2px;background:var(--line);overflow:hidden}
+#main .continue-progress>span{display:block;height:100%;border-radius:inherit;background:var(--green)}
+.library-collections{display:flex;align-items:center;flex-wrap:wrap;gap:8px;min-width:0;margin:0 0 24px}
+.library-collections-label{flex:none;margin-right:2px;color:var(--muted);font:11px/20px var(--user-font);letter-spacing:.02em}
+.collection-chip{display:flex;align-items:center;gap:7px;max-width:100%;min-width:0;min-height:32px;padding:5px 12px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--muted);font:12px/20px var(--user-font)}
+.collection-chip>span{min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.collection-chip>.ui-icon{flex:none;width:14px;height:14px;stroke-width:1.8}
+.collection-chip:hover{color:var(--ink);background:var(--kok-hover);border-color:var(--muted)}
+.collection-chip.active{color:var(--ink);background:var(--green-soft);border-color:var(--green);font-weight:500}
+.collection-chip.add-collection{color:var(--muted);background:transparent;border-style:dashed}
+.collection-chip.add-collection:hover{color:var(--ink);border-color:var(--green)}
+.library-home-back{display:inline-flex;align-items:center;gap:6px;flex:none;align-self:center;margin:0 12px 0 0;color:var(--muted);font-size:12px}
+.library-home-back>.ui-icon{width:15px;height:15px;transform:rotate(180deg)}
+.library-home-back:hover{color:var(--ink)}
+.collection-heading.with-back{justify-content:flex-start}
+@media(max-width:720px){
+ .library-quick{gap:6px;margin-bottom:18px}
+ .library-quick>.quick-link{flex:1 1 auto;justify-content:center;padding:7px 10px}
+ .library-continue{margin-bottom:20px}
+ .library-continue-list{grid-template-columns:minmax(0,1fr)}
+ .library-collections{gap:6px;margin-bottom:18px}
+ .collection-chip{padding:5px 10px}
+ .library-home-back{margin-right:8px}
+}

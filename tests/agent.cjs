@@ -22,6 +22,7 @@ const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypt
   const original=await page.evaluate(id=>byId(id).path,ids.a),hash=()=>crypto.createHash('sha256').update(fs.readFileSync(original)).digest('hex'),before=hash();
   const idle=()=>page.waitForFunction(()=>!AgentUi.state.job);
   assert(await page.locator('#main-nav [data-route="agent"]').isVisible(),'Agent is the first navigation entry in Smart mode');
+  assert.deepEqual(await page.locator('.nav-primary [data-route]').evaluateAll(buttons=>buttons.map(button=>button.dataset.route)),['agent','works','overview'],'Smart mode exposes the three scenario destinations');
   await page.locator('#main-nav [data-route="agent"]').click();await page.waitForSelector('.agent-empty .agent-starters');
   await page.locator('[data-agent-starter]').first().click();assert.match(await page.locator('#agent-input').inputValue(),/整理/);assert.equal(requests.length,0,'starters only fill the composer');
   await page.locator('#agent-input').fill('给这份笔记打标签并写一份摘要');await page.locator('.agent-send').click();

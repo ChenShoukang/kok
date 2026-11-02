@@ -2,6 +2,8 @@
 
 截图使用仓库内的原创示例，不包含个人文件。 / Captures use original repository samples.
 
+- [我的作品 / My works](works-zh.png)
+- [资料库首页 / Library home](library-en.png)
 - [资料库 / Library](overview.jpg)
 - [英文界面 / English interface](overview-en.jpg)
 - [视频封面 / Video covers](video-library.jpg)

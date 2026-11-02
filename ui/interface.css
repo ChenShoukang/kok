@@ -60,8 +60,9 @@ body[data-theme][data-app-mode] .sidebar .collections-heading{margin:12px 0 4px;
 body[data-theme][data-app-mode] .sidebar-bottom{padding-top:12px;border-top:0}
 body[data-theme][data-app-mode] .sidebar .settings-button{margin-bottom:0}
 body[data-theme][data-app-mode] .sidebar .nav-more{display:flex;margin-top:12px}
-body[data-theme][data-app-mode] .sidebar :is(.brand>span,.nav-label,.nav-group,.sidebar-rule,.collections-heading,#collections-nav,#extra-nav),body[data-theme][data-app-mode] .sidebar .settings-button>span:last-child,body[data-theme][data-app-mode] .sidebar .nav-item>.count:not(.agent-busy){display:none!important}
+body[data-theme][data-app-mode] .sidebar :is(.brand>span,.nav-label,.nav-group,.sidebar-rule,#extra-nav),body[data-theme][data-app-mode] .sidebar .settings-button>span:last-child,body[data-theme][data-app-mode] .sidebar .nav-item>.count:not(.agent-busy){display:none!important}
 body[data-theme][data-app-mode] .sidebar-scroll>.nav-item:not(.nav-more){display:none}
+body[data-theme][data-app-mode] .sidebar-scroll>#private-space-toggle{display:flex}
 body[data-theme][data-app-mode] .sidebar .agent-busy{position:absolute;right:6px;top:6px;width:6px;height:6px}
 body[data-theme][data-app-mode] .private-folder-nav{margin-top:8px}
 body[data-theme][data-app-mode] .glass-menu.nav-launcher{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding:10px;border-radius:14px;background:var(--bg)}

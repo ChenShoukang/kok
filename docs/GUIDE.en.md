@@ -4,13 +4,16 @@ v0.9.0 adds source indexing, local semantic search, browser capture, Windows OCR
 
 [中文](GUIDE.md) · [Project home](../README.en.md) · [Documentation](README.en.md)
 
-kok connects local media, images, documents and books to one workflow for organizing and recording what matters. Use it for playback and reading, or go further with notes, source-linked Clips, topic Spaces and optional AI. This guide describes v0.8.1 Preview; available controls depend on mode, enabled modules and format.
+kok connects local media, images, documents and books to one workflow for organizing and recording what matters. Use it for playback and reading, or go further with notes, source-linked Clips, topic Spaces and optional AI. This guide describes v0.10.1 Preview; available controls depend on mode, enabled modules and format.
+
+The top level is organized by what you are doing: **Agent, My works and Library**. Agent asks and runs tasks; My works creates, continues and organizes projects; Library watches, listens, reads and manages content on its own. File types and tools open inside each area; the private folder and Settings stay at the bottom of the rail.
 
 ## Four useful concepts
 
 | Name | Purpose |
 | --- | --- |
-| Library | Reference local files and browse videos, photos, music, documents and books, with collections, favorites, recents, sorting and search |
+| Library | Reference local files and browse videos, photos, music, documents and books, with resume rows, favorites, recents, collections, sorting and search |
+| My works | Create documents/presentations, continue editing content created or modified in kok, and open project spaces, saved clips, creative recipes and the existing-media editing tools |
 | Space | Gather files and Clips around a topic; a source can belong to several Spaces, displayed as a grid, canvas, timeline or graph |
 | Clip | Record text, a time range or a photo region with a return link to its source; a time-range Clip does not create a new media file |
 | Smart collection | Save filters such as PDFs imported in the last seven days that remain unread; results update locally without an AI request |
@@ -21,7 +24,7 @@ Collections and Spaces change application relationships; they do not move disk f
 
 Drop files/folders or choose **Import files**. kok detects supported types and skips already indexed paths. Scan folders you select to discover new files; scanning and local classification do not require a model.
 
-**Today** brings together resume items, recent Clips and running tasks. The library browses by type. Full-text search covers indexed names, text, notes, annotations and subtitles where extraction is supported; see [formats](FORMATS.en.md). Scanned PDFs do not gain searchable text automatically.
+The library home brings together resume items, favorites and recents; type filters stay in the library. Spaces, Clips, smart collections, Recipes and Review open inside their areas. Full-text search covers indexed names, text, notes, annotations and subtitles where extraction is supported; see [formats](FORMATS.en.md). Scanned PDFs do not gain searchable text automatically.
 
 Drag files into ordinary collections to classify them. A private-folder move requires confirmation and a password. Ordinary collections are not encrypted storage.
 

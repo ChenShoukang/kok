@@ -2,9 +2,6 @@
 // Shell behavior uses the existing module, menu and selection contracts.
 const ShellUi=(()=>{
  const tr=(zh,en)=>I18n.language==='en'?en:zh;
- // Navigation rerenders after background library updates. Resolve the live entry
- // when a launcher command runs, rather than keeping a detached button in a closure.
- function navAction(row){const selector=row.id?'#'+CSS.escape(row.id):row.dataset.route?`[data-route="${CSS.escape(row.dataset.route)}"]`:row.dataset.kokCommand?`[data-kok-command="${CSS.escape(row.dataset.kokCommand)}"]`:row.dataset.collection?`[data-collection="${CSS.escape(row.dataset.collection)}"]`:row.hasAttribute('data-open-knowledge')?'[data-open-knowledge]':null;return()=>{if(selector)document.querySelector('.sidebar '+selector)?.click();};}
  function select(ids){if(typeof Warehouse!=='undefined'&&Kok.enabled('workspace'))Warehouse.select(ids);else{libraryDrag.selected=new Set(ids);for(const card of document.querySelectorAll('.file-card'))card.classList.toggle('library-selected',ids.includes(card.dataset.id));}}
  function selected(){return typeof Warehouse!=='undefined'&&Kok.enabled('workspace')?Warehouse.selected:[...libraryDrag.selected];}
  function fileMenu(id,anchor,previous,point){
@@ -45,30 +42,17 @@ const ShellUi=(()=>{
   cards[next]?.querySelector('.file-open').focus({preventScroll:true});cards[next]?.scrollIntoView({block:'nearest'});
  },true);
  document.addEventListener('click',event=>{
-  const more=event.target.closest('[data-nav-more]');if(more){
-   event.preventDefault();
-   const items=[];
-   for(const group of document.querySelectorAll('#main-nav .nav-group,#extra-nav .nav-group')){
-    if(group.dataset.navKey==='library')continue;
-    const rows=[...group.querySelectorAll('.nav-item')].filter(row=>!row.classList.contains('compact-primary')&&!row.classList.contains('nav-more')&&!row.dataset.space);
-    rows.forEach(row=>items.push({label:row.dataset.kokCommand==='workspace.libraryTools'?tr('资料库工具','Library tools'):row.getAttribute('aria-label')||tr('打开','Open'),icon:row.dataset.navIcon||'folder',selected:row.classList.contains('active'),priority:row.dataset.route==='favorites'?-3:row.dataset.route==='recent'?-2:0,action:navAction(row)}));
-   }
-   const collections=[...document.querySelectorAll('#collections-nav .nav-item')],addCollection=$('#add-collection');
-   if(collections.length||addCollection)items.push({label:tr('分类','Collections'),icon:'folder',selected:state.route==='collection',priority:-1,action:()=>{
-    const rows=collections.map(row=>({label:row.getAttribute('aria-label')||tr('分类','Collection'),icon:'folder',protected:true,selected:row.classList.contains('active'),action:navAction(row)}));
-    if(addCollection)rows.push({label:addCollection.getAttribute('aria-label')||tr('新建分类','New collection'),icon:'plus',separatorBefore:rows.length>0,action:()=>addCollection.click()});
-    const box=more.getBoundingClientRect();GlassMenu.openAt(more,{x:box.right+12,y:Math.min(box.top,innerHeight-180)},rows,{label:tr('分类','Collections'),focus:true});
-   }});
-   const loose=[...document.querySelectorAll('.sidebar-scroll > .nav-item')].filter(row=>!row.closest('.nav-group')&&!row.classList.contains('nav-more'));
-   loose.forEach((row,i)=>items.push({label:row.getAttribute('aria-label')||tr('打开','Open'),icon:row.id==='private-space-toggle'?'lock':'folder',selected:row.classList.contains('active'),separatorBefore:i===0,action:navAction(row)}));
-   if(items.length){const box=more.getBoundingClientRect(),rail=document.querySelector('.sidebar')?.getBoundingClientRect();GlassMenu.openAt(more,{x:(rail?rail.right:box.right)+12,y:Math.max(12,Math.min(box.top,innerHeight-456))},items.sort((a,b)=>(a.priority||0)-(b.priority||0)).map(item=>({...item,separatorBefore:false})),{label:tr('更多','More'),className:'nav-launcher',width:342,maxHeight:440,columns:3,focus:true});}
-   return;
-  }
   const tool=event.target.closest('[data-library-tools]');if(!tool)return;
-  const items=[];
-  if(isSmartMode()&&Kok.enabled('ai'))items.push({label:tr('多文件对比与笔记回顾','Compare files and review notes'),icon:'spark',action:()=>openStudy('compare')});
-  if(isSmartMode()&&Kok.enabled('agent'))items.push({label:tr('交给 Agent','Open Agent'),icon:'agent',action:()=>Kok.run('agent.open')});
-  if(Kok.enabled('workspace'))items.push({label:tr('资料检索与备份','Search and library data'),icon:'search',action:()=>Kok.run('workspace.libraryTools')});
+  const smart=isSmartMode(),items=[];
+  if(smart&&Kok.enabled('organizer'))items.push({label:tr('智能整理','Smart library'),icon:'layers',action:()=>navigate('organize')});
+  if(smart&&Kok.enabled('downloads'))items.push({label:tr('视频下载','Video downloads'),icon:'download',action:()=>navigate('downloads')});
+  if(Kok.enabled('knowledge'))items.push({label:tr('知识图谱','Knowledge graph'),icon:'network',action:()=>showKnowledgeGraph()});
+  if(Kok.enabled('workspace'))items.push({label:tr('智能集合','Smart collections'),icon:'search',action:()=>navigate('queries')},{label:tr('回顾','Review'),icon:'clock',action:()=>navigate('review')});
+  if(Kok.enabled('operations'))items.push({label:tr('操作历史','History'),icon:'undo',action:()=>Kok.run('operations.history')});
+  if(Kok.enabled('jobs'))items.push({label:tr('活动','Activity'),icon:'list',action:()=>Kok.run('jobs.activity')});
+  if(Kok.enabled('workspace'))items.push({label:tr('资料检索与备份','Search and library data'),icon:'search',separatorBefore:true,action:()=>Kok.run('workspace.libraryTools')});
+  if(smart&&Kok.enabled('agent'))items.push({label:tr('交给 Agent','Open Agent'),icon:'agent',separatorBefore:true,action:()=>Kok.run('agent.open')});
+  if(smart&&Kok.enabled('ai'))items.push({label:tr('多文件对比与笔记回顾','Compare files and review notes'),icon:'spark',action:()=>openStudy('compare')});
   if(items.length)GlassMenu.open(tool,items,{label:tr('资料库工具','Library tools'),focus:true});
  });
  // Keep group disclosure state through normal route rerenders, without new settings.
@@ -81,6 +65,7 @@ const ShellUi=(()=>{
   const active=document.activeElement,card=active?.closest('.file-card'),route=state.route,id=card?.dataset.id;
   const selector=active?.matches('.card-menu')?'.card-menu':active?.matches('.card-favorite')?'.card-favorite':'.file-open';
   const result=previous.apply(this,args);
+  document.body.dataset.page=state.route;
   if(id&&!active.isConnected&&route===state.route)document.querySelector(`.file-card[data-id="${CSS.escape(id)}"] ${selector}`)?.focus({preventScroll:true});
   return result;
  });

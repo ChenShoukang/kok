@@ -1,5 +1,13 @@
 # kok changelog
 
+## v0.10.1 · Preview
+
+- The top level is organized by what you are doing: Agent, My works and Library. File types and tools move inside those areas; the rail keeps only the three destinations, the private folder and Settings. Legacy routes (Today, Spaces, Clips, smart collections, Recipes, Review, downloads, smart organize, knowledge graph) remain reachable.
+- New My works area: create Markdown/DOCX/TXT/PPTX through the existing new-document flow; continue editing content created or modified in kok; open project spaces, saved clips and creative recipes; start editing existing videos, audio, PDFs or documents in the existing editors. Presentations created in kok are now tracked as owned works too.
+- The library home adds continue-watching/reading rows, favorites/recent links, collections and a library-tools menu (smart organize, video downloads, knowledge graph, smart collections, review, operation history, activity, search and library data). Type filters stay inside the library; watching, listening, reading, subtitles, bookmarks and playback queues remain independent.
+- Agent home and background playback still share the window: the player bar leaves room for the composer and notifications avoid the send control. Empty/conversation layouts, attachment import and the More menu carry over from the previous round.
+- No data format changes. Novel-level chapters/settings and from-scratch audio/video generation remain staged. See [v0.10.1 validation](docs/VALIDATION_0.10.1.md).
+
 ## v0.9.8 · Preview
 
 - Interface redesign: unified near-white and muted purple-dark themes, removed promotional welcome copy and redundant labels; kept a short rail at every width with file categories in the library toolbar; the three-column launcher puts Favorites, Recent and Collections first; pinned offline Phosphor duotone destination glyphs with original geometry and MIT license, while compact actions retain Lucide.

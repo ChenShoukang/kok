@@ -1,14 +1,16 @@
-# kok · A local media and knowledge warehouse
+# kok · A personal AI agent workspace
 
-**Watch, listen, read and take notes. Turn your collection into something of your own.**
+**Describe your goal. Work with Agent.**
 
-Keep videos, photos, music, documents and books in one local library. Organize topics with Spaces, connect sources to notes with Clips, and bring in AI when you want help translating, organizing or writing.
+Start with an idea and let Agent help plan, organize, write and create editable results; continue drafts, projects and material in **My works**; or use the library on its own to watch videos, listen to music and read documents and books with progress and favorites.
+
+The top level is organized by what you are doing — Agent, My works and Library — while file types and tools live inside those areas. See [Agent home and interactions](docs/AGENT_HOME_UI.md) and [the product structure](docs/CREATION_PRODUCT_FLOW.md).
 
 [Published releases](https://github.com/ChenShoukang/kok/releases) · [User guide](docs/GUIDE.en.md) · [中文](README.md) · [Supported formats](docs/FORMATS.en.md)
 
-**v0.9.8 Preview** unifies near-white and muted purple-dark themes, simplifies the welcome screen and rail, and adds offline Phosphor duotone glyphs. It also reshapes Agent into "pick material → state the result → check openable output": the first screen keeps only material, the request and suggestions; explicit count/filter requests are answered locally with zero model requests; retrieval returns anchored page/chapter/subtitle snippets plus read coverage; tool-call messages keep a stable prefix; and every finished task ends with an openable result card. No data format changes. On the same 30-task sample set, requests fell from 100 to 76 (−24%) and input tokens from 566,586 to 431,132 (−24%), with the saving coming from local task routing; the two evaluation passes used 190 requests in total, moving the project request ledger from 359 to 549. See [Agent focus](docs/AGENT_FOCUS.md), the [30-task baseline and before/after comparison](docs/AGENT_TASK_EVAL.md), [interface notes](docs/FLAT_UI.md), [validation](docs/VALIDATION_0.9.8.md) and the [roadmap](ROADMAP.en.md).
+**v0.10.1 Preview** reorganizes the top level by what you are doing: **Agent, My works and Library**. Agent remains the main collaboration entry; the new My works area holds new work, continue-editing, project spaces, clips, recipes and existing-media editing tools; Library keeps independent watching, listening and reading, with continue rows, favorites, recent items, collections and library tools on its home page. File types and tools no longer occupy the top level; older destinations (Today, Spaces, Clips, smart collections, Recipes, Review, downloads, smart organize, knowledge graph) remain reachable inside the areas and through their routes. No data format changes; novel-level chapters/settings and from-scratch audio/video generation stay staged for later releases. See [Agent home and interactions](docs/AGENT_HOME_UI.md), [the product structure](docs/CREATION_PRODUCT_FLOW.md), [validation](docs/VALIDATION_0.10.1.md) and the [roadmap](ROADMAP.en.md).
 
-![kok v0.9.4 flat library using bundled original samples](docs/screenshots/overview-en.jpg)
+![kok v0.10.1 library home with continue-watching rows, using bundled original samples](docs/screenshots/library-en.png)
 
 ## From collecting to creating
 
@@ -29,13 +31,14 @@ Keep videos, photos, music, documents and books in one local library. Organize t
 | Notes, Clips and graphs | Underlines, highlights, thoughts, `[[note links]]`, backlinks, tags, outlines, tasks and templates; Clips return to passages, timestamps or photo regions |
 | AI translation and file chat | Selected-text explanations, side-by-side or translation-only documents, matching-format copies, multi-file comparison and note review; subtitle translation/outlines and separately configured speech recognition |
 | Agent and Recipes | Scoped search/read, organization, notes and new documents/presentations, with review before changes; instruction skills and usage limits; Recipes connect reading, summaries, notes and slides, with activity and operation history |
+| My works | Create documents or presentations; continue editing content created or modified in kok; open project spaces, saved clips and creative recipes; start editing existing videos, audio, PDFs or documents; exported results remain playable in the library |
 | Video downloads | Bilibili/YouTube/Douyin adapters, generic pages and direct links, source selection, queues, resume, sign-in sessions and import; optional components merge split tracks and streams |
 
 See the [user guide](docs/GUIDE.en.md) for workflows, editing/export scope and practical examples.
 
 ## Get started
 
-1. The local v0.9.8 build is `dist/kok-0.9.8-win-x64.zip`; public builds are available from [Releases](https://github.com/ChenShoukang/kok/releases). Check the accompanying SHA-256, extract the full ZIP and run `kok.exe`. Use the version shown on the Release page for public builds.
+1. The local v0.10.1 preview build is `dist/kok-0.10.1-win-x64.zip`; public builds are available from [Releases](https://github.com/ChenShoukang/kok/releases). Check the accompanying SHA-256, extract the full ZIP and run `kok.exe`. Use the version shown on the Release page for public builds.
 2. Choose **Pure** or **Smart**. Local essentials work without configuring AI.
 3. Explore the original samples or drop in your own files, then create a Space or save a Clip.
 
@@ -62,7 +65,7 @@ Choose light/dark themes, background and glass colors, bundled Smiley Sans/LXGW 
 
 ## Documentation and development
 
-[User guide](docs/GUIDE.en.md) · [Documentation](docs/README.en.md) · [Validation](docs/VALIDATION_0.9.8.md) · [Implementation scope](docs/WAREHOUSE_0.8.1.en.md) · [Issues](https://github.com/ChenShoukang/kok/issues/new/choose) · [Security](SECURITY.en.md)
+[User guide](docs/GUIDE.en.md) · [Documentation](docs/README.en.md) · [Validation](docs/VALIDATION_0.10.1.md) · [Product structure](docs/CREATION_PRODUCT_FLOW.md) · [Implementation scope](docs/WAREHOUSE_0.8.1.en.md) · [Issues](https://github.com/ChenShoukang/kok/issues/new/choose) · [Security](SECURITY.en.md)
 
 ```powershell
 npm ci --omit=optional

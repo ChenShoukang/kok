@@ -184,7 +184,8 @@ Kok.define('cleanupFeatures',function(){
  if(subtitleUrl)URL.revokeObjectURL(subtitleUrl);subtitleUrl=null;
  viewer.classList.remove('notes-open');
 });
-$('#add-collection').addEventListener('click',()=>newCollection());
+// The collection entry can be rendered anywhere (library home chips, collection pages), so bind it by delegation.
+document.addEventListener('click',e=>{if(e.target.closest('#add-collection'))newCollection();});
 document.addEventListener('mousedown',e=>{if(e.target.closest('.selection-tools'))e.preventDefault();});
 document.addEventListener('click',async e=>{
  const el=e.target.closest('button,[data-mark]');if(!el)return;

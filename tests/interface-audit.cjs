@@ -25,7 +25,7 @@ const {chromium}=require('./browser.cjs'),assert=require('node:assert/strict'),f
    if(checks.missing||checks.pageOverflow||checks.offscreen?.length||!checks.settingsReachable)report.issues.push(entry);
    console.log(`SCREEN ${report.screens.length}: ${name} ${theme} ${width} ${JSON.stringify(checks)}`);
   }
-  const routes=await page.evaluate(()=>[...new Set([...document.querySelectorAll('#main-nav [data-route],#extra-nav [data-route]')].map(e=>e.dataset.route))]);
+  const routes=await page.evaluate(()=>[...new Set([...document.querySelectorAll('.nav-primary [data-route]')].map(e=>e.dataset.route))]);
   for(const route of routes){
    await page.evaluate(route=>navigate(route),route);await capture(route,1440,1000,'light');
    await page.evaluate(route=>navigate(route),route);await capture(route,960,720,'dark');
@@ -76,7 +76,7 @@ const {chromium}=require('./browser.cjs'),assert=require('node:assert/strict'),f
   }
   await page.evaluate(()=>closeSmall());
   await page.evaluate(()=>ModuleUI.open());await capture('modules',1440,1000,'light','#small-dialog');await capture('modules',650,520,'dark','#small-dialog');await page.evaluate(()=>closeSmall());
-  await page.setViewportSize({width:650,height:520});await page.locator('[data-nav-more]').click();await page.getByRole('menuitem',{name:'私密文件夹',exact:true}).click();await page.waitForSelector('#private-password');await capture('private-unlock',1440,1000,'light','#small-dialog');await capture('private-unlock',650,520,'dark','#small-dialog');await page.evaluate(()=>closeSmall());
+  await page.setViewportSize({width:650,height:520});await page.locator('#private-space-toggle').click();await page.waitForSelector('#private-password');await capture('private-unlock',1440,1000,'light','#small-dialog');await capture('private-unlock',650,520,'dark','#small-dialog');await page.evaluate(()=>closeSmall());
   await page.keyboard.press('Control+k');await capture('commands',1440,1000,'light','#small-dialog');await capture('commands',650,520,'dark','#small-dialog');await page.evaluate(()=>closeSmall());
   await page.evaluate(async()=>{await setting({uiLanguage:'en'});I18n.applyLanguage('en');navigate('overview');});
   for(const route of ['overview','today','agent','spaces','recipes','downloads']){await page.evaluate(route=>navigate(route),route);await capture(route+'-en',650,520,'light');}

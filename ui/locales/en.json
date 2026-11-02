@@ -1,5 +1,36 @@
 {
   "messages": {
+    "帮我把一个想法整理成可执行的方案": "Help me turn an idea into an actionable proposal",
+    "主要入口": "Main destinations",
+    "我的作品": "My works",
+    "继续创作": "Continue creating",
+    "新建作品": "New work",
+    "草稿": "Draft",
+    "已创建": "Created",
+    "还没有作品": "No works yet",
+    "从第一件作品开始": "Start with your first work",
+    "新建作品，或从已有文件开始编辑。": "Create a new work, or start editing an existing file.",
+    "已有视频、音频、PDF 和文档也可以从下方工具开始编辑。": "Existing videos, audio, PDFs and documents can also be edited from the tools below.",
+    "项目空间": "Project spaces",
+    "素材摘录": "Saved clips",
+    "创作配方": "Creative recipes",
+    "剪辑已有视频": "Edit an existing video",
+    "剪辑已有音频": "Edit an existing audio",
+    "整理 PDF 页面": "Organize PDF pages",
+    "编辑已有文档": "Edit an existing document",
+    "选择要剪辑的视频": "Choose a video to edit",
+    "选择要剪辑的音频": "Choose an audio file to edit",
+    "选择要整理的 PDF": "Choose a PDF to organize",
+    "选择要编辑的文档": "Choose a document to edit",
+    "暂无可编辑的内容": "Nothing to edit yet.",
+    "继续观看与阅读": "Continue watching and reading",
+    "帮我制定一份计划": "Help me make a plan",
+    "制作一份演示文稿": "Create a presentation",
+    "整理思路": "Shape an idea",
+    "制定计划": "Make a plan",
+    "制作演示": "Create slides",
+    "有什么想法？": "What would you like to do?",
+    "告诉我，你想完成什么…": "Tell me what you want to get done…",
     "高级设置": "Advanced settings",
     "更多": "More",
     "范围：整个资料库": "Scope: entire library",
@@ -2363,6 +2394,10 @@
     "https://你的搜索服务/search?q={query}&format=json": "https://your-search-service/search?q={query}&format=json"
   },
   "patterns": [
+    {
+      "pattern": "^(\\d+) 个可以继续的草稿$",
+      "replacement": "$1 drafts to continue"
+    },
     {
       "pattern": "^已加入 (\\d+) 个文件，跳过 (\\d+) 个重复或不支持的文件。$",
       "replacement": "Added $1 files. Skipped $2 duplicates or unsupported files."

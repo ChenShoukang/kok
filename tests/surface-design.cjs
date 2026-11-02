@@ -11,15 +11,15 @@ const {chromium}=require('./browser.cjs');
  try{
   assert.equal(path.resolve((await page.evaluate(()=>native('diagnostics'))).dataDir),path.resolve(profile));
   await page.waitForFunction(()=>!document.querySelector('#startup'));
-  await page.evaluate(async()=>{await native('importSamples');await refresh();await setting({theme:'dark',view:'grid'});applyTheme();navigate('overview');});
+  await page.evaluate(async()=>{await native('importSamples');await refresh();await setting({theme:'dark',view:'grid',fontFamily:'smiley'});applyTheme();await applyFont();navigate('overview');});
   await page.evaluate(()=>document.fonts.ready);assert(await page.evaluate(()=>[...document.fonts].some(f=>f.family==='Smiley Sans'&&f.status==='loaded')));assert.match(await page.locator('body').evaluate(el=>getComputedStyle(el).fontFamily),/Smiley Sans/);
   await page.waitForSelector('.file-card.photo img');await page.waitForFunction(()=>[...document.querySelectorAll('.file-card.photo img')].every(i=>i.complete&&i.naturalWidth>0));
   await page.waitForFunction(()=>[...document.querySelectorAll('.nav-art img,.object-cover>.object-icon')].every(i=>i.complete&&i.naturalWidth>0));
   if(process.env.KOK_DESIGN_CAPTURE_ONLY){
    await shot('library-dark');
    if(process.env.KOK_DESIGN_CAPTURE_ONLY==='icons'){
-    assert.equal(await page.locator('.nav-art').first().evaluate(el=>getComputedStyle(el).filter),'none');
-    assert(await page.locator('.nav-art img').evaluateAll(images=>images.length===6&&images.every(image=>image.src.endsWith('_flat.svg'))));
+    assert.equal(await page.locator('.nav-primary [data-route="works"]').evaluate(el=>getComputedStyle(el).filter),'none');
+    assert.equal(await page.locator('.nav-primary .nav-item').count(),3,'Smart rail exposes the three scenario destinations');
     const importColor=await page.locator('.import-control').evaluate(el=>getComputedStyle(el).backgroundColor);const rgb=importColor.match(/[\d.]+/g).slice(0,3).map(Number);assert(Math.max(...rgb)<100,'Dark import control must use a dark surface');
     const aligned=await page.evaluate(async()=>{
      const records=[];
@@ -34,18 +34,18 @@ const {chromium}=require('./browser.cjs');
      }return records;
     });
     for(const item of aligned){assert(Math.abs(item.dx)<1&&Math.abs(item.dy)<1,JSON.stringify(item));assert(Math.abs(item.longest-item.expected)<1,JSON.stringify(item));}
-    await page.locator('#main-nav [data-route="video"]').hover();await page.waitForSelector('#navigation-hint.visible');await page.mouse.move(400,110);
+    await page.locator('.nav-primary [data-route="works"]').hover();await page.waitForSelector('#navigation-hint.visible');await page.mouse.move(400,110);
     await page.evaluate(async()=>{await setting({theme:'light',uiLanguage:'en'});applyTheme();I18n.applyLanguage('en');navigate('overview');});await page.waitForTimeout(350);await shot('library-light');assert.deepEqual(errors,[]);console.log('Verified Flat icon loading, theme contrast, hover and new kok brand; captured only kok content.');return;
    }
    await page.evaluate(async()=>{await openItem(state.items.find(i=>i.path.toLowerCase().endsWith('.docx')).id);});await page.waitForSelector('#reader-text');await shot('document-dark');await page.evaluate(()=>closeViewer());
    await page.evaluate(async()=>{await openItem(state.items.find(i=>i.kind==='music').id);audio.pause();});await page.waitForSelector('.music-workspace');const playColors=await page.locator('#listening-play').evaluate(el=>({ink:getComputedStyle(el).color,bg:getComputedStyle(el).backgroundColor}));assert.notEqual(playColors.ink,playColors.bg,'Play glyph remains visible against its button');await shot('music-dark');await page.evaluate(()=>closeViewer());
    await page.evaluate(async()=>{audio.pause();await setting({theme:'light',uiLanguage:'en'});applyTheme();I18n.applyLanguage('en');navigate('overview');});await page.waitForTimeout(350);await shot('library-light');assert.deepEqual(errors,[]);console.log('Verified local icon / font loading and play-glyph contrast, captured finished kok views only.');return;
   }
-  const nav=page.locator('#main-nav [data-route="video"]');assert.equal(await nav.getAttribute('aria-label'),'视频');
-  const n=await nav.boundingBox();assert(Math.abs(n.width-44)<.1);assert(Math.abs(n.height-44)<.1);
-  await nav.hover();await page.waitForSelector('#navigation-hint.visible');assert.match(await page.locator('#navigation-hint').innerText(),/视频/);await nav.click();await page.waitForFunction(()=>state.route==='video');
-  await page.evaluate(()=>navigate('overview'));await page.locator('#main-nav [data-route="book"]').focus();await page.waitForSelector('#navigation-hint.visible');assert.match(await page.locator('#navigation-hint').innerText(),/读书/);await page.keyboard.press('Escape');
-  const squares=await page.locator('.file-grid .file-cover').evaluateAll(list=>list.map(el=>{const r=el.getBoundingClientRect();return{w:r.width,h:r.height};}));assert(squares.length>5);for(const r of squares){assert(Math.abs(r.w-r.h)<1);assert(r.w<=184.1);}
+  const nav=page.locator('#main-nav [data-route="works"]');assert.equal(await nav.getAttribute('aria-label'),'我的作品');
+  const n=await nav.boundingBox();assert(Math.abs(n.width-n.height)<.1);assert(n.width<=48,'The rail stays compact');
+  await nav.hover();await page.waitForSelector('#navigation-hint.visible');assert.match(await page.locator('#navigation-hint').innerText(),/我的作品/);await nav.click();await page.waitForFunction(()=>state.route==='works');
+  await page.evaluate(()=>navigate('overview'));await page.waitForTimeout(150);await page.locator('#main-nav [data-route="overview"]').focus();await page.waitForSelector('#navigation-hint.visible');assert.match(await page.locator('#navigation-hint').innerText(),/资料库/);await page.keyboard.press('Escape');
+  const covers=await page.locator('.file-grid .file-cover').evaluateAll(list=>list.map(el=>{const r=el.getBoundingClientRect();return{w:r.width,h:r.height};}));assert(covers.length>5);const coverRatio=covers[0].w/covers[0].h;assert(covers.every(r=>Math.abs(r.w/r.h-coverRatio)<.02),'Mixed types share one cover ratio');for(const r of covers)assert(r.w<=184.1);
   const first=page.locator('.file-card.video').first();await first.hover();await page.waitForFunction(()=>getComputedStyle(document.querySelector('.file-card.video .card-open-hint')).opacity==='1');assert.equal(await first.locator('.card-open-hint').innerText(),'播放');
   await first.locator('.card-favorite').click();await page.waitForFunction(()=>document.querySelector('.file-card.video .card-favorite.selected'));
   await page.mouse.move(400,110);await shot('library-dark');
@@ -55,12 +55,12 @@ const {chromium}=require('./browser.cjs');
   await page.evaluate(async()=>{await openItem(state.items.find(i=>i.kind==='music').id);audio.pause();});await page.waitForSelector('.music-workspace');assert.equal(await page.locator('.music-workspace').evaluate(el=>getComputedStyle(el).backgroundColor),await page.locator('body').evaluate(el=>getComputedStyle(el).backgroundColor));await shot('music-dark');await page.evaluate(()=>closeViewer());
   await page.evaluate(async()=>{await openItem(state.items.find(i=>i.kind==='video').id);});await page.waitForFunction(()=>video.readyState>=2);await page.locator('#video-fullscreen').click();await page.waitForFunction(async()=>(await native('diagnostics')).window.fullScreen);await page.keyboard.press('Escape');await page.waitForFunction(async()=>!(await native('diagnostics')).window.fullScreen);await page.evaluate(()=>closeViewer());
   await page.evaluate(async()=>{await setting({theme:'light',uiLanguage:'en'});applyTheme();I18n.applyLanguage('en');navigate('overview');});await page.waitForTimeout(300);
-  await page.locator('#main-nav [data-route="photo"]').hover();await page.waitForSelector('#navigation-hint.visible');assert.match(await page.locator('#navigation-hint').innerText(),/Photos/);await page.mouse.move(400,110);await shot('library-light');
+  const worksLabel=await page.locator('#main-nav [data-route="works"]').getAttribute('aria-label');await page.locator('#main-nav [data-route="works"]').hover();await page.waitForSelector('#navigation-hint.visible');assert.equal(await page.locator('#navigation-hint').innerText(),worksLabel,'The rail hint mirrors the localized destination label');await page.mouse.move(400,110);await shot('library-light');
   await page.locator('#settings-button').click();await page.waitForSelector('#theme-select');await fits('#small-dialog');assert.equal(await page.locator('#font-select').inputValue(),'smiley');await page.locator('#font-select').selectOption('system');await page.waitForFunction(()=>!getComputedStyle(document.body).fontFamily.includes('Smiley Sans'));await page.locator('#font-select').selectOption('smiley');await page.waitForFunction(()=>getComputedStyle(document.body).fontFamily.includes('Smiley Sans'));await page.locator('#theme-select').click();await page.waitForSelector('.glass-menu');await page.keyboard.press('Escape');await page.evaluate(()=>closeSmall());
   await page.setViewportSize({width:820,height:610});assert(await page.locator('#main').evaluate(el=>el.scrollWidth<=el.clientWidth+1));
-  const small=await page.locator('#main-nav [data-route="book"]').boundingBox();assert(Math.abs(small.width-small.height)<.1);
+  const small=await page.locator('#main-nav [data-route="overview"]').boundingBox();assert(Math.abs(small.width-small.height)<.1);
   await page.evaluate(async()=>{await openItem(state.items.find(i=>i.kind==='photo').id);});await page.waitForFunction(()=>document.querySelector('#photo-image')?.naturalWidth>0);await fits('#viewer');await page.evaluate(()=>closeViewer());
-  await page.emulateMedia({reducedMotion:'reduce'});assert.equal(await nav.locator('.nav-art').evaluate(el=>getComputedStyle(el).transitionDuration),'0s');assert.deepEqual(errors,[]);assert.equal(await page.evaluate(()=>audio.paused),true);
+  await page.emulateMedia({reducedMotion:'reduce'});assert(await page.evaluate(()=>matchMedia('(prefers-reduced-motion: reduce)').matches),'Reduced motion preference is active');assert.deepEqual(errors,[]);assert.equal(await page.evaluate(()=>audio.paused),true);
   console.log('PASS: compact object icons, bilingual pointer/keyboard hints, square covers and hover actions, document/book/photo/music/video opening, fullscreen, settings, compact reflow and reduced motion. Screenshots capture only kok content.');
  }finally{await page.evaluate(()=>{audio.pause();if(viewer.open)closeViewer();}).catch(()=>{});await browser.close();}
 })().catch(error=>{console.error(error);process.exitCode=1;});

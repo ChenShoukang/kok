@@ -21,7 +21,7 @@ const {chromium}=require('./browser.cjs'),assert=require('node:assert/strict'),f
   });
   assert(Math.abs(continuity.before.opacity-continuity.after.opacity)<.015,'Interruptions keep the displayed opacity');
   assert.equal(continuity.before.transform,continuity.after.transform,'Interruptions keep the displayed transform');
-  await page.locator('[data-nav-more]').click();await page.locator('.glass-menu:popover-open').waitFor();
+  await page.locator('[data-library-tools]').click();await page.locator('.glass-menu:popover-open').waitFor();
   await page.evaluate(()=>{for(const animation of document.querySelector('.glass-menu').getAnimations())animation.finish();});
   const menuGeometry=await page.locator('.glass-menu').evaluate(element=>{const root=element.getBoundingClientRect(),style=getComputedStyle(element);return{padding:style.padding,radius:style.borderRadius,background:style.backgroundColor,items:[...element.querySelectorAll('button')].map(button=>{const box=button.getBoundingClientRect();return[box.x-root.x,box.y-root.y,box.width,box.height];})};});
   await page.keyboard.press('Escape');
@@ -31,7 +31,7 @@ const {chromium}=require('./browser.cjs'),assert=require('node:assert/strict'),f
   const exitGeometry=exit.geometry;
   assert.deepEqual([exitGeometry.padding,exitGeometry.radius,exitGeometry.background],[menuGeometry.padding,menuGeometry.radius,menuGeometry.background],'The exit retains the same surface geometry and color');
   assert(exitGeometry.items.every((box,index)=>box.every((value,axis)=>Math.abs(value-menuGeometry.items[index][axis])<.1)),'The exit does not reflow menu contents');
-  await page.locator('[data-nav-more]').click();assert.equal(await page.locator('.glass-menu:popover-open').count(),1,'Reopening replaces a pending exit');
+  await page.locator('[data-library-tools]').click();assert.equal(await page.locator('.glass-menu:popover-open').count(),1,'Reopening replaces a pending exit');
   await page.keyboard.press('Escape');await page.waitForFunction(()=>!document.querySelector('.glass-menu-exit'));
   await page.locator('#sort').selectOption('name');await page.waitForFunction(()=>state.settings.sort==='name'&&[...document.querySelectorAll('.file-card')].map(card=>card.dataset.id).join()===filtered().map(item=>item.id).join());
   assert.deepEqual(await page.locator('.file-card').evaluateAll(cards=>cards.map(card=>card.dataset.id)),await page.evaluate(()=>filtered().map(item=>item.id)),'Layout movement does not change sorting or hit targets');
@@ -39,7 +39,7 @@ const {chromium}=require('./browser.cjs'),assert=require('node:assert/strict'),f
   await page.screenshot({path:path.join(output,'library-light.png'),animations:'disabled'});
   for(const theme of ['light','dark']){
    await page.evaluate(async theme=>{await setting({theme});applyTheme();navigate('overview');},theme);
-   await page.setViewportSize({width:650,height:520});await page.locator('[data-nav-more]').click();await page.locator('.glass-menu:popover-open').waitFor();
+   await page.setViewportSize({width:650,height:520});await page.locator('[data-library-tools]').click();await page.locator('.glass-menu:popover-open').waitFor();
    await page.screenshot({path:path.join(output,`launcher-${theme}-650.png`),animations:'disabled'});await page.keyboard.press('Escape');
   }
   await page.setViewportSize({width:1440,height:1000});await page.evaluate(()=>navigate('overview'));
@@ -48,7 +48,7 @@ const {chromium}=require('./browser.cjs'),assert=require('node:assert/strict'),f
   });
   const sorted=[...intervals].sort((a,b)=>a-b),report={continuity,frameSample:{count:intervals.length,medianMs:sorted[Math.floor(sorted.length*.5)],p95Ms:sorted[Math.floor(sorted.length*.95)],maxMs:sorted.at(-1)},note:'Observed isolated WebView2 session; not a hardware-independent frame-rate guarantee.'};
   fs.writeFileSync(path.join(output,'motion-check.json'),JSON.stringify(report,null,2)+'\n');
-  await page.emulateMedia({reducedMotion:'reduce'});await page.evaluate(()=>navigate('overview'));await page.locator('[data-nav-more]').click();
+  await page.emulateMedia({reducedMotion:'reduce'});await page.evaluate(()=>navigate('overview'));await page.locator('[data-library-tools]').click();
   assert.equal(await page.locator('.glass-menu').evaluate(element=>element.getAnimations().length),0,'Reduced motion bypasses the entrance');
   await page.keyboard.press('Escape');assert.equal(await page.locator('.glass-menu-exit').count(),0,'Reduced motion dismisses without a retained frame');
   await page.waitForFunction(()=>CalmMotion.activeCount===0);assert.deepEqual(errors,[]);

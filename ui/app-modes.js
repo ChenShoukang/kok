@@ -12,8 +12,8 @@ Kok.define('applyAppMode',function(){
   if(typeof resetTranslationView==='function')resetTranslationView();if(typeof resetFileAssistant==='function')resetFileAssistant();
   if(typeof organizer!=='undefined'){organizer.preview=[];organizer.selected.clear();organizer.api=null;}
   if(typeof subtitleTracks!=='undefined'&&$('#video')){subtitleTracks=subtitleTracks.filter(t=>!t.translated);renderSubtitleOptions();if(subtitleTracks.length){$('#subtitle-select').value='0';setSubtitle(0);}}
-  if(state.route==='organize'||state.route==='downloads'){state.route='overview';state.query='';$('#search').value='';}
- }else if(state.viewer){beginTranslationView(state.viewer);beginFileAssistant(state.viewer);}
+  if(['agent','organize','downloads'].includes(state.route)){state.route='overview';state.query='';$('#search').value='';}
+ }else{if(state.viewer){beginTranslationView(state.viewer);beginFileAssistant(state.viewer);}if(!modeSession.fromSettings&&!state.settings.startPage&&Kok.enabled('agent'))state.route='agent';}
  renderNav();
 });
 async function initializeAppMode(){applyAppMode();if(!['pure','smart'].includes(state.settings.appMode)){showModeChooser(false);return;}document.body.classList.remove('mode-pending');}
@@ -25,6 +25,7 @@ function modePreview(smart){return `<span class="mode-preview ${smart?'with-assi
 function renderModeChoices(){
  modeSession.step='choose';const current=state.settings.appMode,dialog=modeDialog();
  dialog.innerHTML=modeShell(`<main class="mode-choice-main" aria-label="选择 kok 使用模式"><div class="mode-card-grid">${[['pure','纯净模式'],['smart','智能模式']].map(([mode,label])=>`<button class="mode-card mode-card-${mode} ${current===mode?'is-current':''}" data-choose-mode="${mode}" aria-label="${label}" aria-describedby="mode-description-${mode}">${modePreview(mode==='smart')}<span class="mode-card-caption"><span class="mode-card-title">${label}</span><span class="mode-card-enter" aria-hidden="true">${svg(current===mode?'check':'arrow')}</span></span></button>`).join('')}</div><span id="mode-description-pure" class="mode-accessible-description">离线播放、编辑与阅读。</span><span id="mode-description-smart" class="mode-accessible-description">本地工具，加上你的 AI。</span></main>`);
+ const cards=dialog.querySelector('.mode-card-grid'),smart=cards?.querySelector('[data-choose-mode=smart]');if(smart)cards.prepend(smart);
  I18n.localize(dialog);animateModeStep(dialog);
 }
 function renderSmartNotice(){modeSession.step='notice';const dialog=modeDialog();dialog.innerHTML=modeShell(`<main class="mode-notice-main"><button class="mode-back" data-mode-back>${svg('skipBack')}返回选择</button><div class="mode-notice-hero"><div class="mode-notice-icon"><img src="mode-smart.svg?v=0.9.6-ui-20261101" width="112" height="112" alt=""></div><span class="mode-kicker">进入智能模式之前</span><h1>连接你的 AI</h1></div><div class="mode-notice-glass"><div class="mode-notice-feature"><span>${svg('settings')}</span><div><b>使用自己的 API</b><p>密钥仅在本机加密保存，支持稍后配置。</p></div></div><div class="mode-notice-feature"><span>${svg('shield')}</span><div><b>所选内容发送至 API</b><p>使用 AI 时发送所选字幕、正文、笔记或画面。费用由服务商计算。</p></div></div><div class="mode-notice-feature"><span>${svg('leaf')}</span><div><b>由你开启</b><p>进入模式不发起请求；开启自动翻译后，打开内容也会请求。</p></div></div><p class="mode-notice-consent">随时可切回纯净模式。</p><div class="mode-notice-actions"><button class="button secondary" data-enter-smart="configure">配置模型并进入</button><button class="button primary" data-enter-smart="continue">开始使用</button></div></div></main>`);I18n.localize(dialog);animateModeStep(dialog);}

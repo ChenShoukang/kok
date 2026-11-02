@@ -36,7 +36,7 @@ else (async()=>{
  let browser,page;const errors=[];
  try{
    browser=await chromium.connectOverCDP('http://127.0.0.1:9225');page=browser.contexts()[0].pages().find(p=>p.url().startsWith('https://app.kok.local'));page.on('pageerror',e=>errors.push(e.message));page.setDefaultTimeout(30000);await page.setViewportSize({width:1380,height:900});
-   await page.waitForFunction(()=>!document.querySelector('#startup'));assert.equal((await page.evaluate(()=>native('diagnostics'))).version,'0.4.1');
+   await page.waitForFunction(()=>!document.querySelector('#startup'));assert.equal((await page.evaluate(()=>native('diagnostics'))).version,require('../package.json').version);
    const change=async(selector,value)=>page.locator(selector).evaluate((input,value)=>{input.value=String(value);input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new Event('change',{bubbles:true}));},value);
    const english=async selector=>{const missing=await page.locator(selector).evaluate(root=>{const found=[];const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);let node;while(node=walker.nextNode()){if(node.parentElement.getClientRects().length&&!I18n.isProtected(node.parentElement)&&!node.parentElement.closest('script,style,svg,textarea')&&/[\u3400-\u9fff]/.test(node.nodeValue))found.push(node.nodeValue.trim());}return found;});assert.deepEqual(missing,[],'Visible interface text must have an English translation');};
    if(!['pdf','downloads'].includes(process.env.KOK_PREVIEW_FROM)){
@@ -46,6 +46,8 @@ else (async()=>{
    await page.evaluate(async()=>{await closeSmall();await setting({theme:'dark',customDarkBg:'#20212a',customDarkGlass:'#3c354c'});applyTheme();I18n.applyLanguage('en');await settings();});await page.locator('[data-open-appearance]').click();assert.equal(await page.locator('[data-color-setting=customDarkBg]').inputValue(),'#20212a');await english('#small-dialog');await page.screenshot({path:path.join(output,'appearance-dark-en.png'),scale:'css'});
    const saved=await page.evaluate(()=>native('library'));assert.equal(saved.settings.customLightBg,'#e8eef8');assert.equal(saved.settings.customDarkBg,'#20212a');
    await page.evaluate(async()=>{await closeSmall();await setting({theme:'light',uiLanguage:'zh',readerLayout:'scroll'});applyTheme();I18n.applyLanguage('zh');const item=state.items.find(i=>i.ext==='TXT');await native('update',{id:item.id,patch:{bookmarks:[]}});item.bookmarks=[];await openItem(item.id);});await page.waitForSelector('#reader-text');
+   // The reading tools live in the TOC sidebar, which starts collapsed for books.
+   await page.locator('[data-toggle-toc]').first().click();await page.waitForFunction(()=>!document.querySelector('.reading-workspace')?.classList.contains('toc-collapsed'));
    assert(await page.locator('#reader-text .text-mark').count());assert.equal(await page.locator('#reader-text').textContent(),await page.evaluate(()=>state.book.chapters[state.chapter].text));
    const searchChapter=await page.evaluate(()=>state.book.chapters.findIndex(c=>c.text.includes('BEACON_041')));await page.evaluate(target=>changeChapter(target===0?1:0),searchChapter);
    await page.locator('[data-reading-tab=search]').click();await page.locator('#reading-full-query').fill('BEACON_041');await page.waitForSelector('[data-reading-result="0"]');await page.locator('[data-reading-result="0"]').click();await page.waitForFunction(target=>state.chapter===target&&CSS.highlights.get('kok-global-find')?.size>0,searchChapter);
