@@ -108,6 +108,9 @@ class Tests {
             PresentationRulesTests.Run(Path.Combine(temp,"presentation-rules"),Check);
             AgentTests.Run(Path.Combine(temp,"agent-rules"),Check);
             AgentTaskTests.Run(Path.Combine(temp,"agent-tasks"),Check);
+            AgentSessionTests.Run(Path.Combine(temp,"agent-sessions"),Check);
+            AgentSkillTests.Run(Path.Combine(temp,"agent-skills"),Check);
+            AgentPluginTests.Run(Path.Combine(temp,"agent-plugins"),Check);
             AgentLocalTaskTests.Run(Path.Combine(temp,"agent-local-tasks"),Check);
             AgentVisionTests.Run(Path.Combine(temp,"agent-vision"),Check);
             AgentWebTests.Run(Path.Combine(temp,"agent-web"),Check);
@@ -117,6 +120,7 @@ class Tests {
             OsSandboxTests.Run(Path.Combine(temp,"os-sandbox"),Check);
             AgentOrchestrationTests.Run(Path.Combine(temp,"agent-orchestration"),Check);
             AgentKernelTests.Run(Path.Combine(temp,"agent-kernel"),Check);
+            AgentHeadlessTests.Run(Path.Combine(temp,"agent-headless"),Check);
             AgentPlatformTests.Run(Path.Combine(temp,"agent-platform"),Check);
             AgentReliability090Tests.Run(Path.Combine(temp,"agent-090"),Check);
             McpTests.Run(Path.Combine(temp,"mcp"),Check);

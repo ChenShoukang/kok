@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Collections.Generic;
 namespace kok {
- public class Operation {public string id,module,source,title,created,state="proposed",undoneBy,createdItemId,createdStamp,fileVersion;public bool reviewOperation=true;public List<AgentChange> patches=new List<AgentChange>();public List<ResourcePatch> resources=new List<ResourcePatch>();}
+ public class Operation {public string id,module,source,title,created,state="proposed",undoneBy,createdItemId,createdStamp,fileVersion,documentBeforeStamp,documentAfterStamp;public bool reviewOperation=true;public List<AgentChange> patches=new List<AgentChange>();public List<ResourcePatch> resources=new List<ResourcePatch>();}
  public sealed class Operations {
   readonly Library library;readonly Action<string,object> notify;
   public Operations(Library library,Action<string,object> notify){this.library=library;this.notify=notify??((n,v)=>{});}

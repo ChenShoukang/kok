@@ -224,6 +224,33 @@ namespace kok {
             return "\"" + value.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
         }
 
+        // M2-3 codemode: batch executor for read-only nested tools requested by the isolated QuickJS run.
+        // Requests arrive pre-validated/capped by AgentSandbox; each runs through the task's existing scoped
+        // read path and never becomes a task receipt. Per-item failures become isError text the code can catch.
+        internal static Func<string,Dictionary<string,object>[],CancellationToken,Task<List<Dictionary<string,object>>>> SandboxToolBatch(AgentService agent) {
+            return async (taskId, requests, token) => {
+                var results = new List<Dictionary<string,object>>();
+                foreach (var request in requests ?? new Dictionary<string,object>[0]) {
+                    int index; try { index = Convert.ToInt32(request.ContainsKey("index") ? request["index"] : 0); } catch { index = 0; }
+                    string name = Convert.ToString(request.ContainsKey("name") ? request["name"] : "") ?? "";
+                    var args = request.ContainsKey("args") ? request["args"] as Dictionary<string,object> : null;
+                    string text; bool isError = false;
+                    try {
+                        var call = new AgentCall { id = Guid.NewGuid().ToString("N"), tool = name, args = args ?? new Dictionary<string,object>(), status = "queued" };
+                        var result = await agent.SandboxReadTool(taskId, call, token);
+                        text = Library.Json.Serialize(result);
+                    } catch (OperationCanceledException) { throw; }
+                    catch (Exception error) {
+                        text = AgentFailure.Classify(error).Message; if (String.IsNullOrWhiteSpace(text)) text = "工具调用失败。"; isError = true;
+                    }
+                    if (text == null) text = "";
+                    if (text.Length > AgentSandbox.MaxToolResultChars) text = text.Substring(0, AgentSandbox.MaxToolResultChars - 32) + "\n[sandbox tool result truncated]";
+                    results.Add(new Dictionary<string,object> { { "index", index }, { "text", text }, { "isError", isError } });
+                }
+                return results;
+            };
+        }
+
         internal static string Guidance {
             get { return "When the execution environment is enabled, list_folder/read_text_file read files inside the user's chosen workspace; write_text_file/run_command are approval-gated proposals with bounded output and runtime. Never assume files outside that workspace exist. "; }
         }

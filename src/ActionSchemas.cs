@@ -10,8 +10,18 @@ namespace kok {
   static Dictionary<string,object> O(string[] required,params object[] fields){return CapabilitySchema.Obj(CapabilitySchema.Fields(fields),required);}
   public static Dictionary<string,object> For(string name){
    if(name.StartsWith("command",StringComparison.Ordinal)||new[]{"moduleCatalog","agentTaskList","agentSessions","operationList","jobList"}.Contains(name))return CapabilitySchema.Obj();
-   if(name=="agentTaskStart")return O(new[]{"sessionId","goal"},"sessionId",S(32),"goal",S(2000),"approvalPolicy",E("each","task","read_only"),"semanticCompression",B(),"contextTokens",N(8000,128000,true),"useMemory",B(),"allowDelegation",B(),"allowSandbox",B(),"allowedTools",A(100,S(64)),"intent",E("assist","discuss"),"protocol",E("auto","tools","json"),"workflow",S(64),"instruction",S(800),"budget",new Dictionary<string,object>{{"type","integer"},{"enum",new[]{6000,14000,24000,48000,64000}}},"requestLimit",N(1,24,true),"costLimit",N(0,10000),"inputRate",N(0,10000),"outputRate",N(0,10000),"scope",O(new[]{"mode"},"mode",E("all","selected","collection"),"ids",A(24,S(32)),"collection",S(100)),"history",A(10,O(new[]{"role","content"},"role",E("user","assistant"),"content",S(6000))),"handoff",new Dictionary<string,object>{{"type","object"},{"additionalProperties",true},{"nullable",true}});
+   if(name=="agentTaskStart")return O(new[]{"sessionId","goal"},"sessionId",S(32),"goal",S(2000),"sessionLeafId",S(32),"approvalPolicy",E("each","task","read_only"),"semanticCompression",B(),"contextTokens",N(8000,128000,true),"reserveTokens",N(0,64000,true),"keepRecentTokens",N(0,64000,true),"useMemory",B(),"allowDelegation",B(),"allowSandbox",B(),"allowedTools",A(100,S(64)),"intent",E("assist","discuss"),"protocol",E("auto","tools","json"),"workflow",S(64),"instruction",S(800),"projectId",S(32),"budget",new Dictionary<string,object>{{"type","integer"},{"enum",new[]{6000,14000,24000,48000,64000}}},"requestLimit",N(1,24,true),"costLimit",N(0,10000),"inputRate",N(0,10000),"outputRate",N(0,10000),"scope",O(new[]{"mode"},"mode",E("all","selected","collection"),"ids",A(24,S(32)),"collection",S(100)),"history",A(10,O(new[]{"role","content"},"role",E("user","assistant"),"content",S(6000))),"handoff",new Dictionary<string,object>{{"type","object"},{"additionalProperties",true},{"nullable",true}});
    if(name=="agentLocalPlan")return O(new[]{"goal","scope"},"goal",S(300),"scope",O(new[]{"mode"},"mode",E("all","selected","collection"),"ids",A(24,S(32)),"collection",S(100)));
+   if(name=="agentSessionList")return CapabilitySchema.Obj();
+   if(name=="agentSessionTree"||name=="agentSessionProject"||name=="agentSessionDelete")return O(new[]{"sessionId"},"sessionId",S(32),"leafId",S(32));
+   if(name=="agentSessionFork")return O(new[]{"sessionId","entryId"},"sessionId",S(32),"entryId",S(32),"newSessionId",S(32));
+   if(name=="agentSessionSwitch")return O(new[]{"sessionId","leafId"},"sessionId",S(32),"leafId",S(32));
+   if(name=="agentSessionRename")return O(new[]{"sessionId","title"},"sessionId",S(32),"title",S(64));
+   if(name=="agentSessionLabel")return O(new[]{"sessionId","targetId","label"},"sessionId",S(32),"targetId",S(32),"label",S(64));
+   if(name=="agentSkillsList"||name=="agentSkillsReload")return CapabilitySchema.Obj();
+   if(name=="agentSkillRead")return O(new[]{"name"},"name",S(64));
+   if(name=="agentPluginsList"||name=="agentPluginsReload")return CapabilitySchema.Obj();
+   if(name=="agentPromptRead")return O(new[]{"name"},"name",S(64));
    if(name=="agentScheduleList")return CapabilitySchema.Obj();
    if(name=="agentScheduleSave")return O(new[]{"schedule"},"schedule",CapabilitySchema.Obj(additional:true));
    if(name=="agentScheduleDelete")return O(new[]{"id"},"id",S(32));
@@ -23,12 +33,15 @@ namespace kok {
    if(name=="agentMemoryDelete")return O(new[]{"id","revision"},"id",S(32),"revision",S(32));
    if(name=="agentMemoryUndo")return O(new[]{"token"},"token",S(32));
    if(name=="agentSandboxResult")return O(new[]{"ticket","ok","output"},"ticket",S(32),"ok",B(),"output",S(16000));
+   if(name=="agentSandboxTools")return O(new[]{"ticket","requests"},"ticket",S(32),"requests",A(8,O(new[]{"index","name","args"},"index",N(0,23,true),"name",E("search_library","read_items","recall_result","search_memory","list_collections"),"args",CapabilitySchema.Obj(additional:true))));
    if(name=="agentArtifactSave")return O(new[]{"taskId","callId","name","format"},"taskId",S(32),"callId",S(32),"name",S(100),"format",E("md","txt","docx"));
    if(name=="saveAgentSessions")return O(new[]{"text"},"text",S(1500000));
    if(name=="agentTaskPresence")return O(new[]{"taskId","foreground"},"taskId",S(32),"foreground",B());
    if(name=="agentTaskStop")return O(new string[0],"taskId",S(32),"cancel",B());
    if(name=="agentTaskDecide")return O(new[]{"taskId","callId","approve"},"taskId",S(32),"callId",S(32),"approve",B(),"batch",B(),"grant",B());
    if(name=="agentTaskAdjust")return O(new[]{"taskId","text"},"taskId",S(32),"text",S(400));
+   if(name=="agentTaskCompact")return O(new[]{"taskId"},"taskId",S(32),"instructions",S(400));
+   if(name=="agentTaskSteer"||name=="agentTaskFollowUp")return O(new[]{"taskId","text"},"taskId",S(32),"text",S(2000));
    if(name=="agentTaskUndo")return O(new[]{"taskId","callId"},"taskId",S(32),"callId",S(32));
    if(name=="agentTaskEvents")return O(new[]{"taskId"},"taskId",S(32),"eventId",S(32));
    if(new[]{"agentTaskRead","agentTaskResume","agentTaskDelete","agentHandoffPreview","agentTaskTrace","exportAgentTrace"}.Contains(name))return O(new[]{"taskId"},"taskId",S(32));
@@ -38,6 +51,10 @@ namespace kok {
    if(name=="agentUndoCreated")return O(new[]{"id","stamp"},"id",S(32),"stamp",S(100));
    if(name=="createDocument")return O(new[]{"name","format"},"name",S(100),"format",E("md","docx","txt"),"collection",S(100),"text",S(380000));
    if(name=="saveDocument")return O(new[]{"id","text","signature"},"id",S(32),"text",S(380000),"signature",S(100),"recipe",CapabilitySchema.Obj(additional:true));
+   if(name=="documentVersions")return O(new[]{"id"},"id",S(32));
+   if(name=="documentVersion"||name=="documentVersionRestore")return O(new[]{"id","operationId"},"id",S(32),"operationId",S(32));
+   if(name=="documentVersionLabel")return O(new[]{"id","operationId","label"},"id",S(32),"operationId",S(32),"label",S(64));
+   if(name=="documentVersionUnlabel")return O(new[]{"id","operationId"},"id",S(32),"operationId",S(32));
    if(name=="newPresentation")return O(new[]{"name","base64"},"name",S(100),"collection",S(100),"base64",S(44*1024*1024));
    if(name=="exportPresentation")return O(new[]{"id","base64"},"id",S(32),"base64",S(44*1024*1024),"name",S(100));
    if(name=="bulkClassify")return O(new[]{"ids","collection"},"ids",A(1000,S(32)),"collection",S(100));

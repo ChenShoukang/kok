@@ -16,6 +16,7 @@ namespace kok {
             AiConfig current=ConfigSnapshot(),next=ConfigSnapshot();next.endpoint=Value(values,"endpoint",current.endpoint).Trim();Uri endpoint=Endpoint(next.endpoint);
             string key=Value(values,"apiKey","").Trim();bool clear=values.ContainsKey("clearKey")&&Convert.ToBoolean(values["clearKey"]);
             if(clear)next.protectedKey="";
+            next.promptCache=values.ContainsKey("promptCache")?Convert.ToBoolean(values["promptCache"]):current.promptCache;
             if(key.Length>0){if(key.Length>4096||key.Any(Char.IsControl))throw new InvalidDataException("API 密钥格式无效。");next.protectedKey=Convert.ToBase64String(ProtectedData.Protect(Encoding.UTF8.GetBytes(key),null,DataProtectionScope.CurrentUser));}
             else if(!clear&&!String.IsNullOrEmpty(current.protectedKey)&&endpoint!=Endpoint(current.endpoint))throw new InvalidDataException("更换接口地址时，请重新填写对应服务的密钥。");
             return next;

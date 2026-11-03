@@ -252,6 +252,10 @@
       "sha256": "029f67b9e3eeb7ddf7c7c499b174c50388725e8ea50d4ea59ed7dbaf8d61cb82"
     },
     {
+      "name": "paperclip",
+      "sha256": "510ced7c1ffbcec127ce6e4ed5fc1d4b268fbad75d6fe7926920b4113bc3bd73"
+    },
+    {
       "name": "pause",
       "sha256": "0f4280e6dcc1047551bbc6ef8a9f1a34959de13c7f077d9667d12ab90c8fbca7"
     },

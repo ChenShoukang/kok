@@ -19,6 +19,7 @@ namespace kok {
         [STAThread] static void Main(string[] args) {
             if(args.Length>=2&&args[0]=="--sandbox-exec"){Environment.ExitCode=OsSandbox.RunHelper(args[1]);return;}
             if(args.Contains("--mcp")){McpAccessHost.Run(args);return;}
+            if(args.Length>=1&&args[0]=="agent"){Environment.ExitCode=AgentHeadless.Run(args);return;}
             LiveEvaluationBudget.Initialize(args);
             AppDomain.CurrentDomain.UnhandledException+=delegate(object sender,UnhandledExceptionEventArgs e) { var error=e.ExceptionObject as Exception;if(error!=null)RuntimeLog.Write("unhandled",error); };
             try{if(!SetProcessDpiAwarenessContext(new IntPtr(-4)))SetProcessDPIAware();}catch(EntryPointNotFoundException){SetProcessDPIAware();} Application.EnableVisualStyles(); Application.SetCompatibleTextRenderingDefault(false);

@@ -32,7 +32,7 @@ namespace kok {
             string encoded=await SessionPersistence.ReadSnapshot(browser.CoreWebView2.ExecuteScriptAsync("window.kokSession ? JSON.stringify(window.kokSession()) : '[]'"),5000);
             string json=Library.Json.Deserialize<string>(encoded);if(json==null)throw new InvalidDataException("窗口内容尚未准备好，请稍后重试关闭。");
             foreach(var edit in Library.Json.Deserialize<List<Dictionary<string,object>>>(json)){
-                string id=StringArg(edit,"id");var entry=target.Find(id);var patch=(Dictionary<string,object>)edit["patch"];if(entry!=null){if(entry.ownedDocument&&!target.IsPrivate&&patch.ContainsKey("editDraft")){var draft=Library.Json.Deserialize<Dictionary<string,object>>(Library.Json.Serialize(patch["editDraft"]));target.SaveDocumentSession(id,draft);patch.Remove("editDraft");}if(patch.Count>0)target.Update(id,patch);}
+                string id=StringArg(edit,"id");var entry=target.Find(id);var patch=(Dictionary<string,object>)edit["patch"];if(entry!=null){if(entry.ownedDocument&&!target.IsPrivate&&new[]{"MD","DOCX","TXT"}.Contains(entry.ext)&&patch.ContainsKey("editDraft")){var draft=Library.Json.Deserialize<Dictionary<string,object>>(Library.Json.Serialize(patch["editDraft"]));target.SaveDocumentSession(id,draft);patch.Remove("editDraft");}if(patch.Count>0)target.Update(id,patch);}
                 if(target==normalLibrary&&target.Find(id)!=null&&edit.ContainsKey("translationView"))await HandleReadingSessionAction("saveTranslationView",new Dictionary<string,object>{{"id",id},{"view",edit["translationView"]}});
             }
         }

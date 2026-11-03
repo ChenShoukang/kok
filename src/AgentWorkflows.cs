@@ -7,6 +7,7 @@ namespace kok {
         public static string Load(string appDir,string name){
             if(String.IsNullOrEmpty(name))return "";if(!Names.Contains(name))throw new InvalidDataException("任务工作流无效。");
             string dir=Path.Combine(appDir,"ui","skills",name),skill=File.ReadAllText(Path.Combine(dir,"SKILL.md")),resource=File.ReadAllText(Path.Combine(dir,"references","output.md"));
+            if(name=="slides")resource+="\n[Licensed visual reference: apply aesthetic principles to the native editable PPTX tools; do not output HTML or load external editors.]\n"+File.ReadAllText(Path.Combine(dir,"references","frontend-design.txt"));
             if(skill.Length+resource.Length>7000)throw new InvalidDataException("任务工作流无效。");
             return "[Task workflow: "+name+"]\n"+skill+"\n[Output template and checks]\n"+resource;
         }

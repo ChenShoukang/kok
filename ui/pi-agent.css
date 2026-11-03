@@ -1,0 +1,95 @@
+/* Adapted from Pi web-ui, MIT, Copyright (c) 2025 Mario Zechner.
+ * Pinned source 559a71683d93ac5ff110e89ca0966bdd2a7eeccd: AgentInterface,
+ * MessageEditor, Messages, ChatPanel, MarkdownArtifact and app.css.
+ * Tailwind utility geometry is expressed as scoped CSS. See docs/licenses/Pi-MIT.txt.
+ */
+body[data-page=agent]{--pi-card:var(--kok-panel);--pi-radius:12px;--pi-space:16px}
+[data-agent-artifacts][hidden]{display:none!important}
+body[data-page=agent] #workspace-selection{display:none!important}
+body[data-page=agent]:has(.pi-artifacts:not([hidden])) #toasts{top:124px}
+:root body[data-theme][data-app-mode][data-page=agent] .agent-main{width:min(800px,100%);max-width:800px}
+:root body[data-theme][data-app-mode] .agent-page.is-empty .agent-main{justify-content:normal;padding-bottom:0;padding-top:0}
+:root body[data-theme][data-app-mode] .agent-page.is-empty .agent-toolbar{position:relative;inset:auto}
+:root body[data-theme][data-app-mode] .agent-page.is-empty .agent-stream{display:flex;flex:1;min-height:0;justify-content:flex-end}
+:root body[data-theme][data-app-mode] .agent-page.is-empty .agent-empty{display:flex;flex-direction:column;align-items:center;margin:0;padding:12px 0}
+:root body[data-theme][data-app-mode] .agent-empty h1{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);margin:0;white-space:nowrap}
+:root body[data-theme][data-app-mode] .agent-starters{order:0;margin:0;gap:8px}
+:root body[data-theme][data-app-mode] .agent-starters>button{border:0;background:transparent;padding:8px 10px}
+:root body[data-theme][data-app-mode] .agent-stream{gap:12px;padding:16px 8px 16px}
+:root body[data-theme][data-app-mode] .agent-user{align-self:flex-start;max-width:100%;padding:8px 16px;margin:0 8px;border:1px solid color-mix(in srgb,var(--green) 18%,var(--line));border-radius:12px;background:color-mix(in srgb,var(--green) 6%,var(--bg));font-size:14px;line-height:1.7}
+:root body[data-theme][data-app-mode] .agent-reply{padding:4px 16px;gap:0;line-height:1.8}
+:root body[data-theme][data-app-mode] .agent-reply>.agent-led{display:none}
+:root body[data-theme][data-app-mode] .agent-answer-actions{gap:8px;margin-top:4px}
+:root body[data-theme][data-app-mode] .agent-card{margin-left:16px;margin-right:16px;padding:10px;border-radius:6px}
+:root body[data-theme][data-app-mode] .agent-card.agent-done:has(.agent-completed-preview){padding:10px}
+:root body[data-theme][data-app-mode] .agent-result{margin-inline:16px;border-radius:6px;padding:10px}
+:root body[data-theme][data-app-mode] .agent-result-compact{padding:8px 0}
+:root body[data-theme][data-app-mode] .agent-tool-group{margin:0 16px;padding-left:10px}
+:root body[data-theme][data-app-mode] .agent-composer{gap:0 8px;padding:0 8px 8px;min-height:0;border-radius:12px;box-shadow:none;background:var(--pi-card);max-height:min(72dvh,680px)}
+:root body[data-theme=light][data-app-mode] .agent-composer{background:#fff}
+:root body[data-theme][data-app-mode] .agent-composer .agent-context{grid-row:1;padding:12px 8px 4px;min-height:0;gap:8px}
+.agent-composer .agent-context:empty{display:none}
+:root body[data-theme][data-app-mode] .agent-composer #agent-input{grid-row:2;min-height:54px;max-height:200px;margin:0;padding:16px 8px 12px;font-size:15px;line-height:1.65}
+.agent-compose-options{grid-column:1;grid-row:3;display:flex;align-items:flex-start;flex-wrap:wrap;gap:4px;min-width:0}
+:root body[data-theme][data-app-mode] .agent-compose-options>.agent-add{--control-radius:6px;width:32px;height:32px;min-width:32px;padding:8px;display:flex;align-items:center;justify-content:center;background:transparent;border:0;border-radius:6px;color:var(--muted)}
+.agent-add>b{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+:root body[data-theme][data-app-mode] .agent-compose-options>.agent-scope-chip{margin-left:auto;max-width:58%;height:32px;padding:6px 8px;background:transparent;border:0;color:var(--muted)}
+:root body[data-theme][data-app-mode] .agent-compose-options .agent-advanced{order:1;min-width:32px;max-width:100%}
+:root body[data-theme][data-app-mode] .agent-compose-options .agent-scope-chip{order:2}
+:root body[data-theme][data-app-mode] .agent-compose-options .agent-advanced>summary{width:32px;height:32px;min-height:32px;padding:8px;justify-content:center;border-radius:6px}
+.agent-compose-options .agent-advanced>summary>span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+:root body[data-theme][data-app-mode] .agent-compose-options .agent-advanced[open]{order:3;flex-basis:100%;width:100%;padding:0 4px 8px}
+:root body[data-theme][data-app-mode] .agent-controls{grid-column:2;grid-row:3;align-self:start;gap:4px}
+:root body[data-theme][data-app-mode] .agent-controls>.agent-send,:root body[data-theme][data-app-mode] .agent-controls>.agent-stop{--control-radius:6px;width:32px;height:32px;min-width:32px;min-height:32px;padding:8px;background:transparent;color:var(--ink);border:0;border-radius:6px}
+:root body[data-theme][data-app-mode] .agent-controls>.agent-send>.ui-icon{width:18px;height:18px}
+:root body[data-theme][data-app-mode] .agent-controls>.agent-send:hover:not(:disabled),:root body[data-theme][data-app-mode] .agent-compose-options>:is(button,details)>summary:hover{background:var(--kok-hover)}
+:root body[data-theme][data-app-mode] .agent-controls>.agent-send:disabled{opacity:.3}
+.agent-queued{margin-top:8px;padding:0 8px}
+:root body[data-theme][data-app-mode] .agent-page.has-artifacts{gap:0;justify-content:stretch}
+:root body[data-theme][data-app-mode] .agent-page.has-artifacts .agent-main{flex:1;width:50%;max-width:none;padding-right:20px;min-width:0}
+.pi-artifacts{display:flex;flex-direction:column;flex:1;min-width:0;width:50%;height:100%;border-left:1px solid var(--line);background:var(--bg);overflow:hidden}
+.pi-artifacts[hidden]{display:none!important}
+.pi-artifacts>header{display:flex;align-items:center;min-height:42px;flex:none;border-bottom:1px solid var(--line)}
+.pi-artifact-tabs{display:flex;flex:1;min-width:0;overflow-x:auto;scrollbar-width:thin}
+:root body[data-theme][data-app-mode] .pi-artifact-tabs>button{display:flex;align-items:center;gap:6px;flex:none;min-width:0;max-width:220px;padding:12px 12px 10px;border:0;border-bottom:2px solid transparent;border-radius:0;background:transparent;font:12px/18px var(--user-font);color:var(--muted)}
+:root body[data-theme][data-app-mode] .pi-artifact-tabs>button[aria-pressed=true]{border-bottom-color:var(--green);color:var(--ink)}
+.pi-artifact-tabs>button>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pi-artifact-tabs>button>.ui-icon{width:14px;height:14px}
+.pi-artifact-toolbar{display:flex;align-items:center;gap:4px;flex-wrap:wrap;padding:8px 10px;flex:none;border-bottom:1px solid var(--line)}
+.pi-artifact-toolbar>span{margin-left:auto;color:var(--muted);font:10px var(--num-font)}
+.pi-preview-toggle{display:flex;align-items:center;gap:2px;padding:2px;background:var(--kok-panel);border-radius:6px}
+:root body[data-theme][data-app-mode] .pi-preview-toggle>button{--control-radius:4px;min-height:26px;padding:4px 9px;border-radius:4px;background:transparent;font-size:11px;color:var(--muted)}
+:root body[data-theme][data-app-mode] .pi-preview-toggle>button[aria-pressed=true]{background:var(--kok-hover);color:var(--ink)}
+:root body[data-theme][data-app-mode] .pi-artifacts .icon-button{width:28px;height:28px;min-width:28px;padding:6px;border-radius:6px}
+.pi-artifact-content{overflow:auto;min-height:0;flex:1;padding:20px 24px;scrollbar-width:thin}
+.pi-artifact-document{font:15px/1.9 var(--user-font)}
+.pi-artifact-document h3{font-size:18px;font-weight:600;margin:24px 0 12px}
+.pi-artifact-source,.pi-artifact-plain{font:12px/1.8 Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere;margin:0}
+.pi-artifact-note{font-size:12px;color:var(--muted)}
+.pi-artifact-error{font-size:13px;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--muted)}
+@media(max-width:799px){.pi-artifacts{position:absolute;inset:0;z-index:6;width:100%;border:1px solid var(--line);border-radius:12px;box-shadow:0 16px 48px #0003}:root body[data-theme][data-app-mode] .agent-page.has-artifacts .agent-main{width:100%;padding-right:0}.pi-artifact-content{padding:16px}}
+@media(max-width:540px){:root body[data-theme][data-app-mode] .agent-compose-options>.agent-scope-chip{max-width:54%;font-size:10px;padding-inline:4px}:root body[data-theme][data-app-mode] .agent-card{margin-inline:0}:root body[data-theme][data-app-mode] .agent-result{margin-inline:0}:root body[data-theme][data-app-mode] .agent-reply{padding-inline:8px}.pi-artifact-tabs>button{max-width:190px}}
+@media(prefers-reduced-motion:no-preference){.pi-artifacts:not([hidden]){animation:pi-panel-enter 160ms cubic-bezier(.4,0,.2,1) both}@keyframes pi-panel-enter{from{opacity:0;transform:translateX(6px)}to{opacity:1;transform:none}}}
+
+/* Flat workspace: a shared surface and simple rules carry the hierarchy. */
+:root body[data-theme][data-app-mode] .agent-page :is(.agent-composer,.agent-user,.agent-card,.agent-result,.agent-queued,.agent-history,.pi-artifacts,.pi-preview-toggle){border-radius:0;box-shadow:none;backdrop-filter:none}
+:root body[data-theme][data-app-mode] .agent-user{background:transparent;border:0;border-left:2px solid var(--green);padding:5px 14px}
+:root body[data-theme][data-app-mode] :is(.agent-card,.agent-result){background:transparent;border:0;border-bottom:1px solid var(--line);padding:12px 0}
+:root body[data-theme][data-app-mode] .agent-composer{background:var(--bg);border:1px solid var(--line)}
+:root body[data-theme][data-app-mode] .agent-composer:focus-within{border-color:color-mix(in srgb,var(--green) 50%,var(--line));box-shadow:none}
+:root body[data-theme][data-app-mode] .pi-preview-toggle{padding:0;background:transparent}
+:root body[data-theme][data-app-mode] .pi-preview-toggle>button{border:0;border-radius:0;border-bottom:1px solid transparent;background:transparent}
+:root body[data-theme][data-app-mode] .pi-preview-toggle>button[aria-pressed=true]{background:transparent;border-bottom-color:var(--ink)}
+.pi-artifact-proposal-title{font-size:12px;padding:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.agent-slide-preview-action{display:inline-flex;align-items:center;gap:7px;margin-top:8px}
+.agent-deck-preview{display:flex;flex-direction:column;gap:16px;min-width:0}
+.agent-deck-navigation{display:flex;justify-content:center;align-items:center;gap:14px;font:11px var(--num-font);color:var(--muted)}
+.agent-deck-slide{container-type:inline-size;position:relative;width:100%;flex:none;overflow:hidden;border:1px solid var(--line)}
+.agent-deck-shape{position:absolute;white-space:pre-wrap;overflow:hidden;overflow-wrap:anywhere;line-height:1.2;font-family:'Microsoft YaHei',sans-serif}
+.agent-deck-shape>img{width:100%;height:100%;object-fit:contain}
+.agent-deck-pages{display:grid;grid-template-columns:1fr;gap:0;border-top:1px solid var(--line)}
+:root body[data-theme][data-app-mode] .agent-deck-pages>button{display:flex;align-items:center;gap:12px;padding:10px 0;border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent;color:var(--muted);text-align:left}
+.agent-deck-pages>button>span{font:10px var(--num-font);min-width:24px}.agent-deck-pages>button>b{font-size:12px;font-weight:400;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+:root body[data-theme][data-app-mode] .agent-deck-pages>button[aria-current=true]{color:var(--ink);box-shadow:inset 2px 0 var(--green);padding-left:9px}
+.agent-deck-notes{font-size:12px;color:var(--muted)}.agent-deck-notes>p{white-space:pre-wrap;line-height:1.8}.agent-deck-limit{font-size:11px;color:var(--muted)}
+.presentation-brief-options{display:flex;gap:14px}.presentation-brief-options>.form-label{flex:1;min-width:0}#new-presentation-topic{width:100%;resize:vertical;min-height:64px}#new-presentation-agent[hidden],#new-presentation-brief[hidden]{display:none!important}#new-document-form:has([data-document-format=pptx][aria-pressed=true]) .document-form-actions>kbd{display:none}

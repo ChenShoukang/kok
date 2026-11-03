@@ -1,7 +1,7 @@
 'use strict';
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict'),http=require('node:http'),{chromium}=require('./browser.cjs'),Fixture=require('./agent-fixture.cjs');
 (async()=>{
- const root=process.env.KOK_TEST_PROFILE;assert(root);const requests=[],errors=[],remote=[];let browser,page,mode='note',ids,slow=0;
+ const root=process.env.KOK_TEST_PROFILE;assert(root);const requests=[],errors=[],remote=[],held=[];let browser,page,mode='note',ids,slow=0;
  const server=http.createServer((req,res)=>{let body='';req.on('data',c=>body+=c);req.on('end',()=>{
   const request=JSON.parse(body);requests.push(request);const content=request.messages.map(m=>m.content).join('\n'),question=request.messages.at(-1).content;
   let reply={reply:'COMPLETE',actions:[],done:true};
@@ -19,7 +19,9 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
    setTimeout(()=>{res.write('data: '+JSON.stringify({choices:[{delta:{content:raw.slice(cut),...(completed.tool_calls?{tool_calls:completed.tool_calls.map((c,index)=>({...c,index}))}:{})},finish_reason:completed.tool_calls?'tool_calls':'stop'}]})+'\n\n');res.write('data: '+JSON.stringify({choices:[],usage:{prompt_tokens:125,completion_tokens:35}})+'\n\n');res.end('data: [DONE]\n\n');},700);return;
   }
   const payload=Fixture.payload(request,reply,{prompt_tokens:120,completion_tokens:40});
-  const send=()=>{res.setHeader('content-type','application/json');res.end(payload);};if(mode==='late'||mode==='steer')setTimeout(send,650);else send();
+  const send=()=>{res.setHeader('content-type','application/json');res.end(payload);};
+  // A held response may be released after a stop aborts the request; ignore the closed socket.
+  if(mode==='queue'){res.on('error',()=>{});held.push(()=>{try{send();}catch{}});return;}if(mode==='late'||mode==='steer')setTimeout(send,650);else send();
  });});
  await new Promise(r=>server.listen(0,'127.0.0.1',r));
  try{
@@ -30,6 +32,9 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
   const fresh=async()=>{await page.evaluate(async id=>{if(AgentUi.state.job)await AgentUi.stop();await AgentUi.newSession();AgentUi.state.context=[id];AgentUi.state.scope='selected';AgentUi.state.skill='';AgentUi.state.requestLimit=6;AgentUi.state.costLimit=0;AgentUi.render();},ids.a);};
   const send=async text=>{await page.locator('#agent-input').fill(text);await page.locator('button[type=submit]').click();};
   const idle=()=>page.waitForFunction(()=>!AgentUi.state.job);
+  const waitFixture=async(predicate,label)=>{for(let n=0;n<400;n++){if(predicate())return;await new Promise(resolve=>setTimeout(resolve,25));}throw Error('fixture timeout: '+(label||'event'));};
+  const releaseHeld=()=>{const release=held.shift();assert(release,'expected a held model response');release();};
+  const drawerCount=count=>page.waitForFunction(count=>{const drawer=document.querySelector('.agent-queued');return drawer&&!drawer.hidden&&drawer.innerText.includes('待处理 · '+count);},count);
   await fresh();await page.locator('#agent-input').fill('UNSENT_DRAFT');await page.evaluate(()=>navigate('overview'));await page.evaluate(()=>navigate('agent'));assert.equal(await page.locator('#agent-input').inputValue(),'UNSENT_DRAFT');
   mode='scope';const scopeStart=requests.length;await send('Summarize the selected source');await idle();assert(requests.slice(scopeStart).every(r=>!JSON.stringify(r).includes('OUTSIDE_NAME_SECRET')&&!JSON.stringify(r).includes('OUTSIDE_BODY_SECRET')));assert.equal(requests.length-scopeStart,3);
   assert.deepEqual(await page.evaluate(async()=>(await native('agentTaskRead',{taskId:AgentUi.state.watch})).options.allowed),[ids.a],'the native task records only the selected scope');
@@ -48,9 +53,38 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
   await page.locator('#agent-input').fill('DRAFT_DURING_STREAM');await page.evaluate(()=>{window.agentInputBefore=$('#agent-input');$('#agent-input').setSelectionRange(2,7);});await idle();
   assert.equal(await page.evaluate(()=>window.agentInputBefore===$('#agent-input')&&$('#agent-input').selectionStart===2&&$('#agent-input').selectionEnd===7),true);assert.equal(await page.locator('#agent-input').inputValue(),'DRAFT_DURING_STREAM');assert.equal(await page.evaluate(()=>AgentUi.state.usage.inputTokens),125);assert.equal(await page.evaluate(()=>AgentUi.state.usage.estimated),false);
   console.log('PASS: genuine stream progress, input DOM/selection retention and provider token usage.');
-  await fresh();mode='steer';slow=0;const steeringStart=requests.length;await send('Summarize');await page.waitForFunction(()=>!!AgentUi.state.job);await page.locator('#agent-input').fill('Only summarize, no edits');await page.locator('button[type=submit]').click();await idle();assert.equal(requests.length-steeringStart,2);assert(requests.at(-1).messages.some(m=>String(m.content||'').includes('Only summarize, no edits')),'the steering adjustment reaches the next model round');assert.equal(await page.locator('[data-agent-run]').count(),0);assert((await page.locator('.agent-stream').innerText()).includes('ADJUSTED_RESULT'));
-  await fresh();mode='late';await send('First task');await page.locator('#agent-input').fill('Queued follow-up');await page.locator('[data-agent-queue]').click();await page.waitForFunction(()=>!AgentUi.state.job&&!AgentUi.state.queue.length&&AgentUi.state.messages.filter(m=>m.role==='user').length===2);assert(requests.at(-1).messages.some(m=>String(m.content||'').includes('Queued follow-up')),'the queued goal runs as a new round');
-  console.log('PASS: mid-task steering discards stale proposals, queued tasks execute afterward.');
+  // Steering no longer cancels an in-flight proposal: it survives the approval boundary and is injected next round.
+  await fresh();mode='steer';slow=0;const steeringStart=requests.length;await send('Summarize');await page.waitForSelector('[data-agent-run]');
+  const steerTask=await page.evaluate(()=>AgentUi.state.watch);
+  await page.locator('#agent-input').fill('Only summarize, no edits');await page.locator('button[type=submit]').click();
+  await page.waitForFunction(()=>$('#agent-input').value==='');await drawerCount(1);
+  assert.equal(await page.evaluate(()=>AgentUi.state.queue.length),0,'steering never touches the local queue');
+  assert.equal(await page.locator('[data-agent-edit-queued]').count(),0,'native queue rows are read-only');
+  assert.equal(requests.length-steeringStart,1,'steering waits for the approval boundary instead of starting a request');
+  await page.locator('[data-agent-run]').click();await idle();
+  assert.equal(requests.length-steeringStart,2);
+  assert((await page.evaluate(id=>byId(id).notes||'',ids.a)).includes('STALE_WRITE'),'steering does not cancel the tool the model already proposed');
+  assert(requests.at(-1).messages.some(m=>String(m.content||'').includes('Only summarize, no edits')),'the steering input reaches the next model round of the same task');
+  assert.equal(await page.evaluate(()=>AgentUi.state.watch),steerTask);
+  const steeringEvents=await page.evaluate(async id=>{const rows=await native('agentTaskEvents',{taskId:id});const out=[];for(const row of rows.filter(row=>row.kind==='input.consumed'))out.push(await native('agentTaskEvents',{taskId:id,eventId:row.id}));return out;},steerTask);
+  assert.equal(steeringEvents.at(-1).data.mode,'steer');
+  assert.equal(await page.locator('[data-agent-run]').count(),0);assert((await page.locator('.agent-stream').innerText()).includes('ADJUSTED_RESULT'));
+  await fresh();mode='queue';const followStart=requests.length;await send('First task');
+  await page.waitForFunction(()=>!!AgentUi.state.job?.id);const followTask=await page.evaluate(()=>AgentUi.state.job.id);
+  await waitFixture(()=>held.length===1,'first held request');
+  await page.locator('#agent-input').fill('Queued follow-up');await page.locator('[data-agent-queue]').click();
+  await page.waitForFunction(()=>$('#agent-input').value==='');await drawerCount(1);
+  assert.match(await page.locator('.agent-queued').innerText(),/Queued follow-up/);
+  assert.equal(await page.evaluate(()=>AgentUi.state.queue.length),0,'the running composer never fills the local queue');
+  releaseHeld();await waitFixture(()=>requests.length===followStart+2,'continued model round');
+  await page.waitForFunction(()=>{const drawer=document.querySelector('.agent-queued');return !drawer||drawer.hidden;});
+  assert(requests.at(-1).messages.some(m=>String(m.content||'').includes('Queued follow-up')),'the follow-up is injected when the run would finish');
+  assert.equal(await page.evaluate(()=>AgentUi.state.watch),followTask,'the follow-up keeps the same task');
+  releaseHeld();await idle();
+  assert.equal(requests.length-followStart,2);
+  assert.equal(await page.evaluate(()=>AgentUi.state.messages.filter(m=>m.role==='user').length),2);
+  assert.equal(await page.evaluate(async()=>(await native('agentTaskList')).filter(task=>task.sessionId===AgentUi.state.sessionId).length),1,'one task, not a queued successor');
+  console.log('PASS: steering survives an approval boundary without cancelling the approved write, and follow-up input continues the same task.');
   await fresh();mode='late';await send('Cancel when switching modes');await page.waitForFunction(()=>!!AgentUi.state.job);await page.evaluate(async()=>{await native('setAppMode',{mode:'pure'});state.settings.appMode='pure';applyAppMode();render();});await idle();await new Promise(r=>setTimeout(r,850));assert.equal(await page.evaluate(()=>AgentUi.state.messages.some(m=>m.text==='LATE_AGENT_REPLY')),false);assert.equal(await page.locator('#agent-input').count(),0);
   await page.evaluate(async()=>{await native('agentTaskStop',{});await native('setAppMode',{mode:'smart',acknowledged:true});await refresh();navigate('agent');});
   console.log('PASS: switching to Pure cancels in-flight work and ignores late results; cancel also works in Pure.');
@@ -67,8 +101,25 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
   await page.evaluate(async()=>{await setting({uiLanguage:'en'});I18n.applyLanguage('en');AgentUi.render();});assert.equal(await page.locator('[data-agent-sessions]').getAttribute('aria-label'),'Sessions');
   assert.deepEqual(errors,[]);assert.deepEqual(remote,[]);assert(!requests.some(r=>JSON.stringify(r).includes(root.replace(/\\/g,'\\\\'))));
   console.log('PASS: Classic font/settings, small/large window controls, English, no JS errors and no remote browser requests.');
-  await page.evaluate(async()=>{await setting({uiLanguage:'zh'});I18n.applyLanguage('zh');});await fresh();mode='late';await send('Stop this task');await page.locator('#agent-input').fill('PAUSED_FOLLOWUP');await page.locator('[data-agent-queue]').click();await page.locator('[data-agent-stop]').click();await idle();const pausedRequests=requests.length;await page.evaluate(()=>AgentUi.save());await page.reload();await page.waitForFunction(()=>!$('#startup'));await page.evaluate(()=>navigate('agent'));assert.equal(await page.evaluate(()=>AgentUi.state.queue[0]),'PAUSED_FOLLOWUP');assert.equal(requests.length,pausedRequests);await page.locator('[data-agent-next]').click();await idle();assert.equal(requests.length,pausedRequests+1);
+  // Stop returns unconsumed native input to the composer; it survives restart without auto-sending.
+  await page.evaluate(async()=>{await setting({uiLanguage:'zh'});I18n.applyLanguage('zh');});await fresh();mode='queue';await send('Stop this task');
+  await page.waitForFunction(()=>!!AgentUi.state.job?.id);const stopTask=await page.evaluate(()=>AgentUi.state.job.id);
+  await waitFixture(()=>held.length===1,'held request before stop');
+  await page.locator('#agent-input').fill('PAUSED_FOLLOWUP');await page.locator('[data-agent-queue]').click();
+  await page.waitForFunction(()=>$('#agent-input').value==='');await drawerCount(1);
+  await page.locator('[data-agent-stop]').click();await idle();await page.waitForFunction(async id=>!(await native('agentTaskRead',{taskId:id})).running,stopTask);held.splice(0).forEach(release=>release());
+  const pausedRequests=requests.length;
+  await page.waitForFunction(()=>$('#agent-input').value==='PAUSED_FOLLOWUP');await page.waitForFunction(()=>$('#toasts').innerText.includes('因停止未执行'));
+  assert.equal(await page.evaluate(()=>AgentUi.state.draft),'PAUSED_FOLLOWUP','stop moves unconsumed native input back into the composer');
+  assert.deepEqual(await page.evaluate(()=>AgentUi.state.queue),[]);
+  assert.equal(await page.locator('.agent-queued').isVisible(),false);
+  const stoppedSnapshot=await page.evaluate(async id=>native('agentTaskRead',{taskId:id}),stopTask);
+  assert.equal(stoppedSnapshot.running,false);assert.deepEqual(stoppedSnapshot.queue,[]);assert.equal(stoppedSnapshot.restoredInputs.length,1);assert.equal(stoppedSnapshot.restoredInputs[0].text,'PAUSED_FOLLOWUP');
+  await page.evaluate(()=>AgentUi.save());await page.reload();await page.waitForFunction(()=>!$('#startup'));await page.evaluate(()=>navigate('agent'));
+  await page.waitForFunction(()=>AgentUi.state.loaded&&$('#agent-input')?.value==='PAUSED_FOLLOWUP');
+  assert.equal(requests.length,pausedRequests,'restored input is never auto-sent');
+  mode='late';await page.locator('#agent-input').press('Enter');await idle();assert.equal(requests.length,pausedRequests+1,'the restored text can be sent as a normal new task');
   await fresh();mode='late';await send('Cancel before entering the private folder');await page.evaluate(async()=>{await native('createPrivate',{password:'OnlyForGeneratedFixture927!'});});await page.waitForFunction(()=>state.isPrivate);assert.equal(await page.evaluate(async()=>{try{await native('agentSessions');return false;}catch{return true;}}),true);await page.evaluate(()=>native('lockPrivate'));await page.waitForFunction(()=>!state.isPrivate);await idle();assert.equal(await page.evaluate(()=>AgentUi.state.messages.some(m=>m.text==='LATE_AGENT_REPLY')),false);
-  assert.deepEqual(errors,[]);console.log('PASS: paused queue persists without replay and private entry cancels work and blocks normal-session access.');
- }catch(error){if(page){await page.screenshot({path:path.join(root,'failure.png')}).catch(()=>{});console.error('Failure state:',await page.evaluate(()=>({phase:AgentUi.state.phase,job:!!AgentUi.state.job,cost:AgentUi.state.costLimit,rates:[AgentUi.state.inputRate,AgentUi.state.outputRate],scope:AgentUi.scope(),draft:AgentUi.state.draft,messages:AgentUi.state.messages.map(m=>({role:m.role,text:m.text,status:m.status})),toasts:$('#toasts').innerText})).catch(()=>null));}throw error;}finally{server.close();if(browser)await browser.close();}
+  assert.deepEqual(errors,[]);console.log('PASS: restored queue input survives restart without auto-send, and private entry cancels work and blocks normal-session access.');
+ }catch(error){if(page){await page.screenshot({path:path.join(root,'failure.png')}).catch(()=>{});console.error('Failure state:',await page.evaluate(()=>({phase:AgentUi.state.phase,job:!!AgentUi.state.job,cost:AgentUi.state.costLimit,rates:[AgentUi.state.inputRate,AgentUi.state.outputRate],scope:AgentUi.scope(),draft:AgentUi.state.draft,messages:AgentUi.state.messages.map(m=>({role:m.role,text:m.text,status:m.status})),toasts:$('#toasts').innerText})).catch(()=>null));}throw error;}finally{held.splice(0).forEach(release=>release());server.close();if(browser)await browser.close();}
 })().catch(error=>{console.error(error);process.exitCode=1;});

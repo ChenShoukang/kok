@@ -13,4 +13,5 @@ assert.deepEqual(history,[{role:'assistant',content:'new'}]);
 assert.equal(m.storedMessages([{role:'thinking'},{role:'tool',status:'pending',args:{},undo:()=>{}}])[0].status,'skipped');
 const grouped=m.groups([{id:'a',role:'tool',tool:'read_items'},{id:'b',role:'tool',tool:'search_library'},{id:'c',role:'tool',tool:'write_note'},{id:'d',role:'agent',text:'Result'},{id:'e',role:'tool',tool:'read_items'}]);
 assert.deepEqual(grouped.map(g=>[g.kind,g.items.map(m=>m.id)]),[['reads',['a','b']],['message',['c']],['message',['d']],['reads',['e']]]);
+assert.deepEqual(m.groups([{role:'tool',tool:'read_items',status:'done'},{role:'tool',tool:'read_items',status:'failed'},{role:'tool',tool:'search_library',status:'done'}]).map(group=>group.kind),['reads','message','reads'],'failed reads remain visible outside collapsed activity groups');
 console.log('PASS: bounded whole-observation context, recent history, partial JSON streaming, skill routing and safe restored proposals.');

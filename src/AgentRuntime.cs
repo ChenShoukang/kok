@@ -10,11 +10,23 @@ using System.Threading.Tasks;
 namespace kok {
     public class AgentAction { public string tool,why; public Dictionary<string,object> args=new Dictionary<string,object>(); }
     public class AgentReply { public string reply; public List<AgentAction> actions=new List<AgentAction>(); public bool done; }
+    // Internal lifecycle/middleware seams (M0-4). All delegates are optional and null by default, so the
+    // engine keeps byte-identical behavior unless the host explicitly registers them.
+    public sealed class AgentToolHooks {
+        public Func<AgentTaskEngine,AgentCall,string> BeforeToolCall;                                        // null/"" allow; non-empty reason blocks execution
+        public Func<AgentTaskEngine,AgentCall,Dictionary<string,object>,Dictionary<string,object>> AfterToolCall; // null return keeps the original result
+        public Action<AgentTaskEngine> PrepareRequest;                                                      // before the request context is built
+        public Action<AgentTaskEngine,List<object>> TransformContext;                                       // after TaskMessages, before the provider call
+        public Func<AgentTaskEngine,AgentModelTurn,string> FinishTurn;                                      // "continue" forces one extra model round (once per task)
+    }
     // One registry drives the native provider schema, the compatible JSON protocol text and local validation.
     // Every action is validated here; writes only become proposals that the user confirms in the interface.
     public sealed class AgentToolSpec {
         public Func<ModuleContext,AgentTaskState,AgentCall,CancellationToken,Task<AgentToolReceipt>> ExecuteWithContext;public Action<AgentAction,Func<string,bool>> Validate;public Func<Library,AgentTaskState,AgentCall,CancellationToken,Task<Dictionary<string,object>>> Read;public Func<Library,AgentTaskState,AgentCall,CancellationToken,AgentToolReceipt> Execute;
         public string Name,Description,Signature,Module,CapabilityId,Title;public Need? Requires;public bool Write;public Dictionary<string,object> Properties;public string[] Required;
+        // Execution hints: "" keeps the existing parallel read batch; "serial" runs this read tool alone in call order.
+        // TerminateHint is reserved for the future middleware slice and has no engine behavior in this round.
+        public string Mode="";public bool TerminateHint;
         public object Schema(){var p=new Dictionary<string,object>(Properties){{"why",AgentRules.Str("One short reason shown to the user",300)}};return new{type="function",function=new{name=Name,description=Description,parameters=new Dictionary<string,object>{{"type","object"},{"properties",p},{"required",Required},{"additionalProperties",false}}}};}
     }
     public static class AgentRules {

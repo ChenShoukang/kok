@@ -26,14 +26,14 @@ local browser assets under `ui/vendor/pdfjs/`, including the rendering module,
 worker, CMaps, standard fonts, ICC profiles and WASM decoders. It is licensed
 under Apache-2.0, with its original LICENSE included in that directory.
 The `.textLayer` CSS rules in `ui/features.css` are adapted from PDF.js viewer
-styles; the rest of the interface styles are original to kok. Individual
+styles; additional interface adaptations are identified below. Individual
 font or decoder notices are retained with their asset directories.
 
 Package: https://www.npmjs.com/package/pdfjs-dist/v/6.4.299
 Source: https://github.com/mozilla/pdf.js
 
 No source code from Tauri, Foliate or mpv has been copied or bundled.
-The original interface, geometric artwork, documentation,
+Except for the attributed adaptations below, the interface, geometric artwork, documentation,
 sample text, generated landscapes, synthesized audio and sample video are
 original to this project.
 
@@ -236,6 +236,23 @@ kok bundles these libraries only to read and extract public web pages that the u
 The offline JavaScript interpreter uses QuickJS Emscripten 0.32.0 (release-sync). QuickJS Emscripten and the QuickJS engine are MIT licensed. The combined Jake Teton-Landis, Fabrice Bellard and Charlie Gordon notices are retained in [QuickJS-Emscripten-MIT.txt](docs/licenses/QuickJS-Emscripten-MIT.txt). Only the browser module, binding helpers and WebAssembly binary are shipped; Node.js and other build dependencies are not included.
 
 Project: https://github.com/justjake/quickjs-emscripten
+
+## Pi Agent web interface
+
+Agent message/editor layout, keyboard handling and the artifact split/overlay interface
+are adapted from **Pi web-ui**, Copyright (c) 2025 Mario Zechner, under the MIT license.
+Source: https://github.com/earendil-works/pi/tree/559a71683d93ac5ff110e89ca0966bdd2a7eeccd/packages/web-ui .
+This is the revision immediately before the upstream web-ui workspace was removed.
+The Lit/Tailwind presentation is ported to kok's DOM renderer in `ui/pi-agent.css`
+and `ui/modules/pi-agent-view.mjs`; files are read through kok's native document APIs.
+The original Pi license is retained in [Pi-MIT.txt](docs/licenses/Pi-MIT.txt).
+Pi's agent runtime, provider storage, browser execution and branding are not included.
+
+## Baoyu design guidance for editable presentations
+
+The bundled `ui/skills/slides/references/frontend-design.txt` is the frontend-design guidance distributed by Jim Liu in baoyu-design, pinned to commit `609638de1594fe264f6e89b28cae986086093210`. Upstream identifies it as Anthropic's Apache-2.0 frontend-design skill with modified frontmatter and text as distributed by Claude Design. The original guidance is retained; kok's slide workflow adapts its visual principles to native editable PPTX compositions.
+
+Source: https://github.com/JimLiu/baoyu-design/blob/609638de1594fe264f6e89b28cae986086093210/archive/baoyu-design/built-in-skills/frontend-design.md . License: [Baoyu-Frontend-Design-Apache-2.0.txt](docs/licenses/Baoyu-Frontend-Design-Apache-2.0.txt). See the upstream [NOTICE](https://github.com/JimLiu/baoyu-design/blob/609638de1594fe264f6e89b28cae986086093210/NOTICE.md) for the repository's separate license categories. The reconstructed editors, Anthropicons, Claude Design system prompts and other references identified there as unlicensed are excluded.
 
 ## Product and navigation glyphs
 

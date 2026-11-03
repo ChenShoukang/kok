@@ -9,6 +9,15 @@
 | 想做什么 | 从这里开始 |
 | --- | --- |
 | 第一次使用，或想系统了解 kok | [**kok 帮助中心**](help/index.md)：安装、模式、界面、三个区域、设置与参考 |
+| 围绕一件作品持续创作（目标/要求/资料/成果/跨会话） | [创作项目](CREATIVE_PROJECTS_0.10.10.md) · [本次验证](VALIDATION_0.10.10.md) |
+| 看版本差异、恢复旧版、选中片段让 Agent 改 | [版本与局部改稿](VERSIONS_0.10.11.md) · [本次验证](VALIDATION_0.10.11.md) |
+| 用 RPC 长期驱动 Agent（编辑器 / CI） | [Headless RPC](AGENT_RPC_0.10.9.md) · [Agent 无界面 CLI](AGENT_CLI_0.10.7.md) · [本次验证](VALIDATION_0.10.9.md) |
+| 安装/编写扩展包（技能与提示模板） | [声明式扩展包](PLUGINS_0.10.8.md) · [本次验证](VALIDATION_0.10.8.md) |
+| v0.10.6 Agent 分支树与原地切换 | [本次验证](VALIDATION_0.10.6.md) · [Agent 首页与交互](AGENT_HOME_UI.md) |
+| v0.10.5 Agent 技能目录与 `/skill` | [本次验证](VALIDATION_0.10.5.md) · [Agent 首页与交互](AGENT_HOME_UI.md) |
+| v0.10.4 Agent 上下文压缩（Pi 式） | [本次验证](VALIDATION_0.10.4.md) · [Agent 首页与交互](AGENT_HOME_UI.md) |
+| v0.10.3 Agent 会话树与消息分叉 | [本次验证](VALIDATION_0.10.3.md) · [Agent 首页与交互](AGENT_HOME_UI.md) |
+| v0.10.2 Agent 输入队列（steering / follow-up） | [本次验证](VALIDATION_0.10.2.md) · [Agent 首页与交互](AGENT_HOME_UI.md) |
 | v0.10.1 三区域入口（Agent / 我的作品 / 资料库） | [本次验证](VALIDATION_0.10.1.md) · [功能结构](CREATION_PRODUCT_FLOW.md) · [Agent 首页与交互](AGENT_HOME_UI.md) |
 | v0.9.8 界面改版与 Agent 聚焦 | [验证](VALIDATION_0.9.8.md) · [Agent 聚焦](AGENT_FOCUS.md) · [30 项任务评测](AGENT_TASK_EVAL.md) · [界面说明](FLAT_UI.md) · [设计参考](INTERFACE_REFERENCES.md) |
 | v0.9.5 紧凑导航与动效修正 | [扁平界面说明](FLAT_UI.md) · [界面参考](INTERFACE_REFERENCES.md) · [界面验证](INTERFACE_VALIDATION.md) · [发布验证](VALIDATION_0.9.5.md) |

@@ -9,6 +9,15 @@ Start with the [user guide](GUIDE.en.md). Find help by the task you want to comp
 | Goal | Read |
 | --- | --- |
 | First time here, or a structured overview | [**kok help center** (Chinese)](help/index.md): setup, modes, interface, the three areas, settings and reference |
+| Keep working on one piece (goal/requirements/materials/artifacts, cross-session) | [Creative projects](CREATIVE_PROJECTS_0.10.10.md) · [Validation](VALIDATION_0.10.10.md) |
+| Browse versions, restore one, revise a selected passage with Agent | [Versions and local revision](VERSIONS_0.10.11.md) · [Validation](VALIDATION_0.10.11.md) |
+| Drive Agent over RPC (editors / CI) | [Headless RPC](AGENT_RPC_0.10.9.md) · [Agent command line](AGENT_CLI_0.10.7.md) · [Validation](VALIDATION_0.10.9.md) |
+| Install or write extension packages (skills and prompt templates) | [Declarative extension packages](PLUGINS_0.10.8.md) · [Validation](VALIDATION_0.10.8.md) |
+| v0.10.6 Agent branch tree and in-place switching | [Validation](VALIDATION_0.10.6.md) · [Agent home and interactions](AGENT_HOME_UI.md) |
+| v0.10.5 Agent skill directories and `/skill` | [Validation](VALIDATION_0.10.5.md) · [Agent home and interactions](AGENT_HOME_UI.md) |
+| v0.10.4 Agent context compaction (Pi-style) | [Validation](VALIDATION_0.10.4.md) · [Agent home and interactions](AGENT_HOME_UI.md) |
+| v0.10.3 Agent session tree and message forking | [Validation](VALIDATION_0.10.3.md) · [Agent home and interactions](AGENT_HOME_UI.md) |
+| v0.10.2 Agent input queues (steering / follow-up) | [Validation](VALIDATION_0.10.2.md) · [Agent home and interactions](AGENT_HOME_UI.md) |
 | v0.10.1 scenario top level (Agent / My works / Library) | [Validation](VALIDATION_0.10.1.md) · [Product structure](CREATION_PRODUCT_FLOW.md) · [Agent home and interactions](AGENT_HOME_UI.md) |
 | v0.9.8 interface redesign and Agent focus | [Validation](VALIDATION_0.9.8.md) · [Agent focus](AGENT_FOCUS.md) · [30-task evaluation](AGENT_TASK_EVAL.md) · [Interface notes](FLAT_UI.md) · [Design references](INTERFACE_REFERENCES.md) |
 | v0.9.5 compact navigation and motion polish | [Flat UI notes](FLAT_UI.md) · [Interface references](INTERFACE_REFERENCES.md) · [Interface validation](INTERFACE_VALIDATION.md) · [Release validation](VALIDATION_0.9.5.md) |

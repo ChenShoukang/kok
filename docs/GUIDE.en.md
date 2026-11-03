@@ -49,6 +49,7 @@ Use **New** to create Markdown, DOCX, TXT or PPTX. Text documents have editing/s
 - **Books**: EPUB contents, TXT chapter detection, full-text search, bookmarks and resume; single pages, adaptive spreads or scrolling; wheel paging, independent reading fonts, size, line/letter/paragraph spacing, width and comfortable paper colors.
 - **PDFs**: local pages, text search, zoom, dark/easy text, underlines, highlights, notes and positioned text. Annotations are stored in kok rather than written directly into the original PDF.
 - **PPTX**: slide lists, notes, presentation mode, basic text/page editing and exported copies. Supported editable text/objects offer right-click AI changes with a preview before applying.
+- **Create slides with Agent**: choose PowerPoint, enter a topic, slide count and style, then select **Create with Agent**. Review the native slide preview before approval. **Give to Agent** includes the current page for text, notes, layout and slide-order changes. Basic managed decks save to the actual PPTX and support undo. Imported originals require an approved full copy before editing. See the [creation workflow](AGENT_CREATIVE_WORKFLOW.md).
 - **Notes**: write alongside a source or attach thoughts to selected text. Markdown supports `[[link]]` completion, backlinks, tags, outlines, tasks and daily/meeting/reading templates.
 
 The knowledge graph shows existing file/note relationships, with scope filters, search, zoom and dragging. It does not establish factual relationships on its own. The current graph displays up to 500 nodes.
@@ -72,7 +73,7 @@ Choose Smart mode and configure a compatible endpoint in **Settings â†’ Tools â†
 | Multi-file comparison | Select readable sources, preview excerpts, compare agreements/differences/evidence and return to sources |
 | Note review | Review highlights, annotations and personal notes, choose related earlier notes and save reports or export Markdown |
 | Subtitles | Translate existing subtitles and generate a navigable outline; separately configure local Whisper or a speech API to transcribe unsubtitled video |
-| Agent | Search, read and discuss within selected files, a collection or the library; propose reviewable classification, tags, notes, new documents or presentations |
+| Agent | Search, read and discuss within selected files, a collection or the library; propose reviewable classification, tags, notes, new works, document-body edits and slide revisions |
 
 Video questions primarily use subtitles, optionally a current frame when supported. Long documents/subtitles may be sampled. Images require a vision-capable model; a chat API is not speech recognition. Check source coverage before treating an answer as an analysis of an entire film or book.
 

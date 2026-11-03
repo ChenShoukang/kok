@@ -7,21 +7,25 @@ namespace kok {
     public class AgentTaskOptions {
         public string sessionId,goal,intent="assist",protocol="auto",workflow="",instruction="",workflowGuidance="",approvalPolicy="each";
         public AgentScope scope=new AgentScope();public List<string> allowed=new List<string>();public List<ChatTurn> history=new List<ChatTurn>();
-        public bool semanticCompression=true,useMemory,allowDelegation,allowSandbox;public bool vision;public string searchEndpoint="";public int contextTokens=32000;public List<string> allowedTools;public string parentTaskId="",parentCallId="";public int parentSteering;
-        public int budget=14000,requestLimit=6,kernelVersion;public double costLimit,inputRate,outputRate;public AgentHandoff handoff;
+        public bool semanticCompression=true,useMemory,allowDelegation,allowSandbox;public bool vision;public string searchEndpoint="";public int contextTokens=32000;public List<string> allowedTools;public string parentTaskId="",parentCallId="",sessionLeafId="",skillsIndex="";public int parentSteering;
+        public int budget=14000,requestLimit=6,kernelVersion,reserveTokens,keepRecentTokens;public double costLimit,inputRate,outputRate;public AgentHandoff handoff;
+        public string projectId="",projectBrief="";
     }
     public class AgentHandoff {public string taskId,eventId,note;public List<string> callIds=new List<string>(),ids=new List<string>();}
     public class AgentCall {
         public string childTaskId;public string id,providerId,turnId,tool,why,status="queued",error="",errorKind="",resultEventId,stamp,externalStamp;
         public Dictionary<string,object> args=new Dictionary<string,object>(),result;
-        public List<AgentChange> changes;public string beforeText,afterText;
+        public List<AgentChange> changes;public string beforeText,afterText,documentSignature,documentBeforeStamp;
         public int sequence,attempt,steering;public bool retryable,hostGenerated;public Dictionary<string,string> sources=new Dictionary<string,string>();
     }
     public class AgentDialogue {public string id,role,text,turnId,requestId;public int sequence;public bool meta,interrupted;public List<string> sourceIds=new List<string>();}
+    public class AgentInput {public string id,text,mode,status="queued",created,turnId;}
     public class AgentTaskState {
-        public string id,status="created",error="",errorKind="",phase="",protocol="json";public bool retryable,needsModel=true,modelDone,estimated,cancelRequested;
-        public AgentTaskOptions options;public int sequence,requests,round,inputTokens,outputTokens,cachedTokens,repairs,steerVersion,replySteering;
-        public double cost;public List<AgentCall> calls=new List<AgentCall>();public List<AgentDialogue> dialogue=new List<AgentDialogue>();public List<string> adjustments=new List<string>();
+        public string id,status="created",error="",errorKind="",phase="",protocol="json";public bool retryable,needsModel=true,modelDone,estimated,cancelRequested,lastUsageEstimated,contextRecovered,compactRequested;public string compactInstructions="";
+        public AgentTaskOptions options;public int sequence,requests,round,inputTokens,outputTokens,cachedTokens,repairs,steerVersion,replySteering,lastUsageSequence,lastUsageInputTokens,lastUsageOutputTokens;
+        public double cost;public List<AgentCall> calls=new List<AgentCall>();public List<AgentDialogue> dialogue=new List<AgentDialogue>();public List<string> adjustments=new List<string>();public List<AgentInput> inputs=new List<AgentInput>();
+        public List<AgentInput> QueuedInputs {get{return inputs.Where(i=>i.status=="queued").ToList();}}
+        public List<AgentInput> RestoredInputs {get{return inputs.Where(i=>i.status=="restored").ToList();}}
         public List<AgentEvent> events=new List<AgentEvent>();
         public AgentContextCheckpoint checkpoint;
         public List<AgentApprovalGrant> grants=new List<AgentApprovalGrant>();
@@ -40,15 +44,23 @@ namespace kok {
                 case "task.plan":plan=Get<List<AgentPlanStep>>(d,"steps");planSteering=Get<int>(d,"steering");planInvalidation="";verification=null;break;
                 case "task.verified":verification=Get<AgentVerification>(d,"verification");reviewInvalidation="";break;
                 case "task.review_invalidated":InvalidateReview(Get<string>(d,"reason"));break;
-                case "context.compacted":checkpoint=Get<AgentContextCheckpoint>(d,"checkpoint");break;
+                case "context.compacted":checkpoint=Get<AgentContextCheckpoint>(d,"checkpoint");compactRequested=false;compactInstructions="";break;
+                case "context.compact_requested":compactRequested=true;compactInstructions=Get<string>(d,"instructions")??"";break;
+                case "context.recovery":contextRecovered=true;break;
+                case "context.skipped":case "context.discarded":compactRequested=false;compactInstructions="";break;
                 case "subtask.started":calls.First(c=>c.id==Get<string>(d,"callId")).childTaskId=Get<string>(d,"taskId");break;
                 case "tool.reconfirm":calls.First(c=>c.id==Get<string>(d,"callId")).status="pending";break;
                 case "task.protocol":protocol=Get<string>(d,"protocol");break;
                 case "request.repair":repairs++;break;
                 case "task.adjusted":AddInstruction(e);break;
+                // Native queue reduction: the engine emits task.adjusted for every consumed item too, so
+                // plan/verification invalidation, grant revocation and transcript insertion keep one path.
+                case "input.queued":inputs.Add(new AgentInput{id=Get<string>(d,"inputId"),text=Get<string>(d,"text"),mode=Get<string>(d,"mode"),created=e.created});break;
+                case "input.consumed":{var input=inputs.FirstOrDefault(i=>i.id==Get<string>(d,"inputId"));if(input!=null){input.status="consumed";input.turnId=Get<string>(d,"turnId");}break;}
+                case "input.restored":{foreach(var inputId in Get<List<string>>(d,"inputIds")??new List<string>()){var input=inputs.FirstOrDefault(i=>i.id==inputId);if(input!=null)input.status="restored";}break;}
                 case "task.continued":AddInstruction(e);status="paused";phase="等待继续";break;
                 case "request.started":requests++;cost+=Get<double>(d,"reserve");break;
-                case "request.usage":cost+=Get<double>(d,"cost")-Get<double>(d,"reserve");inputTokens+=Get<int>(d,"inputTokens");outputTokens+=Get<int>(d,"outputTokens");cachedTokens+=d.ContainsKey("cachedTokens")?Get<int>(d,"cachedTokens"):0;estimated|=Get<bool>(d,"estimated");break;
+                case "request.usage":cost+=Get<double>(d,"cost")-Get<double>(d,"reserve");inputTokens+=Get<int>(d,"inputTokens");outputTokens+=Get<int>(d,"outputTokens");cachedTokens+=d.ContainsKey("cachedTokens")?Get<int>(d,"cachedTokens"):0;estimated|=Get<bool>(d,"estimated");if(Get<string>(d,"purpose")!="compaction"){lastUsageSequence=e.sequence;lastUsageInputTokens=Get<int>(d,"inputTokens");lastUsageOutputTokens=Get<int>(d,"outputTokens");lastUsageEstimated=Get<bool>(d,"estimated");}break;
                 case "assistant.interrupted":dialogue.Add(new AgentDialogue{id=e.id,role="agent",text=Get<string>(d,"text"),requestId=Get<string>(d,"requestId"),sequence=e.sequence,interrupted=true});break;
                 case "approval.granted":grants.Add(Get<AgentApprovalGrant>(d,"grant"));break;
                 case "approval.used":{var g=grants.FirstOrDefault(x=>x.id==Get<string>(d,"grantId"));if(g!=null)g.remaining=Math.Max(0,g.remaining-1);break;}

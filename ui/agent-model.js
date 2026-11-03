@@ -33,7 +33,7 @@ const AgentModel=(()=>{
   if(['running','queued','pending'].includes(copy.status)){copy.status='skipped';copy.error='';}return copy;
  });}
  function groups(messages){
-  const result=[];for(const m of messages){const read=m.role==='tool'&&['search_library','read_items','list_collections'].includes(m.tool);
+  const result=[];for(const m of messages){const read=m.role==='tool'&&m.status!=='failed'&&['search_library','read_items','list_collections'].includes(m.tool);
    const previous=result.at(-1);if(read&&previous?.kind==='reads')previous.items.push(m);else result.push({kind:read?'reads':'message',items:[m]});
   }return result;
  }

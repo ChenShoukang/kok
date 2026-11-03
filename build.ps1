@@ -1,4 +1,4 @@
-﻿param([switch]$Test)
+param([switch]$Test)
 $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
 & node (Join-Path $root 'tools\vendor-sandbox.cjs')
@@ -68,6 +68,10 @@ foreach ($reference in $references) { $arguments += '/reference:' + $reference }
 $arguments += Get-ChildItem (Join-Path $root 'src\*.cs') | ForEach-Object { $_.FullName }
 & $compiler $arguments
 if ($LASTEXITCODE -ne 0) { throw 'Compilation failed.' }
+# Console-subsystem CLI launcher so scripts/CI get real exit codes and a stable stdout stream.
+$cliArguments = @('/nologo','/langversion:latest','/nullable:disable','/target:exe','/platform:x64','/optimize+','/utf8output',('/out:' + (Join-Path $out 'kok-agent.exe')),('/reference:' + (Join-Path $out 'kok.exe')))
+& $compiler $cliArguments (Join-Path $root 'src\cli\AgentCliEntry.cs')
+if ($LASTEXITCODE -ne 0) { throw 'CLI compilation failed.' }
 Copy-Item $core,$forms -Destination $out -Force
 Copy-Item $tagLibrary -Destination $out -Force
 Copy-Item -LiteralPath (Join-Path $root 'tools\sqlite\sqlite3.dll') -Destination $out -Force
@@ -104,6 +108,9 @@ if ($Test) {
     $testArgs += Join-Path $root 'tests\PresentationRulesTests.cs'
     $testArgs += Join-Path $root 'tests\AgentTests.cs'
     $testArgs += Join-Path $root 'tests\AgentTaskTests.cs'
+    $testArgs += Join-Path $root 'tests\AgentSessionTests.cs'
+    $testArgs += Join-Path $root 'tests\AgentSkillTests.cs'
+    $testArgs += Join-Path $root 'tests\AgentPluginTests.cs'
     $testArgs += Join-Path $root 'tests\AgentLocalTaskTests.cs'
     $testArgs += Join-Path $root 'tests\AgentVisionTests.cs'
     $testArgs += Join-Path $root 'tests\AgentWebTests.cs'
@@ -113,6 +120,7 @@ if ($Test) {
     $testArgs += Join-Path $root 'tests\OsSandboxTests.cs'
     $testArgs += Join-Path $root 'tests\AgentOrchestrationTests.cs'
     $testArgs += Join-Path $root 'tests\AgentKernelTests.cs'
+    $testArgs += Join-Path $root 'tests\AgentHeadlessTests.cs'
     $testArgs += Join-Path $root 'tests\AgentPlatformTests.cs'
     $testArgs += Join-Path $root 'tests\AgentReliability090Tests.cs'
     $testArgs += Join-Path $root 'tests\McpTests.cs'

@@ -16,10 +16,11 @@ namespace kok {
         static string DraftValue(Dictionary<string,object> draft,string key){object value;return draft!=null&&draft.TryGetValue(key,out value)?Convert.ToString(value):"";}
         static string DocumentHash(string file){using(var sha=SHA256.Create())using(var stream=File.OpenRead(file))return "sha256:"+BitConverter.ToString(sha.ComputeHash(stream)).Replace("-","").ToLowerInvariant();}
         void CheckDocumentDirectory(){Directory.CreateDirectory(DocumentDirectory);if((File.GetAttributes(DocumentDirectory)&FileAttributes.ReparsePoint)!=0)throw new InvalidDataException("文档目录不能是链接目录。");}
-        Entry ManagedDocument(string id){
+        Entry ManagedDocument(string id){return ManagedOwnedFile(id,"MD","DOCX","TXT");}
+        Entry ManagedOwnedFile(string id,params string[] formats){
             if(IsPrivate)throw new InvalidOperationException("请先返回普通资料库新建或保存文档。");
             var entry=Find(id);string root=Path.GetFullPath(DocumentDirectory)+Path.DirectorySeparatorChar;
-            if(entry==null||!entry.ownedDocument||!new[]{"MD","DOCX","TXT"}.Contains(entry.ext)||!Path.GetFullPath(entry.path).StartsWith(root,StringComparison.OrdinalIgnoreCase)||!String.Equals(Path.GetDirectoryName(Path.GetFullPath(entry.path)),root.TrimEnd(Path.DirectorySeparatorChar),StringComparison.OrdinalIgnoreCase))throw new InvalidDataException("只能直接保存 kok 新建的文档。");
+            if(entry==null||!entry.ownedDocument||!formats.Contains(entry.ext)||!Path.GetFullPath(entry.path).StartsWith(root,StringComparison.OrdinalIgnoreCase)||!String.Equals(Path.GetDirectoryName(Path.GetFullPath(entry.path)),root.TrimEnd(Path.DirectorySeparatorChar),StringComparison.OrdinalIgnoreCase))throw new InvalidDataException("只能直接保存 kok 新建的文档。");
             CheckDocumentDirectory();if(File.Exists(entry.path)&&(File.GetAttributes(entry.path)&FileAttributes.ReparsePoint)!=0)throw new InvalidDataException("文档文件不能是链接文件。");return entry;
         }
         public Entry CreateDocument(string name,string format,string collection,string initialText="",string operationId="",string operationSource=""){
@@ -48,12 +49,12 @@ namespace kok {
                 if(text.Length>DocumentTextLimit)throw new InvalidDataException("文档超过轻量编辑的大小限制。");return new DocumentContent{text=text,signature=signature};
             }
         }
-        public DocumentSaved SaveDocument(string id,string text,string expectedSignature,Dictionary<string,object> recipe){
+        public DocumentSaved SaveDocument(string id,string text,string expectedSignature,Dictionary<string,object> recipe,string operationId=null,string operationSource=null,string documentBeforeStamp=null){
             if(text==null||text.Length>DocumentTextLimit)throw new InvalidDataException("文档超过轻量编辑的大小限制。");
             lock(gate){var entry=ManagedDocument(id);if(!File.Exists(entry.path))throw new FileNotFoundException("文档文件已移动或删除。");if(new FileInfo(entry.path).Length>8*1024*1024)throw new InvalidDataException("文档超过轻量编辑的大小限制。");string current=DocumentHash(entry.path);
                 if(current!=expectedSignature){var source=DocumentSource(id);if(source.recovery||source.text!=text)throw new InvalidOperationException("文件已在其他位置修改，请另存副本以保留修改。");return new DocumentSaved{signature=current,modified=entry.modified,size=entry.size};}
                 int columns=recipe==null?1:(int)CreativeEdits.Number(recipe,"columns",1,1,2);double fontSize=recipe==null?17:CreativeEdits.Number(recipe,"fontSize",17,13,24);byte[] bytes=entry.ext=="DOCX"?TextDocumentExport.Export(text,entry.name,"docx",columns):new UTF8Encoding(false).GetBytes(text);
-                return CommitDocument(entry,text,bytes,columns,fontSize);
+                return CommitDocument(entry,text,bytes,columns,fontSize,operationId,operationSource,documentBeforeStamp);
             }
         }
         public void SaveDocumentSession(string id,Dictionary<string,object> draft){

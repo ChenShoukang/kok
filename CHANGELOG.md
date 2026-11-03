@@ -1,5 +1,113 @@
 # kok 版本记录
 
+## v0.11.1 · Preview
+
+- PPT 制作接入 baoyu-design 明确以 Apache 2.0 授权的视觉指引，固定上游提交并保留原文和许可。默认杂志风格，四套主题、九种原生可编辑构图，预览、编辑器和导出保持字体与图形一致。
+- 演示任务自动加载设计工作流；内容过密时要求精简或放入备注。对比、流程、卡片、指标等布局按信息任务选择，真实数据与备注保留；局部改稿仍只修改指定页。
+- PPT 直接双击文字即可修改并自动保存，属性面板默认收起；左侧支持复制、拖动排序、删除与撤销，顶部合并为一个当前页 Agent 入口。保存后封面与章节标题保持正确。
+- 输出上限与输入上下文超限分开处理；回答被截断时在原请求、费用与输出预留限制内自动调整，最多额外两次，避免无效压缩。长文档创作提高初始输出额度。
+- 截断的正文或工具参数不会成为可执行提案；完整重生成后仍走原审批。流式响应保留末尾增量并记录尾部用量。
+- 恢复卡片显示“回答未完成”，提供“分段继续”；填入原目标与分段要求，保留当前资料，不自动发送。其他失败后的继续入口也带回原目标。
+- 见[功能说明](docs/OUTPUT_RECOVERY_0.11.1.md)与[验证记录](docs/VALIDATION_0.11.1.md)。
+
+## v0.10.13 · Preview
+
+- 创作项目 P4：完整验证三份资料、报告、手动改稿、选段交给 Agent、八页 PPT、重启后换会话续作、命名版本恢复与 DOCX / PPTX 导出。
+- 项目默认范围纳入近期成果，避免成果可见却不能读取或修改；最多 24 份，显式选中范围和文件夹保持优先。
+- 原生会话按任务事件序号同步，同一任务等待补充后继续时保留后续对话与既有成果，重复同步不重复消息。
+- 真实流程和模型夹具边界见[验收说明](docs/CREATIVE_ACCEPTANCE_0.10.13.md)，结果见[验证记录](docs/VALIDATION_0.10.13.md)。
+
+## v0.10.12 · Preview
+
+- 创作项目 P3：成果面板合并原生项目成果、分支内的持久会话成果与当前对话成果，同一文件去重。切换分支、新建会话和重新打开软件后仍可继续预览实际文件。
+- 会话恢复保留用户选定的历史分支；不把最近一次已完成任务的工具卡片重新放回分支。分支树增加可切换、可分叉的成果节点，迟到的成果及项目读取不会覆盖新会话。
+- 历史版本支持命名检查点、重命名与移除；100 条历史版本限额内优先保留已命名版本。检查点元数据加密保存，失败时回滚缓存，原子替换保留上一份备份，正文不变。
+- 验证范围与数量见 [v0.10.12 验证](docs/VALIDATION_0.10.12.md)；功能边界见 [持续创作](docs/CREATIVE_CONTINUATION_0.10.12.md)。P4 完整创作验收场景后续继续。
+
+## v0.10.11 · Preview
+
+- 文档版本面板：托管文档编辑器新增「版本」按钮，列出当前与历史版本（时间/标题/来源/状态），点选版本显示逐行差异（`+N/−M`），可恢复任一版本；恢复是补偿式新操作（可再撤销），恢复后编辑器正文/签名/保存状态同步；文本不可用格式显示 hash/大小；私密文件夹禁用。
+- 手动保存前差异预览：保存按钮/Ctrl+S 且内容有变化时先显示「保存前确认」（已保存→将保存的逐行差异），取消不写文件并保持未保存，确认才写入；自动保存与失败重试逻辑不变。
+- 局部改稿入口：文档中选中文字 →「让 Agent 改这段」；演示文稿当前页 →「让 Agent 改这页」。提示词只包含该片段/该页内容与“只改这里、保留其他部分”的约束，仅填充输入框并附带文档/演示上下文，不自动发送、不新建任务。
+- 原生 action：`documentVersions` / `documentVersion`（含 `current` 哨兵）/ `documentVersionRestore`（写分类，拒绝 `current`）；UI 原生 action 目录同步。
+- 边界：差异在本地计算（无模型请求）；版本列表最多 100 条、文本 diff 有行数/字符上限；DOCX 版本仅字节恢复+hash；命名检查点/PPT 版本对比未做；审批、证据核对、撤销与沙箱语义不变。
+- 验证记录见 [v0.10.11 验证](docs/VALIDATION_0.10.11.md)。
+
+## v0.10.10 · Preview
+
+- 创作项目（第一版）：扩展“空间”为项目实体（`kind="project"`：目标、风格/验收要求、状态、资料、成果、相关会话），在「我的作品」新建/编辑项目、打开详情、随时继续创作；项目存于既有 workspace + Operation 审计/撤销链路，无新存储表。
+- 从项目继续创作：`AgentUi.openProject` 新建会话并显示项目横幅（目标/资料/成果数，可清除、跨新建会话保留）；`agentTaskStart` 新增可选 `projectId`，宿主校验项目、把目标/要求/资料数/已有成果构成 ≤4000 字项目简报注入 guidance 稳定前缀（同任务内字节一致、利于缓存），未显式指定范围时自动使用项目资料（≤24 份）；项目里发起任务时显式范围不被覆盖。
+- 会话/成果回写：任务启动把会话写入项目 `sessions`，任务终态把创建/修改的成果写入 `artifacts`（去重、可审计/可撤销、失败不影响任务）；成果面板在有项目时优先展示项目成果，切新会话仍可见，不再只依赖当前对话。
+- 版本历史原生底座（UI 下一轮）：`ListVersions`/`ReadVersion`/`RestoreVersion`——从 Operation + 加密版本文件列出作品版本、读取前后文本（MD/TXT/DOCX）与 hash、以补偿式新操作恢复任意版本（可再撤销；私密文件夹禁用）。
+- 边界：项目是空间记录（“空间”页暂也会列出，后续过滤）；项目简报由宿主生成、标记为不可信数据；本轮未接版本 UI 与手改 diff；审批、证据核对、撤销与沙箱语义不变。
+- 验证记录见 [v0.10.10 验证](docs/VALIDATION_0.10.10.md)。
+
+## v0.10.9 · Preview
+
+- Codemode：被批准的 `run_code` 现在可在 QuickJS 沙箱内通过 `tools.search_library` / `tools.read_items` / `tools.recall_result` / `tools.search_memory` / `tools.list_collections` 调用**只读**资料库工具，并把多次检索/读取组合成一段计算；仍沿用原有沙箱与限制（无文件/网络/DOM、16MB、7 秒、输出 ≤16000），无新增写入或审批能力。实现采用同步 QuickJS 的“先记录请求、宿主批量执行、带缓存重放”协议（每批 ≤8、每次 ≤24、单结果 ≤8000、累计 ≤32000、最多 6 轮）；嵌套读取是临时证据、不写回执/journal。用法见 [Codemode](docs/CODEMODE_0.10.9.md)。
+- Headless RPC：`kok-agent.exe --rpc` 启动长期运行的 JSONL 命令循环（`ping` / `prompt` / `steer` / `follow_up` / `abort` / `state` / `compact` / `shutdown`），stdout 串行输出 `response` / `event` / `result` 行；同一进程一个任务、只读策略、支持每任务超时；EOF/Ctrl+C/参数组合错误有明确退出码。适合编辑器、CI 与外部工具驱动。协议见 [Headless RPC](docs/AGENT_RPC_0.10.9.md)。
+- 原生 action 新增 `agentSandboxTools`（嵌套只读批次，白名单/上限/ticket 校验）并同步 UI 原生 action 目录；`run_code` 工具描述更新，Schema 与审批卡片不变。
+- 边界：`tools.*` 仅只读、结果不可作为 `finish_task` 当前回执；RPC 只读、不加载历史会话；事件契约、任务/会话数据格式不变；审批、证据核对、撤销与沙箱语义不变。
+- 验证记录见 [v0.10.9 验证](docs/VALIDATION_0.10.9.md)。
+
+## v0.10.8 · Preview
+
+- 声明式扩展包：扩展包目录（`plugin.json`）可打包 Agent Skills 的 `SKILL.md` 技能与 Markdown 提示模板；从 `<程序目录>\ui\plugins`、`%USERPROFILE%\.kok\plugins`、`<资料库>\.kok\plugins` 发现（同名先到先得），最多 32 个、清单 ≤64KB、路径必须留在包内；技能进入 `<available_skills>` 与 `load_skill`，提示模板可用 `/prompt:名称 参数` 展开到输入框。**不执行任何脚本/代码**，未知字段仅作为惰性数据忽略。
+- Agent 页新增「扩展包」面板：列出已安装扩展包（名称/版本/说明/技能与模板数）、已发现技能数与提示模板列表，支持「重新加载」热更新（同时刷新技能选择器）；`/prompt:` 只填充输入框，不自动发送、不持久化原始命令。
+- 原生 action：`agentPluginsList` / `agentPluginsReload` / `agentPromptRead`；`AgentSkills.Discover` 支持额外（扩展包）技能根与 `load_skill` 读取；提示模板支持 `$ARGUMENTS` 替换与无占位符追加。
+- 边界：扩展包为纯声明式文本，无代码入口、无网络/文件 API、无钩子注册；模板/技能仅进入提示词或输入框；事件契约、任务/会话数据格式不变；审批、证据核对、撤销与沙箱语义不变。
+- 验证记录见 [v0.10.8 验证](docs/VALIDATION_0.10.8.md)。
+
+## v0.10.7 · Preview
+
+- 无界面 Agent CLI：`kok-agent.exe --goal "…" --print|--json`（`kok.exe agent …` 为同一实现）在不打开窗口的情况下运行一次只读任务，复用同一套原生引擎、加密任务记录、检索与证据核对。`kok-agent.exe` 是控制台子系统启动器，脚本/CI 可直接获得可靠退出码与顺序输出；JSON 模式输出 `header → event → result` JSONL，print 模式只输出最终回答；退出码区分 completed/partial/失败/中断；支持 `--data-dir`、范围、预算、请求上限、上下文、超时与会话命名。用法见 [Agent 无界面 CLI](docs/AGENT_CLI_0.10.7.md)。
+- 提供方缓存键（可选）：AI 服务高级设置新增「启用提供方缓存键」，开启后按会话在同一任务内发送 `prompt_cache_key`（仅普通 tools 请求；压缩、JSON 协议与翻译请求不带）。默认关闭，服务商不支持时无副作用。
+- 缓存命中展示：Agent 用量行在 `cachedTokens > 0` 时显示 `缓存命中 {tokens} tokens · {percent}%`。
+- 边界：无界面入口只读，写入仍走桌面逐卡审批；`--approval` / `--allow-writes` 被拒绝；不加载历史会话；无 headless RPC（后续）；事件契约与任务/会话数据格式不变；审批、证据、撤销与沙箱语义不变。
+- 验证记录见 [v0.10.7 验证](docs/VALIDATION_0.10.7.md)。
+
+## v0.10.6 · Preview
+
+- Agent 分支树 UI：工具栏新增「分支树」，打开会话分支面板，按父子顺序缩进展示消息预览、当前分支标记、上下文摘要（compaction）与标签（label）；任务记录以轻量行显示。
+- 原地切换分支：在任意消息节点点「切换到此」调用 `agentSessionSwitch`，界面历史从原生会话投影重建（user/agent 消息），清空草稿/待接续任务状态，后续任务沿该分支继续；运行中禁止切换。
+- 任意节点分叉与重命名：树面板可直接从节点分叉（复用 `agentSessionFork`），可内联重命名会话（`agentSessionRename`，1–64 字符），`/tree` 快捷打开分支面板。
+- 原生支持：新增 `ProjectionMessages`（保留 compaction `firstKeptEntryId` 语义并返回 entry id）；`agentSessionProject` / `agentSessionSwitch` / `agentSessionFork` 的消息带 `id`；`agentSessionTree` 的条目增加 role、160 字符单行 preview、label target、compaction reason（均为 additive）。
+- 边界：切换只重建 user/agent 消息视图，分支内旧工具卡片不会重放；本版不做 LLM 分支摘要（`branch_summary` 结构保留）；事件契约与任务/会话数据格式不变；审批、证据核对、撤销与沙箱语义不变。
+- 本版补齐 M1（技能目录 + 会话树 UI）。验证记录见 [v0.10.6 验证](docs/VALIDATION_0.10.6.md)。
+
+## v0.10.5 · Preview
+
+- Pi / Agent-Skills 风格的技能目录：递归发现 `ui/skills`、`%USERPROFILE%\.agents\skills` 与资料库 `.agents/skills` 下的 `SKILL.md`；解析 frontmatter 的 name / description / disable-model-invocation，正文上限 20000 字符，最多 100 个技能，结果按文件 revision 缓存。启动时只把 `<available_skills>`（名称、描述、位置，XML 转义）注入提示词，模型需要时通过只读 `load_skill` 工具加载全文（不可信参考文本，不执行脚本）。
+- 原生 action：`agentSkillsList` / `agentSkillsReload` / `agentSkillRead`；Agent 页技能选择器新增“已发现的技能”分组与“刷新技能”按钮；输入 `/skill:名称 参数` 可直接用该技能发起任务；选择技能时只发送 `[Skill: name] Use load_skill ...` 的简短指令，全文由工具按需载入，保持提示词前缀稳定。
+- M0-4 内部扩展缝：新增 `AgentToolHooks`（PrepareRequest / TransformContext / BeforeToolCall / AfterToolCall / FinishTurn）与 `AgentToolSpec.Mode`（串行/并行执行）、`TerminateHint`（预留）；钩子为空时行为与之前完全一致，为后续声明式扩展与工具中间件铺路。
+- 边界：技能只读文本、不执行任何脚本；同名技能按 app → user → library 先到先得；app 根下的四个内置 workflow 也会进入提示词索引；事件契约、任务/会话数据格式不变；审批、证据核对、撤销与沙箱语义不变。
+- 验证记录见 [v0.10.5 验证](docs/VALIDATION_0.10.5.md)。
+
+## v0.10.4 · Preview
+
+- Pi 式上下文压缩：触发改为基于最近一次真实请求用量（input+output + 之后内容的尾部估算），并支持 `reserveTokens` / `keepRecentTokens` 配置（0=自动）；按 token 预算从最新回合往回保留最近内容，旧回合整体压缩，不把一次工具调用与其结果拆开。上下文过滤随后更新：保留首条用户目标消息，旧回合与旧用户指令进入摘要。
+- 摘要格式改为固定六段（Goal / Constraints & Preferences / Progress / Key Decisions / Next Steps / Critical Context）+ `<read-files>` / `<modified-files>`；旧摘要以 UPDATE 方式合并；工具结果单条截断到 2000 字符；摘要内容语言跟随任务目标。
+- 手动压缩 `agentTaskCompact`（任务运行中可用，instructions ≤400 字符）；模型上下文溢出时发出 `context.recovery`，自动压缩并重试一次，失败不再次重试。压缩请求以 `purpose=compaction` 记录，不覆盖上下文用量基线。
+- 压缩结果写入原生会话树为 `compaction` 条目（含 `firstKeptEntryId`、`tokensBefore`、reason、读/改文件清单）；会话投影与 fork 按 Pi 语义从保留边界读取，摘要作为不可信的 assistant 消息进入投影。
+- 快照新增 `contextUsage`（tokens/window/reserveTokens/keepRecentTokens/percent/source/lastCompaction）；Agent 页显示上下文用量（实测/估算）、运行中的「压缩上下文」按钮与可折叠摘要（不可信标记）；高级设置可配置预留与保留 token。
+- 边界：自动压缩需要至少 2 个剩余请求，手动与溢出恢复需要 1 个；摘要结果要求 20–6000 字符；事件契约升级为 v3（旧任务记录原样可读）；不实现 Pi 的用户消息内切分（保留首条目标消息），`stopReason=length` 与 overflow 共用一次恢复路径。不改变审批、证据、撤销与沙箱语义。
+- 验证记录见 [v0.10.4 验证](docs/VALIDATION_0.10.4.md)。
+
+## v0.10.3 · Preview
+
+- Agent 会话树（原生）：每个会话写入本机加密的 append-only 记录（`<data dir>/agent-sessions/<sessionId>.jsonl.sealed`，逐行 DPAPI），包含消息、任务标记、usage/model/label 等 Pi 式条目与 leaf 分支指针；支持列出、读取、树、投影、切换 leaf、fork、clone、重命名、删除与标签。旧版界面会话（`agent-sessions.sealed`）在首次访问时一次性导入为线性记录，原文件保留。
+- 会话操作 action：`agentSessionList` / `agentSessionTree` / `agentSessionProject` / `agentSessionFork` / `agentSessionSwitch` / `agentSessionRename` / `agentSessionDelete` / `agentSessionLabel`；任务启动新增 `sessionLeafId`，用于把新消息挂到当前分支。终端任务的事件在会话操作时幂等同步进会话树（任务标记去重）。
+- UI：每条用户或 Agent 消息旁新增「从此处分叉」；分叉生成新会话，只保留该消息之前的消息，并用原生分支投影作为下一次任务的模型历史；分叉标题在同一会话保存后仍然保留。旧版会话仍按原界面存储渲染。
+- 边界：每库最多 64 个原生会话、每会话 4096 条 / 8 MB；凭据与记录使用当前 Windows 账户 DPAPI，不跨账户/机器迁移；fork 产生新会话而不是 Pi 的原地 `/tree` 切换（留待 M1）；compaction / branch_summary / context_edit 条目为 M0-3 预留。本版不改变审批、证据核对、撤销与沙箱语义。
+- 验证记录见 [v0.10.3 验证](docs/VALIDATION_0.10.3.md)。
+
+## v0.10.2 · Preview
+
+- Agent 任务输入与 Pi 对齐：运行中按 Enter 插入 steering（在下一个工具批次后进入同一任务，不打断正在生成的回复、不跳过待确认工具）；时钟按钮把输入排为 follow-up（任务自然结束时继续同一任务，而不是另起新任务）；停止、失败或达到请求上限时，未执行的输入原样放回输入框。原生 action 为 `agentTaskSteer` / `agentTaskFollowUp`，任务快照新增 `queue` / `restoredInputs`。
+- 事件契约升级为 v2（`input.queued` / `input.consumed` / `input.restored`）；旧任务记录按原状态读取，不重写既有加密事件。
+- 会话输入区与队列抽屉更新：运行中显示“待处理 · N”和“下回合插入 / 完成后跟进”标签；停止后输入回到输入框，而不是留在本地待办并另起任务。
+- 本版不改变资料、文档与作品数据格式；验证记录见 [v0.10.2 验证](docs/VALIDATION_0.10.2.md)。
+
 ## v0.10.1 · Preview
 
 - 一级入口按使用场景重组为 Agent、我的作品、资料库；文件类型和工具移入各自区域内部。侧栏只保留三个目的地、私密文件夹和设置；旧路由（今天、空间、摘录、智能集合、配方、回顾、下载、智能整理、知识图谱等）继续可用。

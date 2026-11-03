@@ -36,7 +36,7 @@ body[data-theme][data-app-mode] :is(input,textarea,select){text-shadow:none;box-
 body[data-theme][data-app-mode] .sidebar{width:var(--sidebar-width);padding:24px 14px 16px;background:var(--bg);border-right:1px solid var(--line)}
 body[data-theme][data-app-mode] .sidebar::before,body[data-theme][data-app-mode] .sidebar::after{display:none}
 body[data-theme][data-app-mode] .shell{margin-left:var(--sidebar-width)}
-body[data-theme][data-app-mode] .brand{height:40px;width:40px;margin:0 auto 32px;justify-content:center;gap:0}
+body[data-theme][data-app-mode] .sidebar .brand{display:flex;align-items:center;justify-content:center;height:40px;width:40px;margin:0 auto 32px;padding:0;gap:0;flex:none}
 body[data-theme][data-app-mode] .brand>span{font:650 20px var(--user-font);letter-spacing:-.6px}
 body[data-theme][data-app-mode] .brand img{filter:none;width:32px;height:32px}
 body[data-theme][data-app-mode] .sidebar-scroll{scrollbar-width:none;padding:0;overflow-x:hidden;overflow-y:auto}

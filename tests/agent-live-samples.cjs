@@ -32,7 +32,7 @@ const SAMPLE_TIMEOUT_MS=Object.freeze({local:90000,generation:210000,qa:180000,c
 const BUDGET=14000;
 const MAX_APPROVALS=24;
 // Tools that can modify library metadata or files. Opening an item is not a modification.
-const MODIFY_TOOLS=Object.freeze(['write_note','set_collection','add_tags','create_document','create_presentation','remember_memory','editOrganization','applyOrganization']);
+const MODIFY_TOOLS=Object.freeze(['write_note','set_collection','add_tags','create_document','create_presentation','copy_presentation','edit_presentation','replace_document_text','remember_memory','editOrganization','applyOrganization']);
 const TRAVEL_COLLECTION='评估·旅行';
 // Local-card truth checks: the native router contract is {total, stats:[{label,value}], items:[...]}.
 // These assertions make the 8 local samples measurable without calling a model; adapt here if the

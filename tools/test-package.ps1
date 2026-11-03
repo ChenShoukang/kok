@@ -1,4 +1,4 @@
-﻿param([string]$Archive,[string[]]$Suites=@('ui','features','agent','agent-interactions','agent-reliable','agent-runtime','agent-kernel','mcp','agent-platform','agent-quality','library-services','flat-design','interface-usage','interface-audit','works-navigation','agent-home-layout'))
+﻿param([string]$Archive,[string[]]$Suites=@('ui','features','agent','agent-interactions','agent-reliable','agent-runtime','agent-kernel','mcp','agent-platform','agent-quality','library-services','flat-design','interface-usage','interface-audit','creative-artifacts','creative-e2e','agent-output-recovery','presentation-design','presentation-editing','works-navigation','agent-home-layout','agent-workflow','pi-agent-ui','agent-document-edit','agent-presentations','presentation-save'))
 $ErrorActionPreference='Stop'
 $projectRoot=Split-Path $PSScriptRoot -Parent
 $version=(Get-Content -LiteralPath (Join-Path $projectRoot 'package.json') -Raw|ConvertFrom-Json).version

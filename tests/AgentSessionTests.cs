@@ -1,0 +1,198 @@
+using System;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Security.Cryptography;
+using kok;
+
+class AgentSessionTests {
+ static bool Rejects(Action action){try{action();return false;}catch(InvalidDataException){return true;}}
+ static string NewId(){return Guid.NewGuid().ToString("N");}
+ static string Seal(object value){return Convert.ToBase64String(ProtectedData.Protect(Encoding.UTF8.GetBytes(Library.Json.Serialize(value)),null,DataProtectionScope.CurrentUser));}
+ static string HeaderLine(string id,string title){return Seal(new Dictionary<string,object>{{"type","session"},{"version",1},{"id",id},{"created",DateTime.UtcNow.ToString("o")},{"title",title},{"cwd",""}});}
+ static string MessageLine(string id,string parentId,string text){return Seal(new{type="message",id=id,parentId=parentId,created=DateTime.UtcNow.ToString("o"),data=new{role="user",text=text}});}
+ static string SessionPath(string root,string id){return Path.Combine(root,"agent-sessions",id+".jsonl.sealed");}
+ public static void Run(string root,Action<bool,string> check){
+  Directory.CreateDirectory(root);var store=new AgentSessionStore(root);string id=NewId();
+  store.Ensure(id,"第一会话");var listed=store.List();
+  check(store.Exists(id)&&store.Entries(id).Count==0&&listed.Count==1&&listed[0].id==id&&listed[0].title=="第一会话"&&listed[0].entries==0&&listed[0].bytes>0&&listed[0].created!=null&&listed[0].leafId==null,"session store creates a header-only session and lists its metadata");
+  check(AgentSessionStore.ValidId(NewId())&&AgentSessionStore.ValidId(new string('a',32))&&!AgentSessionStore.ValidId(new string('A',32))&&!AgentSessionStore.ValidId(new string('a',31))&&!AgentSessionStore.ValidId("../"+id)&&!AgentSessionStore.ValidId(null),"session ids are exactly 32 lowercase hex characters");
+  var u1=store.Append(id,"message",null,new Dictionary<string,object>{{"role","user"},{"text","问题一"}});
+  var a1=store.Append(id,"message",u1.id,new Dictionary<string,object>{{"role","assistant"},{"text","回答一"}});
+  var entries=store.Entries(id);
+  check(entries.Count==2&&entries[0].id==u1.id&&entries[1].parentId==u1.id&&Convert.ToString(entries[1].data["text"])=="回答一"&&store.Leaf(id)==a1.id,"message entries roundtrip and the latest message is the implicit leaf");
+  var tool=store.Append(id,"tool",a1.id,new Dictionary<string,object>{{"tool","read_items"},{"status","done"},{"callId",NewId()},{"summary","读取"}});
+  store.Append(id,"usage",tool.id,new Dictionary<string,object>{{"inputTokens",10},{"outputTokens",20},{"cachedTokens",0},{"estimated",false},{"cost",0}});
+  store.Append(id,"model_change",tool.id,new Dictionary<string,object>{{"provider","fixture"},{"modelId","fixture-1"}});
+  check(store.Leaf(id)==tool.id,"tool entries count for the implicit leaf while usage and model changes do not");
+  store.Append(id,"label",null,new Dictionary<string,object>{{"targetId",a1.id},{"label","结论"}});
+  store.Append(id,"task",null,new Dictionary<string,object>{{"taskId",NewId()},{"sequence",1}});
+  store.Append(id,"session_info",null,new Dictionary<string,object>{{"title","会话信息"}});
+  check(store.Entries(id).Count==8&&store.Leaf(id)==tool.id,"label, task and session_info entries are accepted without moving the branch leaf");
+  store.SetLeaf(id,u1.id);
+  check(store.Leaf(id)==u1.id&&store.Projection(id).Count==1&&store.Projection(id)[0].role=="user"&&store.Projection(id)[0].content=="问题一","SetLeaf selects the active branch and projection follows it");
+  store.Append(id,"fixture_unknown",null,new Dictionary<string,object>{{"value","ignored"}});
+  check(store.Tree(id).Count==10&&store.Projection(id).Count==1,"unknown entry types are stored in tree order and ignored by projection");
+  var reopened=new AgentSessionStore(root);
+  check(reopened.Entries(id).Count==10&&reopened.Leaf(id)==u1.id&&reopened.Projection(id).Count==1,"a new store instance reads the same entries, leaf and projection");
+  string raw=File.ReadAllText(SessionPath(root,id));
+  check(!raw.Contains("问题一")&&!raw.Contains("第一会话")&&raw.Trim().Length>0,"session lines are DPAPI sealed and contain no plaintext on disk");
+  var header=(Dictionary<string,object>)Library.Json.DeserializeObject(Encoding.UTF8.GetString(ProtectedData.Unprotect(Convert.FromBase64String(File.ReadAllLines(SessionPath(root,id))[0]),null,DataProtectionScope.CurrentUser)));
+  check(Convert.ToString(header["type"])=="session"&&Convert.ToInt32(header["version"])==1&&Convert.ToString(header["id"])==id&&Convert.ToString(header["title"])=="第一会话","the first line is the encrypted version 1 session header");
+  var u2=store.Append(id,"message",a1.id,new Dictionary<string,object>{{"role","user"},{"text","问题二"}});
+  var a2=store.Append(id,"message",u2.id,new Dictionary<string,object>{{"role","assistant"},{"text","回答二"}});
+  store.SetLeaf(id,a2.id);var projection=store.Projection(id);
+  check(projection.Count==4&&projection[0].role=="user"&&projection[1].role=="assistant"&&projection[2].content=="问题二"&&projection[3].role=="assistant","projection is chronological, skips non-message entries and preserves roles");
+  check(store.Projection(id,a1.id).Count==2&&store.Projection(id,a1.id)[1].content=="回答一","projection can start from an explicit leaf");
+  string forkId=NewId();string forkLeaf=store.Fork(id,u2.id,forkId);var forkEntries=store.Entries(forkId);
+  check(forkLeaf!=null&&forkEntries.Count==4&&forkEntries[3].type=="leaf"&&forkLeaf==forkEntries[2].id&&store.Leaf(forkId)==forkLeaf,"fork copies the root..entry path and marks its last copied entry as the leaf");
+  check(forkEntries[0].parentId==null&&forkEntries[1].parentId==forkEntries[0].id&&forkEntries[2].parentId==forkEntries[1].id,"fork remaps parent links onto the copied entries");
+  check(forkEntries[0].id!=u1.id&&forkEntries[1].id!=a1.id&&forkEntries[2].id!=u2.id,"fork assigns fresh entry ids");
+  var forkProjection=store.Projection(forkId);
+  check(forkProjection.Count==3&&forkProjection[0].content=="问题一"&&forkProjection[1].content=="回答一"&&forkProjection[2].content=="问题二"&&store.Projection(id).Count==4,"fork projection contains only the branch up to the fork point and leaves the source unchanged");
+  check(store.List().First(meta=>meta.id==forkId).title=="分叉 · 第一会话","fork titles default to a truncated branch label");
+  var forkExtra=store.Append(forkId,"message",forkLeaf,new Dictionary<string,object>{{"role","assistant"},{"text","分叉回答"}});store.SetLeaf(forkId,forkExtra.id);
+  check(store.Projection(forkId).Count==4&&store.Projection(id).Count==4,"extending a fork does not modify the source branch");
+  check(Rejects(()=>store.Fork(id,NewId(),NewId()))&&Rejects(()=>store.Fork(id,"../"+NewId(),NewId()))&&Rejects(()=>store.Fork(id,u2.id,"../"+NewId())),"fork from an unknown entry or with invalid ids fails closed");
+  store.SetLeaf(id,a1.id);string cloneId=NewId();string cloneLeaf=store.Clone(id,cloneId);var cloneProjection=store.Projection(cloneId);var cloneEntries=store.Entries(cloneId);
+  check(cloneLeaf!=null&&cloneProjection.Count==2&&cloneProjection[0].content=="问题一"&&cloneProjection[1].content=="回答一"&&store.Leaf(cloneId)==cloneLeaf,"clone copies only the active branch and selects its leaf");
+  check(cloneEntries.Count==3&&cloneEntries[0].id!=u1.id&&cloneEntries[1].parentId==cloneEntries[0].id&&cloneEntries[2].type=="leaf","clone remaps ids and parents");
+  store.SetLeaf(id,a2.id);
+  int beforeRename=store.Entries(id).Count;store.Rename(id,"重命名会话");
+  check(store.List().First(meta=>meta.id==id).title=="重命名会话"&&store.Entries(id).Count==beforeRename&&store.Projection(id).Count==4,"rename rewrites the header title without touching entries or the branch");
+  check(Rejects(()=>store.Rename(id,new string('标',65)))&&Rejects(()=>store.Ensure(NewId(),new string('标',65))),"titles longer than 64 characters are rejected");
+  string edgeId=NewId();store.Ensure(edgeId,"边界会话");string wanted=NewId();
+  var explicitEntry=store.Append(edgeId,"message",null,new Dictionary<string,object>{{"role","agent"},{"text","旧角色"}},wanted);
+  check(explicitEntry.id==wanted&&store.Entries(edgeId)[0].id==wanted&&store.Projection(edgeId).Single().role=="assistant","explicit entry ids are honoured and the legacy agent role is normalized to assistant");
+  byte[] edgeBytes=File.ReadAllBytes(SessionPath(root,edgeId));store.Ensure(edgeId,"不应覆盖");
+  check(store.List().First(meta=>meta.id==edgeId).title=="边界会话"&&File.ReadAllBytes(SessionPath(root,edgeId)).SequenceEqual(edgeBytes),"ensuring an existing session keeps its title and never rewrites the file");
+  check(Rejects(()=>store.SetLeaf(edgeId,NewId())),"SetLeaf requires an entry that exists in the session");
+  string longId=NewId();store.Ensure(longId,new string('长',60));var lone=store.Append(longId,"message",null,new Dictionary<string,object>{{"role","user"},{"text","x"}});string longFork=NewId();store.Fork(longId,lone.id,longFork);string longTitle=store.List().First(meta=>meta.id==longFork).title;
+  check(longTitle.StartsWith("分叉 · ")&&longTitle.Length==64,"default fork titles are truncated to 64 characters");
+  check(Rejects(()=>store.Entries("../outside"))&&Rejects(()=>store.Tree(new string('A',32)))&&Rejects(()=>store.SetLeaf(id,"../"+NewId()))&&Rejects(()=>store.Projection(id,"../"+NewId()))&&Rejects(()=>store.Append("..\\escape","message",null,new Dictionary<string,object>{{"role","user"},{"text","x"}})),"invalid ids are rejected before any path is touched");
+  check(!store.Exists("../outside")&&!store.Exists("")&&Rejects(()=>store.Ensure("../escape","x"))&&!File.Exists(Path.Combine(root,"..","escape.jsonl.sealed")),"invalid ids cannot escape the session directory");
+  check(Rejects(()=>store.Entries(NewId()))&&Rejects(()=>store.Leaf(NewId()))&&Rejects(()=>store.Projection(NewId())),"missing sessions fail closed");
+  string corruptId=NewId();store.Ensure(corruptId,"损坏会话");var c1=store.Append(corruptId,"message",null,new Dictionary<string,object>{{"role","user"},{"text","一"}});store.Append(corruptId,"message",c1.id,new Dictionary<string,object>{{"role","assistant"},{"text","二"}});store.Append(corruptId,"message",null,new Dictionary<string,object>{{"role","user"},{"text","三"}});
+  string corruptPath=SessionPath(root,corruptId);var corruptLines=File.ReadAllLines(corruptPath);corruptLines[2]="AAAA";File.WriteAllText(corruptPath,String.Join("\n",corruptLines)+"\n",new UTF8Encoding(false));byte[] corruptBytes=File.ReadAllBytes(corruptPath);string corruptMessage="";
+  try{store.Entries(corruptId);}catch(InvalidDataException error){corruptMessage=error.Message;}
+  check(corruptMessage.Contains("Agent 会话无法读取")&&Rejects(()=>store.Leaf(corruptId))&&Rejects(()=>store.Projection(corruptId)),"corrupt session lines fail closed with the contract message on every read path");
+  check(File.ReadAllBytes(corruptPath).SequenceEqual(corruptBytes)&&store.Exists(corruptId),"corrupt sessions are preserved untouched");
+  bool listSurvived=true;try{store.List();}catch{listSurvived=false;}check(listSurvived,"listing tolerates a corrupt session instead of failing");
+  string shortId=NewId();store.Ensure(shortId,"短文件");string shortPath=SessionPath(root,shortId);File.WriteAllText(shortPath,"");
+  check(Rejects(()=>store.Entries(shortId))&&Rejects(()=>store.Append(shortId,"message",null,new Dictionary<string,object>{{"role","user"},{"text","x"}}))&&new FileInfo(shortPath).Length==0,"short session files fail closed and are preserved");
+  string capId=NewId();store.Ensure(capId,"上限会话");
+  check(Rejects(()=>store.Append(capId,"message",null,new Dictionary<string,object>{{"role","user"},{"text",new string('x',24001)}})),"message text longer than 24000 characters is rejected");
+  var big=store.Append(capId,"message",null,new Dictionary<string,object>{{"role","user"},{"text",new string('x',24000)}});
+  check(big.id!=null&&store.Entries(capId).Count==1,"message text at the 24000 character limit is stored");
+  check(Rejects(()=>store.Append(capId,"label",null,new Dictionary<string,object>{{"targetId",big.id},{"label",new string('标',65)}}))&&Rejects(()=>store.Append(capId,"message",null,new Dictionary<string,object>{{"role","system"},{"text","x"}}))&&Rejects(()=>store.Append(capId,"session",null,new Dictionary<string,object>())),"invalid payloads and the reserved header type are rejected");
+  string fullId=NewId();string parent=null;var fullLines=new List<string>{HeaderLine(fullId,"满会话")};
+  for(int n=0;n<AgentSessionStore.MaxEntries;n++){string entryId=NewId();fullLines.Add(MessageLine(entryId,parent,"e"));parent=entryId;}
+  Directory.CreateDirectory(Path.Combine(root,"agent-sessions"));string fullPath=SessionPath(root,fullId);File.WriteAllText(fullPath,String.Join("\n",fullLines)+"\n",new UTF8Encoding(false));
+  check(store.Entries(fullId).Count==AgentSessionStore.MaxEntries,"a session at the entry cap is still readable");
+  check(Rejects(()=>store.Append(fullId,"message",parent,new Dictionary<string,object>{{"role","user"},{"text","x"}}))&&File.ReadAllLines(fullPath).Length==AgentSessionStore.MaxEntries+1,"appending past the entry cap fails without truncating the file");
+  string bytesId=NewId();string bytesPath=SessionPath(root,bytesId);File.WriteAllText(bytesPath,HeaderLine(bytesId,"大文件")+"\n"+new string('A',(int)AgentSessionStore.MaxBytes+1024)+"\n");long bytesSize=new FileInfo(bytesPath).Length;
+  check(Rejects(()=>store.Append(bytesId,"message",null,new Dictionary<string,object>{{"role","user"},{"text","x"}}))&&new FileInfo(bytesPath).Length==bytesSize,"appending to a session over the 8 MB cap fails and preserves the file");
+  check(Rejects(()=>store.Entries(bytesId)),"oversized session files fail closed on read");
+  string capRoot=Path.Combine(root,"cap");var capStore=new AgentSessionStore(capRoot);for(int n=0;n<AgentSessionStore.MaxSessions;n++)capStore.Ensure(NewId(),"session");
+  check(capStore.List().Count==AgentSessionStore.MaxSessions,"the store keeps up to 64 sessions");
+  bool capped=false;try{capStore.Ensure(NewId(),"one too many");}catch(InvalidDataException){capped=true;}check(capped,"creating a 65th session is rejected");
+  string existing=capStore.List()[0].id;capStore.Ensure(existing,"更新标题");check(capStore.List().Count==AgentSessionStore.MaxSessions,"ensuring an existing session does not consume another slot");
+  capStore.Delete(existing);capStore.Ensure(NewId(),"after delete");check(capStore.List().Count==AgentSessionStore.MaxSessions,"deleting a session frees a slot");
+  var metas=store.List();bool ordered=true;for(int n=0;n+1<metas.Count;n++)if(String.CompareOrdinal(metas[n].updated,metas[n+1].updated)<0)ordered=false;check(ordered,"sessions are listed newest first");
+  string threadId=NewId();store.Ensure(threadId,"并发会话");var writers=new List<Task>();
+  for(int t=0;t<4;t++)writers.Add(Task.Run(()=>{for(int n=0;n<10;n++)store.Append(threadId,"message",null,new Dictionary<string,object>{{"role","user"},{"text","并发"}});}));
+  Task.WaitAll(writers.ToArray());var threaded=store.Entries(threadId);
+  check(threaded.Count==40&&threaded.Select(entry=>entry.id).Distinct().Count()==40,"concurrent appends are serialized by one lock and keep the file valid");
+  string deleteId=NewId();store.Ensure(deleteId,"删除会话");store.Append(deleteId,"message",null,new Dictionary<string,object>{{"role","user"},{"text","x"}});store.Delete(deleteId);
+  check(!store.Exists(deleteId)&&Rejects(()=>store.Entries(deleteId))&&store.List().All(meta=>meta.id!=deleteId),"delete removes the session and its metadata row");
+  store.Delete(deleteId);check(!store.Exists(deleteId),"deleting a missing session is idempotent");
+  // M0-3 compaction entries: summary first, retained range, fork remapping and the no-compaction path.
+  string compactId=NewId();store.Ensure(compactId,"压缩会话");
+  var oldUser=store.Append(compactId,"message",null,new Dictionary<string,object>{{"role","user"},{"text","旧问题"}});
+  var oldReply=store.Append(compactId,"message",oldUser.id,new Dictionary<string,object>{{"role","assistant"},{"text","旧回答"}});
+  var keptUser=store.Append(compactId,"message",oldReply.id,new Dictionary<string,object>{{"role","user"},{"text","保留问题"}});
+  var keptReply=store.Append(compactId,"message",keptUser.id,new Dictionary<string,object>{{"role","assistant"},{"text","保留回答"}});
+  var compaction=store.Append(compactId,"compaction",keptReply.id,new Dictionary<string,object>{{"summary","早期对话摘要"},{"firstKeptEntryId",keptUser.id},{"tokensBefore",52000},{"reason","manual"},{"details",new Dictionary<string,object>{{"checkpointId",NewId()},{"through",2}}}});
+  store.SetLeaf(compactId,compaction.id);var compactProjection=store.Projection(compactId);
+  check(compactProjection.Count==3&&compactProjection[0].role=="assistant"&&compactProjection[0].content.StartsWith("[UNTRUSTED SESSION SUMMARY]\n")&&compactProjection[0].content.Contains("早期对话摘要")&&compactProjection[1].content=="保留问题"&&compactProjection[2].content=="保留回答","a compaction entry projects its untrusted summary first and only messages from the first kept entry");
+  var summaryOnly=store.Append(compactId,"compaction",compaction.id,new Dictionary<string,object>{{"summary","仅摘要"},{"firstKeptEntryId",null}});
+  store.SetLeaf(compactId,summaryOnly.id);var retained=store.Projection(compactId);
+  check(retained.Count==1&&retained[0].content.Contains("仅摘要"),"a compaction without a kept entry retains no messages and leaves only the latest summary");
+  check(Rejects(()=>store.Append(compactId,"compaction",null,new Dictionary<string,object>{{"firstKeptEntryId",keptUser.id}})),"compaction entries require a summary");
+  string branchId=NewId();store.Ensure(branchId,"分叉压缩");
+  var branchFirst=store.Append(branchId,"message",null,new Dictionary<string,object>{{"role","user"},{"text","分叉前问题"}});
+  var branchReply=store.Append(branchId,"message",branchFirst.id,new Dictionary<string,object>{{"role","assistant"},{"text","分叉前回答"}});
+  var branchKept=store.Append(branchId,"message",branchReply.id,new Dictionary<string,object>{{"role","user"},{"text","分叉保留问题"}});
+  var branchKeptReply=store.Append(branchId,"message",branchKept.id,new Dictionary<string,object>{{"role","assistant"},{"text","分叉保留回答"}});
+  var branchCompaction=store.Append(branchId,"compaction",branchKeptReply.id,new Dictionary<string,object>{{"summary","分叉摘要"},{"firstKeptEntryId",branchKept.id},{"tokensBefore",90000},{"reason","threshold"}});
+  string branchFork=NewId();store.Fork(branchId,branchCompaction.id,branchFork);
+  var branchForkEntries=store.Entries(branchFork);
+  var copiedKept=branchForkEntries.FirstOrDefault(entry=>entry.type=="message"&&Convert.ToString(entry.data["text"])=="分叉保留问题");
+  var copiedCompaction=branchForkEntries.FirstOrDefault(entry=>entry.type=="compaction");
+  var branchForkProjection=store.Projection(branchFork);
+  check(copiedKept!=null&&copiedCompaction!=null&&Convert.ToString(copiedCompaction.data["firstKeptEntryId"])==copiedKept.id&&branchForkProjection.Count==3&&branchForkProjection[0].content.Contains("分叉摘要")&&branchForkProjection[1].content=="分叉保留问题"&&branchForkProjection[2].content=="分叉保留回答","fork remaps a copied compaction's first kept entry to the copied id and projects the retained branch");
+  string sideId=NewId();store.Ensure(sideId,"旁支压缩");
+  var sideRoot=store.Append(sideId,"message",null,new Dictionary<string,object>{{"role","user"},{"text","主问题"}});
+  var sideReply=store.Append(sideId,"message",sideRoot.id,new Dictionary<string,object>{{"role","assistant"},{"text","主回答"}});
+  var sideOther=store.Append(sideId,"message",sideReply.id,new Dictionary<string,object>{{"role","user"},{"text","另一分支消息"}});
+  var sideBranch=store.Append(sideId,"message",sideReply.id,new Dictionary<string,object>{{"role","user"},{"text","当前分支消息"}});
+  var sideBranchReply=store.Append(sideId,"message",sideBranch.id,new Dictionary<string,object>{{"role","assistant"},{"text","当前分支回答"}});
+  var sideCompaction=store.Append(sideId,"compaction",sideBranchReply.id,new Dictionary<string,object>{{"summary","旁支摘要"},{"firstKeptEntryId",sideOther.id},{"tokensBefore",40000},{"reason","manual"}});
+  store.SetLeaf(sideId,sideCompaction.id);
+  check(store.Projection(sideId).Count==1&&store.Projection(sideId)[0].content.Contains("旁支摘要"),"a compaction whose kept entry is not on the active path projects only its summary");
+  string sideFork=NewId();store.Fork(sideId,sideCompaction.id,sideFork);
+  var sideForkCompaction=store.Entries(sideFork).First(entry=>entry.type=="compaction");
+  check(Convert.ToString(sideForkCompaction.data["firstKeptEntryId"])==sideForkCompaction.id&&store.Projection(sideFork).Count==1,"fork points an uncopied kept entry at the new compaction's own id (retain none)");
+  string plainId=NewId();store.Ensure(plainId,"无压缩会话");
+  var plainUser=store.Append(plainId,"message",null,new Dictionary<string,object>{{"role","user"},{"text","无压缩问题"}});
+  store.Append(plainId,"message",plainUser.id,new Dictionary<string,object>{{"role","assistant"},{"text","无压缩回答"}});
+  var plainProjection=store.Projection(plainId);
+  check(plainProjection.Count==2&&plainProjection[0].role=="user"&&plainProjection[0].content=="无压缩问题"&&plainProjection[1].role=="assistant","sessions without a compaction keep the previous message-only projection");
+  // M1-3: projection messages keep the native entry ids used by the branch-tree UI.
+  var messageRows=store.ProjectionMessages(plainId);var plainMessageEntries=store.Entries(plainId).Where(entry=>entry.type=="message").ToList();
+  check(messageRows.Count==2&&messageRows.Select(message=>message.id).SequenceEqual(plainMessageEntries.Select(entry=>entry.id))&&messageRows.Select(message=>message.role+":"+message.content).SequenceEqual(store.Projection(plainId).Select(turn=>turn.role+":"+turn.content)),"ProjectionMessages keeps the native entry ids without a compaction and matches Projection");
+  var compactRows=store.ProjectionMessages(compactId);
+  check(compactRows.Count==1&&compactRows[0].id==summaryOnly.id&&compactRows[0].role=="assistant"&&compactRows[0].content.StartsWith("[UNTRUSTED SESSION SUMMARY]\n")&&compactRows[0].content.Contains("仅摘要"),"ProjectionMessages uses the compaction entry id for the synthetic summary row");
+  store.SetLeaf(branchId,branchCompaction.id);var branchRows=store.ProjectionMessages(branchId);
+  check(branchRows.Count==3&&branchRows[0].id==branchCompaction.id&&branchRows[0].role=="assistant"&&branchRows[0].content.Contains("分叉摘要")&&branchRows.Skip(1).Select(message=>message.id).SequenceEqual(new[]{branchKept.id,branchKeptReply.id}),"a compaction projects its entry id first and then the kept message ids in order (leaf="+store.Leaf(branchId)+", rows="+Library.Json.Serialize(branchRows)+", compaction="+branchCompaction.id+", kept="+branchKept.id+")");
+  var explicitLeafRows=store.ProjectionMessages(branchId,branchKept.id);
+  check(explicitLeafRows.Count==3&&explicitLeafRows.Select(message=>message.id).SequenceEqual(new[]{branchFirst.id,branchReply.id,branchKept.id})&&explicitLeafRows.Select(message=>message.role).SequenceEqual(new[]{"user","assistant","user"}),"ProjectionMessages follows an explicit leaf and keeps ids on a path without a compaction");
+  check(Rejects(()=>store.ProjectionMessages(branchId,NewId()))&&Rejects(()=>store.ProjectionMessages(NewId()))&&Rejects(()=>store.ProjectionMessages(branchId,"../"+NewId())),"ProjectionMessages rejects unknown leaves and missing or invalid sessions");
+  // P3-A native session artifact entries: durable branch records for task-created documents.
+  string artifactsId=NewId();store.Ensure(artifactsId,"成果会话");
+  var artifactUser=store.Append(artifactsId,"message",null,new Dictionary<string,object>{{"role","user"},{"text","成果请求"}});
+  string itemA=NewId(),itemB=NewId(),artifactTask=NewId();
+  var artifactOne=store.Append(artifactsId,"artifact",artifactUser.id,new Dictionary<string,object>{{"itemId",itemA},{"taskId",artifactTask},{"name","报告一"},{"created",DateTime.UtcNow.ToString("o")}});
+  var artifactTwo=store.Append(artifactsId,"artifact",artifactOne.id,new Dictionary<string,object>{{"itemId",itemB},{"taskId",artifactTask},{"name","报告二"},{"created",DateTime.UtcNow.ToString("o")}});
+  store.SetLeaf(artifactsId,artifactTwo.id);
+  var artifactBranch=store.BranchEntries(artifactsId);var artifacts=store.Artifacts(artifactsId);
+  check(artifactBranch.Select(entry=>entry.type).SequenceEqual(new[]{"message","artifact","artifact"})&&artifactBranch[0].id==artifactUser.id&&artifactBranch[2].id==artifactTwo.id,"branch entries walk the parent chain oldest-first and keep artifact records next to messages");
+  check(artifacts.Count==2&&Convert.ToString(artifacts[0]["itemId"])==itemB&&Convert.ToString(artifacts[1]["itemId"])==itemA&&Convert.ToString(artifacts[0]["taskId"])==artifactTask&&Convert.ToString(artifacts[0]["name"])=="报告二"&&artifacts.All(row=>Convert.ToString(row["entryId"])!=""&&Convert.ToString(row["created"])!=""),"session artifacts are returned newest-first with item, task, name, entry and created fields");
+  check(Rejects(()=>store.Append(artifactsId,"artifact",null,new Dictionary<string,object>{{"itemId","../"+NewId()},{"taskId",NewId()}}))&&Rejects(()=>store.Append(artifactsId,"artifact",null,new Dictionary<string,object>{{"itemId",NewId()},{"taskId","bad"}})),"artifact entries require valid 32-hex item and task ids");
+  string forkBefore=NewId();store.Fork(artifactsId,artifactUser.id,forkBefore);string forkAfter=NewId();store.Fork(artifactsId,artifactTwo.id,forkAfter);store.SetLeaf(artifactsId,artifactUser.id);
+  check(store.Artifacts(forkBefore).Count==0&&store.Artifacts(forkAfter).Count==2&&store.Artifacts(artifactsId).Count==0&&store.Artifacts(artifactsId,artifactTwo.id).Count==2,"artifacts follow the branch: forks before them exclude them, forks after copy them and an earlier leaf hides them");
+  store.SetLeaf(artifactsId,artifactTwo.id);
+  var artifactCompaction=store.Append(artifactsId,"compaction",artifactTwo.id,new Dictionary<string,object>{{"summary","成果摘要"},{"firstKeptEntryId",null},{"tokensBefore",40000},{"reason","manual"}});store.SetLeaf(artifactsId,artifactCompaction.id);
+  check(store.Projection(artifactsId).Count==1&&store.Artifacts(artifactsId).Count==2&&store.Artifacts(artifactsId)[0].Count==5,"artifacts stay reachable across a compaction boundary even though the projection drops earlier messages");
+  string dedupeId=NewId();string dedupePath=SessionPath(root,dedupeId);var dedupeLines=new List<string>{HeaderLine(dedupeId,"去重会话")};string dedupeParent=null;
+  string AddDedupeArtifact(object data){string entryId=NewId();dedupeLines.Add(Seal(new{type="artifact",id=entryId,parentId=dedupeParent,created=DateTime.UtcNow.ToString("o"),data}));dedupeParent=entryId;return entryId;}
+  AddDedupeArtifact(new{itemId=itemA,taskId=artifactTask,name="旧名字",created=DateTime.UtcNow.ToString("o")});
+  AddDedupeArtifact(new{itemId="not-hex",taskId=artifactTask,name="坏条目",created=DateTime.UtcNow.ToString("o")});
+  AddDedupeArtifact(new{itemId=itemB,taskId=artifactTask,name="报告二",created=DateTime.UtcNow.ToString("o")});
+  AddDedupeArtifact(new{taskId=artifactTask,name="缺少编号",created=DateTime.UtcNow.ToString("o")});
+  string newerA=AddDedupeArtifact(new{itemId=itemA,taskId=artifactTask,name="新名字",created=DateTime.UtcNow.ToString("o")});
+  dedupeLines.Add(Seal(new{type="leaf",id=NewId(),parentId=(string)null,created=DateTime.UtcNow.ToString("o"),data=new{entryId=newerA}}));
+  File.WriteAllText(dedupePath,String.Join("\n",dedupeLines)+"\n",new UTF8Encoding(false));
+  var dedupeArtifacts=new AgentSessionStore(root).Artifacts(dedupeId);
+  check(dedupeArtifacts.Count==2&&dedupeArtifacts.Select(row=>Convert.ToString(row["name"])).SequenceEqual(new[]{"新名字","报告二"})&&dedupeArtifacts.Select(row=>Convert.ToString(row["itemId"])).SequenceEqual(new[]{itemA,itemB}),"artifact reads dedupe by item keeping the newest record and skip malformed rows instead of failing the session");
+  string capArtifactsId=NewId();string capArtifactsPath=SessionPath(root,capArtifactsId);var capLines=new List<string>{HeaderLine(capArtifactsId,"成果上限")};string capParent=null;var capEntryIds=new List<string>();
+  for(int n=0;n<205;n++){string entryId=NewId();capEntryIds.Add(entryId);capLines.Add(Seal(new{type="artifact",id=entryId,parentId=capParent,created=DateTime.UtcNow.ToString("o"),data=new{itemId=NewId(),taskId=artifactTask,name="成果"+n,created=DateTime.UtcNow.ToString("o")}}));capParent=entryId;}
+  capLines.Add(Seal(new{type="leaf",id=NewId(),parentId=(string)null,created=DateTime.UtcNow.ToString("o"),data=new{entryId=capParent}}));
+  File.WriteAllText(capArtifactsPath,String.Join("\n",capLines)+"\n",new UTF8Encoding(false));
+  var cappedArtifacts=new AgentSessionStore(root).Artifacts(capArtifactsId);
+  check(cappedArtifacts.Count==AgentSessionStore.MaxArtifacts&&Convert.ToString(cappedArtifacts[0]["entryId"])==capParent&&cappedArtifacts.Count(row=>Convert.ToString(row["entryId"])==capEntryIds[0])==0,"artifact reads cap at 200 newest records and drop the oldest branch entries");
+  check(Rejects(()=>store.Artifacts(artifactsId,NewId()))&&Rejects(()=>store.Artifacts(NewId()))&&Rejects(()=>store.BranchEntries(artifactsId,"../"+NewId())),"artifact and branch reads reject unknown leaves and missing or invalid sessions");
+ }
+}

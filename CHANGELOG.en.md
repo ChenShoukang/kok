@@ -1,5 +1,113 @@
 # kok changelog
 
+## v0.11.1 · Preview
+
+- PPT creation loads the explicitly Apache-2.0 visual guidance distributed in baoyu-design at a pinned commit, with the source and license retained. Four themes and nine native editable compositions share typography and geometry across preview, editor and export.
+- Presentation tasks automatically load the design workflow. Dense copy is rejected for revision rather than cropped. Comparisons, processes, cards and metrics keep supplied data and notes; targeted revision preserves other pages.
+- Double-click slide text to edit with automatic persistence; properties stay optional. Duplicate, drag-reorder, delete and undo are available beside page thumbnails, with one current-page Agent entry. Saved cover and section titles remain correct.
+- Distinguish output truncation from input-context overflow. Automatically adjust output within existing request, cost and reserve limits, with at most two additional attempts; long-form document creation gets a suitable initial allowance.
+- Never execute truncated proposals. Complete regenerated changes retain native approval. Streamed final text deltas and trailing usage are retained.
+- Response incomplete offers one Continue in parts action that preserves the original goal and current materials without sending automatically. Other failed-task continuation also restores the goal.
+- See [output recovery](docs/OUTPUT_RECOVERY_0.11.1.md) and [validation](docs/VALIDATION_0.11.1.md).
+
+## v0.10.13 · Preview
+
+- Creative-project P4 connects three sources, a report, manual and targeted revisions, an eight-page presentation, continuation after a native restart, named-checkpoint restore and DOCX / PPTX export.
+- Default project scope includes recent outputs alongside source material, capped at 24 distinct files. Explicit selections and folders retain priority.
+- Native session sync tracks task event sequences so continuation after a request for input retains later messages and existing artifacts without duplicates.
+- See the [acceptance workflow](docs/CREATIVE_ACCEPTANCE_0.10.13.md) and [validation](docs/VALIDATION_0.10.13.md) for fixture boundaries and results.
+
+## v0.10.12 · Preview
+
+- Creative-project P3: previews combine native project artifacts, durable branch artifacts and current transcript results, deduplicated by file. Project outputs remain accessible across branches, sessions and restarts.
+- Session restore retains the selected historical branch and avoids replaying finished task cards. Artifact tree nodes support switching and forking; delayed reads remain bound to their session and library.
+- Historical versions support named checkpoints, renaming and removal. Named versions have priority within the 100-entry limit. Encrypted metadata uses atomic replacement and backup; failed writes roll back cached names without changing document content.
+- See [validation](docs/VALIDATION_0.10.12.md) and [creative continuation](docs/CREATIVE_CONTINUATION_0.10.12.md). P4 remains the next milestone.
+
+## v0.10.11 · Preview
+
+- Document versions panel: the managed-document editor gains a **Versions** button listing current and historical versions (time/title/source/state); selecting one shows line diffs (`+N/−M`) and any version can be restored. Restore is a compensating operation (itself undoable) and synchronizes editor body/signature/save state; formats without extractable text show hash/size; the private folder is excluded.
+- Pre-save diff: the save button / Ctrl+S first shows a **save confirmation** with the saved→pending line diff when content changed; cancel writes nothing and keeps the editor dirty, confirm proceeds. Auto-save and retry logic are unchanged.
+- Local-revision entries: select text in a document → **Let Agent revise this passage**; the current slide in a presentation → **Let Agent revise this page**. Prompts contain only that passage/page plus "change only this, preserve the rest" constraints and only fill the composer with document/presentation context — never auto-sent, never starts a task.
+- Native actions `documentVersions` / `documentVersion` (with a `current` sentinel) / `documentVersionRestore` (write-classified, rejects `current`); UI native-action catalog updated.
+- Limits: diffs are computed locally (no model requests); version lists cap at 100 entries and text diffs have line/character caps; DOCX versions are byte-restore + hash only; named checkpoints and presentation version comparison are not included; approval, evidence review, undo and sandbox semantics are unchanged.
+- See [v0.10.11 validation](docs/VALIDATION_0.10.11.md).
+
+## v0.10.10 · Preview
+
+- Creative projects (first version): spaces extend into project records (`kind="project"`: goal, style/acceptance requirements, status, materials, artifacts, related sessions). Create/edit/open projects in **My works** and continue any time; projects live in the existing workspace + Operation audit/undo chain with no new storage table.
+- Continue in Agent: `AgentUi.openProject` opens a fresh session with a project banner (goal/material/artifact counts, clearable, kept across new sessions); `agentTaskStart` accepts an optional `projectId`; the host validates the project, builds a <=4000-character project brief (goal/requirements/material count/existing artifacts) injected as the stable first guidance segment (byte-identical per task, cache-friendly), and auto-scopes to project materials (<=24) when the caller omitted scope; explicit scopes are preserved.
+- Session/artifact writeback: task start appends the session to project `sessions`; terminal state links created/edited artifacts into `artifacts` (deduped, audited/undoable, failures never break the task). When a project is active the artifact panel prefers durable project artifacts, which stay visible after starting a new session instead of depending on the current conversation.
+- Native version-history foundation (UI next round): `ListVersions`/`ReadVersion`/`RestoreVersion` — list a work's versions from Operations + encrypted version files, read before/after texts (MD/TXT/DOCX) and hashes, and restore any version through a compensating operation (itself undoable; disabled in the private folder).
+- Limits: projects are space records (the 空间 page may list them too until filtered); the project brief is host-generated and marked untrusted; version UI and manual-edit diffs are not wired this round; approval, evidence review, undo and sandbox semantics are unchanged.
+- See [v0.10.10 validation](docs/VALIDATION_0.10.10.md).
+
+## v0.10.9 · Preview
+
+- Codemode: an approved `run_code` can now call **read-only** library tools inside the QuickJS sandbox through `tools.search_library` / `tools.read_items` / `tools.recall_result` / `tools.search_memory` / `tools.list_collections` and combine several reads into one computation. The existing sandbox and limits still apply (no file/network/DOM, 16 MB, 7 s, output <= 16000) with no new write or approval capability. Implementation uses a sync-QuickJS replay protocol (record requests, host executes batches, re-run with cache; <=8 per batch, <=24 per run, <=8000 chars per result, <=32000 total, <=6 rounds); nested reads are ephemeral evidence and never create task receipts/journal entries. See [Codemode](docs/CODEMODE_0.10.9.md).
+- Headless RPC: `kok-agent.exe --rpc` starts a long-lived JSONL command loop (`ping` / `prompt` / `steer` / `follow_up` / `abort` / `state` / `compact` / `shutdown`) with serialized `response` / `event` / `result` lines on stdout, one active task, read-only policy and per-task timeout; EOF/Ctrl+C/combination errors have explicit exit codes. Suitable for editors, CI and external tools. See [Headless RPC](docs/AGENT_RPC_0.10.9.md).
+- New native action `agentSandboxTools` (nested read batches with whitelist/limits/ticket checks) and the matching UI native-action entry; the `run_code` tool description changed while its schema and approval card stay the same.
+- Limits: `tools.*` is read-only and its results cannot serve as current `finish_task` receipts; RPC is read-only and does not load conversation history; event contract and task/session data formats are unchanged; approval, evidence review, undo and sandbox semantics are unchanged.
+- See [v0.10.9 validation](docs/VALIDATION_0.10.9.md).
+
+## v0.10.8 · Preview
+
+- Declarative extension packages: a package directory (`plugin.json`) can ship Agent Skills `SKILL.md` skills and Markdown prompt templates. Packages are discovered from `<app>\ui\plugins`, `%USERPROFILE%\.kok\plugins` and `<library>\.kok\plugins` (first root wins on name), up to 32 packages, manifest <= 64 KB, every path must stay inside the package. Skills join `<available_skills>` and `load_skill`; prompt templates expand into the composer with `/prompt:name args`. **No script or code is ever executed**; unknown fields are ignored as inert data.
+- Agent gains an **Extensions** panel listing installed packages (name/version/description/skill and prompt counts), the discovered skill count and prompt templates, with a **Reload** action that hot-refreshes (and refreshes the skill picker). `/prompt:` only fills the composer — it never auto-sends and never persists the raw command.
+- Native actions `agentPluginsList` / `agentPluginsReload` / `agentPromptRead`; `AgentSkills.Discover` accepts extra (plugin) skill roots and `load_skill` can read them; prompt templates support `$ARGUMENTS` replacement and append-when-missing behavior.
+- Limits: packages are declarative text only — no code entry point, no network/file APIs, no hook registration; skills/templates only reach the prompt or the composer; event contract and task/session data formats are unchanged; approval, evidence review, undo and sandbox semantics are unchanged.
+- See [v0.10.8 validation](docs/VALIDATION_0.10.8.md).
+
+## v0.10.7 · Preview
+
+- Headless Agent CLI: `kok-agent.exe --goal "..." --print|--json` (the same implementation as `kok.exe agent ...`) runs one read-only task without opening a window and reuses the same native engine, encrypted task records, retrieval and evidence checks. `kok-agent.exe` is a console-subsystem launcher so scripts/CI get reliable exit codes and ordered output; JSON mode emits `header → event → result` JSONL, print mode emits only the final answer; exit codes distinguish completed/partial/failure/interruption; supports `--data-dir`, scope, budget, request limit, context, timeout and session naming. See [Agent command line](docs/AGENT_CLI_0.10.7.md).
+- Optional provider cache key: AI service advanced settings add **Enable provider cache key**; when enabled, `prompt_cache_key` is sent per session within a task (normal tools requests only; compaction, JSON-protocol and translation requests never carry it). Off by default and a no-op for providers that do not support the field.
+- Cache-hit display: the Agent usage line shows `缓存命中 {tokens} tokens · {percent}%` when `cachedTokens > 0`.
+- Limits: the headless entry is read-only; writes still go through desktop per-card approval; `--approval` / `--allow-writes` are rejected; no conversation history is loaded; no headless RPC yet (planned); event contract and task/session data formats are unchanged; approval, evidence, undo and sandbox semantics are unchanged.
+- See [v0.10.7 validation](docs/VALIDATION_0.10.7.md).
+
+## v0.10.6 · Preview
+
+- Agent branch-tree UI: a toolbar **Branch tree** button opens the session-branch panel, listing messages in parent/child order with previews, the current branch marker, compaction summaries and labels; task rows show as a subtle line.
+- In-place branch switching: **Switch here** on any message calls `agentSessionSwitch`, rebuilds the visible history from the native session projection (user/agent messages), clears draft/pending-continuation state and lets the next task continue on that branch; switching is blocked while a task runs.
+- Fork from any node and rename: the tree panel forks from a node through the existing `agentSessionFork` and renames sessions inline (`agentSessionRename`, 1–64 chars); `/tree` opens the panel.
+- Native support: new `ProjectionMessages` (keeps Pi `firstKeptEntryId` compaction semantics and returns entry ids); `agentSessionProject` / `agentSessionSwitch` / `agentSessionFork` messages carry `id`; `agentSessionTree` entries gain role, a single-line 160-char preview, label target and compaction reason (all additive).
+- Limits: switching rebuilds only the user/agent transcript, so tool cards from other branches are not replayed; no LLM branch summarization this release (`branch_summary` structure stays reserved); event contract and task/session data formats are unchanged; approval, evidence review, undo and sandbox semantics are unchanged.
+- This completes M1 (skill directories + session tree UI). See [v0.10.6 validation](docs/VALIDATION_0.10.6.md).
+
+## v0.10.5 · Preview
+
+- Pi / Agent-Skills style skill directories: `SKILL.md` files are discovered recursively from `ui/skills`, `%USERPROFILE%\.agents\skills` and the library's `.agents/skills`; frontmatter name / description / disable-model-invocation are parsed, bodies cap at 20000 chars, at most 100 skills, cached by file revision. Startup injects only an `<available_skills>` index (name, description, location, XML-escaped); the model loads the full body on demand through the read-only `load_skill` tool (untrusted reference text, no script execution).
+- Native actions `agentSkillsList` / `agentSkillsReload` / `agentSkillRead`; the Agent skill picker adds a "discovered skills" group and a refresh button; `/skill:name args` starts a task with that skill; selecting a skill sends only the short `[Skill: name] Use load_skill ...` instruction while the body is loaded by the tool, keeping the prompt prefix stable.
+- M0-4 internal extension seams: `AgentToolHooks` (PrepareRequest / TransformContext / BeforeToolCall / AfterToolCall / FinishTurn), `AgentToolSpec.Mode` (serial/parallel execution) and reserved `TerminateHint`; with no hooks registered behavior is identical to before, preparing declarative extensions and tool middleware.
+- Limits: skills are read-only text and never execute scripts; same-name skills resolve app → user → library first; the four bundled app workflows also appear in the prompt index; event contract and task/session data formats are unchanged; approval, evidence review, undo and sandbox semantics are unchanged.
+- See [v0.10.5 validation](docs/VALIDATION_0.10.5.md).
+
+## v0.10.4 · Preview
+
+- Pi-style context compaction: the trigger now uses the latest real request usage (input+output plus an estimate of what followed) and supports `reserveTokens` / `keepRecentTokens` (0 = auto). Recent turns are kept within the token budget and older whole turns are summarized, never splitting a tool call from its results. Context filtering follows: the first user goal message is always kept, while older turns and older user instructions move into the summary.
+- Summary format is the fixed six sections (Goal / Constraints & Preferences / Progress / Key Decisions / Next Steps / Critical Context) plus `<read-files>` / `<modified-files>`, merged into the previous summary via an UPDATE instruction; tool results are clipped to 2000 chars per item; summary language follows the task goal.
+- Manual compaction `agentTaskCompact` while a task runs (instructions <= 400 chars); a provider context overflow emits `context.recovery`, compacts and retries exactly once. Compaction requests record `purpose=compaction` and do not replace the context-usage baseline.
+- Compaction results are persisted into the native session tree as `compaction` entries (`firstKeptEntryId`, `tokensBefore`, reason, read/modified file lists); session projection and fork follow Pi's kept-boundary semantics, with the summary entering the projection as an untrusted assistant message.
+- Snapshots add `contextUsage` (tokens/window/reserveTokens/keepRecentTokens/percent/source/lastCompaction); Agent shows the usage row (measured/estimated), a running-only "Compact context" button and a collapsible summary with an untrusted marker; advanced settings expose the reserve/keep tokens.
+- Limits: automatic compaction needs at least 2 remaining requests, manual and overflow recovery need 1; summaries must be 20–6000 chars; the event contract moves to v3 (old task records load unchanged); Pi's split-user-span cut is not implemented (the first goal message is always kept), and `stopReason=length` shares the single overflow recovery path. Approval, evidence, undo and sandbox semantics are unchanged.
+- See [v0.10.4 validation](docs/VALIDATION_0.10.4.md).
+
+## v0.10.3 · Preview
+
+- Native Agent session tree: each session is written to a local encrypted append-only record (`<data dir>/agent-sessions/<sessionId>.jsonl.sealed`, one DPAPI line per entry) with Pi-style message, task marker, usage/model/label entries and a leaf branch pointer; supports list, read, tree, projection, switch leaf, fork, clone, rename, delete and labels. Legacy UI sessions (`agent-sessions.sealed`) are imported once into linear native entries while the original file is preserved.
+- Session actions: `agentSessionList` / `agentSessionTree` / `agentSessionProject` / `agentSessionFork` / `agentSessionSwitch` / `agentSessionRename` / `agentSessionDelete` / `agentSessionLabel`; task start now carries `sessionLeafId` so new messages attach to the active branch. Terminal task events are synced into the session tree idempotently (task markers deduplicate).
+- UI: every user or Agent message gains **Fork from here**. Forking creates a new session that keeps only the messages before that point and uses the native branch projection as the next task's model history; the fork title survives later saves. Legacy sessions keep rendering from the existing UI store.
+- Limits: at most 64 native sessions per library, 4096 entries / 8 MB per session; records use the current Windows account's DPAPI and do not migrate across accounts or machines; fork creates a new session instead of Pi's in-place `/tree` switch (M1); compaction / branch_summary / context_edit entries are reserved for M0-3. Approval, evidence review, undo and sandbox semantics are unchanged.
+- See [v0.10.3 validation](docs/VALIDATION_0.10.3.md).
+
+## v0.10.2 · Preview
+
+- Agent task input now matches Pi: Enter while a task runs inserts a steering message (it enters the same task after the next tool batch without interrupting the reply being streamed and without skipping pending tool calls); the clock button queues a follow-up (when the task would otherwise finish, the same task continues instead of starting a new one); stopping, failing or reaching the request limit returns not-yet-run input to the composer. Native actions are `agentTaskSteer` / `agentTaskFollowUp`; snapshots add `queue` / `restoredInputs`.
+- The event contract moves to v2 (`input.queued` / `input.consumed` / `input.restored`). Old task records load unchanged and existing encrypted events are never rewritten.
+- Composer and queue drawer updates: while running the drawer shows "pending · N" with "next turn" / "after finish" tags; stopping returns input to the composer instead of leaving it in a local queue that starts a new task.
+- No library, document or work data-format changes. See [v0.10.2 validation](docs/VALIDATION_0.10.2.md).
+
 ## v0.10.1 · Preview
 
 - The top level is organized by what you are doing: Agent, My works and Library. File types and tools move inside those areas; the rail keeps only the three destinations, the private folder and Settings. Legacy routes (Today, Spaces, Clips, smart collections, Recipes, Review, downloads, smart organize, knowledge graph) remain reachable.

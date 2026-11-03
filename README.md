@@ -8,9 +8,9 @@
 
 [下载已发布版本](https://github.com/ChenShoukang/kok/releases) · [帮助中心](docs/help/index.md) · [使用指南](docs/GUIDE.md) · [English](README.en.md) · [格式支持](docs/FORMATS.md)
 
-**v0.10.1 Preview** 把一级入口按使用场景收敛为 **Agent、我的作品、资料库**：Agent 仍是主要协作入口，新增的“我的作品”承载新建、继续编辑、项目空间、摘录、配方与已有媒体的剪辑入口，“资料库”保留独立的观看、收听、阅读，并在首页提供继续观看与阅读、收藏、最近打开、分类和资料库工具。文件类型与工具不再占据一级入口，`今天/空间/摘录/智能集合/配方/回顾/下载/智能整理/知识图谱` 等旧页面仍可通过区域内部入口和路由访问。本版不改变数据格式；小说章节与设定管理、音视频从零生成仍分阶段接入。见 [Agent 首页与交互](docs/AGENT_HOME_UI.md)、[功能结构](docs/CREATION_PRODUCT_FLOW.md)、[本次验证](docs/VALIDATION_0.10.1.md) 与 [路线图](ROADMAP.md)。
+**v0.11.1 Preview** 为 PPT 制作内置 baoyu-design 中许可明确的视觉设计指引，提供四套主题与九种可编辑版式，默认采用杂志风格；预览、局部改稿和导出保持同一套页面结构。回答过长时自动有限恢复，仍未完成可“分段继续”，原目标和资料保留。见[PPT 设计](docs/PPT_DESIGN_0.11.1.md)、[恢复体验](docs/OUTPUT_RECOVERY_0.11.1.md)和[本次验证](docs/VALIDATION_0.11.1.md)。
 
-![kok v0.10.1 我的作品，使用内置原创示例](docs/screenshots/works-zh.png)
+![kok 我的作品，使用内置原创示例](docs/screenshots/works-zh.png)
 
 ## 不只是把文件放在一起
 
@@ -38,7 +38,7 @@
 
 ## 开始使用
 
-1. 本地 v0.10.1 预览包为 `dist/kok-0.10.1-win-x64.zip`；公开版本可从 [Releases](https://github.com/ChenShoukang/kok/releases) 下载。核对随附 SHA-256，完整解压后运行 `kok.exe`，公开版本号以 Release 页面为准。
+1. 本地 v0.11.1 预览包为 `dist/kok-0.11.1-win-x64.zip`；公开版本可从 [Releases](https://github.com/ChenShoukang/kok/releases) 下载。核对随附 SHA-256，完整解压后运行 `kok.exe`，公开版本号以 Release 页面为准。
 2. 首次选择**纯净模式**或**智能模式**；不配置 AI 也能使用本地基础功能。
 3. 点击“体验示例”或拖入自己的文件，先浏览资料，再试着创建一个空间或保存一条摘录。
 
@@ -65,7 +65,7 @@
 
 ## 文档与开发
 
-[帮助中心](docs/help/index.md) · [使用指南](docs/GUIDE.md) · [文档目录](docs/README.md) · [Agent 能力与边界](docs/AGENT_0.9.3.md) · [验证记录](docs/VALIDATION_0.10.1.md) · [功能结构](docs/CREATION_PRODUCT_FLOW.md) · [实现进度](docs/WAREHOUSE_0.8.1.md) · [反馈](https://github.com/ChenShoukang/kok/issues/new/choose) · [安全报告](SECURITY.md)
+[帮助中心](docs/help/index.md) · [使用指南](docs/GUIDE.md) · [文档目录](docs/README.md) · [创作项目](docs/CREATIVE_PROJECTS_0.10.10.md) · [版本与局部改稿](docs/VERSIONS_0.10.11.md) · [无界面 CLI](docs/AGENT_CLI_0.10.7.md) · [扩展包](docs/PLUGINS_0.10.8.md) · [验证记录](docs/VALIDATION_0.11.1.md) · [路线图](ROADMAP.md)
 
 ```powershell
 npm ci --omit=optional

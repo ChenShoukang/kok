@@ -25,12 +25,15 @@ namespace kok {
         sealed class ToolCallDraft {public string id="",name="";public StringBuilder arguments=new StringBuilder();}
         // OpenAI-compatible function calling (DeepSeek, OpenAI, Qwen, SiliconFlow, OpenRouter, Ollama, LM Studio ...).
         // Messages are built by the host in a stable order so providers with automatic prefix caching can reuse earlier rounds.
-        public async Task<AgentModelTurn> AgentToolChat(List<object> messages,object[] tools,Func<string,bool> exists,CancellationToken token,Action<string> onDelta,Action<ChatUsage> onUsage,Action<int> beforeRequest,int maxTokens,Action<int> onStatus=null,bool requireTools=false){
+        public async Task<AgentModelTurn> AgentToolChat(List<object> messages,object[] tools,Func<string,bool> exists,CancellationToken token,Action<string> onDelta,Action<ChatUsage> onUsage,Action<int> beforeRequest,int maxTokens,Action<int> onStatus=null,bool requireTools=false,string cacheKey=null){
             if(maxTokens<128||maxTokens>8000)throw new ArgumentOutOfRangeException("maxTokens");
             AiConfig c=ConfigSnapshot();if(String.IsNullOrWhiteSpace(c.model))throw new InvalidDataException("请先在设置中配置 AI 翻译接口和模型。");Uri endpoint=Endpoint(c.endpoint);string key=ReadKey(c);
             var body=new Dictionary<string,object>{{"model",c.model},{"messages",messages},{"tools",tools},{"tool_choice",requireTools?"required":"auto"},{"stream",true}};AddTokenLimit(body,c,maxTokens);
             bool deepseek=endpoint.Host.Equals("api.deepseek.com",StringComparison.OrdinalIgnoreCase),openai=endpoint.Host.Equals("api.openai.com",StringComparison.OrdinalIgnoreCase);
             if(deepseek)body["thinking"]=new{type="disabled"};if(openai)body["stream_options"]=new{include_usage=true};
+            // Optional OpenAI-compatible prompt cache key: only an explicit enabled setting and a canonical
+            // 32-hex session id add the field, so disabled or empty requests stay byte-identical.
+            if(c.promptCache&&!String.IsNullOrEmpty(cacheKey)&&System.Text.RegularExpressions.Regex.IsMatch(cacheKey,"^[a-f0-9]{32}$"))body["prompt_cache_key"]=cacheKey;
             string json=Library.Json.Serialize(body);if(json.Length>400000)throw new InvalidDataException("Agent 任务过长或已达到步骤上限，请缩小范围。");
             // Estimate the entire serialized request, including tool definitions.
             if(beforeRequest!=null)beforeRequest(AgentTokenBudget.Estimate(json));
@@ -59,7 +62,7 @@ namespace kok {
                     }
                 }}catch(Exception ex){if(token.IsCancellationRequested)throw new OperationCanceledException(token);if(timeout.IsCancellationRequested)throw new TimeoutException("翻译请求超时，请稍后重试或更换模型。");if(ex is AgentToolsUnsupported||ex is AgentFailure)throw;if(ex is HttpRequestException||ex is IOException&&!(ex is InvalidDataException))throw new HttpRequestException("无法连接翻译服务，请检查接口地址与网络。");throw new AgentFailure("response","AI 未返回有效回答，请重试。",true);}
             }
-            token.ThrowIfCancellationRequested();if(finish=="length")throw new AgentFailure("context","AI 回答被截断，请缩小提问范围后重试。");
+            token.ThrowIfCancellationRequested();if(finish=="length")throw new AgentFailure("output_limit","回答较长，本轮尚未完成。可以分段继续完成。");
             return ToTurn(text.ToString().Trim(),calls.Values.ToList(),exists);
         }
         static void Absorb(Dictionary<string,object> part,StringBuilder text,SortedDictionary<int,ToolCallDraft> calls,Action<string> onDelta){

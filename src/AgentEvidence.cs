@@ -2,6 +2,14 @@ using System;
 using System.Linq;
 namespace kok {
  internal static class AgentEvidence {
+  internal static bool DocumentCurrent(Library library,AgentTaskState task,AgentCall call){
+   if(call.stamp==null||call.result==null||!call.result.ContainsKey("id"))return true;
+   string id=Convert.ToString(call.result["id"]),expected=call.stamp;
+   if(task!=null)foreach(var later in task.calls.Where(c=>c.sequence>call.sequence&&c.status=="done"&&(c.tool=="replace_document_text"||c.tool=="edit_presentation")&&c.result!=null&&Convert.ToString(c.result["id"])==id).OrderBy(c=>c.sequence)){
+    if(!later.result.ContainsKey("documentBeforeStamp")||Convert.ToString(later.result["documentBeforeStamp"])!=expected)return false;expected=later.stamp;
+   }
+   return library.AgentCreatedStamp(id)==expected;
+  }
   // Later writes count only when their approved before/after chain is continuous.
   internal static bool ChangesCurrent(Library library,AgentTaskState task,AgentCall call){
    if(call.changes==null)return true;

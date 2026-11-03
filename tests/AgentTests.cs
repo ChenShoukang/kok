@@ -48,6 +48,9 @@ class AgentTests {
   check(repair!=null&&repair.messages.Count==2&&Library.Json.Serialize(repair.messages[1]).Contains("Error: unknown tool"),"an invalid native call becomes a repair round that answers the call with its error");
   provider.status=HttpStatusCode.BadRequest;provider.body="{\"error\":{\"code\":\"unsupported_parameter\",\"param\":\"tools\"}}";bool unsupported=false;try{ask();}catch(AgentToolsUnsupported){unsupported=true;}
   check(unsupported,"a provider that rejects tools signals the JSON fallback instead of failing the task");
+  provider.status=HttpStatusCode.OK;provider.type="text/event-stream";provider.body=chunk(Library.Json.Serialize(new{choices=new[]{new{delta=new{content="已接收前文"}}}}))+chunk(Library.Json.Serialize(new{choices=new[]{new{delta=new{content="与末尾"},finish_reason="length"}}}))+chunk(Library.Json.Serialize(new{choices=new object[0],usage=new{prompt_tokens=70,completion_tokens=900}}))+"data: [DONE]\n\n";
+  string partial="";ChatUsage cutUsage=null;AgentFailure cutFailure=null;try{service.ChatAsync("kok Agent","source text","source","goal",null,"",false,CancellationToken.None,delta=>partial+=delta,900,value=>cutUsage=value).GetAwaiter().GetResult();}catch(AgentFailure failure){cutFailure=failure;}
+  check(cutFailure!=null&&cutFailure.kind=="output_limit"&&partial=="已接收前文与末尾"&&cutUsage!=null&&cutUsage.outputTokens==900,"length-finished SSE keeps its final text delta and trailing usage before reporting output truncation");
   check(Rejects(()=>AgentRules.Parse("{\"reply\":\"x\",\"actions\":[{\"tool\":\"create_presentation\",\"args\":{\"title\":\"Deck\",\"slides\":[]}}]}",exists)),"presentations need at least one slide");
   library.Update(id,new Dictionary<string,object>{{"tags",new List<string>{"design"," design ","plan"}}});
   check(library.Find(id).tags.SequenceEqual(new[]{"design","plan"}),"tag patches are trimmed, de-duplicated and reversible through update");

@@ -7,7 +7,7 @@ $source = Join-Path $root 'dist\kok'
 $stage = Join-Path $root ('dist\release-' + [guid]::NewGuid().ToString('N') + '\kok')
 New-Item -ItemType Directory -Force $stage | Out-Null
 # Explicit allowlist: never include the data directory or development test binaries.
-foreach ($file in @('kok.exe','kok.exe.config','Microsoft.Web.WebView2.Core.dll','Microsoft.Web.WebView2.WinForms.dll','WebView2Loader.dll','README.md','README.en.md','ROADMAP.md','ROADMAP.en.md','CHANGELOG.md','CHANGELOG.en.md','SECURITY.md','SECURITY.en.md','LICENSE','THIRD_PARTY_NOTICES.md','SUPPORT.md','CODE_OF_CONDUCT.md','CONTRIBUTING.md','WEBVIEW2-LICENSE.txt','WEBVIEW2-NOTICE.txt')) {
+foreach ($file in @('kok.exe','kok-agent.exe','kok.exe.config','Microsoft.Web.WebView2.Core.dll','Microsoft.Web.WebView2.WinForms.dll','WebView2Loader.dll','README.md','README.en.md','ROADMAP.md','ROADMAP.en.md','CHANGELOG.md','CHANGELOG.en.md','SECURITY.md','SECURITY.en.md','LICENSE','THIRD_PARTY_NOTICES.md','SUPPORT.md','CODE_OF_CONDUCT.md','CONTRIBUTING.md','WEBVIEW2-LICENSE.txt','WEBVIEW2-NOTICE.txt')) {
     Copy-Item -LiteralPath (Join-Path $source $file) -Destination $stage -Force
 }
 & (Join-Path $root 'tools\copy-runtime-ui.ps1') -Destination (Join-Path $stage 'ui')
