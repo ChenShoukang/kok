@@ -64,6 +64,18 @@ namespace kok {
  internal static class WorkspaceModule {
   public static KokModule Create(){var schema=CapabilitySchema.Obj(CapabilitySchema.Fields("kind",new Dictionary<string,object>{{"type","string"},{"enum",new[]{"space","clip","query","recipe"}}},"id",CapabilitySchema.Str(32),"value",CapabilitySchema.Obj(additional:true)),new[]{"kind","id"});return new KokModule{Name="workspace",Ui=true,Actions=new[]{
    ModuleDefinitions.Action("workspaceState",Need.None,false,(c,a)=>Task.FromResult(c.Library.WorkspaceSnapshot()),CapabilitySchema.Obj()),
+   ModuleDefinitions.Action("projectDeliveries",Need.NormalLibrary,false,async(c,a)=>{
+    var rows=await Task.Run(()=>c.Library.ReadProjectDeliveries(ModuleContext.Text(a,"projectId")),c.Token);
+    c.Policy.Ensure(Need.NormalLibrary,"workspace");
+    return rows;
+   },CapabilitySchema.Obj(CapabilitySchema.Fields("projectId",CapabilitySchema.Str(32)),new[]{"projectId"})),
+   ModuleDefinitions.Action("projectAddArtifact",Need.NormalLibrary,true,(c,a)=>{
+    using(c.BeginWrite()){
+     var linked=c.Library.ProjectLinkArtifact(ModuleContext.Text(a,"projectId"),ModuleContext.Text(a,"itemId"));
+     if(linked)c.Notify("libraryChanged",null);
+     return Task.FromResult((object)linked);
+    }
+   },CapabilitySchema.Obj(CapabilitySchema.Fields("projectId",CapabilitySchema.Str(32),"itemId",CapabilitySchema.Str(32)),new[]{"projectId","itemId"})),
    ModuleDefinitions.Action("workspaceSave",Need.None,true,(c,a)=>Task.FromResult((object)c.Library.ProposeResource(ModuleContext.Text(a,"kind"),ModuleContext.Text(a,"id"),a.ContainsKey("value")?Library.Json.Serialize(a["value"]):null)),schema),
    ModuleDefinitions.Action("queryCollection",Need.None,false,async(c,a)=>{var result=await Task.Run(()=>c.Library.QueryCollection(AgentTaskState.Get<CollectionQuery>(a,"query")),c.Token);c.Policy.Ensure(Need.None,"workspace");return (object)result;},CapabilitySchema.Obj(CapabilitySchema.Fields("query",CapabilitySchema.Obj(additional:true)),new[]{"query"})),
    ModuleDefinitions.Action("fullTextSearch",Need.None,false,async(c,a)=>{var result=await Task.Run(()=>c.Library.FullTextSearch(ModuleContext.Text(a,"query")),c.Token);c.Policy.Ensure(Need.None,"workspace");return (object)result;},CapabilitySchema.Obj(CapabilitySchema.Fields("query",CapabilitySchema.Str(200)),new[]{"query"})),

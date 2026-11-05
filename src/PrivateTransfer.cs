@@ -72,6 +72,7 @@ namespace kok {
    foreach(var id in ids){string thumb=Path.Combine(DataDir,"thumbs",id+".jpg");if(File.Exists(thumb))File.Delete(thumb);
     using(var hash=System.Security.Cryptography.SHA256.Create()){string view=Path.Combine(DataDir,"translations","view-"+BitConverter.ToString(hash.ComputeHash(Encoding.UTF8.GetBytes(id))).Replace("-","").ToLowerInvariant()+".json");if(File.Exists(view))File.Delete(view);}
    }
+   ForgetProjectDeliveries(ids);
    File.Delete(PrivateMovePath);RememberItems();
   }
  }

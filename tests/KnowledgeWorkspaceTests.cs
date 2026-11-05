@@ -128,5 +128,21 @@ class KnowledgeWorkspaceTests {
   check(spaces(library).First(space=>space.id==writeProjectId).artifacts.Contains(continued.id)&&service.SessionStore.Artifacts(synthetic.options.sessionId).Any(row=>Convert.ToString(row["itemId"])==continued.id),"a continued task registers its later artifacts in both the project and durable session index");
   int continuedOps=operationStore.List().Count,continuedEntries=service.SessionStore.Entries(synthetic.options.sessionId).Count;service.WriteProjectArtifacts(synthetic);service.WriteSessionArtifacts(synthetic);
   check(operationStore.List().Count==continuedOps&&service.SessionStore.Entries(synthetic.options.sessionId).Count==continuedEntries&&service.SessionStore.Artifacts(synthetic.options.sessionId).Count==3,"repeated terminal callbacks dedupe artifacts after continuation without extra operations or session entries");
+  string copyPath=Path.Combine(root,"delivery-copy.md");
+  byte[] copyBytes=Encoding.UTF8.GetBytes("Exported deliverable");
+  File.WriteAllBytes(copyPath,copyBytes);
+  library.Import(new[]{copyPath},null);
+  var copy=library.Db.items.Single(item=>item.path==copyPath);
+  check(library.TryRecordProjectDelivery(deliverable,copy,copyBytes),"a successful export of a linked project artifact records a receipt");
+  List<Dictionary<string,object>> Deliveries(Library target,string id)=>Library.Json.Deserialize<List<Dictionary<string,object>>>(Library.Json.Serialize(target.ReadProjectDeliveries(id)));
+  var restarted=new Library(library.DataDir);
+  var delivery=Deliveries(restarted,linkProjectId).Single();
+  check(Convert.ToString(delivery["path"])==copyPath&&Convert.ToString(delivery["exportId"])==copy.id&&Convert.ToBoolean(delivery["available"])&&Deliveries(restarted,writeProjectId).Count==0,"delivery history survives reload and is scoped to the project's artifacts");
+  string privateFolder=Path.Combine(root,"delivery-private");
+  using(var vault=VaultSession.Create(privateFolder,"delivery-test-password")){
+   var privateLibrary=new Library(privateFolder,vault);
+   restarted.TransferToPrivate(privateLibrary,new[]{copy.id});
+   check(Deliveries(restarted,linkProjectId).Count==0&&File.Exists(copyPath),"moving a delivered copy into the private folder removes its ordinary project receipt without deleting the exported file");
+  }
  }
 }

@@ -1,5 +1,12 @@
 # kok changelog
 
+## v0.11.2 · Preview
+
+- Try an example from the empty Agent or My works screen and create an editable Markdown note locally.
+- Find older projects by name or goal in All projects. Add an existing managed document or presentation to a project.
+- Export history shows saved copies with their time, location and fingerprint. Reveal the file in Explorer directly from the project.
+- The Chinese help center adds tutorials for a first note and a source-based report and presentation. [Help center](docs/help/index.md) · [Validation](docs/VALIDATION_0.11.2.md)
+
 ## v0.11.1 · Preview
 
 - PPT creation loads the explicitly Apache-2.0 visual guidance distributed in baoyu-design at a pinned commit, with the source and license retained. Four themes and nine native editable compositions share typography and geometry across preview, editor and export.

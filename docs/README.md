@@ -2,13 +2,16 @@
 
 [项目首页](../README.md) · [English](README.en.md)
 
-第一次使用先读[使用指南](GUIDE.md)。这里按你想完成的事找说明；版本记录和开发实现放在后面。
+第一次使用从[帮助中心](help/index.md)开始。这里收录专题、版本记录和开发文档。
 
 ## 按功能查找
 
 | 想做什么 | 从这里开始 |
 | --- | --- |
 | 第一次使用，或想系统了解 kok | [**kok 帮助中心**](help/index.md)：安装、模式、界面、三个区域、设置与参考 |
+| 看一份资料、写笔记，或从资料做出报告和 PPT | [第一篇笔记](help/getting-started/first-work.md) · [第一个创作项目](help/getting-started/first-agent-project.md) |
+| v0.11.2 本地示例、项目搜索与交付记录 | [项目交付说明](help/works/continue-editing.md#项目搜索与交付记录) · [本版验证](VALIDATION_0.11.2.md) |
+| v0.11.1 PPT 设计、直接编辑与回答恢复 | [PPT 操作](help/works/presentations.md) · [回答未完成](help/agent/results-history.md#回答未完成) · [本版验证](VALIDATION_0.11.1.md) |
 | 围绕一件作品持续创作（目标/要求/资料/成果/跨会话） | [创作项目](CREATIVE_PROJECTS_0.10.10.md) · [本次验证](VALIDATION_0.10.10.md) |
 | 看版本差异、恢复旧版、选中片段让 Agent 改 | [版本与局部改稿](VERSIONS_0.10.11.md) · [本次验证](VALIDATION_0.10.11.md) |
 | 用 RPC 长期驱动 Agent（编辑器 / CI） | [Headless RPC](AGENT_RPC_0.10.9.md) · [Agent 无界面 CLI](AGENT_CLI_0.10.7.md) · [本次验证](VALIDATION_0.10.9.md) |
@@ -45,6 +48,7 @@
 
 | 文档 | 内容 |
 | --- | --- |
+| [v0.11.1 实用性复核](PRACTICALITY_REVIEW_0.11.1.md) | 首次使用、成果交付、模型质量与迁移的缺口和验收建议 |
 | [v0.9.0 同类差距与实施路线](PEER_GAPS_0.9.0.md) | 当前工作区复核、历史真实评测、公开来源、分阶段任务与验收条件 |
 | [Agent 30 项任务评测基线](AGENT_TASK_EVAL.md) | 固定样本、首次真实基线结果、验收口径与 token / 费用 / 耗时度量 |
 | [v0.8.1 实现范围](WAREHOUSE_0.8.1.md) | 当前覆盖与未完成的整体验收，区分功能、规划与兼容层 |

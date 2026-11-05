@@ -80,7 +80,8 @@ namespace kok {
                 string temp=destination+"."+Guid.NewGuid().ToString("N")+".tmp";try{File.WriteAllBytes(temp,bytes);if(File.Exists(destination))File.Replace(temp,destination,null);else File.Move(temp,destination);}finally{if(File.Exists(temp))File.Delete(temp);}
                 target.Import(new[]{destination},null);var saved=target.Db.items.FirstOrDefault(i=>String.Equals(i.path,destination,StringComparison.OrdinalIgnoreCase));
                 if(format=="pdf"&&saved!=null&&args.ContainsKey("annotations"))target.Update(saved.id,new Dictionary<string,object>{{"annotations",args["annotations"]}});
-                Notify("libraryChanged",null);return new{saved=true,name=Path.GetFileName(destination),id=saved==null?"":saved.id};
+                bool deliveryRecordFailed=!target.TryRecordProjectDelivery(entry,saved,bytes);
+                Notify("libraryChanged",null);return new{saved=true,name=Path.GetFileName(destination),id=saved==null?"":saved.id,deliveryRecordFailed};
             }
             string job=StringArg(args,"jobId");if(job.Length<1||job.Length>80||creativeJobs.ContainsKey(job)||creativeJobs.Count>=2)throw new InvalidOperationException("请等待当前导出完成。");
             var edit=Library.Json.Deserialize<Dictionary<string,object>>(Library.Json.Serialize(args["edit"]));string extension=entry.kind=="video"?".mp4":"."+StringArg(args,"format");if(entry.kind=="music"&&!new[]{".wav",".mp3",".m4a"}.Contains(extension))throw new InvalidDataException("请选择支持的导出格式。");

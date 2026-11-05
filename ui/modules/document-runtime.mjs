@@ -7,6 +7,34 @@ const documentSaveBlocked=error=>/其他位置修改|已移动或删除|大小�
 const documentShortcutAvailable=()=>!state.isPrivate&&(Kok.enabled('documents')||Kok.enabled('presentations'))&&[...document.querySelectorAll('dialog[open]')].every(d=>d.id==='knowledge-dialog'||d.id==='creative-dialog'&&managedTextSession(creative.session));
 function setDocumentStatus(s,message,error=false){if(creative.session!==s)return;const status=$('#creative-status');if(status){status.textContent=I18n.text(message);status.classList.toggle('document-save-error',error);}$('#creative-dialog')?.setAttribute('data-save-state',error?'error':s.documentSaving?'saving':s.documentDirty?'dirty':'saved');}
 function documentTemplate(name,kind){const title='# '+name+'\n\n',section=text=>'## '+I18n.text(text)+'\n\n';return kind==='daily'?title+section('今日重点')+'- [ ] \n\n'+section('随手记录'):kind==='meeting'?title+section('议题')+'- \n\n'+section('讨论记录')+section('行动事项')+'- [ ] \n':kind==='reading'?title+section('摘录')+'> \n\n'+section('我的想法')+section('关联笔记'):'';}
+const exampleAvailable=()=>!state.isPrivate&&Kok.enabled('documents')&&!state.items.some(item=>item.ownedDocument);
+function showExampleWork(){
+ if(!exampleAvailable())return;
+ const tr=value=>I18n.text(value);
+ const excerpt=tr('一段音乐，一本书，一张留下来的照片。');
+ const source=tr('给日常一点留白');
+ showSmall(`<h2>${tr('用示例试一次')}</h2><p class="dialog-description">${tr('读一句示例，写下一个想做的小事。')}</p><blockquote class="works-example-quote"><p>${esc(excerpt)}</p><small>${esc(source)}</small></blockquote><form id="example-work-form"><label class="form-label">${tr('我的下一步')}<textarea id="example-work-note" maxlength="1000" rows="3" placeholder="${esc(tr('例如：整理一个旅行文件夹'))}"></textarea></label><div class="document-form-actions"><button type="button" class="text-button" data-close-small>${tr('取消')}</button><button type="submit" class="button primary">${tr('保存并编辑')}</button></div></form>`);
+ const form=$('#example-work-form');
+ form.onsubmit=async event=>{
+  event.preventDefault();
+  const button=form.querySelector('[type=submit]');
+  if(button.disabled||state.isPrivate)return;
+  button.disabled=true;
+  try{
+   const name=tr('我的第一篇阅读笔记');
+   const note=$('#example-work-note').value.trim()||tr('先选一个文件夹，整理三份最近用过的资料。');
+   const text=`# ${name}\n\n## ${tr('摘录')}\n\n> ${excerpt}\n\n— ${source}\n\n## ${tr('我的下一步')}\n\n${note}\n`;
+   const item=await native('createDocument',{name,format:'md',collection:'',text});
+   await refresh();
+   if(!form.isConnected||!$('#small-dialog').open)return;
+   await closeSmall();
+   navigate('works');
+   await openCreativeEditor(item.id);
+  }catch(error){fail(error);}finally{button.disabled=false;}
+ };
+ I18n.localize($('#small-dialog'));
+ $('#example-work-note').focus();
+}
 async function showNewDocument(options={}){
  if(documentCreationPending)return;if(state.isPrivate){toast('请先返回普通资料库新建或保存文档。',true);return;}
  const formats=[['md','Markdown','md'],['docx','Word','W'],['txt','纯文本','txt'],['pptx','PowerPoint','P']].filter(([kind])=>Kok.enabled(kind==='pptx'?'presentations':'documents'));if(!formats.length)throw Error(I18n.text('此模块已停用，请在设置中重新启用。'));if(options.format&&!formats.some(([kind])=>kind===options.format))throw Error(I18n.text('此功能当前不可用。'));const initial=options.format||formats[0][0];
@@ -239,6 +267,7 @@ async function documentReviseSelection(s){
  toast(I18n.text('已把选中的文字交给 Agent。'));
 }
 document.addEventListener('click',event=>{
+ if(event.target.closest('[data-example-work]')){showExampleWork();return;}
  if(event.target.closest('[data-document-versions]')&&managedTextSession(creative.session)){event.preventDefault();event.stopImmediatePropagation();openDocumentVersions(creative.session).catch(fail);return;}
  if(event.target.closest('[data-agent-revise-selection]')&&managedTextSession(creative.session)){event.preventDefault();event.stopImmediatePropagation();documentReviseSelection(creative.session).catch(fail);}
 },true);
@@ -249,5 +278,5 @@ document.addEventListener('selectionchange',()=>{if(creative.session&&managedTex
 Kok.extend('core','documents:creation-visibility','renderNav',previous=>function(){const result=previous();createButton.classList.toggle('hidden',!!state.isPrivate||!Kok.enabled('documents')&&!Kok.enabled('presentations'));return result;});
 
 // Explicit adapter for the remaining legacy shell; implementation helpers stay local.
-export const DocumentUi=Object.freeze({open:showNewDocument,isManaged:managedTextSession});
+export const DocumentUi=Object.freeze({open:showNewDocument,isManaged:managedTextSession,exampleAvailable});
 globalThis.DocumentUi=DocumentUi;

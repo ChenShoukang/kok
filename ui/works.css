@@ -22,6 +22,15 @@
 .works-empty p{max-width:44ch;margin:0;color:var(--muted);font:12px/1.75 var(--user-font)}
 .works-empty small{max-width:44ch;color:var(--muted);font:11px/1.7 var(--user-font)}
 .works-empty .button{margin-top:6px}
+.works-example-actions,.project-section-heading,.project-delivery-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.works-example-quote{margin:16px 0;padding:4px 14px;border-inline-start:2px solid var(--line)}
+.works-example-quote p{margin:4px 0}
+.works-example-quote small,.project-delivery small{color:var(--muted)}
+.project-section-heading,.project-delivery-head{justify-content:space-between}
+.project-delivery{padding:8px 0;border-bottom:1px solid var(--line)}
+.project-delivery-head b,.project-delivery-path{min-width:0;overflow-wrap:anywhere}
+.project-delivery-path{margin-top:3px;color:var(--muted);font-size:11px;user-select:text}
+#project-delivery-list{max-height:min(36vh,280px);overflow-y:auto}
 .works-tool-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;min-width:0}
 .works-tool{display:flex;align-items:center;gap:10px;min-width:0;padding:13px 14px;border:1px solid var(--line);border-radius:var(--radius-md);background:transparent;color:var(--ink);text-align:left;font:12px/1.5 var(--user-font);cursor:pointer;transition:background-color var(--motion-fast,160ms) ease,border-color var(--motion-fast,160ms) ease}
 .works-tool:hover{background:var(--kok-hover);border-color:var(--muted)}

@@ -24,6 +24,12 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
   assert(await page.locator('#settings-button').isVisible(),'Settings stays in the rail');
   await page.waitForFunction(()=>{const active=document.querySelector('.nav-primary .nav-item.active'),indicator=document.querySelector('.nav-indicator');if(!active||!indicator||getComputedStyle(indicator).opacity!=='1')return false;const a=active.getBoundingClientRect(),i=indicator.getBoundingClientRect();return Math.abs(a.x-i.x)<1.5&&Math.abs(a.y-i.y)<1.5&&Math.abs(a.width-i.width)<1.5&&Math.abs(a.height-i.height)<1.5;});
   await shot('agent-default-1440');
+  const initialTasks=await page.evaluate(async()=>(await native('agentTaskList')).length);
+  await page.locator('[data-example-work]').click();
+  await page.waitForSelector('#example-work-form');
+  await page.locator('#example-work-form [data-close-small]').click();
+  await page.waitForFunction(()=>!$('#small-dialog').open);
+  assert.equal(await page.evaluate(()=>state.items.filter(item=>item.ownedDocument).length),0,'opening or cancelling the exercise creates nothing');
   await page.evaluate(async()=>{await native('importSamples');await refresh();});
   // 我的作品: the primary create action reuses the document chooser; the continue section starts empty.
   await page.evaluate(()=>navigate('works'));
@@ -40,6 +46,20 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
   assert(await page.locator('#small-dialog [data-document-format]').count()>=2,'新建作品 reuses the document format chooser');
   await shot('works-new-dialog');
   await page.evaluate(()=>closeSmall());await page.waitForFunction(()=>!document.querySelector('#small-dialog').open);
+  await page.locator('[data-example-work]').click();
+  await page.locator('#example-work-note').fill('给旅行照片建一个分类。');
+  await page.locator('#example-work-form [type=submit]').click();
+  await page.waitForSelector('#creative-dialog[open] #creative-text');
+  const exampleId=await page.evaluate(()=>creative.session.item.id);
+  const example=await page.evaluate(id=>native('documentSource',{id}),exampleId);
+  assert.match(example.text,/给日常一点留白/);
+  assert.match(example.text,/给旅行照片建一个分类/);
+  assert.equal(await page.evaluate(async()=>(await native('agentTaskList')).length),initialTasks,'the example creates a local note without an Agent task');
+  await page.evaluate(()=>closeCreative());
+  await page.locator(`[data-work-open="${exampleId}"]`).click();
+  await page.waitForSelector('#creative-dialog[open] #creative-text');
+  assert.match(await page.locator('#creative-text').inputValue(),/给旅行照片建一个分类/);
+  await page.evaluate(()=>closeCreative());
   const workId=await page.evaluate(async()=>{const item=await native('createDocument',{name:'导航验收草稿',format:'md',collection:'',text:'# 导航验收\n\n从我的作品继续编辑。'});await refresh();return item.id;});
   await page.evaluate(()=>navigate('works'));
   await page.waitForSelector('.works-continue [data-work-open="'+workId+'"]');
@@ -111,6 +131,12 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
   assert.equal(storedProject.materials,2,'the native project record keeps both materials');
   assert.equal(storedProject.artifacts,0);assert.match(storedProject.goal,/留白/);
   assert.equal(await page.evaluate(()=>window.__worksAgentStarts),0,'building and editing a project starts no Agent task');
+  await page.locator(`[data-project-open="${projectId}"]`).click();
+  await page.locator('[data-project-add-artifact]').click();
+  await page.locator(`[data-project-link-artifact="${exampleId}"]`).click();
+  await page.waitForSelector(`[data-project-artifact="${exampleId}"]`);
+  await page.locator('[data-project-back]').click();
+  await page.waitForFunction(()=>!$('#small-dialog').open);
   await page.evaluate(()=>navigate('works'));
   // The works tools keep the existing routes reachable and the media pickers reuse the creative editor.
   for(const [tool,label]of [['spaces','项目空间'],['clips','素材摘录'],['recipes','创作配方']]){const button=page.locator('[data-works-tool="'+tool+'"]');assert.equal(await button.count(),1,'Works tool '+tool+' exists');assert.match(await button.innerText(),new RegExp(label));}
@@ -225,8 +251,28 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
   await page.waitForFunction(()=>state.route==='agent');
   assert(await page.locator('.agent-page').count()>0,'The brand returns to the Agent in Smart mode');
   await page.setViewportSize({width:1440,height:1000});
+  // Make the original project older than the dashboard's first page, while retaining the real workspace records.
+  for(let index=0;index<24;index++){
+   await page.evaluate(index=>{
+    const id=uid(),updated='2099-01-01T00:00:00.000Z';
+    window.seedSearchProject=native('workspaceSave',{kind:'space',id,value:{id,kind:'project',name:'检索夹具 '+index,updated,created:updated,members:[],positions:{}}});
+   },index);
+   await confirmOperation();
+   await page.evaluate(()=>window.seedSearchProject);
+  }
+  await page.evaluate(async()=>{
+   await Warehouse.load();
+   navigate('works');
+  });
+  assert.equal(await page.locator(`[data-project-card="${projectId}"]`).count(),0);
+  await page.locator('[data-project-directory]').click();
+  await page.locator('#project-directory-search').fill('重逢长篇');
+  await page.locator(`#project-directory-list [data-project-open="${projectId}"]`).click();
+  await page.waitForSelector(`[data-project-artifact="${exampleId}"]`);
+  await page.locator('[data-project-back]').click();
+  await page.waitForFunction(()=>!$('#small-dialog').open);
   assert.deepEqual(errors,[]);
-  console.log('PASS: three scenario destinations, works page create/continue/tools/media, library quick links/continue/collections/tools, Pure-mode reduction, English rail and compact windows. No page errors.');
+  console.log('PASS: local sample note without a task, manual work attached to a project, search beyond the 24 recent cards, three destinations, works/media and library navigation, Pure mode, English and compact windows. No page errors.');
   console.log('Screenshots: '+output);
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exit(1)});

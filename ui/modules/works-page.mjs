@@ -54,24 +54,91 @@ function projectCard(project){
 function projectSection(){
  if(state.isPrivate)return '';
  const rows=projectRows(),cards=rows.slice(0,WORK_LIMIT).map(projectCard).join('');
- return `<section class="works-continue works-projects"><h2>${t('创作项目')}</h2><div class="works-projects-actions" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><small>${esc(rows.length?t(rows.length+' 个创作项目'):t('还没有创作项目'))}</small><button type="button" class="button secondary works-new-button" data-project-new>${svg('plus')}<span>${t('新建创作项目')}</span></button></div>${cards?`<div class="works-grid">${cards}</div>`:`<p class="works-project-hint">${t('把资料、要求和成果放进同一个创作项目，之后可以从这里继续。')}</p>`}</section>`;
+ return `<section class="works-continue works-projects"><h2>${t('创作项目')}</h2><div class="works-projects-actions" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><small>${esc(rows.length?t(rows.length+' 个创作项目'):t('还没有创作项目'))}</small><button type="button" class="button secondary works-new-button" data-project-new>${svg('plus')}<span>${t('新建创作项目')}</span></button>${rows.length?`<button type="button" class="text-button" data-project-directory>${t('全部项目')}</button>`:''}</div>${cards?`<div class="works-grid">${cards}</div>`:`<p class="works-project-hint">${t('把资料、要求和成果放进同一个创作项目，之后可以从这里继续。')}</p>`}</section>`;
+}
+function openProjectDirectory(){
+ showSmall(`<h2>${t('全部项目')}</h2><input id="project-directory-search" class="works-source-search" type="search" autocomplete="off" aria-label="${esc(t('搜索项目'))}" placeholder="${esc(t('搜索项目'))}"><div id="project-directory-list" class="works-source-list"></div><div class="document-form-actions"><button type="button" class="text-button" data-close-small>${t('关闭')}</button><button type="button" class="button secondary" id="project-directory-more">${t('显示更多')}</button></div>`);
+ const search=$('#project-directory-search'),list=$('#project-directory-list'),more=$('#project-directory-more');
+ let limit=WORK_LIMIT;
+ const paint=()=>{
+  const query=search.value.trim().toLocaleLowerCase();
+  const matches=projectRows().filter(project=>[project.name,project.goal].some(text=>String(text||'').toLocaleLowerCase().includes(query)));
+  list.innerHTML=matches.slice(0,limit).map(project=>`<button type="button" class="works-source" data-project-open="${esc(project.id)}">${glyph('layers')}<span data-user-content>${esc(project.name)}</span><small>${t(projectStatusLabel(project.status))}</small></button>`).join('')||`<p class="works-source-empty">${t('没有匹配的项目。')}</p>`;
+  more.hidden=matches.length<=limit;
+ };
+ search.oninput=()=>{limit=WORK_LIMIT;list.scrollTop=0;paint();};
+ more.onclick=()=>{limit+=WORK_LIMIT;paint();if(more.hidden)search.focus();};
+ paint();I18n.localize($('#small-dialog'));search.focus();
 }
 function projectMaterialRow(item,attribute){
  return `<button type="button" class="works-source" ${attribute}="${esc(item.id)}">${kindIcon(item.kind)}<span data-user-content>${esc(item.name)}</span><small>${esc(item.ext)}</small></button>`;
 }
-function projectSectionBlock(title,count,rows,attribute,empty){
- return `<section class="works-project-detail-section"><h3>${t(title)}${count!==null?` · ${count}`:''}</h3>${rows.length?`<div class="works-source-list">${rows.map(row=>projectMaterialRow(row,attribute)).join('')}</div>`:`<p class="dialog-description">${t(empty)}</p>`}</section>`;
+function projectSectionBlock(title,count,rows,attribute,empty,action=''){
+ return `<section class="works-project-detail-section"><div class="project-section-heading"><h3>${t(title)} · ${count}</h3>${action}</div>${rows.length?`<div class="works-source-list">${rows.map(row=>projectMaterialRow(row,attribute)).join('')}</div>`:`<p class="dialog-description">${t(empty)}</p>`}</section>`;
 }
 function projectTextSection(title,text,empty){
  return `<section class="works-project-detail-section"><h3>${t(title)}</h3><p data-user-content>${esc(text||t(empty))}</p></section>`;
 }
+function deliveryRow(row){
+ const date=new Date(row.created);
+ const dateText=Number.isNaN(date.getTime())?'':date.toLocaleString();
+ return `<article class="project-delivery"><div class="project-delivery-head"><b data-user-content>${esc(row.name)}</b>${row.available?`<button type="button" class="text-button" data-project-reveal="${esc(row.exportId)}">${t('在文件夹中显示')}</button>`:`<small>${t('文件可能已移动')}</small>`}</div><small data-user-content>${esc(row.source)} · ${esc(row.format)} · ${esc(dateText)} · <code title="${esc(row.sha256)}">${esc(row.sha256.slice(0,12))}</code></small><div class="project-delivery-path" data-user-content>${esc(row.path)}</div></article>`;
+}
 function projectDetailView(project){
  const counts=projectCounts(project),materials=(project.members||[]).map(byId).filter(Boolean),artifacts=(project.artifacts||[]).map(byId).filter(Boolean),sessions=(project.sessions||[]).filter(projectHex);
- return `<div id="project-detail" data-project-detail="${esc(project.id)}"><h2 data-user-content>${esc(project.name||t('未命名项目'))}</h2><p class="dialog-description">${esc(projectStatusLabel(project.status))} · ${t('资料')} ${counts.materials} · ${t('成果')} ${counts.artifacts}</p>${projectTextSection('目标',projectGoalText(project),'未填写目标')}${projectTextSection('要求',String(project.requirements||'').trim(),'未填写要求')}${projectSectionBlock('资料',counts.materials,materials,'data-project-item','还没有资料')}${projectSectionBlock('成果',counts.artifacts,artifacts,'data-project-artifact','还没有成果')}<section class="works-project-detail-section"><h3>${t('会话')} · ${counts.sessions}</h3>${sessions.length?`<p><small>${sessions.slice(0,12).map(id=>esc(id.slice(0,8))).join(' · ')}</small></p>`:`<p class="dialog-description">${t('暂无会话')}</p>`}<button type="button" class="text-button" data-project-resume="${esc(project.id)}">${t('继续此项目')}</button></section><div class="document-form-actions"><button type="button" class="text-button" data-close-small data-project-back>${t('返回')}</button><button type="button" class="button secondary" data-project-edit="${esc(project.id)}">${t('编辑项目')}</button><button type="button" class="button primary" data-project-continue="${esc(project.id)}">${t('继续创作')}</button></div></div>`;
+ const id=esc(project.id);
+ const addArtifact=`<button type="button" class="text-button" data-project-add-artifact="${id}">${svg('plus')}${t('添加成果')}</button>`;
+ return `<div id="project-detail" data-project-detail="${id}">
+ <h2 data-user-content>${esc(project.name||t('未命名项目'))}</h2>
+ <p class="dialog-description">${esc(projectStatusLabel(project.status))} · ${t('资料')} ${counts.materials} · ${t('成果')} ${counts.artifacts}</p>
+ ${projectTextSection('目标',projectGoalText(project),'未填写目标')}
+ ${projectTextSection('要求',String(project.requirements||'').trim(),'未填写要求')}
+ ${projectSectionBlock('资料',counts.materials,materials,'data-project-item','还没有资料')}
+ ${projectSectionBlock('成果',counts.artifacts,artifacts,'data-project-artifact','还没有成果',addArtifact)}
+ <section class="works-project-detail-section"><h3>${t('交付记录')}</h3><div id="project-delivery-list" aria-live="polite"></div></section>
+ <section class="works-project-detail-section"><h3>${t('会话')} · ${counts.sessions}</h3>
+ ${sessions.length?`<p><small>${sessions.slice(0,12).map(id=>esc(id.slice(0,8))).join(' · ')}</small></p>`:`<p class="dialog-description">${t('暂无会话')}</p>`}
+ <button type="button" class="text-button" data-project-resume="${id}">${t('继续此项目')}</button></section>
+ <div class="document-form-actions"><button type="button" class="text-button" data-close-small data-project-back>${t('返回')}</button><button type="button" class="button secondary" data-project-edit="${id}">${t('编辑项目')}</button><button type="button" class="button primary" data-project-continue="${id}">${t('继续创作')}</button></div></div>`;
 }
-async function openProjectDetail(id){
- const project=projectById(id);if(!project){toast(t('找不到创作项目。'),true);return;}
+async function openProjectDetail(id,project=projectById(id)){
+ if(state.isPrivate)return;
+ if(!project){toast(t('找不到创作项目。'),true);return;}
  showSmall(projectDetailView(project));I18n.localize($('#small-dialog'));
+ const panel=$('#project-delivery-list');
+ if(!panel)return;
+ try{
+  const rows=await native('projectDeliveries',{projectId:id});
+  if(!panel.isConnected||!$('#small-dialog').open||state.isPrivate)return;
+  panel.innerHTML=rows.length?rows.map(deliveryRow).join(''):`<p class="dialog-description">${t('导出项目成果后，副本会记录在这里。')}</p>`;
+ }catch{
+  if(panel.isConnected)panel.textContent=t('暂时无法读取交付记录。');
+ }
+}
+function openProjectArtifactPicker(id){
+ const project=projectById(id);if(!project)return;
+ const linked=new Set(project.artifacts||[]);
+ showSmall(`<h2>${t('添加成果')}</h2><input id="project-artifact-search" class="works-source-search" type="search" autocomplete="off" aria-label="${esc(t('搜索名称'))}" placeholder="${esc(t('搜索名称'))}"><div id="project-artifact-picker" class="works-source-list"></div><div class="document-form-actions"><button type="button" class="text-button" data-project-open="${esc(id)}">${t('返回')}</button></div>`);
+ const search=$('#project-artifact-search'),list=$('#project-artifact-picker');
+ const paint=()=>{
+  const query=search.value.trim().toLocaleLowerCase();
+  const rows=continueItems().filter(item=>item.ownedDocument&&!linked.has(item.id)&&item.name.toLocaleLowerCase().includes(query)).slice(0,SOURCE_LIMIT);
+  list.innerHTML=rows.map(item=>projectMaterialRow(item,'data-project-link-artifact')).join('')||`<p class="works-source-empty">${t('没有可添加的作品。')}</p>`;
+ };
+ list.onclick=async event=>{
+  const button=event.target.closest('[data-project-link-artifact]');
+  if(!button||list.inert)return;
+  list.inert=true;
+  try{
+   const linked=await native('projectAddArtifact',{projectId:id,itemId:button.dataset.projectLinkArtifact});
+   if(!linked){toast(t('此作品无法加入项目。'),true);return;}
+   // Use the committed snapshot directly. A concurrent library refresh can supersede a cached Warehouse load.
+   const snapshot=await native('workspaceState');
+   const current=(snapshot.spaces||[]).find(row=>row.id===id&&row.kind==='project');
+   if(list.isConnected&&$('#small-dialog').open)await openProjectDetail(id,current||null);
+  }catch(error){fail(error);}finally{list.inert=false;}
+ };
+ paint();I18n.localize($('#small-dialog'));search.focus();
 }
 async function openProjectDialog(existing=null){
  const project=existing?structuredClone(existing):null,selected=new Set((project?.members||[]).filter(id=>byId(id))),projectId=project?.id||uid(),status=project?.status||'active';
@@ -116,7 +183,8 @@ function continueSection(items){
  return `<section class="works-continue"><h2>${t('继续创作')}</h2><div class="works-grid">${items.map(workCard).join('')}</div></section>`;
 }
 function emptyState(){
- return `<section class="works-empty"><span class="works-empty-icon" aria-hidden="true">${glyph('layers')}</span><h2>${t('从第一件作品开始')}</h2><p>${t('新建作品，或从已有文件开始编辑。')}</p>${canCreate()?newButton('data-works-new-empty',true):''}${Kok.enabled('editing')?`<small>${t('已有视频、音频、PDF 和文档也可以从下方工具开始编辑。')}</small>`:''}</section>`;
+ const example=globalThis.DocumentUi?.exampleAvailable()?`<button type="button" class="button secondary" data-example-work>${glyph('document')}${t('用示例试一次')}</button>`:'';
+ return `<section class="works-empty"><span class="works-empty-icon" aria-hidden="true">${glyph('layers')}</span><h2>${t('从第一件作品开始')}</h2><p>${t('新建作品，或从已有文件开始编辑。')}</p><div class="works-example-actions">${example}${canCreate()?newButton('data-works-new-empty',true):''}</div>${Kok.enabled('editing')?`<small>${t('已有视频、音频、PDF 和文档也可以从下方工具开始编辑。')}</small>`:''}</section>`;
 }
 function toolsSection(){
  const workspace=Kok.enabled('workspace'),editing=Kok.enabled('editing');
@@ -157,7 +225,7 @@ function installWorksClicks(){
  if(worksClicksInstalled)return;worksClicksInstalled=true;
  document.addEventListener('click',async event=>{
   try{
-   const button=event.target.closest('[data-works-new],[data-works-new-empty],[data-work-open],[data-works-tool],[data-works-media],[data-works-source],[data-project-new],[data-project-open],[data-project-continue],[data-project-resume],[data-project-edit],[data-project-item],[data-project-artifact]');
+   const button=event.target.closest('[data-works-new],[data-works-new-empty],[data-work-open],[data-works-tool],[data-works-media],[data-works-source],[data-project-new],[data-project-open],[data-project-continue],[data-project-resume],[data-project-edit],[data-project-item],[data-project-artifact],[data-project-directory],[data-project-add-artifact],[data-project-reveal]');
    if(!button)return;
    if(button.hasAttribute('data-works-new')||button.hasAttribute('data-works-new-empty')){if(canCreate())await DocumentUi.open();return;}
    if(button.dataset.workOpen)return await openCreativeEditor(button.dataset.workOpen);
@@ -165,6 +233,9 @@ function installWorksClicks(){
    if(button.dataset.worksMedia)return await openSourcePicker(button.dataset.worksMedia);
    if(button.dataset.worksSource)return await openSource(button.dataset.worksSource);
    if(button.hasAttribute('data-project-new')){await openProjectDialog();return;}
+   if(button.hasAttribute('data-project-directory')){openProjectDirectory();return;}
+   if(button.dataset.projectAddArtifact){openProjectArtifactPicker(button.dataset.projectAddArtifact);return;}
+   if(button.dataset.projectReveal){if(!state.isPrivate)await native('reveal',{id:button.dataset.projectReveal});return;}
    if(button.dataset.projectOpen){await openProjectDetail(button.dataset.projectOpen);return;}
    if(button.dataset.projectContinue||button.dataset.projectResume){await closeSmall();await AgentUi.openProject(button.dataset.projectContinue||button.dataset.projectResume);return;}
    if(button.dataset.projectEdit){

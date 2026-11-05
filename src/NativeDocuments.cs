@@ -22,7 +22,12 @@ namespace kok {
     if(action=="newPresentation"){var item=await Task.Run(()=>lib.CreatePresentation(ModuleContext.Text(a,"name"),ModuleContext.Text(a,"collection"),bytes,Guid.NewGuid().ToString("N"),"user"));ctx.Notify("libraryChanged",null);return item;}
     if(action=="savePresentation"){var saved=await Task.Run(()=>lib.SavePresentation(ModuleContext.Text(a,"id"),bytes,ModuleContext.Text(a,"signature")));ctx.Notify("libraryChanged",null);return saved;}
     var original=Entry(ctx,a);string output=ctx.ChooseDestination(original,".pptx","PowerPoint|*.pptx");if(output==null)return new{cancelled=true};string temp=output+"."+Guid.NewGuid().ToString("N")+".tmp";
-    try{File.WriteAllBytes(temp,bytes);if(File.Exists(output))File.Replace(temp,output,null);else File.Move(temp,output);}finally{if(File.Exists(temp))File.Delete(temp);}lib.Import(new[]{output},null);ctx.Notify("libraryChanged",null);return new{saved=true,name=Path.GetFileName(output)};
+    try{File.WriteAllBytes(temp,bytes);if(File.Exists(output))File.Replace(temp,output,null);else File.Move(temp,output);}finally{if(File.Exists(temp))File.Delete(temp);}
+    lib.Import(new[]{output},null);
+    var exported=lib.Db.items.Find(item=>String.Equals(item.path,output,StringComparison.OrdinalIgnoreCase));
+    bool deliveryRecordFailed=!lib.TryRecordProjectDelivery(original,exported,bytes);
+    ctx.Notify("libraryChanged",null);
+    return new{saved=true,name=Path.GetFileName(output),deliveryRecordFailed};
    }
   }
  }

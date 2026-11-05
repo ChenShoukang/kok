@@ -651,8 +651,9 @@ function agentMessage(m){
 }
 function agentEmpty(){
  const suggestions=agentSuggestions();
+ const example=globalThis.DocumentUi?.exampleAvailable()?`<button type="button" data-example-work>${glyph('document')}<span>${I18n.text('用示例试一次')}</span></button>`:'';
  return `<div class="agent-empty"><h1>${I18n.text('有什么想法？')}</h1>
- <div class="agent-starters">${suggestions.map(([text,icon,label])=>`<button type="button" data-agent-starter="${esc(I18n.text(text))}">${glyph(icon)}<span>${I18n.text(label||text)}</span></button>`).join('')}</div></div>`;
+ <div class="agent-starters">${example}${suggestions.map(([text,icon,label])=>`<button type="button" data-agent-starter="${esc(I18n.text(text))}">${glyph(icon)}<span>${I18n.text(label||text)}</span></button>`).join('')}</div></div>`;
 }
 function agentMore(anchor){
  GlassMenu.open(anchor,[

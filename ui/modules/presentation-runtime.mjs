@@ -63,7 +63,22 @@ async function presentationBytes(deck){await loadPresentationExporter();const fi
 }
 async function createPresentationFile(name,collection){const deck={name,width:13.333333,height:7.5,slides:[blankPresentationSlide()]};const base64=await presentationBytes(deck);return native('newPresentation',{name,collection,base64});}
 async function confirmBasicPresentationExport(){const s=presentation.session;if(!s?.deck.unsupported)return true;showSmall('<h2>导出基础排版副本</h2><p class="dialog-description">此演示含未还原的复杂元素。副本只包含当前可见的文字、图片、基础形状和备注；原文件保留。</p><div class="document-form-actions"><button class="text-button" data-close-small>取消</button><button class="button secondary" id="ppt-export-basic-confirm">导出基础副本</button></div>');return new Promise(resolve=>{let accepted=false;$('#small-dialog').addEventListener('close',()=>resolve(accepted),{once:true});$('#ppt-export-basic-confirm').onclick=()=>{accepted=true;closeSmall();};});}
-async function exportPresentation(){const s=presentation.session;if(!s||s.exporting)return;s.exporting=true;$('[data-ppt-action=export]').disabled=true;setPresentationStatus('正在导出…');try{if(!await confirmBasicPresentationExport()){setPresentationStatus('已取消');return;}await savePresentationDraft();const base64=await presentationBytes(s.deck);if(presentation.session!==s)throw Error(I18n.text('文件已切换。'));const result=await native('exportPresentation',{id:s.item.id,base64});setPresentationStatus(result.cancelled?'已取消':'副本已导出');}catch(error){setPresentationStatus(error.message);fail(error);}finally{if(presentation.session===s){s.exporting=false;$('[data-ppt-action=export]').disabled=false;}}}
+async function exportPresentation(){
+ const s=presentation.session;if(!s||s.exporting)return;
+ s.exporting=true;
+ $('[data-ppt-action=export]').disabled=true;
+ setPresentationStatus('正在导出…');
+ try{
+  if(!await confirmBasicPresentationExport()){setPresentationStatus('已取消');return;}
+  await savePresentationDraft();
+  const base64=await presentationBytes(s.deck);
+  if(presentation.session!==s)throw Error(I18n.text('文件已切换。'));
+  const result=await native('exportPresentation',{id:s.item.id,base64});
+  const message=result.cancelled?'已取消':result.deliveryRecordFailed?'副本已保存，交付记录未写入。':'副本已导出';
+  setPresentationStatus(message);
+ }catch(error){setPresentationStatus(error.message);fail(error);}
+ finally{if(presentation.session===s){s.exporting=false;$('[data-ppt-action=export]').disabled=false;}}
+}
 // P2: page-specific Agent entry. The prompt carries the page number, the current page's title and
 // text shapes (bounded, images counted only) and asks for a local edit_presentation change limited
 // to this page. It only opens the Agent composer with that prompt — never sends or starts a task.
