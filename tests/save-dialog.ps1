@@ -15,6 +15,7 @@ public static class FixtureSaveDialog {
  [DllImport("user32.dll",CharSet=CharSet.Unicode)] public static extern int GetClassName(IntPtr window,StringBuilder name,int length);
  [DllImport("user32.dll",CharSet=CharSet.Unicode)] public static extern IntPtr SendMessage(IntPtr window,int message,IntPtr param,string text);
  [DllImport("user32.dll",CharSet=CharSet.Unicode)] public static extern IntPtr SendMessage(IntPtr window,int message,IntPtr param,StringBuilder text);
+ [DllImport("user32.dll",CharSet=CharSet.Unicode)] public static extern IntPtr SendMessage(IntPtr window,int message,IntPtr param,IntPtr data);
  [DllImport("user32.dll")] public static extern bool PostMessage(IntPtr window,int message,IntPtr param,IntPtr data);
  public static string Describe(IntPtr dialog) {
   var controls=new List<string>();
@@ -34,11 +35,14 @@ public static class FixtureSaveDialog {
    return true;
   },IntPtr.Zero);
   if(field==IntPtr.Zero||save==IntPtr.Zero)return false;
-  if(SendMessage(field,12,IntPtr.Zero,destination)==IntPtr.Zero)return false;
+  const int SelectText=0x00B1,ReplaceSelection=0x00C2,ReadText=0x000D,ClickButton=0x00F5;
+  // The shell dialog can keep its original filename when only WM_SETTEXT is sent.
+  SendMessage(field,SelectText,IntPtr.Zero,new IntPtr(-1));
+  SendMessage(field,ReplaceSelection,new IntPtr(1),destination);
   var current=new StringBuilder(destination.Length+2);
-  SendMessage(field,13,(IntPtr)current.Capacity,current);
+  SendMessage(field,ReadText,(IntPtr)current.Capacity,current);
   return String.Equals(current.ToString(),destination,StringComparison.Ordinal)
-   &&PostMessage(save,245,IntPtr.Zero,IntPtr.Zero);
+   &&PostMessage(save,ClickButton,IntPtr.Zero,IntPtr.Zero);
  }
 }
 '@
