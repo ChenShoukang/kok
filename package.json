@@ -54,7 +54,7 @@
   "dependencies": {
     "@jitl/quickjs-wasmfile-release-sync": "0.32.0",
     "pdf-lib": "^1.17.1",
-    "pdfjs-dist": "6.4.299",
+    "pdfjs-dist": "6.5.438",
     "quickjs-emscripten-core": "0.32.0"
   },
   "release": {
