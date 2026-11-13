@@ -14,6 +14,7 @@ namespace kok {
         // (part of the cacheable prompt prefix) cannot shift between requests of the same task.
         readonly Dictionary<string,string> taskCatalogs=new Dictionary<string,string>();
         string TaskCatalog(AgentTaskState t){
+            if(t.options.workspaceVersion==1&&!AgentWorkspaceTools.NeedsLibrary(AgentTaskIntent.Combined(t.options.goal??"",t.adjustments)))return "Workspace code task: inspect the configured repository with workspace_info/search_workspace/read_workspace_file; unrelated library metadata is omitted.";
             lock(taskCatalogs){string cached;if(taskCatalogs.TryGetValue(t.id,out cached))return cached;
                 string value=normalLibrary.AgentScopedCatalog(t.TaskScope,t.options.budget<=6000?20:t.options.budget<=14000?40:80,t.options.scope.mode=="selected",t.options.goal);
                 if(taskCatalogs.Count>=32)taskCatalogs.Clear();taskCatalogs[t.id]=value;return value;}

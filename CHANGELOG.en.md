@@ -1,5 +1,17 @@
 # kok changelog
 
+## v0.15.0 · Preview
+
+- Add project/executable discovery, bounded code search, paged UTF-8 reads and read-only Git status/diffs. Windows Store aliases no longer count as real Python interpreters.
+- Add exact patches guarded by raw-byte SHA-256 and workspace identity. Preserve unrelated user changes, BOM and newlines, reject stale approval and avoid replaying an already-applied patch.
+- Bind successful command checks to actual source versions and exit codes; changed inputs invalidate old verification.
+- Add task-owned isolated WebView2 sessions for explicitly approved local HTTP apps, with fresh observations, fill/select/click and postcondition waits.
+- Unrelated research tasks omit workspace command tools; saving default settings retains automatic tool selection.
+- Fix command-output reads blocking the desktop, reduce irrelevant code-task context and expose actual patch/job/browser results with direct access to workspace outputs.
+- Preserve existing research, document, PPT and legacy workflows. General remote websites, desktop UIA and professional media engines remain future milestones.
+
+
+
 ## v0.14.0 · Preview
 
 - Establish the general Agent foundation with a strictly checked TypeScript runtime on Deep Agents / LangGraph. C# retains desktop integration, approval and actual file operations; the previous loop is isolated for compatibility.

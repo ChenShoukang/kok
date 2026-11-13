@@ -269,4 +269,5 @@ body[data-theme][data-app-mode] .agent-main{min-height:0}
 .agent-result-actions .agent-local-followup{height:30px;font-size:12px}
 @media(max-width:760px){.agent-result{margin-left:0}.agent-result-head h3{font-size:14px}}
 @media(prefers-reduced-motion:reduce){.agent-result{animation:none}}
+.agent-workspace-files{display:grid;gap:7px;margin:16px 0;padding:14px;border:1px solid var(--line);border-radius:12px;min-width:0}.agent-workspace-files>b{font-size:13px}.agent-workspace-files>button{display:flex;align-items:center;gap:8px;text-align:left;overflow-wrap:anywhere;white-space:normal;min-width:0}.agent-patch-edit{display:grid;gap:6px;margin:12px 0}.agent-patch-edit pre{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;max-height:220px;overflow:auto}
 #agent-command-jobs,#agent-command-jobs article{min-width:0}#agent-command-jobs pre{max-height:240px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;user-select:text}#agent-command-jobs header>b{min-width:0;overflow-wrap:anywhere}#agent-command-jobs .agent-command-assets{padding-inline-start:18px;overflow-wrap:anywhere;font-size:12px;line-height:1.8}

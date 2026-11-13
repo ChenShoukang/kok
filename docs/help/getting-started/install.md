@@ -16,7 +16,7 @@ kok 是 Windows 桌面应用，解压已发布的 ZIP 即可运行，不需要�
 
 ## 下载并运行
 
-1. 打开 [GitHub 发布页](https://github.com/ChenShoukang/kok/releases/tag/v0.14.0)，下载 `kok-0.14.0-win-x64.zip` 和对应的 `.sha256` 校验文件。
+1. 打开 [GitHub 发布页](https://github.com/ChenShoukang/kok/releases/tag/v0.15.0)，下载 `kok-0.15.0-win-x64.zip` 和对应的 `.sha256` 校验文件。
 2. 校验下载的 ZIP（可选）：将文件哈希与 `.sha256` 内容比较。
 3. 把完整 ZIP 解压到一个**可写目录**（例如 `D:\Apps\kok`）。不要只把 `kok.exe` 单独拖出来，
    旁边的运行库和 `ui` 文件夹必须保留。

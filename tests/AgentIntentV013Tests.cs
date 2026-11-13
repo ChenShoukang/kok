@@ -389,7 +389,7 @@ class AgentIntentV013Tests {
         Verify(report.Count<=14&&report.Contains("create_document")&&report.Contains("read_document")&&report.Contains("replace_document_text")&&!report.Contains("generate_subtitles")&&!report.Contains("index_video_frames"),"profile: the pure report base profile is <=14 tools with the delivery writes and no media capabilities");
         // Configured capabilities are appended after the base cap and are never trimmed (#19).
         string execDir=Path.Combine(lib.DataDir,"exec-workspace");Directory.CreateDirectory(execDir);AgentExecution.Save(lib,true,execDir,false);
-        var configuredOptions=new AgentTaskOptions{goal="联网查询资料，写一份报告",allowed=new List<string>{source},useMemory=true,allowDelegation=true,allowSandbox=true,searchEndpoint="https://example.invalid/search",sessionId=Id()};
+        var configuredOptions=new AgentTaskOptions{goal="联网查询资料，写一份报告，同时检查工作区代码",allowed=new List<string>{source},useMemory=true,allowDelegation=true,allowSandbox=true,searchEndpoint="https://example.invalid/search",sessionId=Id()};
         service.PrepareDelivery(configuredOptions);
         var configured=AgentToolProfiles.ForTask(configuredOptions,lib);
         Verify(new[]{"web_search","fetch_url","run_code","delegate_parallel","search_memory","remember_memory","list_folder","read_text_file","write_text_file","run_command","create_document","read_items","finish_task"}.All(configured.Contains),"profile: configured capabilities plus the delivery tools survive the base-profile cap (#19)");

@@ -8,7 +8,7 @@ The top level is organized by what you are doing — Agent, My works and Library
 
 [Published releases](https://github.com/ChenShoukang/kok/releases) · [Help center (Chinese)](docs/help/index.md) · [User guide](docs/GUIDE.en.md) · [中文](README.md) · [Supported formats](docs/FORMATS.en.md)
 
-**v0.14.0 Preview** establishes the general Agent foundation: a typed TypeScript runtime, versioned task and asset contracts, recoverable checkpoints, approved background command jobs and truthful status for nine capability domains. Research and documents remain available; media, music, coding and computer use follow the [detailed plan](docs/PROJECT_PLAN_0.14_TO_1.0.md). [Validation and limits](docs/VALIDATION_0.14.0.md) · [Changelog](CHANGELOG.en.md)
+**v0.15.0 Preview** adds code task workflows: workspace search and paged reads, SHA-256 guarded patches, Git status/diffs and command verification tied to actual source versions. Isolated WebView2 sessions observe and interact with local web apps. Research tasks load relevant tools on demand. [Validation and limits](docs/VALIDATION_0.15.0.md) · [Development plan](docs/PROJECT_PLAN_0.14_TO_1.0.md) · [Changelog](CHANGELOG.en.md)
 
 ![kok library home with continue-watching rows, using bundled original samples](docs/screenshots/library-en.png)
 
@@ -38,7 +38,7 @@ See the [kok help center (Chinese)](docs/help/index.md) and the [user guide](doc
 
 ## Get started
 
-1. Download `kok-0.14.0-win-x64.zip` and its SHA-256 from [Releases](https://github.com/ChenShoukang/kok/releases). Extract the full ZIP and run `kok.exe`.
+1. Download `kok-0.15.0-win-x64.zip` and its SHA-256 from [Releases](https://github.com/ChenShoukang/kok/releases). Extract the full ZIP and run `kok.exe`.
 2. Choose **Pure** or **Smart**. Local essentials work without configuring AI.
 3. Explore the original samples or drop in your own files, then create a Space or save a Clip.
 
@@ -65,7 +65,7 @@ Choose light/dark themes, background and glass colors, bundled Smiley Sans/LXGW 
 
 ## Documentation and development
 
-[Help center (Chinese)](docs/help/index.md) · [User guide](docs/GUIDE.en.md) · [Documentation](docs/README.en.md) · [Creative projects](docs/CREATIVE_PROJECTS_0.10.10.md) · [Versions and revision](docs/VERSIONS_0.10.11.md) · [Agent CLI](docs/AGENT_CLI_0.10.7.md) · [Validation](docs/VALIDATION_0.14.0.md) · [Roadmap](ROADMAP.en.md)
+[Help center (Chinese)](docs/help/index.md) · [User guide](docs/GUIDE.en.md) · [Documentation](docs/README.en.md) · [Creative projects](docs/CREATIVE_PROJECTS_0.10.10.md) · [Versions and revision](docs/VERSIONS_0.10.11.md) · [Agent CLI](docs/AGENT_CLI_0.10.7.md) · [Validation](docs/VALIDATION_0.15.0.md) · [Roadmap](ROADMAP.en.md)
 
 ```powershell
 npm ci --omit=optional

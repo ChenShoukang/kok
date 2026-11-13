@@ -2705,7 +2705,53 @@
     "此后台作业不属于当前任务。": "This background job belongs to a different task.",
     "后台作业记录已达上限。": "The background job history limit has been reached.",
     "最多同时运行两个后台作业。": "At most two background jobs may run at once.",
-    "命令以非零退出码结束。": "The command ended with a nonzero exit code."
+    "命令以非零退出码结束。": "The command ended with a nonzero exit code.",
+    "工作区精确补丁": "Exact workspace patch",
+    "仅操作当前任务的本地验证浏览器。": "Only the current task’s local verification browser is operated.",
+    "识别代码工作区": "Inspect code workspace",
+    "搜索工作区代码": "Search workspace code",
+    "分段读取代码": "Read code by lines",
+    "读取 Git 状态与差异": "Read Git status and diff",
+    "应用工作区补丁": "Apply workspace patch",
+    "打开本地验证浏览器": "Open local verification browser",
+    "读取验证页面": "Observe verification page",
+    "操作验证页面": "Interact with verification page",
+    "工作区凭据和私密配置不提供给 Agent。": "Workspace credentials and private configuration are excluded from Agent access.",
+    "工作区文件不存在。": "Workspace file not found.",
+    "工作区文本读取最多支持 4 MB 文件。": "Workspace text reads support files up to 4 MB.",
+    "工作区工具只处理 UTF-8 文本。": "Workspace tools only handle UTF-8 text.",
+    "单行内容过长，请缩小文件或使用专用工具。": "The line is too long. Use a smaller file or a dedicated tool.",
+    "工作区文件已变化，请重新读取后再生成补丁。": "The workspace file changed. Read it again before proposing a patch.",
+    "补丁原文必须在当前文件中唯一匹配。": "The original patch text must match exactly once in the current file.",
+    "补丁不能为空，且结果不能超过 200000 字符。": "The patch must change the file and its result must stay within 200,000 characters.",
+    "工作区已变化，请重新审核补丁。": "The workspace changed. Review the patch again.",
+    "补丁预览与执行结果不一致，请重新审核。": "The execution result does not match the patch preview. Review again.",
+    "支持代码搜索、版本保护补丁、Git 差异及绑定文件版本的实际测试。": "Code search, version-guarded patches, Git diffs and actual checks tied to source versions are available.",
+    "支持独立会话中的本地网页观察、输入和点击验证；通用网页与桌面操作待接入。": "Isolated local web observation, input and click verification are available; general remote websites and desktop automation are pending.",
+    "验证浏览器仅支持明确的本机 HTTP 地址（127.0.0.1 或 [::1]）。": "The verification browser only supports explicit local HTTP addresses (127.0.0.1 or [::1]).",
+    "验证浏览器已关闭。": "The verification browser was closed.",
+    "验证浏览器已关闭，请重新打开。": "The verification browser was closed. Open a new session.",
+    "验证浏览器启动超时，请检查 WebView2。": "The verification browser timed out while starting. Check WebView2.",
+    "浏览器地址超出已批准的本机来源。": "The browser address is outside the approved local origin.",
+    "本地页面导航超时。": "Local page navigation timed out.",
+    "页面尚不能读取，请稍后重试。": "The page cannot be read yet. Retry shortly.",
+    "页面尚未出现预期内容，请检查实际状态。": "The expected page content did not appear. Inspect the actual state.",
+    "验证浏览器会话不存在。": "Verification browser session not found.",
+    "验证浏览器会话不存在或不属于当前任务。": "The browser session is missing or belongs to another task.",
+    "请先配置并启用工作区，再使用本地验证浏览器。": "Configure and enable a workspace before opening the local verification browser.",
+    "浏览器观察已过期，请重新读取页面后再操作。": "The browser observation is stale. Read the page again before interacting.",
+    "页面控件不存在，请重新读取。": "The page control no longer exists. Observe again.",
+    "页面控件已变化或不可操作，请重新读取后再试。": "The page control changed or is not interactive. Observe again.",
+    "代码任务尚无成功的工作区补丁，请读取目标文件并应用精确补丁后再完成。": "This code task has no successful workspace patch. Read the target and apply an exact patch before finishing.",
+    "工作区已变化，旧工作区的补丁和验证不能证明当前结果。": "The workspace changed. Patches and checks from the previous workspace cannot prove this result.",
+    "命令执行期间输入文件已变化，请重新验证。": "Input files changed while the command ran. Verify again.",
+    "工作区成果": "Workspace outputs",
+    "执行前会核对文件版本，保留其他内容。": "The file version is checked before execution; other content is preserved.",
+    "已核对文件": "File verified",
+    "填写": "Fill",
+    "工作区或成果文件已变化，请重新读取。": "The workspace or output file changed. Read it again.",
+    "替换为": "Replace with",
+    "代码任务尚无目标文件读取或可验证改动，请先检查实际代码。": "No target source was inspected or verifiably changed. Inspect the actual code first."
   },
   "patterns": [
     {
@@ -2893,6 +2939,22 @@
     {
       "pattern": "^因停止未执行：([0-9]+) 条输入已放回输入框$",
       "replacement": "$1 input(s) were not executed and were returned to the composer."
+    },
+    {
+      "pattern": "^代码文件在补丁后已变化，请重新读取并验证当前版本：(.*)$",
+      "replacement": "The source changed after the patch. Read and verify the current version: $1"
+    },
+    {
+      "pattern": "^代码文件当前不可读取：(.*)$",
+      "replacement": "The source is currently unreadable: $1"
+    },
+    {
+      "pattern": "^当前代码版本尚无成功的实际验证。请使用 start_command_job 的 inputs 声明改动文件，运行适用测试并等待实际退出码 0：(.*)$",
+      "replacement": "This source version has no successful actual check. Declare the changed file in command job inputs, run the applicable checks and wait for exit code 0: $1"
+    },
+    {
+      "pattern": "^本地页面导航失败：(.*)$",
+      "replacement": "Local page navigation failed: $1"
     }
   ],
   "审批策略": "Approval policy",

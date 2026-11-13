@@ -8,7 +8,7 @@
 
 [下载已发布版本](https://github.com/ChenShoukang/kok/releases) · [帮助中心](docs/help/index.md) · [使用指南](docs/GUIDE.md) · [English](README.en.md) · [格式支持](docs/FORMATS.md)
 
-**v0.14.0 Preview** 建立通用 Agent 基础：TypeScript 运行时、版本化任务与资产协议、可恢复检查点、需审批的后台命令作业，以及九类能力的真实状态。文档和研究保持可用；视频、照片、音乐、代码和电脑操作按[详细规划](docs/PROJECT_PLAN_0.14_TO_1.0.md)逐步接入。[本版验证与边界](docs/VALIDATION_0.14.0.md) · [版本记录](CHANGELOG.md)
+**v0.15.0 Preview** 补足代码任务闭环：工作区搜索与分段读取、SHA-256 保护的精确补丁、Git 状态与差异，以及绑定实际文件版本的命令验证。独立 WebView2 会话支持本地网页观察、输入和点击；研究任务按需加载工具。[本版验证与边界](docs/VALIDATION_0.15.0.md) · [详细规划](docs/PROJECT_PLAN_0.14_TO_1.0.md) · [版本记录](CHANGELOG.md)
 
 ![kok 我的作品，使用内置原创示例](docs/screenshots/works-zh.png)
 
@@ -38,7 +38,7 @@
 
 ## 开始使用
 
-1. 从 [Releases](https://github.com/ChenShoukang/kok/releases) 下载 `kok-0.14.0-win-x64.zip` 和 SHA-256 校验文件。完整解压后运行 `kok.exe`。
+1. 从 [Releases](https://github.com/ChenShoukang/kok/releases) 下载 `kok-0.15.0-win-x64.zip` 和 SHA-256 校验文件。完整解压后运行 `kok.exe`。
 2. 首次选择**纯净模式**或**智能模式**；不配置 AI 也能使用本地基础功能。
 3. 从「我的作品」点「用示例试一次」写一份笔记，或在资料库导入自己的文件。
 
@@ -65,7 +65,7 @@
 
 ## 文档与开发
 
-[帮助中心](docs/help/index.md) · [使用指南](docs/GUIDE.md) · [文档目录](docs/README.md) · [创作项目](docs/CREATIVE_PROJECTS_0.10.10.md) · [版本与局部改稿](docs/VERSIONS_0.10.11.md) · [无界面 CLI](docs/AGENT_CLI_0.10.7.md) · [扩展包](docs/PLUGINS_0.10.8.md) · [验证记录](docs/VALIDATION_0.14.0.md) · [路线图](ROADMAP.md)
+[帮助中心](docs/help/index.md) · [使用指南](docs/GUIDE.md) · [文档目录](docs/README.md) · [创作项目](docs/CREATIVE_PROJECTS_0.10.10.md) · [版本与局部改稿](docs/VERSIONS_0.10.11.md) · [无界面 CLI](docs/AGENT_CLI_0.10.7.md) · [扩展包](docs/PLUGINS_0.10.8.md) · [验证记录](docs/VALIDATION_0.15.0.md) · [路线图](ROADMAP.md)
 
 ```powershell
 npm ci --omit=optional

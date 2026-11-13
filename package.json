@@ -1,6 +1,6 @@
 {
   "name": "kok",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "description": "kok Windows desktop library development tests (not needed to run the app)",
   "private": true,
   "directories": {
@@ -40,7 +40,7 @@
     "test:sites": "node tests/site-adapters.cjs",
     "test:agent": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"& ./tools/test-desktop.ps1 -Suites @('agent','agent-interactions','agent-workflow','creative-artifacts','creative-e2e','agent-output-recovery','presentation-design','presentation-editing','pi-agent-ui','agent-document-edit','agent-presentations','presentation-save','agent-reliable','agent-runtime','agent-kernel','mcp','agent-platform','agent-quality','library-services')\"",
     "test:research": "npm --prefix runtime/research test",
-    "check:research": "npm --prefix runtime/research run check && node --check tests/agent-research.cjs && node --check tests/agent-foundation.cjs",
+    "check:research": "npm --prefix runtime/research run check && node --check tests/agent-research.cjs && node --check tests/agent-foundation.cjs && node --check tests/agent-coding.cjs && node --check tests/agent-browser.cjs",
     "test:research-desktop": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-desktop.ps1 -Suites agent-research",
     "test:agent-samples": "node tests/agent-task-samples.cjs",
     "test:interface": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"& ./tools/test-desktop.ps1 -Suites @('flat-design','interface-usage','interface-audit')\""

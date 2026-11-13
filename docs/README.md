@@ -8,6 +8,7 @@
 
 | 想做什么 | 从这里开始 |
 | --- | --- |
+| v0.15.0 代码工作区与本地网页验证 | [实现、验证与边界](VALIDATION_0.15.0.md) |
 | v0.14.0 通用 Agent 基础、后台作业与能力状态 | [验证与实现边界](VALIDATION_0.14.0.md) · [发布说明](RELEASE_NOTES.md) |
 | 第一次使用，或想系统了解 kok | [**kok 帮助中心**](help/index.md)：安装、模式、界面、三个区域、设置与参考 |
 | 看一份资料、写笔记，或从资料做出报告和 PPT | [第一篇笔记](help/getting-started/first-work.md) · [第一个创作项目](help/getting-started/first-agent-project.md) |

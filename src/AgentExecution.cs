@@ -31,7 +31,7 @@ namespace kok {
                 if (root.Length > 1000 || root.Any(Char.IsControl)) throw new InvalidDataException("工作目录路径无效。");
                 if (!Path.IsPathRooted(root) || !Directory.Exists(root)) throw new InvalidDataException("工作目录必须是已存在的绝对路径。");
             }
-            if(enabled!=Enabled(library)||root!=Root(library)||sandbox!=SandboxEnabled(library))AgentCommandJobs.Stop(library);
+            if(enabled!=Enabled(library)||root!=Root(library)||sandbox!=SandboxEnabled(library)){AgentCommandJobs.Stop(library);AgentBrowser.Stop(library);}
             library.SaveAgentExecution(enabled, root, sandbox);
         }
 
@@ -72,7 +72,7 @@ namespace kok {
                         if (action.args.ContainsKey("cwd")) ValidateRelative(Convert.ToString(action.args["cwd"]), true);
                         if (action.args.ContainsKey("timeoutSeconds")) { int seconds; try { seconds = Convert.ToInt32(action.args["timeoutSeconds"]); } catch { throw new FormatException("timeoutSeconds must be an integer"); } if (seconds < 1 || seconds > MaxTimeoutSeconds) throw new FormatException("timeoutSeconds must be 1-" + MaxTimeoutSeconds); }
                     },
-                    ExecuteWithContext = (context, state, call, token) => Task.FromResult(new AgentToolReceipt{result=RunCommand(context, call, token)})
+                    ExecuteWithContext = (context, state, call, token) => Task.Run(()=>new AgentToolReceipt{result=RunCommand(context, call, token)},token)
                 }
             };
         }
@@ -89,10 +89,11 @@ namespace kok {
 
         internal static void ValidateRelative(string path, bool allowEmpty) {
             path = (path ?? "").Trim();
+            if(allowEmpty&&path==".")return;
             if (path.Length == 0) { if (allowEmpty) return; throw new FormatException("path is required"); }
             if (path.Length > 500 || path.Any(Char.IsControl) || Path.IsPathRooted(path)) throw new FormatException("path must be relative to the workspace root");
             var parts = path.Replace('\\', '/').Split('/');
-            if (parts.Any(part => part == ".." || part == "." || part.Length == 0 || part.IndexOf(':') >= 0)) throw new FormatException("path must not contain parent traversal or drive letters");
+            if (parts.Any(part => part == ".." || part == "." || part.Length == 0 || part.IndexOf(':') >= 0 || part.TrimEnd(' ','.')!=part || System.Text.RegularExpressions.Regex.IsMatch(part,@"^(?:CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\.|$)",System.Text.RegularExpressions.RegexOptions.IgnoreCase))) throw new FormatException("path must not contain traversal, drive letters or Windows device aliases");
         }
 
         internal static string Resolve(Library library, string relative, bool allowEmpty) {
@@ -117,6 +118,7 @@ namespace kok {
         }
 
         static Dictionary<string,object> ReadFile(Library library, string relative) {
+            AgentWorkspaceTools.SafePath(relative);
             string full = Resolve(library, relative, false);
             if (!File.Exists(full)) throw new InvalidDataException("文件不存在。");
             var info = new FileInfo(full);
@@ -133,6 +135,7 @@ namespace kok {
             context.Policy.Ensure(Need.NormalLibrary, "agent");
             var library = context.Library;
             string relative = Convert.ToString(call.args["path"]).Trim();
+            AgentWorkspaceTools.SafePath(relative);
             string text = Convert.ToString(call.args["text"]);
             if (text.Length > MaxWriteChars) throw new InvalidDataException("text exceeds the write limit.");
             bool overwrite = call.args.ContainsKey("overwrite") && call.args["overwrite"] != null && Convert.ToBoolean(call.args["overwrite"]);
@@ -143,7 +146,7 @@ namespace kok {
             bool existed = File.Exists(full);
             byte[] bytes = new UTF8Encoding(false).GetBytes(text);
             File.WriteAllBytes(full, bytes);
-            return new Dictionary<string,object> { { "text", (existed ? "Overwrote " : "Created ") + relative + " (" + bytes.LongLength + " bytes) inside the workspace." }, { "path", relative }, { "bytes", bytes.LongLength }, {"assets",new[]{WorkspaceAsset(library,relative,"artifact")}} };
+            return new Dictionary<string,object> { { "text", (existed ? "Overwrote " : "Created ") + relative + " (" + bytes.LongLength + " bytes) inside the workspace." }, { "path", relative }, { "bytes", bytes.LongLength }, {"sha256",AgentWorkspaceTools.Hash(File.ReadAllBytes(full))}, {"workspaceId",AgentWorkspaceTools.RootId(library)}, {"readBackVerified",true}, {"assets",new[]{WorkspaceAsset(library,relative,"artifact")}} };
         }
 
         internal static AgentAssetRef WorkspaceAsset(Library library,string relative,string role){
@@ -164,6 +167,7 @@ namespace kok {
             string cwd = Resolve(library, cwdRelative, true);
             if (!Directory.Exists(cwd)) throw new InvalidDataException("工作目录不存在。");
             bool sandbox = SandboxEnabled(library);
+            var checkedInputs=AgentWorkspaceTools.Inputs(library,call.args);
             string output, errorText; int exit; string engine;
             if (sandbox) {
                 if (!OsSandbox.Supported) throw new InvalidDataException("AppContainer 沙箱不可用：" + OsSandbox.Status);
@@ -188,24 +192,26 @@ namespace kok {
             string text = "Exit code " + exit + "\nSTDOUT:\n" + output + (errorText.Length > 0 ? "\nSTDERR:\n" + errorText : "");
             if (text.Length > MaxOutputChars * 2) text = text.Substring(0, MaxOutputChars * 2) + "\n[Output truncated]";
             text += "\nSandbox: " + (sandbox ? "AppContainer (no network, no user-file access, writes only inside the workspace)" : "disabled - the command runs with your full user permissions");
-            return new Dictionary<string,object> { { "text", text }, { "exitCode", exit }, { "stdout", output }, { "stderr", errorText }, { "sandbox", sandbox }, { "engine", engine } };
+            return new Dictionary<string,object> { { "text", AgentWorkspaceTools.Redact(text) }, { "exitCode", exit }, { "stdout", AgentWorkspaceTools.Redact(output) }, { "stderr", AgentWorkspaceTools.Redact(errorText) }, { "sandbox", sandbox }, { "engine", engine }, {"checkedInputs",checkedInputs}, {"inputsCurrent",AgentWorkspaceTools.InputsCurrent(library,checkedInputs)} };
         }
 
         internal static string ResolveExecutable(string command) {
             if (String.IsNullOrWhiteSpace(command)) return null;
-            if (Path.IsPathRooted(command)) return File.Exists(command) && Path.GetExtension(command).Equals(".exe", StringComparison.OrdinalIgnoreCase) ? Path.GetFullPath(command) : null;
+            if (Path.IsPathRooted(command)) return ExecutableFile(command) ? Path.GetFullPath(command) : null;
             string[] names = Path.GetExtension(command).Length == 0 ? new[] { command + ".exe", command } : new[] { command };
             foreach (var directory in (Environment.GetEnvironmentVariable("PATH") ?? "").Split(';')) {
                 string trimmed = directory.Trim();
                 if (trimmed.Length == 0) continue;
                 foreach (string name in names) {
-                    try { string candidate = Path.Combine(trimmed, name); if (File.Exists(candidate)) return Path.GetFullPath(candidate); } catch { }
+                    try { string candidate = Path.Combine(trimmed, name); if (ExecutableFile(candidate)) return Path.GetFullPath(candidate); } catch { }
                 }
             }
             return null;
         }
 
-        static void RunProcess(ProcessStartInfo start, int timeout, CancellationToken token, out string output, out string errorText, out int exit) {
+        static bool ExecutableFile(string path){if(!File.Exists(path)||!Path.GetExtension(path).Equals(".exe",StringComparison.OrdinalIgnoreCase))return false;try{using(var stream=File.OpenRead(path))return stream.ReadByte()==77&&stream.ReadByte()==90;}catch(IOException){return false;}catch(UnauthorizedAccessException){return false;}}
+
+        internal static void RunProcess(ProcessStartInfo start, int timeout, CancellationToken token, out string output, out string errorText, out int exit) {
             using (var group = new DownloadProcessGroup())
             using (var process = new Process { StartInfo = start }) {
                 try { process.Start(); } catch (Exception error) { throw new InvalidDataException("无法启动命令：" + error.Message); }
@@ -224,11 +230,11 @@ namespace kok {
 
         static async Task<string> ReadLimitedAsync(StreamReader reader, int limit) {
             var builder = new StringBuilder(); var buffer = new char[4096]; int read;
-            while ((read = await reader.ReadAsync(buffer, 0, buffer.Length)) > 0) { if (builder.Length < limit) builder.Append(buffer, 0, Math.Min(read, limit - builder.Length)); }
+            while ((read = await reader.ReadAsync(buffer, 0, buffer.Length).ConfigureAwait(false)) > 0) { if (builder.Length < limit) builder.Append(buffer, 0, Math.Min(read, limit - builder.Length)); }
             return builder.ToString();
         }
 
-        static string QuoteArgument(string value) {
+        internal static string QuoteArgument(string value) {
             if (value == null) return "\"\"";
             if (value.Length > 0 && value.All(c => !Char.IsWhiteSpace(c) && c != '"')) return value;
             return "\"" + value.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";

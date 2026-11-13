@@ -1,6 +1,6 @@
 ﻿param([string[]]$Suites=@('ui','features','translation','i18n','minimal','drop','workspaces','video-layout','refinements','menus-covers','compatibility','organizer','companion','private-space','app-modes','recovery','agent','agent-interactions','agent-reliable','agent-runtime','agent-kernel','mcp','agent-platform','agent-quality','library-services','creative-artifacts','creative-e2e','agent-output-recovery','presentation-design','presentation-editing','works-navigation','agent-home-layout','agent-workflow','pi-agent-ui','agent-document-edit','agent-presentations','presentation-save'),[string]$LargeMediaFile,[string]$RealFilesFolder,[string]$Executable,[string]$AuditDirectory)
 $ErrorActionPreference='Stop'
-if(-not $PSBoundParameters.ContainsKey('Suites')){$Suites=@('agent-research','agent-foundation')+$Suites}
+if(-not $PSBoundParameters.ContainsKey('Suites')){$Suites=@('agent-research','agent-foundation','agent-coding','agent-browser')+$Suites}
 $projectRoot=Split-Path $PSScriptRoot -Parent
 $executable=if($Executable){(Resolve-Path -LiteralPath $Executable).Path}else{Join-Path $projectRoot 'dist\kok\kok.exe'}
 $testBoundary=[IO.Path]::GetFullPath((Join-Path $projectRoot 'test-output')).TrimEnd([IO.Path]::DirectorySeparatorChar)+[IO.Path]::DirectorySeparatorChar
@@ -58,7 +58,7 @@ foreach($suite in $Suites){
     if($suite -eq 'agent-live-quality' -or $suite -eq 'agent-live-samples'){if($env:KOK_LIVE_AI -ne '1' -or -not $env:KOK_LIVE_CONFIG){throw 'Explicit live evaluation source configuration is required.'};Copy-Item -LiteralPath $env:KOK_LIVE_CONFIG -Destination (Join-Path $profile 'ai-settings.json')}
     # Fixed-response legacy suites retain their original protocol; the research suite exercises the new default.
     $previousAgentRuntime=$env:KOK_AGENT_RUNTIME
-    $env:KOK_AGENT_RUNTIME=if($suite -in @('agent-research','agent-foundation','agent-live-quality','agent-live-samples')){'research'}else{'native'}
+    $env:KOK_AGENT_RUNTIME=if($suite -in @('agent-research','agent-foundation','agent-coding','agent-browser','agent-live-quality','agent-live-samples')){'research'}else{'native'}
     $process=Start-Process -FilePath $executable -ArgumentList @('--debug','--test-silent','--data-dir',('"'+$profile+'"')) -PassThru -WindowStyle Hidden
     $env:KOK_TEST_NATIVE_PID=[string]$process.Id
     $env:KOK_TEST_EXECUTABLE=$executable

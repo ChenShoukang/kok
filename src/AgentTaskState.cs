@@ -14,7 +14,7 @@ namespace kok {
         // list). Only an auto profile is re-derived from task.adjusted; an explicit list stays authoritative.
         public bool allowedToolsAuto;
         public string parentTaskId="",parentCallId="",sessionLeafId="",skillsIndex="";public int parentSteering;
-        public int budget=14000,requestLimit=6,kernelVersion,reserveTokens,keepRecentTokens;public double costLimit,inputRate,outputRate;public AgentHandoff handoff;
+        public int budget=14000,requestLimit=6,kernelVersion,workspaceVersion,reserveTokens,keepRecentTokens;public double costLimit,inputRate,outputRate;public AgentHandoff handoff;
         public string projectId="",projectBrief="";
         // Set once by the host (AgentDelivery.PrepareDelivery) from the goal/scope; nullable for replay of older tasks.
         public AgentDeliveryRequirement delivery;

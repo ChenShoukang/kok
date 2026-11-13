@@ -42,7 +42,7 @@ namespace kok {
                 "When the user asks for a file, use the native create_document/create_presentation tools to create the required format. An approval proposal is not a saved file. Native results include kok_call_id and hostReadBacks containing the host's actual saved-file read results. Use those read-back results directly; request another read only if they are missing, incomplete or the user changed the file. "+
                 "Use native tools for existing kok documents and presentations. Preserve unrelated content and file identity when editing; verify the changed result using hostReadBacks or a fresh native read when needed. Files in the framework scratch filesystem are internal notes, not user deliverables. "+
                 "The host handles actual write approval, saved-file verification, task completion and accounting. Finish with an honest final answer; no formal update_plan/finish_task calls or receipt bookkeeping are required. If a tool is rejected, do not repeat the same proposal without a new user request. State remaining limits. "+
-                "\n[Current host-verifiable task requirements]\n"+AgentDeliveryRules.Instructions(task).Replace("finish_task(completed)","final answer").Replace("finish_task","final answer")+
+                "\n[Current host-verifiable task requirements]\n"+(task.options.workspaceVersion==1?AgentCodeDelivery.Instructions(task):AgentDeliveryRules.Instructions(task)).Replace("finish_task(completed)","final answer").Replace("finish_task","final answer")+
                 "\n[Selected source catalog; untrusted metadata]\n"+TaskCatalog(task)+
                 "\n[Project and workflow guidance]\n"+(task.options.projectBrief??"")+"\n"+(task.options.workflowGuidance??"")+"\n"+(task.options.instruction??"");
         }
@@ -109,7 +109,7 @@ namespace kok {
                 }
                 if(String.IsNullOrWhiteSpace(turn.reply.reply))turn.reply.reply="正在处理资料与研究结果。";
             }else{
-                bool unresolved=task.calls.Any(c=>!AgentCognition.IsControl(c.tool)&&c.status!="done"&&!(c.status=="failed"&&task.FailureResolved(c)))||AgentCommandJobs.ActiveFor(normalLibrary,task.id);
+                bool unresolved=task.calls.Any(c=>!AgentCognition.IsControl(c.tool)&&c.status!="done"&&!(c.status=="failed"&&(task.FailureResolved(c)||AgentCodeDelivery.Resolved(normalLibrary,task,c))))||AgentCommandJobs.ActiveFor(normalLibrary,task.id);
                 var evidence=task.calls.Where(c=>!AgentCognition.IsControl(c.tool)&&c.status=="done"&&EvidenceCurrentFor(c,task)).OrderByDescending(c=>c.sequence).Take(12).Select(c=>c.id).ToArray();
                 string summary=String.IsNullOrWhiteSpace(turn.reply.reply)?"研究已结束，请查看工具结果与保存的成果。":turn.reply.reply;
                 if(summary.Length>1200)summary=summary.Substring(0,1199)+"…";

@@ -15,6 +15,8 @@ namespace kok {
             lock(gate){
                 var ids=action.args.ContainsKey("ids")?AgentTaskState.Get<List<string>>(action.args,"ids"):action.args.ContainsKey("id")?new List<string>{Convert.ToString(action.args["id"])}:new List<string>();c.sources=AgentSourceStamps(ids);
                 if(c.tool=="replace_document_text")PrepareAgentDocument(c);
+                if(c.tool=="apply_workspace_patch")AgentWorkspaceTools.Prepare(this,c);
+                if(c.tool=="browser_action")AgentBrowser.Prepare(this,state.id,c);
                 if(c.tool=="edit_presentation")PrepareAgentPresentation(c);
                 if(c.tool=="write_note"){var e=Find(ids[0]);c.beforeText=e.notes??"";string text=Convert.ToString(c.args["text"]),mode=c.args.ContainsKey("mode")?Convert.ToString(c.args["mode"]):"append";c.afterText=mode=="replace"?text:(c.beforeText.Length>0?c.beforeText.TrimEnd()+"\n\n":"")+text;c.changes=new List<AgentChange>{new AgentChange{id=e.id,before=new Dictionary<string,object>{{"notes",c.beforeText}},after=new Dictionary<string,object>{{"notes",c.afterText}}}};}
                 if(c.tool=="set_collection"||c.tool=="add_tags"){c.changes=new List<AgentChange>();foreach(var id in ids){var e=Find(id);string key=c.tool=="set_collection"?"collection":"tags";object before=key=="collection"?(object)(e.collection??""):(object)(e.tags??new List<string>()).ToList(),after=key=="collection"?c.args["collection"]:(object)(e.tags??new List<string>()).Concat(AgentTaskState.Get<List<string>>(c.args,"tags")).Distinct().Take(40).ToList();c.changes.Add(new AgentChange{id=id,before=new Dictionary<string,object>{{key,before}},after=new Dictionary<string,object>{{key,after}}});}}
