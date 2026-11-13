@@ -20,7 +20,7 @@ namespace kok {
         }
         internal AgentResearchKernel(string appDirectory){
             string root=Path.Combine(appDirectory,"runtime","research");
-            if(!Available(appDirectory))throw new AgentFailure("runtime","研究内核运行组件缺失，请重新构建或完整解压 v0.13.0 安装包。旧任务仍使用兼容内核。",true);
+            if(!Available(appDirectory))throw new AgentFailure("runtime","研究内核运行组件缺失，请完整解压新版安装包。",true);
             var start=new ProcessStartInfo(Path.Combine(root,"node.exe"),"\""+Path.Combine(root,"worker.mjs")+"\""){
                 WorkingDirectory=root,UseShellExecute=false,CreateNoWindow=true,
                 RedirectStandardInput=true,RedirectStandardOutput=true,RedirectStandardError=true,

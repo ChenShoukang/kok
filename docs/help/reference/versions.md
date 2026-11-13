@@ -69,13 +69,13 @@
 
 ## 更新记录与验证
 
-版本变化和本版验收范围分别见[版本记录](../../../CHANGELOG.md)与[v0.13.0 验证记录](../../VALIDATION_0.13.0.md)。
+版本变化和本版验收范围分别见[版本记录](../../../CHANGELOG.md)与[v0.14.0 验证记录](../../VALIDATION_0.14.0.md)。
 
 ---
 
 **相关**
 
-- [v0.13.0 验证记录](../../VALIDATION_0.13.0.md)
+- [v0.14.0 验证记录](../../VALIDATION_0.14.0.md)
 - [版本记录](../../../CHANGELOG.md)
 - [安装 kok](../getting-started/install.md)
 - [帮助与支持](../help-and-support.md)

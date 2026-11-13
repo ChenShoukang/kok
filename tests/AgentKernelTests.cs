@@ -587,7 +587,14 @@ static class AgentKernelTests {
   serialEngine.Start();await serialEngine.Completion;
   check(serialOrder.SequenceEqual(new[]{"a","b"})&&serialState.status=="partial","Mode=\"serial\" read tools execute one-by-one in request order");
   var parallelState=Seed(journal);var parallelOrder=new List<string>();int parallelRounds=0;
-  Func<AgentTaskState,AgentCall,CancellationToken,Task<Dictionary<string,object>>> parallelRead=async(s,c,t)=>{if(c.tool=="hook_parallel_a")await Task.Delay(30,t);parallelOrder.Add(c.tool=="hook_parallel_a"?"a":"b");return new Dictionary<string,object>{{"text","PARALLEL"}};};
+  var parallelSecond=new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+  // Require B to actually start while A is suspended. Slow journal writes may take over 30 ms,
+  // so wall-clock delays cannot establish whether the engine permits overlapping reads.
+  Func<AgentTaskState,AgentCall,CancellationToken,Task<Dictionary<string,object>>> parallelRead=async(s,c,t)=>{
+   if(c.tool=="hook_parallel_a"&&await Task.WhenAny(parallelSecond.Task,Task.Delay(10000,t))!=parallelSecond.Task)throw new TimeoutException("Second parallel read did not start while the first read waited.");
+   parallelOrder.Add(c.tool=="hook_parallel_a"?"a":"b");if(c.tool=="hook_parallel_b")parallelSecond.TrySetResult(true);
+   return new Dictionary<string,object>{{"text","PARALLEL"}};
+  };
   Func<AgentTaskEngine,CancellationToken,Task<AgentModelTurn>> parallelModel=(e,t)=>{parallelRounds++;return parallelRounds==1?Reply(e,Action("hook_parallel_a",new{}),Action("hook_parallel_b",new{})):Reply(e,Finish("partial"));};
   var parallelEngine=new AgentTaskEngine(parallelState,journal,()=>{},parallelModel,parallelRead,write,Prepare,()=>{});
   parallelEngine.Start();await parallelEngine.Completion;

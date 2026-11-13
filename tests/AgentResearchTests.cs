@@ -54,7 +54,11 @@ static class AgentResearchTests {
             Service.Stop();throw new Exception("Research runtime fixture timed out.");
         }
     }
-    public static void Run(string root,Action<bool,string> check){RunAsync(root,check).GetAwaiter().GetResult();}
+    public static void Run(string root,Action<bool,string> check){
+        // GitHub's UTF-8 console makes Process.StandardInput emit a BOM before our own writer.
+        // Exercise that environment explicitly even on local legacy-code-page consoles.
+        var previous=Console.InputEncoding;try{Console.InputEncoding=new UTF8Encoding(true);RunAsync(root,check).GetAwaiter().GetResult();}finally{Console.InputEncoding=previous;}
+    }
     static async Task RunAsync(string root,Action<bool,string> check){
         check(AgentResearchKernel.Available(AppDomain.CurrentDomain.BaseDirectory),"research: packaged Node and worker are available without a system Node lookup");
         using(var server=new Server()){

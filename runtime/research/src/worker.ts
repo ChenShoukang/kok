@@ -15,7 +15,9 @@ function permit(request: ModelRequest): Promise<void> {
 const lines = createInterface({ input: process.stdin, crlfDelay: Infinity });
 lines.on('line', async line => {
   let value: unknown;
-  try { if (line.length > 2_000_000) throw new Error(); value = JSON.parse(line); if (!isRecord(value)) throw new Error(); }
+  // .NET Framework's original StandardInput writer may emit a UTF-8 BOM when the console
+  // uses code page 65001, before the explicit no-BOM writer takes ownership of its stream.
+  try { if (line.length > 2_000_000) throw new Error(); value = JSON.parse(line.replace(/^\uFEFF/, '')); if (!isRecord(value)) throw new Error(); }
   catch { output({ type: 'error', message: '研究内核输入格式无效。' }); return; }
   if (value.type === 'model_permit') {
     const id = typeof value.requestId === 'string' ? value.requestId : '', pending = permissions.get(id); permissions.delete(id);
