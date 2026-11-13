@@ -391,7 +391,10 @@ const {chromium}=require('./browser.cjs'),Fixture=require('./agent-fixture.cjs')
   assert(await page.evaluate(()=>$('#agent-input')===window.stableAgentInput&&$('#agent-input').selectionStart===2&&$('#agent-input').selectionEnd===5&&$('#agent-stream').scrollTop<4));
   await fresh();mode='outline';await send('把重逢的故事整理成三章大纲，保存为草稿');
   await page.waitForSelector('[data-agent-run]');await page.locator('[data-agent-run]').click();await idle();
-  assert(await page.locator('.agent-result-artifact [data-agent-open-item]').isVisible());
+  // v0.12 host auto read-back adds the task's own created artifact to the tool sources, so the result
+  // card renders both the primary 打开文档 button and a same-id source chip under 查看来源. Assert the
+  // primary open-document action only, so the strict locator does not match two elements.
+  assert(await page.locator('.agent-result-artifact [data-agent-open-item]').first().isVisible());
   assert.match(await page.locator('.agent-result-artifact h3').innerText(),/重逢/);
   assert.equal(await page.locator('.agent-completed-preview').evaluate(node=>node.open),false,'completed creation previews collapse so the result remains primary');
   await page.locator('.agent-completed-preview>summary').click();assert(await page.locator('.agent-completed-preview .agent-rich-text h3').first().isVisible());

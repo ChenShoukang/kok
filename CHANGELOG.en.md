@@ -1,5 +1,52 @@
 # kok changelog
 
+## v0.14.0 · Preview
+
+- Establish the general Agent foundation with a strictly checked TypeScript runtime on Deep Agents / LangGraph. C# retains desktop integration, approval and actual file operations; the previous loop is isolated for compatibility.
+- Add versioned TaskSpec, asset and capability contracts projected from the existing authoritative delivery rules and real file versions.
+- Persist new LangGraph checkpoints through public write interfaces, with migration of v0.13.0 checkpoints and approval-boundary recovery.
+- Add individually approved background command jobs with durable IDs, local waits, cancellation, actual exit codes and declared output assets. Results are encrypted; interrupted jobs never replay automatically after restart.
+- Show truthful status for all nine capability domains, including music. Engines that are still planned are not advertised as available.
+- Prevent delayed memory refreshes from reopening a closed dialog; wrap command output and show declared output paths in the job view.
+- Add migration, actual process execution, output asset and desktop integration coverage. See [validation and limits](docs/VALIDATION_0.14.0.md) and the [development plan](docs/PROJECT_PLAN_0.14_TO_1.0.md).
+
+## v0.13.0 · Preview
+
+- New tasks use Deep Agents 1.16.4 / LangGraph 1.7.3 for source reading, research and content creation, with the user's configured model provider.
+- The SDK owns the model/tool loop. kok enforces scope, approval, actual file writes, saved-artifact validation, undo and request/cost limits. Final answers enter host verification without model-authored formal plan/finish receipts.
+- Native tools use resumable interrupts; compressed SDK state is stored in the encrypted task journal. Restarting at approval does not regenerate or duplicate the write.
+- Generic subagents and shell are disabled by default. One bundled Node worker starts on demand and exits after the task; no developer runtime installation is required.
+- Actual host read-back receipts reach the SDK directly. Fixed Windows Chinese input encoding and source revision metadata being mistaken for a targeted file edit.
+- Existing tasks retain their original execution semantics; explicit compatibility JSON uses the native runtime. See [kernel and migration](docs/RESEARCH_KERNEL_0.13.0.md) and [validation](docs/VALIDATION_0.13.0.md) for scope and limits.
+
+## v0.12.2 · Preview
+
+- Task requirements are now a sequential state machine: later messages can add, replace or cancel page counts, length bounds, deliverable kinds, full-source reading and body-edit requirements. "Change it to a report", "don't edit yet, only analyze", "cancel the length limit", "only read the beginning" and "use all sources" apply to the current state instead of accumulating stale requirements.
+- Tool profiles, prompts and acceptance read the same current requirement: after switching from a chat reply to saving a file, the creation tool is available again instead of being blocked by an earlier "do not create a file".
+- Completion binds to the final deliverable ID and current version: type, format (DOCX/MD/TXT), measured length (characters, CJK characters or English words), page count, existence and read-back must all hold on the same file. Mixing conditions across files, satisfying page counts with an older deck, reading only one slide, or editing without a post-edit read-back no longer pass.
+- Presentation reads are unified: `read_presentation` page coverage counts toward full-source coverage, and a created deck's read-back must cover all pages (or the full text).
+- Chat replies are checked against measured length requirements; the retained-constraint block prioritizes final revisions and warns that older versions may be void.
+- This release is verified with offline native tests, an independent probe and desktop suites; no live model end-to-end rerun was performed. Scope and limits are in [Validation](docs/VALIDATION_0.12.2.md).
+
+## v0.12.1 · Preview
+
+- When the user changes requirements mid-task, delivery acceptance and available tools are re-derived from the latest request: 8 pages changed to 5 validates 5, adding "save it as a document" opens the creation tool, and completed artifacts/reads are preserved.
+- Delivery acceptance supports multiple deliverables (report and deck validated separately), narrowed source scope ("use only the second source"), and distinguishes deliverable page counts from source page references. Negated requests ("do not make a PPT") and "reply in chat, do not create a file" are no longer misread as delivery actions.
+- Length acceptance is now measured by the host: CJK characters are counted after stripping Markdown formatting, and post-creation read-back must cover the artifact text (at least 8,000 characters or the full document) instead of a two-character read.
+- `read_document` and `read_items` share exact-reading and coverage semantics: full-source checks accept either tool, long `read_document` results are no longer cropped again, `max_chars` is enforced, multiple results get a guaranteed share of the task budget, and earlier source openings plus constraint sentences remain visible in later turns.
+- Repaired failures: a read retried with corrected parameters resolves the earlier failure; `uncertain_write`, skipped and undone steps still block completion.
+- Tool profiles keep configured memory, web, execution, delegation and MCP capabilities instead of silently trimming them to the 14-tool budget; mid-task additions open the tools the new request needs.
+- Evaluation separates partial from complete outcomes, reports completed/partial/needs-input/failed counts, renames citation and write-claim metrics to match their actual checks, and adds required-facts and forbidden-items checks. The result card separates input sources from generated artifacts.
+- This release is verified with offline native tests, an independent probe and desktop suites; no live model end-to-end rerun was performed. Scope and limits are in [Validation](docs/VALIDATION_0.12.1.md).
+
+## v0.12.0 · Preview
+
+- Artifacts created by a task join that task's readable scope: create, read back, targeted edit and finish can complete inside one task, while restart, undo and out-of-scope reads keep the original boundaries.
+- Agent reads are exact and paged: `read_items` supports `offset` / `max_chars`, `has_more` / `next_offset` and per-source coverage, so long sources and their final revisions are no longer lost to sampling; context clipping no longer collapses oversized results into a short note.
+- `finish_task(completed)` now includes host-verified delivery: a real artifact, the actual slide count, a current read-back after creation/editing and full-source coverage; a rejected completion names only the failing item. Repaired failures no longer block completion.
+- Tool groups are chosen from the goal (report, revision, presentation), so a default report task no longer exposes subtitle or media-index capabilities. The default request limit is unchanged.
+- A small DeepSeek live evaluation led to fixes for negated creation requirements, secondary clipping of exact reads and unclear request-budget guidance. The final native suite passes 1053 tests; content completeness and consistency across artifacts still need work. Evidence and limits are in [Validation](docs/VALIDATION_0.12.0.md).
+
 ## v0.11.2 · Preview
 
 - Try an example from the empty Agent or My works screen and create an editable Markdown note locally.

@@ -11,6 +11,9 @@ class Tests {
     static void Check(bool condition,string name) { if(!condition) throw new Exception("FAIL: "+name); Console.WriteLine("PASS: "+name); count++; }
     static void Entry(ZipArchive zip,string path,string content) { using(var writer=new StreamWriter(zip.CreateEntry(path).Open(),new UTF8Encoding(false))) writer.Write(content); }
     static int Main(string[] args) {
+        if(args.Length>0&&args[0]=="--command-job-fixture"){System.Threading.Thread.Sleep(Int32.Parse(args[1]));if(args.Length>3)File.WriteAllText(args[3],"fixture-artifact");Console.WriteLine("job-fixture-ok");return Int32.Parse(args[2]);}
+        string previousRuntime=Environment.GetEnvironmentVariable("KOK_AGENT_RUNTIME");
+        Environment.SetEnvironmentVariable("KOK_AGENT_RUNTIME","native"); // Existing fixtures exercise the compatibility runtime; research fixtures opt in explicitly.
         string temp=Path.Combine(Path.GetTempPath(),"kok-tests-"+Guid.NewGuid().ToString("N")); Directory.CreateDirectory(temp);
         try {
             string text=Path.Combine(temp,"中文书名.txt"); File.WriteAllText(text,"第一章\n\n你好，世界。",new UTF8Encoding(true));
@@ -123,6 +126,15 @@ class Tests {
             AgentHeadlessTests.Run(Path.Combine(temp,"agent-headless"),Check);
             AgentPlatformTests.Run(Path.Combine(temp,"agent-platform"),Check);
             AgentReliability090Tests.Run(Path.Combine(temp,"agent-090"),Check);
+            AgentScopeV012Tests.Run(Path.Combine(temp,"agent-scope-v012"),Check);
+            AgentReadingV012Tests.Run(Path.Combine(temp,"agent-reading-v012"),Check);
+            AgentDeliveryV012Tests.Run(Path.Combine(temp,"agent-delivery-v012"),Check);
+            AgentIntentV013Tests.Run(Path.Combine(temp,"agent-intent-v013"),Check);
+            AgentReadingV013Tests.Run(Path.Combine(temp,"agent-reading-v013"),Check);
+            AgentRecoveryV013Tests.Run(Path.Combine(temp,"agent-recovery-v013"),Check);
+            AgentAcceptanceV122Tests.Run(Path.Combine(temp,"agent-acceptance-v122"),Check);
+            AgentResearchTests.Run(Path.Combine(temp,"agent-research-v013"),Check);
+            AgentFoundationTests.Run(Path.Combine(temp,"agent-foundation-v014"),Check);
             McpTests.Run(Path.Combine(temp,"mcp"),Check);
             McpRemoteTests.Run(Path.Combine(temp,"mcp-remote"),Check);
             McpOAuthTests.Run(Path.Combine(temp,"mcp-oauth"),Check);
@@ -137,6 +149,6 @@ class Tests {
             Check(rejected&&File.ReadAllText(lib.StoragePath)=="bad sqlite","corrupt database preserved and reported");
             Console.WriteLine(count+" tests passed.");return 0;
         } catch(Exception ex) { Console.Error.WriteLine(ex);return 1; }
-        finally { Directory.Delete(temp,true); }
+        finally { Environment.SetEnvironmentVariable("KOK_AGENT_RUNTIME",previousRuntime);Directory.Delete(temp,true); }
     }
 }

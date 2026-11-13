@@ -10,6 +10,9 @@ namespace kok {
     // Domain-independent execution/state ownership. UI rendering neither schedules turns nor resolves promises.
     public sealed partial class AgentTaskEngine {
         public readonly AgentTaskState State;public readonly CancellationTokenSource Cancellation=new CancellationTokenSource();
+        // C1: host delivery acceptance hook, called by AgentCognition before a completed task is verified.
+        // Null keeps the pre-0.12 behavior (probes and legacy engines).
+        public Func<AgentTaskState,string> DeliveryCheck;
         readonly AgentJournal journal;readonly Action changed;readonly Action validate;
         readonly Func<AgentTaskEngine,CancellationToken,Task<AgentModelTurn>> model;
         readonly Func<AgentTaskState,AgentCall,CancellationToken,Task<Dictionary<string,object>>> read;
@@ -87,7 +90,7 @@ namespace kok {
             await decisions.WaitAsync();try{validate();Cancellation.Token.ThrowIfCancellationRequested();var call=State.calls.FirstOrDefault(c=>c.id==callId);if(!IsRunning||call==null||call.status!="pending")throw new InvalidOperationException("请先继续任务并重新确认操作。");
                 if(State.options.approvalPolicy=="read_only")throw new AgentFailure("approval","只读任务不允许执行修改。");
                 if(!approve){RevokeGrants("rejected");Emit("tool.skipped",new{callId=call.id,reason="user"});Signal();return;}
-                if(new[]{"mcp_call","delegate_task","delegate_parallel","run_code"}.Contains(call.tool)&&batch)throw new AgentFailure("approval","外部工具需要逐项确认。");
+                if(new[]{"mcp_call","delegate_task","delegate_parallel","run_code","start_command_job"}.Contains(call.tool)&&batch)throw new AgentFailure("approval","外部工具需要逐项确认。");
                 if(grant&&(batch||automatic||!AgentApproval.Eligible(State,call)||automaticAllowed==null||!automaticAllowed()))throw new AgentFailure("approval","此操作不能授予本任务许可。");
                 if(automatic){var permit=AgentApproval.Find(State,call);if(permit==null||!CanAutoApprove(call))return;Emit("approval.used",new{grantId=permit.id,callId=call.id});}
                 if(grant)Emit("approval.granted",new{grant=new AgentApprovalGrant{id=Guid.NewGuid().ToString("N"),tool=call.tool,ids=AgentApproval.Targets(call),steering=State.steerVersion}});
@@ -95,14 +98,28 @@ namespace kok {
                 journal.CheckCapacity(State.id,600000);Emit("tool.started",new{callId=call.id});
                 bool applied=false;try{var receipt=await write(State,call,Cancellation.Token);var result=Patched(call,receipt.result);Emit("tool.completed",new{callId=call.id,result,stamp=receipt.stamp});applied=true;}
                 catch(OperationCanceledException){throw;}catch(Exception error){RevokeGrants("failed");var f=AgentFailure.Classify(error);var toolFailure=error as AgentToolFailure;Emit("tool.failed",new{callId=call.id,kind=f.kind,message=f.Message,retryable=false,result=toolFailure==null?null:toolFailure.result});}
-                if(applied&&State.options.kernelVersion>=3&&call.changes!=null&&read!=null){
+                if(applied&&State.options.kernelVersion>=3&&read!=null){
                     // This is an actual host read, with its own durable outcome; afterText is never a read receipt.
-                    try{var ids=call.changes.Select(c=>c.id).Distinct().ToList();for(int n=0;n<ids.Count;n+=8){var back=prepare(State,new AgentAction{tool="read_items",args=new Dictionary<string,object>{{"ids",ids.Skip(n).Take(8).ToList()}},why="Host read-back after approved metadata write"},call.turnId,null);back.hostGenerated=true;Emit("tool.proposed",new{call=back});await ReadCall(back);}}
+                    // P0-1: createdAtifact receipts are read back too, so the model (and delivery acceptance) sees
+                    // the real saved content instead of guessing; scope validation uses the updated task scope.
+                    var readback=new List<string>();
+                    if(call.changes!=null)readback.AddRange(call.changes.Select(change=>change.id));
+                    string artifactId=AgentTaskState.ArtifactId(call);if(artifactId!=null)readback.Add(artifactId);
+                    // P0-3: in-place edits (replace_document_text / edit_presentation) are read back too so delivery
+                    // acceptance can prove the changed content; the edited id never grants any extra scope.
+                    string editTargetId=AgentTaskState.EditTargetId(call);if(editTargetId!=null&&State.InScope(editTargetId))readback.Add(editTargetId);
+                    var ids=readback.Where(id=>!String.IsNullOrEmpty(id)).Distinct().ToList();
+                    if(ids.Count>0)try{string why=artifactId!=null?"Host read-back after approved artifact creation":editTargetId!=null?"Host read-back after approved in-place edit":"Host read-back after approved metadata write";for(int n=0;n<ids.Count;n+=8){var back=prepare(State,new AgentAction{tool="read_items",args=new Dictionary<string,object>{{"ids",ids.Skip(n).Take(8).ToList()}},why=why},call.turnId,null);back.hostGenerated=true;Emit("tool.proposed",new{call=back});await ReadCall(back);}}
                     catch(OperationCanceledException){throw;}catch(AgentFailure f){Emit("task.note",new{text="Automatic read-back unavailable: "+f.Message});}
                     catch{Emit("task.note",new{text="Automatic read-back unavailable. Read the changed sources before completing."});}
                 }
                 Signal();
             }finally{decisions.Release();}
+        }
+        // Proposal rejected by policy/validation before execution: recorded like any other failed call so the
+        // model sees the reason in the next tool result. Never executed and never blocks the run loop.
+        static AgentCall RejectedProposal(AgentAction action,string turnId,string providerId,string kind,string message){
+            return new AgentCall{id=Guid.NewGuid().ToString("N"),providerId=providerId,turnId=turnId,tool=action==null?null:action.tool,args=action==null||action.args==null?new Dictionary<string,object>():action.args,why=action==null?null:action.why,status="failed",errorKind=kind,error=message??"",retryable=false};
         }
         async Task ReadCall(AgentCall call){
             Cancellation.Token.ThrowIfCancellationRequested();validate();journal.CheckCapacity(State.id,70000);
@@ -145,10 +162,23 @@ namespace kok {
                     var turn=await model(this,Cancellation.Token);Cancellation.Token.ThrowIfCancellationRequested();validate();
                     if(steering!=State.steerVersion){InterruptStream("superseded");Emit("request.discarded",new{reason="new user instructions"});continue;}
                     string turnId=Guid.NewGuid().ToString("N");
-                    var sources=State.calls.Where(c=>c.status=="done"&&c.result!=null).SelectMany(c=>AgentTaskState.Get<List<ChatReference>>(c.result,"references")??new List<ChatReference>()).Select(r=>r.fileId).Where(id=>id!=null&&State.options.allowed.Contains(id)).Distinct().ToList();
-                    var proposals=new List<AgentCall>();for(int n=0;n<turn.reply.actions.Count;n++)proposals.Add(prepare(State,turn.reply.actions[n],turnId,n<turn.providerIds.Count?turn.providerIds[n]:null));
+                    var sources=State.calls.Where(c=>c.status=="done"&&c.result!=null).SelectMany(c=>AgentTaskState.Get<List<ChatReference>>(c.result,"references")??new List<ChatReference>()).Select(r=>r.fileId).Where(id=>id!=null&&State.InScope(id)).Distinct().ToList();
+                    var proposals=new List<AgentCall>();
+                    for(int n=0;n<turn.reply.actions.Count;n++){
+                        var action=turn.reply.actions[n];string providerId=n<turn.providerIds.Count?turn.providerIds[n]:null;
+                        // P1 safety net: a proposal refused by the tool allow-list (policy) or by its own
+                        // parameter validation is recorded as a durable failed call instead of aborting the
+                        // whole task. The next model round can reroute or finish partial; unknown exceptions
+                        // still propagate so real bugs are never hidden.
+                        try{proposals.Add(prepare(State,action,turnId,providerId));}
+                        catch(FormatException error){proposals.Add(RejectedProposal(action,turnId,providerId,"validation",error.Message));}
+                        catch(AgentFailure failure)when(failure.kind=="policy"){proposals.Add(RejectedProposal(action,turnId,providerId,"policy",failure.Message));}
+                    }
                     Emit("assistant.reply",new{text=turn.reply.reply,turnId=turnId,done=turn.reply.done,sources=sources,steering=steering});
-                    foreach(var call in proposals)Emit("tool.proposed",new{call=call});
+                    foreach(var call in proposals){
+                        Emit("tool.proposed",new{call=call});
+                        if(call.status=="failed")Emit("tool.failed",new{callId=call.id,kind=call.errorKind,message=call.error,retryable=false});
+                    }
                     // FinishTurn runs after the reply and its proposals. "continue" may force exactly one
                     // extra model request per task, and only when nothing queued/pending needs execution
                     // first; verification/approval/completion rules still run on the next iteration.

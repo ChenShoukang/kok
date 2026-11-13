@@ -17,7 +17,7 @@
 | 需补充信息 | 2 | 1 | 4 | 14,560 | 971 | 9,472 |
 | **合计** | **30** | **26** | **76** | **431,132** | **23,898** | **275,072** |
 
-- 全部 30 项引用可回溯（`citationsValid` 30/30）；本地 8 项命中数与资料库独立统计一致；无未授权写入；每个模型任务的创作文件在完成后可撤销并恢复资料库。
+- 全部 30 项引用可回溯（该轮记录名为 `citationsValid`，v0.12.1 起更名为 `citationIdsResolve`，含义不变：来源 id 可解析且在范围内）；本地 8 项命中数与资料库独立统计一致；无未授权写入；每个模型任务的创作文件在完成后可撤销并恢复资料库。
 - 4 项未达验收：`gen-note-from-docs` 与 `complex-long-task-note-followup` 在请求上限（6 / 8 次）处以 `limited` 结束——任务已完成读取、写入与引用，但多步“读→写→回读→核对”消耗达上限；`qa-pdf-second-page` 以 `needs_input` 结束（模型提示缺信息，未伪造答案）；`needs-pdf-contact-info` 状态为 `needs_input`，但回答未命中评测器的“未提供/未知”措辞判定（诚实性措辞检查偏严）。
 - 费用：按记录的 4 / 16 元每百万 token 保守单价约 **¥2.11**；按 DeepSeek 公开价（输入缓存命中 ¥0.5/M、未命中 ¥2/M、输出 ¥8/M）估算约 **¥0.64**。本轮两轮评测合计 190 次请求（含评测器验证），项目总账更新至 **549**（见[请求总账](validation/live-ledger-0.9.8.json)）。
 - 密钥只通过用户提供的凭据文件写入隔离测试 profile 的 DPAPI 配置，运行结束即清除（`keyCleared:true`），报告与仓库不含密钥；完整报告见[机器可读记录](validation/agent-live-0.9.8.json)。
@@ -131,7 +131,10 @@
 | reusedReadRefs | 上述重复读取中由宿主直接复用旧结果（未重新读取）的次数 | `resultEventId` 复用 |
 | opened | 评测器通过真实查看器打开成果或来源成功的次数 | 实际打开 `#close-viewer` |
 | artifactOpenable | 新建文档/演示文稿存在、文件在磁盘上、后缀符合预期 | 库条目 + 文件系统 |
-| citationsValid | 要求引用的样本至少引用 1 个真实来源，全部来源 id 可解析且在本次资料范围内 | 消息 `sourceIds` |
+| citationIdsResolve（旧名 citationsValid） | 要求引用的样本至少引用 1 个真实来源，全部来源 id 可解析且在本次资料范围内；**不证明来源支持结论** | 消息 `sourceIds` |
+| writeClaimsMatchWrites（旧名 noUnsupportedClaims） | 只比对“已保存/已创建/已写入”等写入声称与实际 applied 写入是否一致；**不是事实核验** | 执行回执 + 答案文本 |
+| factsPresent / forbiddenRespected | v0.12.1 新增：样本 acceptance.facts 每条须出现、forbidden 每条不得出现（字面包含，非语义判断） | 答案/本地卡/成品正文 |
+| completedOutcome | v0.12.1 新增：生成/问答/复杂任务必须 completed；partial 单独统计，不再计入完整通过 | `agentTaskRead().status` |
 | novice | 3 个首次使用检查通过数（见下） | 报告 `noviceChecks` |
 | 路由 | `actualRoute` 记录实际走本地还是模型；`fallback` / `misrouted` 分别标记本地样本回退模型、模型样本被本地误判 | `agentTaskStart`/`agentLocalPlan` 实际调用 |
 

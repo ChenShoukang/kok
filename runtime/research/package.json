@@ -1,0 +1,30 @@
+{
+  "name": "kok-research-runtime",
+  "version": "0.14.0",
+  "private": true,
+  "type": "module",
+  "description": "Typed general-purpose Agent runtime and native capability port for kok",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "start": "node worker.mjs",
+    "test": "node --test test/*.test.mjs",
+    "check": "tsc --noEmit && node --check kernel.mjs && node --check worker.mjs"
+  },
+  "dependencies": {
+    "@langchain/core": "1.4.0",
+    "@langchain/langgraph": "1.7.3",
+    "@langchain/langgraph-checkpoint": "1.2.2",
+    "@langchain/openai": "1.8.4",
+    "deepagents": "1.16.4",
+    "esbuild": "0.28.2",
+    "langchain": "1.6.5",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "typescript": "6.0.3"
+  }
+}

@@ -40,16 +40,20 @@ namespace kok {
     }
     public partial class Library {
         readonly object knowledgeGate=new object();
-        sealed class KnowledgeBody { public string stamp,text; }
+        sealed class KnowledgeBody { public string stamp,text; public bool capped; }
         readonly Dictionary<string,KnowledgeBody> knowledgeBodies=new Dictionary<string,KnowledgeBody>();
         string ReadKnowledgeBody(Entry entry,ref int skipped){
+            bool capped;return ReadKnowledgeBody(entry,ref skipped,out capped);
+        }
+        string ReadKnowledgeBody(Entry entry,ref int skipped,out bool capped){
+            capped=false;
             if(entry.ext=="PDF"||entry.kind=="photo")return IndexedBody(entry.id);
-            if(entry.kind=="video"||entry.kind=="music"){try{var tracks=entry.generatedSubtitles!=null?new List<SubtitleTrack>{entry.generatedSubtitles}:Subtitles.Discover(entry.path);string body=String.Join("\n",tracks.Take(1).SelectMany(t=>t.cues).Select(c=>"["+TimeSpan.FromSeconds(c.start).ToString(@"hh\:mm\:ss")+"] "+c.text));if(body.Length>120000){skipped++;body=body.Substring(0,120000);}return body;}catch{skipped++;return "";}}
+            if(entry.kind=="video"||entry.kind=="music"){try{var tracks=entry.generatedSubtitles!=null?new List<SubtitleTrack>{entry.generatedSubtitles}:Subtitles.Discover(entry.path);string body=String.Join("\n",tracks.Take(1).SelectMany(t=>t.cues).Select(c=>"["+TimeSpan.FromSeconds(c.start).ToString(@"hh\:mm\:ss")+"] "+c.text));if(body.Length>120000){skipped++;capped=true;body=body.Substring(0,120000);}return body;}catch{skipped++;return "";}}
             bool readable=new[]{"MD","MARKDOWN","TXT","CSV","JSON","LOG","HTML","HTM","DOCX","EPUB","PPTX"}.Contains(entry.ext);if(!readable)return "";
             try{var info=new FileInfo(entry.path);if(!info.Exists||info.Length>(entry.ext=="PPTX"?32*1024*1024:entry.ext=="DOCX"||entry.ext=="EPUB"?2*1024*1024:1024*1024)){skipped++;return "";}
-                string stamp=info.Length+"|"+info.LastWriteTimeUtc.Ticks+"|"+DraftValue(entry.editDraft,"signature")+"|"+DraftValue(entry.editDraft,"recovery")+"|"+DraftValue(entry.editDraft,"text").GetHashCode();KnowledgeBody cached;if(knowledgeBodies.TryGetValue(entry.id,out cached)&&cached.stamp==stamp)return cached.text;
+                string stamp=info.Length+"|"+info.LastWriteTimeUtc.Ticks+"|"+DraftValue(entry.editDraft,"signature")+"|"+DraftValue(entry.editDraft,"recovery")+"|"+DraftValue(entry.editDraft,"text").GetHashCode();KnowledgeBody cached;if(knowledgeBodies.TryGetValue(entry.id,out cached)&&cached.stamp==stamp){capped=cached.capped;return cached.text;}
                 string text=entry.ext=="PPTX"?String.Join("\n\n",PresentationFiles.Read(entry.path,false).slides.Select(slide=>String.Join("\n",slide.shapes.Select(shape=>shape.text))+"\n"+slide.notes)):entry.ownedDocument?DocumentSource(entry.id).text:entry.ext=="MD"||entry.ext=="MARKDOWN"?ReadText(entry.path):String.Join("\n\n",ReadBook(entry).chapters.Select(c=>c.text));
-                if(text.Length>120000){text=text.Substring(0,120000);skipped++;}knowledgeBodies[entry.id]=new KnowledgeBody{stamp=stamp,text=text};return text;
+                if(text.Length>120000){text=text.Substring(0,120000);skipped++;capped=true;}knowledgeBodies[entry.id]=new KnowledgeBody{stamp=stamp,text=text,capped=capped};return text;
             }catch{skipped++;return "";}
         }
         public List<KnowledgeLink> RelatedLinks(string id){if(Find(id)==null)throw new FileNotFoundException("资料已移除。");if(!IsPrivate)BuildKnowledgeIndex();lock(gate)return store.Relations(id);}

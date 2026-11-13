@@ -8,6 +8,8 @@ Start with the [user guide](GUIDE.en.md). Find help by the task you want to comp
 
 | Goal | Read |
 | --- | --- |
+| v0.14.0 general Agent foundation, background jobs and capability status | [Validation and limits](VALIDATION_0.14.0.md) · [Release notes](RELEASE_NOTES.md) |
+| v0.13.0 research kernel, resource tradeoffs and language migration | [Kernel guide](RESEARCH_KERNEL_0.13.0.md) · [Validation](VALIDATION_0.13.0.md) |
 | First time here, or a structured overview | [**kok help center** (Chinese)](help/index.md): setup, modes, interface, the three areas, settings and reference |
 | Keep working on one piece (goal/requirements/materials/artifacts, cross-session) | [Creative projects](CREATIVE_PROJECTS_0.10.10.md) · [Validation](VALIDATION_0.10.10.md) |
 | Browse versions, restore one, revise a selected passage with Agent | [Versions and local revision](VERSIONS_0.10.11.md) · [Validation](VALIDATION_0.10.11.md) |

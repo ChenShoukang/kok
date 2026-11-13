@@ -31,6 +31,7 @@ namespace kok {
                 if (root.Length > 1000 || root.Any(Char.IsControl)) throw new InvalidDataException("工作目录路径无效。");
                 if (!Path.IsPathRooted(root) || !Directory.Exists(root)) throw new InvalidDataException("工作目录必须是已存在的绝对路径。");
             }
+            if(enabled!=Enabled(library)||root!=Root(library)||sandbox!=SandboxEnabled(library))AgentCommandJobs.Stop(library);
             library.SaveAgentExecution(enabled, root, sandbox);
         }
 
@@ -100,6 +101,8 @@ namespace kok {
             ValidateRelative(relative, allowEmpty);
             string full = Path.GetFullPath(Path.Combine(root, (relative ?? "").Replace('/', Path.DirectorySeparatorChar)));
             if (!full.Equals(root.TrimEnd(Path.DirectorySeparatorChar), StringComparison.OrdinalIgnoreCase) && !full.StartsWith(root, StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException("路径超出工作目录。");
+            string boundary=root.TrimEnd(Path.DirectorySeparatorChar);
+            for(string cursor=full;cursor!=null&&cursor.Length>boundary.Length&&!String.Equals(cursor.TrimEnd(Path.DirectorySeparatorChar),boundary,StringComparison.OrdinalIgnoreCase);cursor=Path.GetDirectoryName(cursor))if((File.Exists(cursor)||Directory.Exists(cursor))&&(File.GetAttributes(cursor)&FileAttributes.ReparsePoint)!=0)throw new InvalidDataException("工作区路径不允许符号链接或目录联接。");
             return full;
         }
 
@@ -123,7 +126,7 @@ namespace kok {
             string text = bytes.Length >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF ? Encoding.UTF8.GetString(bytes, 3, bytes.Length - 3) : Encoding.UTF8.GetString(bytes);
             text = text.Replace("\r\n", "\n").Replace('\r', '\n');
             if (text.Length > MaxReadBytes) text = text.Substring(0, MaxReadBytes) + "\n[Truncated]";
-            return new Dictionary<string,object> { { "text", "File " + relative + " (" + bytes.LongLength + " bytes):\n" + text }, { "path", relative }, { "bytes", bytes.LongLength } };
+            return new Dictionary<string,object> { { "text", "File " + relative + " (" + bytes.LongLength + " bytes):\n" + text }, { "path", relative }, { "bytes", bytes.LongLength }, {"assets",new[]{WorkspaceAsset(library,relative,"source")}} };
         }
 
         static Dictionary<string,object> WriteFile(ModuleContext context, AgentCall call) {
@@ -140,17 +143,24 @@ namespace kok {
             bool existed = File.Exists(full);
             byte[] bytes = new UTF8Encoding(false).GetBytes(text);
             File.WriteAllBytes(full, bytes);
-            return new Dictionary<string,object> { { "text", (existed ? "Overwrote " : "Created ") + relative + " (" + bytes.LongLength + " bytes) inside the workspace." }, { "path", relative }, { "bytes", bytes.LongLength } };
+            return new Dictionary<string,object> { { "text", (existed ? "Overwrote " : "Created ") + relative + " (" + bytes.LongLength + " bytes) inside the workspace." }, { "path", relative }, { "bytes", bytes.LongLength }, {"assets",new[]{WorkspaceAsset(library,relative,"artifact")}} };
         }
 
-        static Dictionary<string,object> RunCommand(ModuleContext context, AgentCall call, CancellationToken token) {
+        internal static AgentAssetRef WorkspaceAsset(Library library,string relative,string role){
+            string full=Resolve(library,relative,false),root=Path.GetFullPath(Root(library)).TrimEnd(Path.DirectorySeparatorChar);
+            for(string cursor=full;!String.Equals(cursor,root,StringComparison.OrdinalIgnoreCase)&&cursor.Length>root.Length;cursor=Path.GetDirectoryName(cursor))if((File.Exists(cursor)||Directory.Exists(cursor))&&(File.GetAttributes(cursor)&FileAttributes.ReparsePoint)!=0)throw new InvalidDataException("工作区资产不通过符号链接读取。");
+            var info=new FileInfo(full);return new AgentAssetRef{id="workspace:"+Library.StudyHash(new{root,path=Path.GetFullPath(full)}),role=role,kind="file",format=Path.GetExtension(full).TrimStart('.').ToUpperInvariant(),version=info.Exists?Library.StudyHash(new{bytes=info.Length,modified=info.LastWriteTimeUtc.Ticks}):"",available=info.Exists,path=relative.Replace('\\','/')};
+        }
+
+        internal static Dictionary<string,object> RunCommand(ModuleContext context, AgentCall call, CancellationToken token, int maximumTimeout=MaxTimeoutSeconds, string expectedRoot=null) {
             context.Policy.Ensure(Need.NormalLibrary, "agent");
             var library = context.Library;
+            if(expectedRoot!=null&&!String.Equals(expectedRoot,Root(library),StringComparison.OrdinalIgnoreCase))throw new InvalidDataException("后台作业的工作区已变化，未启动命令。");
             string command = Convert.ToString(call.args["command"]).Trim();
             var args = call.args.ContainsKey("args") && call.args["args"] != null ? AgentTaskState.Get<List<string>>(call.args, "args") : new List<string>();
             string cwdRelative = call.args.ContainsKey("cwd") && call.args["cwd"] != null ? Convert.ToString(call.args["cwd"]) : "";
             int timeout = call.args.ContainsKey("timeoutSeconds") && call.args["timeoutSeconds"] != null ? Convert.ToInt32(call.args["timeoutSeconds"]) : 30;
-            if (timeout < 1 || timeout > MaxTimeoutSeconds) throw new InvalidDataException("命令超时设置无效。");
+            if (timeout < 1 || timeout > maximumTimeout) throw new InvalidDataException("命令超时设置无效。");
             string cwd = Resolve(library, cwdRelative, true);
             if (!Directory.Exists(cwd)) throw new InvalidDataException("工作目录不存在。");
             bool sandbox = SandboxEnabled(library);

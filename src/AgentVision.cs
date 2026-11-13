@@ -69,7 +69,7 @@ namespace kok {
             token.ThrowIfCancellationRequested();
             string id = call.args.ContainsKey("id") ? Convert.ToString(call.args["id"]) : "";
             var entry = library.Find(id);
-            if (entry == null || !state.options.allowed.Contains(id) || !library.AgentHas(id)) throw new InvalidDataException("Unknown media item in the allowed scope.");
+            if (entry == null || !state.InScope(id) || !library.AgentHas(id)) throw new InvalidDataException("Unknown media item in the allowed scope.");
             var info = new FileInfo(entry.path);
             if (!info.Exists) throw new InvalidDataException("The media file is missing.");
             int page = call.args.ContainsKey("page") && call.args["page"] != null ? Convert.ToInt32(call.args["page"]) : 0;

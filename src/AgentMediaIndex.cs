@@ -63,7 +63,7 @@ namespace kok {
         static Entry Scoped(ModuleContext context, AgentTaskState state, string id) {
             context.Policy.Ensure(Need.NormalLibrary, "agent");
             var entry = context.Library.Find(id);
-            if (entry == null || state == null || state.options == null || !state.options.allowed.Contains(id)) throw new InvalidDataException("That source is not in the allowed scope.");
+            if (entry == null || state == null || state.options == null || !state.InScope(id)) throw new InvalidDataException("That source is not in the allowed scope.");
             return entry;
         }
 

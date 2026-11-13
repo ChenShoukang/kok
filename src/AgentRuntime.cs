@@ -25,8 +25,7 @@ namespace kok {
         public Func<ModuleContext,AgentTaskState,AgentCall,CancellationToken,Task<AgentToolReceipt>> ExecuteWithContext;public Action<AgentAction,Func<string,bool>> Validate;public Func<Library,AgentTaskState,AgentCall,CancellationToken,Task<Dictionary<string,object>>> Read;public Func<Library,AgentTaskState,AgentCall,CancellationToken,AgentToolReceipt> Execute;
         public string Name,Description,Signature,Module,CapabilityId,Title;public Need? Requires;public bool Write;public Dictionary<string,object> Properties;public string[] Required;
         // Execution hints: "" keeps the existing parallel read batch; "serial" runs this read tool alone in call order.
-        // TerminateHint is reserved for the future middleware slice and has no engine behavior in this round.
-        public string Mode="";public bool TerminateHint;
+        public string Mode="";
         public object Schema(){var p=new Dictionary<string,object>(Properties){{"why",AgentRules.Str("One short reason shown to the user",300)}};return new{type="function",function=new{name=Name,description=Description,parameters=new Dictionary<string,object>{{"type","object"},{"properties",p},{"required",Required},{"additionalProperties",false}}}};}
     }
     public static class AgentRules {

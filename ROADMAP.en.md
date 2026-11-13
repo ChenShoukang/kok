@@ -2,6 +2,21 @@
 
 [中文](ROADMAP.md) · English
 
+## Next direction: a general-purpose personal agent
+
+Core scope includes research, documents, presentations, spreadsheets, photo editing,
+video, music and audio creation, coding, browser automation and computer use.
+Use one execution kernel with on-demand capability packs and domain-specific
+validation of real outputs. Preserve useful local media and workspace tools.
+
+The [detailed plan 2.0](docs/PROJECT_PLAN_0.14_TO_1.0.md) (Chinese) defines v0.14–v1.0
+milestones, individual music and computer-use workstreams, quality gates and rollout.
+An initial set of general workflows can arrive earlier; the complete proposed scope
+requires a revised, acceptance-based estimate of roughly 7–10 months for one primary
+developer with AI assistance.
+
+The detailed plan takes priority over the historical progress and backlog below.
+
 ## v0.9.8 Preview deliverables
 
 Completed the interface redesign (near-white and muted purple-dark themes, minimal welcome previews, a short rail at every width, a three-column launcher with frequent destinations first, offline Phosphor duotone glyphs, interruptible motion with persistent focus) together with the Agent focus redesign: first-screen defaults with material-aware suggestions, local task routing (`agentLocalPlan`, zero model requests), fragment-level retrieval with read coverage, a cache-friendly stable message prefix, task result cards, and a fixed 30-task sample set with an offline validator plus an opt-in live evaluation entry.

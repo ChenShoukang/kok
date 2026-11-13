@@ -11,7 +11,7 @@ namespace kok {
         public Dictionary<string,string> AgentSourceStamps(IEnumerable<string> ids){lock(gate){var result=new Dictionary<string,string>();foreach(var id in ids.Distinct()){var e=Find(id);if(e==null)continue;var f=new FileInfo(e.path);result[id]=StudyHash(new{id=e.id,modified=f.Exists?f.LastWriteTimeUtc.Ticks:0,size=f.Exists?f.Length:0,extraction=e.ext=="PDF"||e.kind=="photo"?store.ContentRevision(e.id):"",metadata=SearchContent.Metadata(e),notes=e.notes,draft=e.editDraft,chapters=e.chapterTexts,annotations=e.annotations,generated=e.generatedSubtitles,sidecars=CaptionSources(e)});}return result;}}
         public AgentCall PrepareAgentCall(AgentTaskState state,AgentAction action,string turn,string provider){
             if(!ModuleRegistry.Builtins.ToolEnabled(action.tool,this))throw new InvalidOperationException("此模块已停用，请在设置中启用。");
-            AgentRules.ValidateAction(action,id=>state.options.allowed.Contains(id)&&AgentHas(id));var c=new AgentCall{id=Guid.NewGuid().ToString("N"),providerId=provider,turnId=turn,tool=action.tool,args=action.args,why=action.why,status=AgentRules.ReadTools.Contains(action.tool)?"queued":"pending"};
+            AgentRules.ValidateAction(action,id=>state.InScope(id)&&AgentHas(id));var c=new AgentCall{id=Guid.NewGuid().ToString("N"),providerId=provider,turnId=turn,tool=action.tool,args=action.args,why=action.why,status=AgentRules.ReadTools.Contains(action.tool)?"queued":"pending"};
             lock(gate){
                 var ids=action.args.ContainsKey("ids")?AgentTaskState.Get<List<string>>(action.args,"ids"):action.args.ContainsKey("id")?new List<string>{Convert.ToString(action.args["id"])}:new List<string>();c.sources=AgentSourceStamps(ids);
                 if(c.tool=="replace_document_text")PrepareAgentDocument(c);
@@ -25,16 +25,17 @@ namespace kok {
             if(Db.settings.ContainsKey("agentToolReceipts")){var rows=Json.Deserialize<Dictionary<string,Dictionary<string,object>>>(Json.Serialize(Db.settings["agentToolReceipts"]));Dictionary<string,object> r;if(rows.TryGetValue(operation,out r))return r;}return null;}}
         public async Task<Dictionary<string,object>> ReadAgentTool(AgentTaskState state,AgentCall call,CancellationToken token){
             if(!ModuleRegistry.Builtins.ToolEnabled(call.tool,this))throw new InvalidOperationException("此模块已停用，请在设置中启用。");
-            RequireAiMode();AgentRules.ValidateAction(new AgentAction{tool=call.tool,args=call.args},id=>state.options.allowed.Contains(id)&&AgentHas(id));token.ThrowIfCancellationRequested();
+            RequireAiMode();AgentRules.ValidateAction(new AgentAction{tool=call.tool,args=call.args},id=>state.InScope(id)&&AgentHas(id));token.ThrowIfCancellationRequested();
             var spec=AgentRules.Tools.First(t=>t.Name==call.tool);if(spec.Read!=null)return await spec.Read(this,state,call,token);
-            if(call.tool=="list_collections")return new Dictionary<string,object>{{"text","Collections: "+String.Join(", ",state.options.allowed.Select(Find).Where(e=>e!=null).Select(e=>e.collection).Distinct())}};
-            if(call.tool=="search_library")return Json.Deserialize<Dictionary<string,object>>(Json.Serialize(await AgentSearchCurrent(call.args,state.options.allowed,token)));
+            if(call.tool=="read_items")return ReadAgentItemsExact(state,call);
+            if(call.tool=="list_collections")return new Dictionary<string,object>{{"text","Collections: "+String.Join(", ",state.TaskScope.Select(Find).Where(e=>e!=null).Select(e=>e.collection).Distinct())}};
+            if(call.tool=="search_library")return Json.Deserialize<Dictionary<string,object>>(Json.Serialize(await AgentSearchCurrent(call.args,state.TaskScope,token)));
             var ids=AgentTaskState.Get<List<string>>(call.args,"ids");string question=call.args.ContainsKey("question")?Convert.ToString(call.args["question"]):"";
             var result=await Task.Run(()=>BuildKnowledgeContext(ids,"summarize",question,state.options.budget),token);token.ThrowIfCancellationRequested();RequireAiMode();string text=String.IsNullOrEmpty(result.coverageText)?result.context:result.context+"\n\n"+result.coverageText;return new Dictionary<string,object>{{"text",text},{"references",result.references},{"skipped",result.skipped},{"coverage",result.coverage}};
         }
         public AgentToolReceipt WriteAgentTool(AgentTaskState state,AgentCall call,CancellationToken token,Operations operations=null){
             if(!ModuleRegistry.Builtins.ToolEnabled(call.tool,this))throw new InvalidOperationException("此模块已停用，请在设置中启用。");
-            RequireAiMode();token.ThrowIfCancellationRequested();AgentRules.ValidateAction(new AgentAction{tool=call.tool,args=call.args},id=>state.options.allowed.Contains(id)&&AgentHas(id));
+            RequireAiMode();token.ThrowIfCancellationRequested();AgentRules.ValidateAction(new AgentAction{tool=call.tool,args=call.args},id=>state.InScope(id)&&AgentHas(id));
             if(call.tool=="replace_document_text")return ReplaceAgentDocument(state,call,token);
             if(call.tool=="edit_presentation")return EditAgentPresentation(state,call,token);
             var previous=AgentReceipt(call.id);if(previous!=null)return new AgentToolReceipt{result=previous,stamp=previous.ContainsKey("id")?AgentCreatedStamp(Convert.ToString(previous["id"])):null};

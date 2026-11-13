@@ -1,5 +1,12 @@
 # Third-party notices
 
+The research kernel added in v0.13.0 redistributes Node.js and a bundled JavaScript
+worker using Deep Agents, LangGraph, LangChain and their dependencies. Exact
+versions and hashes are recorded in `runtime/research/manifest.json` in the
+release. Their license and notice texts, including Node.js third-party notices,
+are included beside the worker in `runtime/research/THIRD_PARTY_NOTICES.txt`.
+Dependency versions are pinned in [the research lockfile](runtime/research/package-lock.json).
+
 kok uses Microsoft.Web.WebView2 SDK version 1.0.4314.35 from the official
 NuGet package. Release bundles redistribute:
 

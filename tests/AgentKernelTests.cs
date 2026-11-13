@@ -587,11 +587,18 @@ static class AgentKernelTests {
   serialEngine.Start();await serialEngine.Completion;
   check(serialOrder.SequenceEqual(new[]{"a","b"})&&serialState.status=="partial","Mode=\"serial\" read tools execute one-by-one in request order");
   var parallelState=Seed(journal);var parallelOrder=new List<string>();int parallelRounds=0;
-  Func<AgentTaskState,AgentCall,CancellationToken,Task<Dictionary<string,object>>> parallelRead=async(s,c,t)=>{if(c.tool=="hook_parallel_a")await Task.Delay(30,t);parallelOrder.Add(c.tool=="hook_parallel_a"?"a":"b");return new Dictionary<string,object>{{"text","PARALLEL"}};};
+  var parallelSecond=new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+  // Require B to actually start while A is suspended. Slow journal writes may take over 30 ms,
+  // so wall-clock delays cannot establish whether the engine permits overlapping reads.
+  Func<AgentTaskState,AgentCall,CancellationToken,Task<Dictionary<string,object>>> parallelRead=async(s,c,t)=>{
+   if(c.tool=="hook_parallel_a"&&await Task.WhenAny(parallelSecond.Task,Task.Delay(10000,t))!=parallelSecond.Task)throw new TimeoutException("Second parallel read did not start while the first read waited.");
+   parallelOrder.Add(c.tool=="hook_parallel_a"?"a":"b");if(c.tool=="hook_parallel_b")parallelSecond.TrySetResult(true);
+   return new Dictionary<string,object>{{"text","PARALLEL"}};
+  };
   Func<AgentTaskEngine,CancellationToken,Task<AgentModelTurn>> parallelModel=(e,t)=>{parallelRounds++;return parallelRounds==1?Reply(e,Action("hook_parallel_a",new{}),Action("hook_parallel_b",new{})):Reply(e,Finish("partial"));};
   var parallelEngine=new AgentTaskEngine(parallelState,journal,()=>{},parallelModel,parallelRead,write,Prepare,()=>{});
   parallelEngine.Start();await parallelEngine.Completion;
-  check(parallelOrder.SequenceEqual(new[]{"b","a"})&&parallelState.status=="partial"&&AgentRules.Tools.Single(t=>t.Name=="hook_serial_a").Mode=="serial"&&AgentRules.Tools.Single(t=>t.Name=="hook_parallel_a").Mode==""&&AgentRules.Tools.Where(t=>t.Name.StartsWith("hook_",StringComparison.Ordinal)).All(t=>!t.TerminateHint),"default Mode=\"\" keeps the existing parallel batch and TerminateHint stays reserved (false)");
+  check(parallelOrder.SequenceEqual(new[]{"b","a"})&&parallelState.status=="partial"&&AgentRules.Tools.Single(t=>t.Name=="hook_serial_a").Mode=="serial"&&AgentRules.Tools.Single(t=>t.Name=="hook_parallel_a").Mode=="","default Mode=\"\" keeps the existing parallel batch");
   async Task<string> HookBaseline(AgentToolHooks hooks){
    var st=Seed(journal);int rounds=0;
    Func<AgentTaskEngine,CancellationToken,Task<AgentModelTurn>> model=(e,t)=>{rounds++;if(rounds==1)return Reply(e,Action("update_plan",new{steps=new[]{new{id="read",title="Read the source",status="in_progress",evidence=new string[0]}}}),Action("read_items",new{ids=new[]{new string('a',32)}}));string receipt=st.calls.Single(c=>c.tool=="read_items").id;return Reply(e,Action("update_plan",new{steps=new[]{new{id="read",title="Read the source",status="done",evidence=new[]{receipt}}}}),Finish("completed",receipt));};

@@ -8,8 +8,14 @@
 
 | 想做什么 | 从这里开始 |
 | --- | --- |
+| v0.14.0 通用 Agent 基础、后台作业与能力状态 | [验证与实现边界](VALIDATION_0.14.0.md) · [发布说明](RELEASE_NOTES.md) |
 | 第一次使用，或想系统了解 kok | [**kok 帮助中心**](help/index.md)：安装、模式、界面、三个区域、设置与参考 |
 | 看一份资料、写笔记，或从资料做出报告和 PPT | [第一篇笔记](help/getting-started/first-work.md) · [第一个创作项目](help/getting-started/first-agent-project.md) |
+| v0.13.0 研究内核、资源取舍与语言迁移 | [内核说明](RESEARCH_KERNEL_0.13.0.md) · [本版验证](VALIDATION_0.13.0.md) |
+| 通用 Agent 规划：代码、电脑操作、PPT、照片、视频与音乐 | [详细计划 2.0](PROJECT_PLAN_0.14_TO_1.0.md) |
+| v0.12.2 当前要求更新与最终交付物验收 | [版本与更新](help/reference/versions.md) · [本版验证](VALIDATION_0.12.2.md) |
+| v0.12.1 中途调整、读取覆盖与评测口径修复 | [版本与更新](help/reference/versions.md) · [本版验证](VALIDATION_0.12.1.md) |
+| v0.12.0 Agent 成果回读、原文分页读取与交付验收 | [版本与更新](help/reference/versions.md) · [本版验证](VALIDATION_0.12.0.md) |
 | v0.11.2 本地示例、项目搜索与交付记录 | [项目交付说明](help/works/continue-editing.md#项目搜索与交付记录) · [本版验证](VALIDATION_0.11.2.md) |
 | v0.11.1 PPT 设计、直接编辑与回答恢复 | [PPT 操作](help/works/presentations.md) · [回答未完成](help/agent/results-history.md#回答未完成) · [本版验证](VALIDATION_0.11.1.md) |
 | 围绕一件作品持续创作（目标/要求/资料/成果/跨会话） | [创作项目](CREATIVE_PROJECTS_0.10.10.md) · [本次验证](VALIDATION_0.10.10.md) |
