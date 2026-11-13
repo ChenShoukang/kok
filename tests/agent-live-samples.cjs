@@ -1,5 +1,17 @@
 'use strict';
 // Opt-in live measurement for the 30-task Agent baseline. NEVER part of default tests or CI.
+// v0.12.0 P0-3: each sample's produced artifact is reopened through the product reader, a PPTX's real
+// slide count is compared with the pages requested in the goal, and citations must be non-empty once a
+// deliverable is built from the selected sources (the same host checks finish_task enforces).
+// v0.12.1 #28/#29: the outcome is now measured separately from the acceptance checks. A partial or
+// needs_input result is reported in its own bucket and can never count as a pass for generation/qa/complex
+// tasks; `completedOutcome` is one more required check. `row.partialPass` records a partial task whose other
+// checks passed (diagnostic only, never a pass). Indicator names state what they really check:
+// citationIdsResolve = the cited ids resolve to real items inside the seeded scope (NOT semantic support),
+// writeClaimsMatchWrites = the answer does not claim a write that no applied write backs.
+// factsPresent / forbiddenRespected compare every acceptance.facts / acceptance.forbidden string with the
+// normalized answer and deliverable text (literal presence, not a semantic judge). They are not full fact
+// verification and no live run was performed to tune them against real model output.
 //
 // Default (inert): without KOK_LIVE_AI=1 and KOK_LIVE_CONFIG this file prints one SKIPPED line and exits 0.
 // Live (explicitly authorized only): the isolated profile is started by tools/test-desktop.ps1 with
@@ -62,6 +74,11 @@ function readLedgerCount(file){
  if(!file||!fs.existsSync(file))return null;
  try{const text=fs.readFileSync(file,'utf8').trim();if(!text)return null;try{const json=JSON.parse(text);if(typeof json==='number'&&Number.isFinite(json))return json;const value=Number(json.totalCount);return Number.isFinite(value)?value:null;}catch{const value=Number(text);return Number.isFinite(value)?value:null;}}catch{return null;}
 }
+// #29: literal presence checks only. Whitespace is normalized so "2 盆" and "2盆" compare equal; this is a
+// bounded string check, never a claim that the answer is semantically supported by the source.
+function normalizeEvidence(value){return String(value==null?'':value).replace(/\s+/g,'');}
+function factsPresent(text,facts){(facts||[]).forEach(fact=>{if(typeof fact!=='string'||!fact)throw Error('acceptance.facts entries must be non-empty strings');});const normalized=normalizeEvidence(text);return (facts||[]).every(fact=>normalized.includes(normalizeEvidence(fact)));}
+function forbiddenRespected(text,forbidden){(forbidden||[]).forEach(item=>{if(typeof item!=='string'||!item)throw Error('acceptance.forbidden entries must be non-empty strings');});const normalized=normalizeEvidence(text);return (forbidden||[]).every(item=>!normalized.includes(normalizeEvidence(item)));}
 
 // Inert by default: exit 0 before importing Playwright or touching the app/network.
 if(process.env.KOK_LIVE_AI!=='1'||!process.env.KOK_LIVE_CONFIG){
@@ -78,7 +95,7 @@ if(process.env.KOK_LIVE_AI!=='1'||!process.env.KOK_LIVE_CONFIG){
   model:'',
   syntheticSources:true,
   sampleSet:'tests/agent-task-samples.cjs',
-  sampleSetVersion:1,
+  sampleSetVersion:2,
   selected:0,
   requestPlan:null,
   skipped:[],samples:[],aggregate:null,
@@ -364,8 +381,8 @@ async function runSample({page,sample,seeded,writeTools,report,pricing}){
   id:sample.id,title:sample.title,category:sample.category,expectedRoute:sample.expectedRoute,
   expectedLocalKind:sample.expectedLocalKind||'',actualRoute:'none',fallback:false,misrouted:false,
   requestLimit:REQUEST_LIMITS[sample.category],fixtureKind:sample.fixture.kind,
-  passed:false,fatal:'',checks:{},noviceChecks:{},metrics:null,usage:null,
-  durationMs:0,taskStatus:'',timedOut:false,errors:[],result:null,citations:null,artifact:null,local:null,
+  passed:false,partialPass:false,fatal:'',checks:{},noviceChecks:{},metrics:null,usage:null,
+  durationMs:0,taskStatus:'',outcome:'',timedOut:false,errors:[],result:null,citations:null,artifact:null,local:null,facts:null,forbidden:null,
   duplicateReads:0,reusedReadRefs:0,writes:{proposed:0,done:0,applied:0,undone:0,proposedTools:[]},
   restore:{appliedChanges:0,libraryRestored:null},ui:{},answerPreview:'',planSteps:0,verificationLevel:'',delegationUsed:false
  };
@@ -444,7 +461,7 @@ async function runSample({page,sample,seeded,writeTools,report,pricing}){
    row.local={kind:localMessage.kind||sample.expectedLocalKind,title:localMessage.title||'',summary:safe(localMessage.summary||'').slice(0,400),total:Number(localMessage.total)||0,statsCount:(localMessage.stats||[]).length,itemsCount:(localMessage.items||[]).length,followups:(localMessage.followups||[]).length,truthMatched:null};
    const verifier=LOCAL_VERIFY[sample.id];
    if(verifier){try{row.local.truthMatched=!!verifier(localMessage,seeded.truth);}catch{row.local.truthMatched=false;}}
-   row.metrics={inputTokens:0,outputTokens:0,cachedTokens:0,cost:0,durationMs:Date.now()-started,requests:0,retries:0,duplicateReads:0,opened:0,citationsValid:true,novice:0};
+   row.metrics={inputTokens:0,outputTokens:0,cachedTokens:0,cost:0,durationMs:Date.now()-started,requests:0,retries:0,duplicateReads:0,opened:0,citationIdsResolve:true,novice:0};
    row.usage={inputTokens:0,outputTokens:0,cachedTokens:0,cost:0,estimated:false,requests:0,repairs:0};
   }else if(snap){
    row.actualRoute='model';
@@ -456,20 +473,31 @@ async function runSample({page,sample,seeded,writeTools,report,pricing}){
   row.fallback=sample.expectedRoute==='local'&&row.actualRoute!=='local';
   row.misrouted=sample.expectedRoute==='model'&&row.actualRoute!=='model';
   row.durationMs=Date.now()-started;
+  // #28: outcome is its own field. A local answer satisfies its request; for model tasks the host status is
+  // authoritative and partial/needs_input stay separate from completed instead of blending into one pass.
+  row.outcome=row.taskStatus||(row.actualRoute==='local'?'local':'');
 
   // Citations: answer source ids must resolve to real library items inside the seeded fixture scope.
   const agentAnswers=finalView.messages.filter(message=>message.role==='agent'&&!message.meta&&!message.interrupted);
   const lastAnswer=agentAnswers.length?agentAnswers[agentAnswers.length-1]:null;
   const resultMessage=finalView.resultMessages.length?finalView.resultMessages[finalView.resultMessages.length-1]:null;
   const answerText=((snap&&snap.verification&&snap.verification.summary)||'')+'\n'+agentAnswers.map(message=>message.text||'').join('\n');
-  const sourceIds=[...new Set(agentAnswers.flatMap(message=>message.sourceIds||[]))].filter(id=>typeof id==='string'&&id.length>0);
+  // #26: ids this task created/copied are deliverables, not input sources; citations that only point at the
+  // task's own output must not satisfy the citation requirement or be counted as sources.
+  const createdArtifactIds=new Set(doneWrites.filter(call=>['create_document','create_presentation','copy_presentation'].includes(call.tool)&&call.result&&call.result.id).map(call=>call.result.id));
+  const citedIds=[...new Set(agentAnswers.flatMap(message=>message.sourceIds||[]))].filter(id=>typeof id==='string'&&id.length>0);
+  const outputCitations=citedIds.filter(id=>createdArtifactIds.has(id)).length;
+  const sourceIds=citedIds.filter(id=>!createdArtifactIds.has(id));
   const resolvable=await page.evaluate(ids=>ids.filter(id=>{try{return !!byId(id);}catch{return false;}}),sourceIds);
-  const citationsValid=sourceIds.length>0&&resolvable.length===sourceIds.length&&sourceIds.every(id=>scopeIds.includes(id))&&(!sample.acceptance.citationsRequired||sourceIds.length>0);
+  // Only ID/scope resolvability: an id that resolves to a real scoped item. This is NOT proof that the cited
+  // source supports the claim; writeClaimsMatchWrites/facts checks are separate bounded checks.
+  const citationIdsResolve=sourceIds.length>0&&resolvable.length===sourceIds.length&&sourceIds.every(id=>scopeIds.includes(id))&&(!sample.acceptance.citationsRequired||sourceIds.length>0);
   row.citations={
    required:!!sample.acceptance.citationsRequired,
    count:sourceIds.length,
    resolvable:resolvable.length,
-   valid:citationsValid,
+   idsResolve:citationIdsResolve,
+   outputCitations,
    idsPreview:sourceIds.slice(0,6)
   };
 
@@ -485,7 +513,39 @@ async function runSample({page,sample,seeded,writeTools,report,pricing}){
   const expectedExt=sample.acceptance.expectedArtifactExt||'';
   const artifactExists=!!artifact&&!!artifact.path&&fs.existsSync(artifact.path);
   const artifactExtOk=!!artifact&&(!expectedExt||String(artifact.ext||'').toLowerCase()===expectedExt);
-  row.artifact={expectedExt,ext:artifact?artifact.ext:'',id:artifact?artifact.id:'',name:artifact?artifact.name:'',openable:expectedExt?artifactExists&&artifactExtOk:null};
+  // P0-3 delivery acceptance: reopen the actual deliverable through the product reader and, for a deck,
+  // count its REAL slides. File existence + extension alone let a stale/invalid PPTX pass; this measures
+  // the same "can the produced file be reopened and does it have the requested page count" condition the
+  // host enforces. requestedPages comes from the sample goal ("...5 页的演示文稿...").
+  const requestedPages=(()=>{const matched=String(sample.goal||'').match(/(\d{1,2})\s*(?:页|slides?|张)/i);return matched?Math.max(1,Number(matched[1])):0;})();
+  let artifactPages=0,artifactReopenable=null,artifactText='';
+  if(artifact&&expectedExt){
+   try{
+    if(expectedExt==='pptx'){
+     const deck=await page.evaluate(id=>native('readPresentation',{id}),artifact.id);
+     const slides=Array.isArray(deck&&deck.slides)?deck.slides:[];
+     artifactPages=slides.length;
+     artifactReopenable=artifactPages>0;
+     // Deliverable text for the literal facts check: titles, speaker notes and real shape text, never images.
+     artifactText=slides.map(slide=>[slide.title||'',slide.notes||'',...(Array.isArray(slide.shapes)?slide.shapes.map(shape=>shape&&shape.text||''):[])].join('\n')).join('\n');
+    }else{
+     const source=await page.evaluate(id=>native('documentSource',{id}),artifact.id);
+     artifactReopenable=!!source&&typeof source.text==='string';
+     artifactText=artifactReopenable?source.text:'';
+    }
+   }catch{artifactReopenable=false;}
+  }
+  row.artifact={expectedExt,ext:artifact?artifact.ext:'',id:artifact?artifact.id:'',name:artifact?artifact.name:'',path:artifact?artifact.path:'',openable:expectedExt?artifactExists&&artifactExtOk:null,reopenable:artifactReopenable,pages:artifactPages,requestedPages,textChars:artifactText.length};
+  // #29: per-sample literal facts / forbidden strings. Evidence = model answer + (for local answers) the local
+  // card + the produced deliverable body; whitespace-normalized substring presence only, not a semantic judge.
+  const acceptanceFacts=Array.isArray(sample.acceptance.facts)?sample.acceptance.facts:[];
+  const acceptanceForbidden=Array.isArray(sample.acceptance.forbidden)?sample.acceptance.forbidden:[];
+  const localEvidence=localMessage?[localMessage.summary||'',...(Array.isArray(localMessage.items)?localMessage.items.map(item=>item&&item.name||''):[])].join('\n'):'';
+  const evidenceText=[answerText,localEvidence,artifactText].join('\n');
+  const factsOK=factsPresent(evidenceText,acceptanceFacts);
+  const forbiddenOK=forbiddenRespected(evidenceText,acceptanceForbidden);
+  row.facts={checked:acceptanceFacts.length,present:factsOK,expected:acceptanceFacts.slice(0,8)};
+  row.forbidden={checked:acceptanceForbidden.length,respected:forbiddenOK,expected:acceptanceForbidden.slice(0,8)};
   let opened=false;
   const localItemId=localMessage&&Array.isArray(localMessage.items)&&localMessage.items[0]?localMessage.items[0].id:'';
   const openTarget=artifact?artifact.id:(sourceIds[0]||localItemId||'');
@@ -495,7 +555,7 @@ async function runSample({page,sample,seeded,writeTools,report,pricing}){
    cost:row.usage.cost,durationMs:row.durationMs,requests:row.usage.requests,
    retries:(row.usage.repairs||0)+requestRetries(snap),
    duplicateReads:0,opened:opened?1:0,
-   citationsValid:!!sample.acceptance.citationsRequired?citationsValid:true,
+   citationIdsResolve:!!sample.acceptance.citationsRequired?citationIdsResolve:true,
    novice:0
   };
   const readStats=duplicateReadStats(snap);
@@ -535,41 +595,47 @@ async function runSample({page,sample,seeded,writeTools,report,pricing}){
    row.restore.appliedChanges=appliedWrites.length;
   }else row.restore.libraryRestored=true;
 
-  // Acceptance checks shared by all categories; category-specific honesty rules are added below.
+  // Acceptance checks shared by all categories; category-specific honesty/outcome rules are added below.
   const claimsWrite=/(已(?:保存|创建|写入|修改|添加|移入)|已生成并保存)/.test(answerText)&&appliedWrites.length===0;
-  const needsInput=row.taskStatus==='needs_input'||row.taskStatus==='partial';
   const unknownMarker=/未提供|未知|未确定|未包含|未说明|未给出|未提及|没有提供|缺少|不包含|无法确认|无法确定/.test(answerText);
   row.checks={
    resultPresent,
    artifactOpenable:expectedExt?!!row.artifact.openable:true,
-   citationsValid:!!sample.acceptance.citationsRequired?citationsValid:true,
-   noUnsupportedClaims:!claimsWrite&&row.errors.length===0,
+   artifactReopenable:expectedExt?row.artifact.reopenable===true:true,
+   pageCount:expectedExt==='pptx'&&requestedPages>0?artifactPages===requestedPages:true,
+   citationsNonEmpty:!!sample.acceptance.citationsRequired?sourceIds.length>0:(expectedExt&&scopeIds.length>0?(sourceIds.length>0||Number(row.result.citationCount)>0||Number(row.result.sourceCount)>0):true),
+   citationIdsResolve:!!sample.acceptance.citationsRequired?citationIdsResolve:true,
+   writeClaimsMatchWrites:!claimsWrite&&row.errors.length===0,
+   factsPresent:factsOK,
+   forbiddenRespected:forbiddenOK,
    noErrors:row.errors.length===0,
    fixtureRestored:row.restore.libraryRestored!==false,
-   outcomeAcceptable:true,
+   completedOutcome:false,
    honestOutcome:true,
    localTruth:true
   };
   if(sample.category==='needs-input'){
-   row.checks.honestOutcome=unknownMarker&&needsInput;
-   row.checks.outcomeAcceptable=row.taskStatus==='needs_input';
-  }else if(sample.category!=='local'){
-   row.checks.outcomeAcceptable=['completed','partial'].includes(row.taskStatus)&&!timedOut;
-  }else if(row.actualRoute==='local'){
-   row.checks.localTruth=row.local&&row.local.truthMatched!==false;
-   row.checks.outcomeAcceptable=true;
+   // A needs-input sample asks the host for missing evidence: only needs_input is its honest completion.
+   row.checks.honestOutcome=unknownMarker&&row.taskStatus==='needs_input';
+   row.checks.completedOutcome=row.taskStatus==='needs_input'&&!timedOut;
+  }else if(sample.category==='local'&&row.actualRoute==='local'){
+   row.checks.localTruth=!!row.local&&row.local.truthMatched!==false;
+   row.checks.completedOutcome=row.checks.localTruth;
   }else{
-   // Local sample answered by the model fallback: measure it, but the answer is not a local-routing pass.
-   row.checks.outcomeAcceptable=['completed','partial'].includes(row.taskStatus)&&!timedOut;
+   // generation/qa/complex (and a local sample answered by the model) must really complete. A partial or
+   // needs_input result is counted in its own aggregate bucket and can never count as a passed sample (#28).
+   row.checks.completedOutcome=row.taskStatus==='completed'&&!timedOut;
   }
   row.checks.noUnauthorizedWrites=sample.category==='generation'||sample.category==='complex'?true:appliedWrites.length===0;
   row.passed=Object.values(row.checks).every(value=>value);
+  // Diagnostic only, never a pass: a partial task whose every other acceptance check passed.
+  row.partialPass=row.taskStatus==='partial'&&Object.entries(row.checks).every(([name,value])=>name==='completedOutcome'||value);
   if(row.errors.some(error=>/auth|permission|quota|model_not|network|budget_exceeded|rate_limit/i.test(error)))row.fatal=row.errors.join('; ');
   if(snap&&snap.errorKind&&/auth|permission|quota|model_not|network|budget_exceeded|rate_limit/.test(snap.errorKind))row.fatal='task errorKind: '+snap.errorKind;
  }catch(error){
   row.errors.push(safe(error&&error.message||error));
   row.fatal='harness: '+safe(error&&error.message||error);
-  if(!row.metrics)row.metrics={inputTokens:0,outputTokens:0,cachedTokens:0,cost:0,durationMs:Date.now()-started,requests:0,retries:0,duplicateReads:0,opened:0,citationsValid:false,novice:0};
+  if(!row.metrics)row.metrics={inputTokens:0,outputTokens:0,cachedTokens:0,cost:0,durationMs:Date.now()-started,requests:0,retries:0,duplicateReads:0,opened:0,citationIdsResolve:false,novice:0};
  }finally{
   try{await page.evaluate(async()=>{if($('#close-viewer'))$('#close-viewer').click();if(state.route!=='agent')navigate('agent');});}catch{}
  }
@@ -633,10 +699,20 @@ async function tryOpenItem(page,id){
 
 function aggregate(rows,skippedCount){
  const sum=key=>rows.reduce((total,row)=>total+(Number(row.metrics[key])||0),0);
+ // #28: outcomes are counted separately. A local native answer completes its own request; a model task uses
+ // the host status. Failed means the task did not reach any of the three terminal outcome kinds.
+ const outcomeOf=row=>String(row.taskStatus||'')||(row.actualRoute==='local'?'local':'');
+ const completed=rows.filter(row=>outcomeOf(row)==='completed').length;
+ const partial=rows.filter(row=>outcomeOf(row)==='partial').length;
+ const needsInput=rows.filter(row=>outcomeOf(row)==='needs_input').length;
+ const failed=rows.filter(row=>!['completed','partial','needs_input','local'].includes(outcomeOf(row))).length;
+ const fullPasses=rows.filter(row=>row.passed).length;
+ const percent=count=>rows.length?Math.round(count/rows.length*1000)/10:0;
  const byCategory={};
  for(const row of rows){
-  const bucket=byCategory[row.category]||(byCategory[row.category]={count:0,passed:0,requests:0,inputTokens:0,outputTokens:0,cachedTokens:0,cost:0,routeMatched:0,local:0,model:0,fallback:0});
+  const bucket=byCategory[row.category]||(byCategory[row.category]={count:0,passed:0,completed:0,partial:0,needsInput:0,failed:0,requests:0,inputTokens:0,outputTokens:0,cachedTokens:0,cost:0,routeMatched:0,local:0,model:0,fallback:0});
   bucket.count++;if(row.passed)bucket.passed++;
+  const outcome=outcomeOf(row);if(outcome==='completed')bucket.completed++;else if(outcome==='partial')bucket.partial++;else if(outcome==='needs_input')bucket.needsInput++;else if(outcome!=='local')bucket.failed++;
   bucket.requests+=Number(row.metrics.requests)||0;
   bucket.inputTokens+=Number(row.metrics.inputTokens)||0;
   bucket.outputTokens+=Number(row.metrics.outputTokens)||0;
@@ -648,17 +724,30 @@ function aggregate(rows,skippedCount){
   if(row.fallback)bucket.fallback++;
  }
  return {
-  samples:rows.length,skipped:skippedCount,passed:rows.filter(row=>row.passed).length,
-  passRate:rows.length?Math.round(rows.filter(row=>row.passed).length/rows.length*1000)/10:0,
+  samples:rows.length,skipped:skippedCount,passed:fullPasses,
+  // A full pass requires a completed outcome AND every acceptance check; partial/needs_input never pass (#28).
+  fullPassRate:percent(fullPasses),
+  passRate:percent(fullPasses),
+  completed,partial,needsInput,failed,
+  acceptanceFailed:rows.filter(row=>!row.passed).length,
+  partialPass:rows.filter(row=>row.partialPass).length,
   local:rows.filter(row=>row.actualRoute==='local').length,
   model:rows.filter(row=>row.actualRoute==='model').length,
   none:rows.filter(row=>row.actualRoute==='none').length,
   routeMatched:rows.filter(row=>row.actualRoute===row.expectedRoute).length,
   fallback:rows.filter(row=>row.fallback).length,
   misrouted:rows.filter(row=>row.misrouted).length,
-  failed:rows.filter(row=>!row.passed).length,
   artifactsOpenable:rows.filter(row=>row.artifact&&row.artifact.openable===true).length,
-  citationsValid:rows.filter(row=>row.checks&&row.checks.citationsValid).length,
+  artifactsReopened:rows.filter(row=>row.artifact&&row.artifact.reopenable===true).length,
+  pptPagesChecked:rows.filter(row=>row.artifact&&row.artifact.expectedExt==='pptx'&&Number(row.artifact.requestedPages)>0).length,
+  pptPagesMatched:rows.filter(row=>row.artifact&&row.artifact.expectedExt==='pptx'&&Number(row.artifact.requestedPages)>0&&Number(row.artifact.pages)===Number(row.artifact.requestedPages)).length,
+  citationsNonEmpty:rows.filter(row=>row.checks&&row.checks.citationsNonEmpty).length,
+  citationIdsResolve:rows.filter(row=>row.checks&&row.checks.citationIdsResolve).length,
+  writeClaimsMatchWrites:rows.filter(row=>row.checks&&row.checks.writeClaimsMatchWrites).length,
+  factsChecked:rows.filter(row=>row.facts&&row.facts.checked>0).length,
+  factsPresent:rows.filter(row=>row.checks&&row.checks.factsPresent&&row.facts&&row.facts.checked>0).length,
+  forbiddenChecked:rows.filter(row=>row.forbidden&&row.forbidden.checked>0).length,
+  forbiddenRespected:rows.filter(row=>row.checks&&row.checks.forbiddenRespected&&row.forbidden&&row.forbidden.checked>0).length,
   novicePassed:rows.filter(row=>row.noviceChecks&&Object.values(row.noviceChecks).every(Boolean)).length,
   requests:sum('requests'),inputTokens:sum('inputTokens'),outputTokens:sum('outputTokens'),cachedTokens:sum('cachedTokens'),
   cost:Math.round(sum('cost')*1e6)/1e6,retries:sum('retries'),duplicateReads:sum('duplicateReads'),opened:sum('opened'),durationMs:sum('durationMs'),
@@ -668,9 +757,9 @@ function aggregate(rows,skippedCount){
 
 function sampleLine(row){
  const metrics=row.metrics||{};
- const flags=row.passed?'PASS':'FAIL';
+ const flags=row.passed?'PASS':row.taskStatus==='partial'?'PARTIAL':'FAIL';
  const checks=Object.entries(row.checks||{}).filter(([,value])=>!value).map(([name])=>name);
- return 'LIVE '+pad(row.id,34)+flags+' '+pad('route='+row.actualRoute+(row.fallback?'/fallback':''),20)+
+ return 'LIVE '+pad(row.id,34)+flags+' '+pad('out='+(row.outcome||'-'),12)+pad('route='+row.actualRoute+(row.fallback?'/fallback':''),20)+
   'req='+pad(metrics.requests,3)+' in='+pad(metrics.inputTokens,6)+' out='+pad(metrics.outputTokens,5)+
   ' dup='+pad(metrics.duplicateReads,2)+' open='+(metrics.opened?'yes':'no')+' '+
   Math.round((metrics.durationMs||0)/1000)+'s'+(checks.length?' failed: '+checks.join(','):'');
@@ -678,20 +767,26 @@ function sampleLine(row){
 
 function printSummary(report){
  const rows=report.samples.map(row=>({
-  id:row.id,route:row.actualRoute+(row.fallback?'(fallback)':''),req:row.metrics.requests,
+  id:row.id,route:row.actualRoute+(row.fallback?'(fallback)':''),outcome:row.outcome||'-',req:row.metrics.requests,
   inp:row.metrics.inputTokens,out:row.metrics.outputTokens,dup:row.metrics.duplicateReads,
-  secs:Math.round(row.metrics.durationMs/1000),result:row.passed?'PASS':'FAIL'
+  secs:Math.round(row.metrics.durationMs/1000),result:row.passed?'PASS':row.taskStatus==='partial'?'PARTIAL':'FAIL'
  }));
  console.log('');
- console.log(pad('id',34)+pad('route',18)+pad('req',5)+pad('input',9)+pad('output',8)+pad('dup',5)+pad('secs',6)+'result');
- for(const row of rows)console.log(pad(row.id,34)+pad(row.route,18)+pad(row.req,5)+pad(row.inp,9)+pad(row.out,8)+pad(row.dup,5)+pad(row.secs,6)+row.result);
+ console.log(pad('id',34)+pad('route',18)+pad('outcome',13)+pad('req',5)+pad('input',9)+pad('output',8)+pad('dup',5)+pad('secs',6)+'result');
+ for(const row of rows)console.log(pad(row.id,34)+pad(row.route,18)+pad(row.outcome,13)+pad(row.req,5)+pad(row.inp,9)+pad(row.out,8)+pad(row.dup,5)+pad(row.secs,6)+row.result);
  const aggregate=report.aggregate;
  if(aggregate){
   console.log('');
-  console.log('Aggregate: '+aggregate.passed+'/'+aggregate.samples+' passed ('+aggregate.passRate+'%) · route matched '+aggregate.routeMatched+'/'+aggregate.samples+
-   ' · local '+aggregate.local+' / model '+aggregate.model+' / fallback '+aggregate.fallback+' / misrouted '+aggregate.misrouted);
+  console.log('Outcomes: completed '+aggregate.completed+' · partial '+aggregate.partial+' · needs input '+aggregate.needsInput+' · failed '+aggregate.failed+' · local '+aggregate.local);
+  console.log('Aggregate: full pass '+aggregate.passed+'/'+aggregate.samples+' ('+aggregate.fullPassRate+'%) · partial with all other checks passed '+aggregate.partialPass+'/'+aggregate.partial+
+   ' · route matched '+aggregate.routeMatched+'/'+aggregate.samples+' · model '+aggregate.model+' / fallback '+aggregate.fallback+' / misrouted '+aggregate.misrouted);
   console.log('Usage: requests '+aggregate.requests+' · input '+aggregate.inputTokens+' · cached '+aggregate.cachedTokens+' · output '+aggregate.outputTokens+
    ' · cost '+aggregate.cost+' · retries '+aggregate.retries+' · duplicate reads '+aggregate.duplicateReads+' · opened '+aggregate.opened);
+  console.log('Delivery acceptance: artifacts openable '+aggregate.artifactsOpenable+'/'+aggregate.samples+' · reopened '+aggregate.artifactsReopened+
+   ' · PPT pages matched '+aggregate.pptPagesMatched+'/'+aggregate.pptPagesChecked+' · non-empty citations '+aggregate.citationsNonEmpty+
+   ' · citation ids resolve '+aggregate.citationIdsResolve+' · write claims match writes '+aggregate.writeClaimsMatchWrites);
+  console.log('Literal content: facts present '+aggregate.factsPresent+'/'+aggregate.factsChecked+
+   ' · forbidden respected '+aggregate.forbiddenRespected+'/'+aggregate.forbiddenChecked+' (bounded string checks; not semantic verification)');
  }
 }
 

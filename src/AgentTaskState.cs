@@ -5,11 +5,19 @@ using System.Collections.Generic;
 
 namespace kok {
     public class AgentTaskOptions {
+        // Empty on pre-0.13 journals: they keep their original native execution semantics.
+        public string runtime="";
         public string sessionId,goal,intent="assist",protocol="auto",workflow="",instruction="",workflowGuidance="",approvalPolicy="each";
         public AgentScope scope=new AgentScope();public List<string> allowed=new List<string>();public List<ChatTurn> history=new List<ChatTurn>();
-        public bool semanticCompression=true,useMemory,allowDelegation,allowSandbox;public bool vision;public string searchEndpoint="";public int contextTokens=32000;public List<string> allowedTools;public string parentTaskId="",parentCallId="",sessionLeafId="",skillsIndex="";public int parentSteering;
+        public bool semanticCompression=true,useMemory,allowDelegation,allowSandbox;public bool vision;public string searchEndpoint="";public int contextTokens=32000;public List<string> allowedTools;
+        // v0.12.1: true when the host derived allowedTools from the goal/instructions (not a user-picked explicit
+        // list). Only an auto profile is re-derived from task.adjusted; an explicit list stays authoritative.
+        public bool allowedToolsAuto;
+        public string parentTaskId="",parentCallId="",sessionLeafId="",skillsIndex="";public int parentSteering;
         public int budget=14000,requestLimit=6,kernelVersion,reserveTokens,keepRecentTokens;public double costLimit,inputRate,outputRate;public AgentHandoff handoff;
         public string projectId="",projectBrief="";
+        // Set once by the host (AgentDelivery.PrepareDelivery) from the goal/scope; nullable for replay of older tasks.
+        public AgentDeliveryRequirement delivery;
     }
     public class AgentHandoff {public string taskId,eventId,note;public List<string> callIds=new List<string>(),ids=new List<string>();}
     public class AgentCall {
@@ -28,11 +36,107 @@ namespace kok {
         public List<AgentInput> RestoredInputs {get{return inputs.Where(i=>i.status=="restored").ToList();}}
         public List<AgentEvent> events=new List<AgentEvent>();
         public AgentContextCheckpoint checkpoint;
+        public Dictionary<string,object> researchCheckpoint;
         public List<AgentApprovalGrant> grants=new List<AgentApprovalGrant>();
+        // P0-1 effective task scope: artifacts created by this task (host receipts only, never model claims)
+        // join the original user scope for reads, edits, search, verification and delegation.
+        public List<string> createdArtifactIds=new List<string>();
+        // P1 repaired failures: failedCallId -> successfulCallId that later succeeded with the same tool+args.
+        public Dictionary<string,string> resolvedBy=new Dictionary<string,string>();
+        public static readonly string[] ArtifactTools={"create_document","create_presentation","copy_presentation"};
+        // Writes that edit an existing artifact in place: their receipt id identifies the edited item and the
+        // host must read it back after approval, but it never joins createdArtifactIds (it already has a scope).
+        public static readonly string[] EditTargetTools={"replace_document_text","edit_presentation"};
+        public static bool IsArtifactTool(string tool){return tool!=null&&Array.IndexOf(ArtifactTools,tool)>=0;}
+        public static bool IsEditTargetTool(string tool){return tool!=null&&Array.IndexOf(EditTargetTools,tool)>=0;}
+        // A host write receipt id is the only accepted artifact identity: control/presentation ids are checked
+        // with the journal id format and unknown or model-supplied values are ignored.
+        public static string ArtifactId(AgentCall call){
+            if(call==null||!IsArtifactTool(call.tool)||call.result==null)return null;
+            object value;if(!call.result.TryGetValue("id",out value))return null;
+            string id=Convert.ToString(value);return AgentJournal.ValidId(id)?id:null;
+        }
+        public static string EditTargetId(AgentCall call){
+            if(call==null||!IsEditTargetTool(call.tool)||call.result==null)return null;
+            object value;if(!call.result.TryGetValue("id",out value))return null;
+            string id=Convert.ToString(value);return AgentJournal.ValidId(id)?id:null;
+        }
+        public List<string> TaskScope {get{
+            var ids=new List<string>();var seen=new HashSet<string>(StringComparer.Ordinal);
+            if(options!=null&&options.allowed!=null)foreach(var id in options.allowed)if(!String.IsNullOrEmpty(id)&&seen.Add(id))ids.Add(id);
+            foreach(var id in createdArtifactIds)if(!String.IsNullOrEmpty(id)&&seen.Add(id))ids.Add(id);
+            return ids;
+        }}
+        public bool InScope(string id){
+            if(String.IsNullOrEmpty(id))return false;
+            if(createdArtifactIds.Count>0&&createdArtifactIds.Contains(id))return true;
+            return options!=null&&options.allowed!=null&&options.allowed.Contains(id);
+        }
+        public bool FailureResolved(AgentCall failed){
+            if(failed==null||String.IsNullOrEmpty(failed.id))return false;
+            string resolverId;if(!resolvedBy.TryGetValue(failed.id,out resolverId)||String.IsNullOrEmpty(resolverId))return false;
+            var resolver=calls.FirstOrDefault(c=>c.id==resolverId);return resolver!=null&&resolver.status=="done";
+        }
+        // Read tools whose successful call can repair an earlier failed read of the same source (#14).
+        public static readonly string[] ReadTools={"read_items","read_document","read_presentation"};
+        static bool ResolutionExcluded(string errorKind){return errorKind=="uncertain_write"||errorKind=="uncertain_external"||errorKind=="conflict";}
+        // Deterministic request/format/source errors carry no "the write may have happened" ambiguity, so a
+        // corrected retry may repair them; timeout/network/policy/uncertain outcomes may not.
+        static bool CorrectionErrorKind(string errorKind){return errorKind=="validation"||errorKind=="format"||errorKind=="source"||errorKind=="missing_source";}
+        static void AddTargetId(List<string> ids,HashSet<string> seen,object value){
+            string id=Convert.ToString(value);if(AgentJournal.ValidId(id)&&seen.Add(id))ids.Add(id);
+        }
+        // Target ids from id/ids args, validated as library ids so model-supplied or malformed values never link.
+        static List<string> TargetIds(Dictionary<string,object> args){
+            var ids=new List<string>();var seen=new HashSet<string>(StringComparer.Ordinal);if(args==null)return ids;
+            object value;if(args.TryGetValue("id",out value))AddTargetId(ids,seen,value);
+            if(args.TryGetValue("ids",out value)&&value!=null){
+                if(value is string)AddTargetId(ids,seen,value);
+                else{
+                    try{foreach(var item in Library.Json.Deserialize<List<object>>(Library.Json.Serialize(value)))AddTargetId(ids,seen,item);}
+                    catch{try{foreach(var item in Library.Json.Deserialize<List<string>>(Library.Json.Serialize(value)))AddTargetId(ids,seen,item);}catch{}}
+                }
+            }
+            return ids;
+        }
+        // A corrected read (different pagination params such as offset/max_chars) on an overlapping target id
+        // repairs the earlier read failure. The same tool or any other exact read tool counts, because both
+        // return the same source text; a search/summary call never repairs a failed exact read.
+        static bool CorrectedReadFailure(AgentCall failed,AgentCall done){
+            if(failed==null||done==null)return false;
+            if(Array.IndexOf(ReadTools,failed.tool)<0||Array.IndexOf(ReadTools,done.tool)<0)return false;
+            if(!CorrectionErrorKind(failed.errorKind))return false;
+            var failedIds=TargetIds(failed.args);if(failedIds.Count==0)return false;
+            var doneIds=TargetIds(done.args);return doneIds.Any(id=>failedIds.Contains(id));
+        }
+        // Called from replay for every successful tool call: record repair relationships for earlier failures
+        // with the same tool and identical JSON args, plus corrected read retries on the same target (#14),
+        // then remember host-created artifacts.
+        void ApplyCompletion(AgentCall done){
+            string artifactId=ArtifactId(done);if(artifactId!=null&&!createdArtifactIds.Contains(artifactId))createdArtifactIds.Add(artifactId);
+            string args=Library.Json.Serialize(done.args??new Dictionary<string,object>());
+            foreach(var failed in calls){
+                if(failed==done||failed.status!="failed"||ResolutionExcluded(failed.errorKind))continue;
+                if(failed.tool==done.tool&&Library.Json.Serialize(failed.args??new Dictionary<string,object>())==args){resolvedBy[failed.id]=done.id;continue;}
+                // #14: an out-of-range read corrected to a valid offset must count as resolved, while an
+                // unrelated success (different target) and every uncertain outcome above stays unresolved.
+                if(CorrectedReadFailure(failed,done))resolvedBy[failed.id]=done.id;
+            }
+        }
+        void ApplyUndone(AgentCall undone){
+            string artifactId=ArtifactId(undone);if(artifactId!=null)createdArtifactIds.Remove(artifactId);
+            foreach(var key in resolvedBy.Where(pair=>pair.Value==undone.id).Select(pair=>pair.Key).ToList())resolvedBy.Remove(key);
+        }
         public List<AgentPlanStep> plan=new List<AgentPlanStep>();public AgentVerification verification;public int planSteering;public string planInvalidation="",reviewInvalidation="";
         public bool PlanCurrent {get{return plan.Count==0||planSteering==steerVersion&&planInvalidation=="";}}
         void InvalidateReview(string reason){if(verification!=null){verification=null;reviewInvalidation=reason;if(status=="completed"||status=="partial"){status="review_required";phase="核对已失效，请重新检查结果。";}}if(plan.Count>0)planInvalidation=reason;}
-        void AddInstruction(AgentEvent e){InvalidateReview("instructions");grants.Clear();adjustments.Add(Get<string>(e.data,"text"));steerVersion++;dialogue.Add(new AgentDialogue{id=e.id,role="user",text=Get<string>(e.data,"text"),sequence=e.sequence});}
+        void AddInstruction(AgentEvent e){InvalidateReview("instructions");grants.Clear();adjustments.Add(Get<string>(e.data,"text"));steerVersion++;dialogue.Add(new AgentDialogue{id=e.id,role="user",text=Get<string>(e.data,"text"),sequence=e.sequence});
+            // v0.12.1: acceptance and auto-derived tools follow the latest instruction instead of the values frozen
+            // at task start. Replay-safe (no Library dependency) and best-effort so a journal from another version
+            // still loads; an explicit user-picked allowedTools list is never overwritten.
+            try{if(options!=null)options.delivery=AgentDeliveryRules.Derive(options,adjustments);}catch{}
+            try{if(options!=null&&options.allowedToolsAuto)options.allowedTools=AgentToolProfiles.ForTask(options,null,adjustments);}catch{}
+        }
         public static T Get<T>(Dictionary<string,object> data,string key){return data.ContainsKey(key)?Library.Json.Deserialize<T>(Library.Json.Serialize(data[key])):default(T);}
         public static AgentTaskState Replay(string id,List<AgentEvent> events){var s=new AgentTaskState{id=id};foreach(var e in events)s.Apply(e);return s;}
         public void Apply(AgentEvent e){
@@ -69,15 +173,17 @@ namespace kok {
                 case "task.note":dialogue.Add(new AgentDialogue{id=e.id,role="agent",meta=true,text=Get<string>(d,"text"),sequence=e.sequence});break;
                 case "tool.proposed":var c=Get<AgentCall>(d,"call");c.sequence=e.sequence;calls.Add(c);if(!AgentCognition.IsControl(c.tool))verification=null;break;
                 case "tool.started":case "tool.retry":{var c1=calls.First(c=>c.id==Get<string>(d,"callId"));c1.status=e.kind=="tool.retry"?"queued":"running";c1.error="";c1.attempt++;break;}
-                case "tool.completed":{var c1=calls.First(c=>c.id==Get<string>(d,"callId"));c1.status="done";c1.result=Get<Dictionary<string,object>>(d,"result");c1.resultEventId=e.id;c1.stamp=Get<string>(d,"stamp");break;}
+                case "tool.completed":{var c1=calls.First(c=>c.id==Get<string>(d,"callId"));c1.status="done";c1.result=Get<Dictionary<string,object>>(d,"result");c1.resultEventId=e.id;c1.stamp=Get<string>(d,"stamp");ApplyCompletion(c1);break;}
                 case "tool.reused":{var c1=calls.First(c=>c.id==Get<string>(d,"callId"));var previous=calls.First(c=>c.resultEventId==Get<string>(d,"resultRef")&&c.result!=null);c1.status="done";c1.result=previous.result;c1.resultEventId=previous.resultEventId;break;}
                 case "tool.sources":calls.First(c=>c.id==Get<string>(d,"callId")).sources=Get<Dictionary<string,string>>(d,"sources");break;
-                case "tool.skipped":case "tool.undone":{var c1=calls.First(c=>c.id==Get<string>(d,"callId"));c1.status=e.kind=="tool.skipped"?"skipped":"undone";grants.Clear();if(e.kind=="tool.skipped")c1.error=d.ContainsKey("reason")?Get<string>(d,"reason"):"user";else InvalidateReview("undo");break;}
+                case "tool.skipped":{var c1=calls.First(c=>c.id==Get<string>(d,"callId"));c1.status="skipped";grants.Clear();c1.error=d.ContainsKey("reason")?Get<string>(d,"reason"):"user";break;}
+                case "tool.undone":{var c1=calls.First(c=>c.id==Get<string>(d,"callId"));c1.status="undone";grants.Clear();InvalidateReview("undo");ApplyUndone(c1);break;}
                 case "tool.failed":{var c1=calls.First(c=>c.id==Get<string>(d,"callId"));c1.status="failed";c1.error=Get<string>(d,"message");c1.errorKind=Get<string>(d,"kind");c1.retryable=Get<bool>(d,"retryable");c1.result=Get<Dictionary<string,object>>(d,"result");c1.resultEventId=c1.result==null?null:e.id;break;}
                 case "task.waiting":status="waiting";phase="等待确认";break;
                 case "task.cancel_requested":case "task.cancelled":cancelRequested=true;status="cancelled";phase="任务已取消";break;
                 case "task.paused":case "task.stopped":status=cancelRequested?"cancelled":e.kind=="task.paused"?"paused":"stopped";phase=cancelRequested?"任务已取消":"任务已暂停";break;
                 case "task.failed":status="failed";error=Get<string>(d,"message");errorKind=Get<string>(d,"kind");retryable=Get<bool>(d,"retryable");break;
+                case "research.checkpoint":researchCheckpoint=d;break;
                 case "task.completed":status=Get<bool>(d,"limited")?"limited":d.ContainsKey("outcome")?Get<string>(d,"outcome"):"completed";phase=status=="completed"?"已完成":status=="partial"?"部分完成":status=="needs_input"?"需要补充信息":"已达到本次请求上限。";break;
             }
         }

@@ -7,7 +7,7 @@
 // Local samples must be answerable by the native zero-model router (agentLocalPlan): explicit Chinese verb
 // + explicit constraint, and one of its supported intents (count/list/collections/tags/kinds).
 // Everything here is synthetic; fixture notes never reference real files or personal data.
-const METRICS=Object.freeze(['inputTokens','outputTokens','cachedTokens','cost','durationMs','requests','retries','duplicateReads','opened','citationsValid','novice']);
+const METRICS=Object.freeze(['inputTokens','outputTokens','cachedTokens','cost','durationMs','requests','retries','duplicateReads','opened','citationIdsResolve','novice']);
 const NOVICE_CHECKS=Object.freeze(['startsWithoutHelp','confirmsOnlyWhenNeeded','findsResult']);
 const CATEGORIES=Object.freeze(['local','generation','qa','complex','needs-input']);
 const ROUTES=Object.freeze(['local','model']);
@@ -32,6 +32,10 @@ const ROUTER_REJECT_MARKERS=/(总结|概括|归纳|摘要|提炼|提取|分析|�
 
 function sample(row){
  const acceptance=row.acceptance||{};
+ // v0.12.1 #29: optional literal content rules. facts must appear in the answer/deliverable; forbidden
+ // strings must not. They are bounded string checks, never a semantic judge of source support.
+ const facts=Array.isArray(acceptance.facts)?Object.freeze(acceptance.facts.map(String)):undefined;
+ const forbidden=Array.isArray(acceptance.forbidden)?Object.freeze(acceptance.forbidden.map(String)):undefined;
  const value={
   id:row.id,
   title:row.title,
@@ -44,7 +48,9 @@ function sample(row){
    artifactOpenable:!!acceptance.artifactOpenable,
    citationsRequired:!!acceptance.citationsRequired,
    noUnsupportedClaims:acceptance.noUnsupportedClaims!==false,
-   ...(acceptance.expectedArtifactExt?{expectedArtifactExt:acceptance.expectedArtifactExt}:{})
+   ...(acceptance.expectedArtifactExt?{expectedArtifactExt:acceptance.expectedArtifactExt}:{}),
+   ...(facts?{facts}:{}),
+   ...(forbidden?{forbidden}:{})
   }),
   metrics:METRICS,
   noviceChecks:NOVICE_CHECKS
@@ -92,7 +98,7 @@ const RAW=[
  {id:'gen-summary-selected-docs',title:'总结所选文档要点',category:'generation',expectedRoute:'model',
   goal:'读取所选的两份旅行资料，用三条要点总结旅行计划，重点包含日期、目的地和预算，不要修改资料。',
   fixture:{kind:'documents',notes:'合成 Markdown：海边旅行初稿与修订稿，含日期、目的地、两版预算；仅用于总结。'},
-  acceptance:{resultPresent:true}},
+  acceptance:{resultPresent:true,facts:['厦门','1200','1800']}},
  {id:'gen-pdf-notes',title:'PDF 阅读要点笔记',category:'generation',expectedRoute:'model',
   goal:'阅读这份 PDF，把要点整理成一篇新的 Markdown 笔记并保存到资料库。',
   fixture:{kind:'pdf',notes:'原创示例 PDF（kok 使用指南），页数少、可离线解析；另附合成文档作对照。'},
@@ -104,15 +110,15 @@ const RAW=[
  {id:'gen-note-from-docs',title:'资料整理成笔记',category:'generation',expectedRoute:'model',
   goal:'把选中的两份资料整理成一篇 Markdown 笔记，包含日期、预算和准备清单，保存为资料库里的新文档。',
   fixture:{kind:'documents',notes:'合成 Markdown：旅行初稿与摄影准备清单，内容可合成笔记；原文件不得修改。'},
-  acceptance:{resultPresent:true,artifactOpenable:true,citationsRequired:true,expectedArtifactExt:'md'}},
+  acceptance:{resultPresent:true,artifactOpenable:true,citationsRequired:true,expectedArtifactExt:'md',facts:['厦门','相机']}},
  {id:'gen-presentation-five-pages',title:'生成五页演示文稿',category:'generation',expectedRoute:'model',
   goal:'用选中的资料做一份 5 页的演示文稿，主题是海边旅行计划，生成后保存到资料库。',
   fixture:{kind:'documents',notes:'合成 Markdown：旅行初稿、修订稿与摄影准备清单，可作为演示文稿素材。'},
-  acceptance:{resultPresent:true,artifactOpenable:true,citationsRequired:true,expectedArtifactExt:'pptx'}},
+  acceptance:{resultPresent:true,artifactOpenable:true,citationsRequired:true,expectedArtifactExt:'pptx',facts:['厦门']}},
  {id:'gen-compare-two-versions',title:'比较两版旅行计划',category:'generation',expectedRoute:'model',
   goal:'读取并比较初稿和修订稿两份资料，说明预算和日期的差异，引用两份来源，不修改文件。',
   fixture:{kind:'documents',notes:'合成 Markdown：修订稿预算 1800 元替代初稿 1200 元，日期一致；比较任务。'},
-  acceptance:{resultPresent:true,citationsRequired:true}},
+  acceptance:{resultPresent:true,citationsRequired:true,facts:['1200','1800','600']}},
  {id:'gen-organize-recent-proposal',title:'建议整理最近资料',category:'generation',expectedRoute:'model',
   goal:'先读取最近导入的资料，告诉我可以怎么按主题分类和打标签；只提出建议，等我确认后再执行修改。',
   fixture:{kind:'library',notes:'隔离资料库中的原创示例与合成文档；允许提出修改建议，但确认前不得实际写入。'},
@@ -134,7 +140,7 @@ const RAW=[
  {id:'qa-travel-budget-unknown',title:'旅行预算与住宿问题',category:'qa',expectedRoute:'model',
   goal:'根据所选资料回答：这次旅行的总预算是多少？住宿费用确定了吗？请引用你读到的来源，不确定的地方直接说明。',
   fixture:{kind:'documents',notes:'合成 Markdown：旅行初稿写预算 1200 元、住宿费用未提供；回答必须引用已读来源。'},
-  acceptance:{resultPresent:true,citationsRequired:true}},
+  acceptance:{resultPresent:true,citationsRequired:true,facts:['1200'],forbidden:['1800']}},
  {id:'qa-pdf-second-page',title:'PDF 内容与页码引用',category:'qa',expectedRoute:'model',
   goal:'这份 PDF 第 2 页讲了什么？只根据 PDF 内容回答，并指出信息在 PDF 中的页码位置。',
   fixture:{kind:'pdf',notes:'原创示例 PDF（kok 使用指南）页数少、文本可提取；回答需引用该 PDF 来源并给页码锚点。'},
@@ -142,11 +148,11 @@ const RAW=[
  {id:'qa-compare-version-budget',title:'两版预算差异问答',category:'qa',expectedRoute:'model',
   goal:'初稿和修订稿的预算分别是多少？差额是多少？请分别引用两份来源，不要合并成一个数字。',
   fixture:{kind:'documents',notes:'合成初稿（1200 元）与修订稿（1800 元），差额 600 元；两份来源必须分别引用。'},
-  acceptance:{resultPresent:true,citationsRequired:true}},
+  acceptance:{resultPresent:true,citationsRequired:true,facts:['1200','1800','600'],forbidden:['500元']}},
  {id:'qa-plant-watering',title:'植物记录问答',category:'qa',expectedRoute:'model',
   goal:'根据植物记录回答：阳台有几盆植物？多久浇一次水？只依据资料内容，引用来源。',
   fixture:{kind:'documents',notes:'合成 Markdown：植物记录写 2 盆植物、每 7 天浇水一次；不得补写资料外信息。'},
-  acceptance:{resultPresent:true,citationsRequired:true}},
+  acceptance:{resultPresent:true,citationsRequired:true,facts:['2盆','7天'],forbidden:['3盆','8天']}},
  {id:'qa-release-checklist',title:'发布检查清单问答',category:'qa',expectedRoute:'model',
   goal:'根据所选资料，回答发布前需要完成的检查项有哪些，逐条列出并引用对应的资料。',
   fixture:{kind:'documents',notes:'原创示例 DOCX 与合成发布检查清单 Markdown，列出若干检查项；回答需引用来源。'},
@@ -154,21 +160,21 @@ const RAW=[
  {id:'qa-reading-plan-dates',title:'阅读计划日期问答',category:'qa',expectedRoute:'model',
   goal:'从所选资料里找出阅读计划的关键日期和对应任务，逐条列出并引用来源。',
   fixture:{kind:'documents',notes:'合成阅读计划 Markdown，含日期与任务对应关系；回答需逐条引用来源。'},
-  acceptance:{resultPresent:true,citationsRequired:true}},
+  acceptance:{resultPresent:true,citationsRequired:true,facts:['11月8日','11月15日']}},
  {id:'qa-travel-preparation',title:'旅行准备清单问答',category:'qa',expectedRoute:'model',
   goal:'根据摄影准备清单和旅行计划，回答需要带哪些摄影装备；资料没有提到的信息要说明。',
   fixture:{kind:'documents',notes:'合成摄影准备清单（相机、电池、存储卡等）与旅行计划；回答需引用已读来源并标出未知项。'},
-  acceptance:{resultPresent:true,citationsRequired:true}},
+  acceptance:{resultPresent:true,citationsRequired:true,facts:['电池']}},
 
  // ------------------------------------------------------------------------ complex: 3 multi-step / delegated long tasks
  {id:'complex-delegation-two-docs',title:'委派子任务汇总两份资料',category:'complex',expectedRoute:'model',
   goal:'把读取并总结两份资料的工作委派给一个只读子任务，你根据子任务报告给出结论并核对来源，不修改资料。',
   fixture:{kind:'documents',notes:'合成旅行初稿与修订稿；委派只读子任务，父任务需核对子任务来源。'},
-  acceptance:{resultPresent:true,citationsRequired:true}},
+  acceptance:{resultPresent:true,citationsRequired:true,facts:['厦门']}},
  {id:'complex-long-task-note-followup',title:'长任务：总结后写笔记并读回核对',category:'complex',expectedRoute:'model',
   goal:'分步完成：先阅读所选两份资料并总结，再新建一篇 Markdown 笔记写入总结，最后读回笔记核对内容完整后结束。不要修改原始资料。',
   fixture:{kind:'documents',notes:'合成旅行初稿与修订稿；需要计划、写入、读回核对的多步长任务，原文件保持不变。'},
-  acceptance:{resultPresent:true,artifactOpenable:true,citationsRequired:true,expectedArtifactExt:'md'}},
+  acceptance:{resultPresent:true,artifactOpenable:true,citationsRequired:true,expectedArtifactExt:'md',facts:['厦门']}},
  {id:'complex-pdf-video-presentation',title:'PDF 与视频字幕综合演示',category:'complex',expectedRoute:'model',
   goal:'综合这份 PDF 和示例视频的字幕，先列出计划，再制作一份 3 页的演示文稿并保存；引用两类来源。',
   fixture:{kind:'pdf',notes:'原创示例 PDF 与同目录示例 webm 视频及中文字幕 srt；跨来源制作演示文稿，长任务。'},
@@ -178,11 +184,11 @@ const RAW=[
  {id:'needs-hotel-price',title:'询问未提供的酒店价格',category:'needs-input',expectedRoute:'model',
   goal:'资料里写了酒店名称和每晚价格吗？如果资料没有提供，请明确说没有，不要联网猜测，并以需要补充信息结束。',
   fixture:{kind:'documents',notes:'合成 Markdown 明确写“酒店名称和住宿价格未提供”；模型不得编造酒店名或价格。'},
-  acceptance:{resultPresent:true}},
+  acceptance:{resultPresent:true,forbidden:['每晚价格为','元/晚']}},
  {id:'needs-pdf-contact-info',title:'询问 PDF 未包含的联系方式',category:'needs-input',expectedRoute:'model',
   goal:'这份 PDF 里有没有作者的联系方式或补充数据表格？如果没有，请直接说明缺少信息并以需要补充信息结束，不要编造。',
   fixture:{kind:'pdf',notes:'原创示例 PDF 不含作者联系方式或数据表格；模型应如实说明缺失并结束为需要补充信息。'},
-  acceptance:{resultPresent:true}}
+  acceptance:{resultPresent:true,forbidden:['联系方式：','邮箱：']}}
 ];
 
 const SAMPLES=Object.freeze(RAW.map(sample));
@@ -229,6 +235,12 @@ if(require.main===module){
   assert.equal(typeof a.artifactOpenable,'boolean','artifactOpenable must be boolean: '+s.id);
   if(a.artifactOpenable){assert.ok(ARTIFACT_EXTS.includes(a.expectedArtifactExt),'openable artifact needs expectedArtifactExt: '+s.id);}
   else assert.equal(a.expectedArtifactExt,undefined,'expectedArtifactExt only when artifactOpenable: '+s.id);
+  // v0.12.1 #29: optional literal content rules; validate their shape when a sample defines them.
+  for(const key of ['facts','forbidden']){
+   const list=a[key];if(list===undefined)continue;
+   assert.ok(Array.isArray(list)&&list.length>0,key+' must be a non-empty array when present: '+s.id);
+   assert.ok(list.every(item=>typeof item==='string'&&item.trim().length>0),key+' entries must be non-empty strings: '+s.id);
+  }
   assert.deepEqual(s.metrics,[...METRICS],'metrics list mismatch on '+s.id);
   assert.deepEqual(s.noviceChecks,[...NOVICE_CHECKS],'noviceChecks list mismatch on '+s.id);
   if(s.category==='local'){
@@ -251,6 +263,13 @@ if(require.main===module){
  assert.equal(byRoute.local,8,'exactly 8 samples must expect the local route');
  assert.equal(byRoute.model,22,'exactly 22 samples must expect the model route');
 
+ // v0.12.1 #29: the live harness checks acceptance.facts / acceptance.forbidden literally. Require enough
+ // samples to define them so the content checks cannot silently become vacuous.
+ const factsCoverage=count(SAMPLES,s=>Array.isArray(s.acceptance.facts)&&s.acceptance.facts.length>0);
+ const forbiddenCoverage=count(SAMPLES,s=>Array.isArray(s.acceptance.forbidden)&&s.acceptance.forbidden.length>0);
+ assert.ok(factsCoverage>=8,'at least 8 samples must define literal acceptance facts, found '+factsCoverage);
+ assert.ok(forbiddenCoverage>=4,'at least 4 samples must define forbidden strings, found '+forbiddenCoverage);
+
  const coverage=COVERAGE_RULES.map(rule=>({name:rule.name,count:count(SAMPLES,rule.test),min:rule.min}));
  for(const row of coverage)if(row.count<row.min)fail('coverage "'+row.name+'" requires at least '+row.min+' samples, found '+row.count);
  const kindCoverage={};for(const s of SAMPLES)kindCoverage[s.fixture.kind]=(kindCoverage[s.fixture.kind]||0)+1;
@@ -266,6 +285,7 @@ if(require.main===module){
  console.log('Routes: local '+byRoute.local+' / model '+byRoute.model+' · fixture kinds: '+Object.entries(kindCoverage).map(([kind,n])=>kind+' '+n).join(', '));
  console.log('Local router vocabulary: '+byRoute.local+' goals use a supported intent verb + explicit constraint and avoid generative/write wording (300-char contract).');
  console.log('Coverage: '+coverage.map(row=>row.name+' '+row.count+' (min '+row.min+')').join(' · '));
+ console.log('Literal content rules: facts on '+factsCoverage+' samples · forbidden on '+forbiddenCoverage+' samples (bounded string checks, not semantic verification).');
  console.log('');
  console.log(pad('id',36)+pad('category',12)+pad('route',7)+pad('kind',12)+pad('artifact',9)+pad('citations',10)+'title');
  for(const row of rows)console.log(pad(row[0],36)+pad(row[1],12)+pad(row[2],7)+pad(row[3],12)+pad(row[4],9)+pad(row[5],10)+row[6]);

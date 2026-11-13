@@ -49,7 +49,7 @@ namespace kok {
                     Validate = (action, exists) => {
                         string query = action.args != null && action.args.ContainsKey("query") ? Convert.ToString(action.args["query"]).Trim() : "";
                         if (query.Length == 0 || query.Length > 200) throw new FormatException("query must be 1-200 characters");
-                        object limit; if (action.args.ContainsKey("limit") && action.args["limit"] != null) { int n; try { n = Convert.ToInt32(action.args["limit"]); } catch { throw new FormatException("limit must be an integer"); } if (n < 1 || n > 8) throw new FormatException("limit must be 1-8"); }
+                        if (action.args.ContainsKey("limit") && action.args["limit"] != null) { int n; try { n = Convert.ToInt32(action.args["limit"]); } catch { throw new FormatException("limit must be an integer"); } if (n < 1 || n > 8) throw new FormatException("limit must be 1-8"); }
                     },
                     ExecuteWithContext = (c, state, call, token) => Search(c, call, token)
                 }

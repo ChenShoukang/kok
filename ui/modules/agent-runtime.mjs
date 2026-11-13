@@ -43,7 +43,7 @@ function agentEntries(){
 function agentBatch(){
  const pending=agent.messages.filter(m=>m.status==='pending');if(!pending.length)return '';
  if(pending.length===1){const m=pending[0],tool=AGENT_TOOLS[m.tool]||{label:m.tool};return `<div class="agent-batch agent-single-review" role="status"><button type="button" class="agent-review-target text-button" data-agent-review-target="${m.id}">${svg('info')}<span>${I18n.text('等待确认')} · ${esc(I18n.text(tool.label))}</span>${svg('chevron')}</button></div>`;}
- const rows=pending.filter(m=>!['mcp_call','delegate_task','run_code'].includes(m.tool)),chosen=rows.filter(m=>m.selected!==false),selected=chosen.length,external=pending.length-rows.length;
+ const rows=pending.filter(m=>!['mcp_call','delegate_task','run_code','start_command_job'].includes(m.tool)),chosen=rows.filter(m=>m.selected!==false),selected=chosen.length,external=pending.length-rows.length;
  // Summarize exactly what the batch will change before the user confirms it.
  const groups=new Map();for(const m of chosen){const label=I18n.text((AGENT_TOOLS[m.tool]||{label:m.tool}).label);groups.set(label,(groups.get(label)||0)+1);}
  const change=`${I18n.text('将修改')} ${selected} ${I18n.text('项')}${groups.size?' · '+[...groups].map(([label,count])=>label+(count>1?' × '+count:'')).join(' · '):''}`;
@@ -176,7 +176,7 @@ function agentSuggestions(){
  if(String(item.ext||'').toUpperCase()==='PDF')return AGENT_SUGGESTIONS.pdf;
  return AGENT_SUGGESTIONS.document;
 }
-const agent={...AgentPlatformUi.defaults,messages:[],context:[],budget:14000,job:null,history:[],draft:'',titleOverride:'',sessionId:uid(),sessions:[],loaded:false,saveTimer:null,scope:'all',collection:'',skill:'auto',nativeSkills:[],nativeSkillsLoaded:false,plugins:[],prompts:[],pluginSkillsCount:0,pluginsLoaded:false,sessionArtifacts:[],requestLimit:6,costLimit:0,inputRate:0,outputRate:0,usage:null,phase:'',queue:[],options:false,advancedOpen:false,lastScope:'',intent:'assist',protocol:'auto',watch:'',recovery:null,handoff:null,project:null};
+const agent={...AgentPlatformUi.defaults,messages:[],context:[],budget:14000,job:null,history:[],draft:'',titleOverride:'',sessionId:uid(),sessions:[],loaded:false,saveTimer:null,scope:'all',collection:'',skill:'auto',nativeSkills:[],nativeSkillsLoaded:false,plugins:[],prompts:[],pluginSkillsCount:0,pluginsLoaded:false,sessionArtifacts:[],requestLimit:12,costLimit:0,inputRate:0,outputRate:0,usage:null,phase:'',queue:[],options:false,advancedOpen:false,lastScope:'',intent:'assist',protocol:'auto',watch:'',recovery:null,handoff:null,project:null};
 // Restored input ids already handed back to the composer, so repeated snapshot pulls never duplicate them.
 const agentRestoredSeen=new Set();
 
@@ -599,8 +599,12 @@ function agentResultStatus(status,errorKind){return errorKind==='output_limit'?I
 function agentResultCounts(sources,citations){return I18n.text('使用 '+sources+' 份资料 · '+citations+' 处来源引用');}
 function agentTaskResult(job,snap){
  const messages=snap.messages||[],calls=messages.filter(m=>m.role==='tool'),hex=id=>/^[a-f0-9]{32}$/.test(String(id||''));
- const sourceIds=[...new Set(calls.flatMap(m=>(m.sourceIds||[]).filter(hex)))];if(!sourceIds.length)for(const m of calls)for(const r of m.result?.references||[])hex(r?.fileId)&&sourceIds.push(r.fileId);
- const citations=[...new Set(messages.filter(m=>m.role==='agent'&&!m.meta&&!m.interrupted).flatMap(m=>(m.sourceIds||[]).filter(hex)))];
+ // #26 input sources vs generated outputs: ids this task created/copied are deliverables, not sources. The
+ // artifact itself stays in artifactId / the open button; counts and source chips must not include it.
+ const createdIds=new Set(calls.filter(m=>m.status==='done'&&['create_document','create_presentation','copy_presentation'].includes(m.tool)&&hex(m.result?.id)).map(m=>m.result.id));
+ const sourceId=id=>hex(id)&&!createdIds.has(id);
+ const sourceIds=[...new Set(calls.flatMap(m=>(m.sourceIds||[]).filter(sourceId)))];if(!sourceIds.length)for(const m of calls)for(const r of m.result?.references||[])if(sourceId(r?.fileId)&&!sourceIds.includes(r.fileId))sourceIds.push(r.fileId);
+ const citations=[...new Set(messages.filter(m=>m.role==='agent'&&!m.meta&&!m.interrupted).flatMap(m=>(m.sourceIds||[]).filter(sourceId)))];
  const artifact=[...calls].reverse().find(m=>['create_document','create_presentation','copy_presentation','edit_presentation','replace_document_text'].includes(m.tool)&&m.status==='done'&&hex(m.result?.id));
  const reply=[...messages].reverse().find(m=>m.role==='agent'&&!m.meta&&!m.interrupted);
  return {id:uid(),role:'result',kind:'task',local:false,errorKind:String(snap.errorKind||''),status:String(snap.status||'stopped'),title:String(artifact?(artifact.result.name||artifact.args?.name||artifact.args?.title||''):'').slice(0,200),summary:String(snap.verification?.summary||reply?.text||'').slice(0,600),sourceCount:sourceIds.length,citationCount:citations.length,sourceIds:sourceIds.slice(0,24),artifactId:artifact?.result?.id||'',goal:job.goal||''};
@@ -659,6 +663,7 @@ function agentMore(anchor){
  GlassMenu.open(anchor,[
   {key:'tasks',label:I18n.text('任务记录'),icon:'list',action:()=>agentTaskRecords()},
   {key:'memory',label:I18n.text('长期记忆'),icon:'bookmark',action:()=>AgentPlatformUi.memories()},
+  {key:'command-jobs',label:I18n.text('后台作业'),icon:'list',action:()=>AgentPlatformUi.commandJobs()},
   {key:'schedules',label:I18n.text('计划任务'),icon:'calendar',disabled:!!agent.job,action:()=>AgentPlatformUi.schedules()}
  ],{label:I18n.text('更多'),focus:true});
 }
@@ -672,7 +677,7 @@ function agentContextUsageView(){
  const percent=Number.isFinite(Number(usage.percent))?Number(usage.percent):window?Math.round(1000*tokens/window)/10:0;
  const source=usage.source==='usage'?'usage':'estimate';
  const last=usage.lastCompaction&&typeof usage.lastCompaction==='object'?usage.lastCompaction:null;
- return `<div class="agent-context-usage" data-source="${source}"><span class="agent-context-meter" title="${esc(I18n.text('上下文用量'))}">${I18n.text('上下文')} ${tokens}/${window} · ${percent}%</span><span class="agent-context-source" data-source="${source}" title="${esc(I18n.text(source==='usage'?'来自服务商的实际用量':'未获得实际用量，按结构估算'))}">${I18n.text(source==='usage'?'实测':'估算')}</span>${agent.job?`<button type="button" class="text-button" data-agent-compact title="${esc(I18n.text('压缩上下文'))}" aria-label="${esc(I18n.text('压缩上下文'))}">${I18n.text('压缩上下文')}</button>`:''}${last?`<details class="agent-context-summary"><summary>${I18n.text('上下文摘要 · ')}${esc(agentCompactReason(last.reason))}${last.current===false?' · '+I18n.text('已失效'):''}</summary><p class="agent-context-untrusted">${I18n.text('以下为不可信摘要，仅供参考，不代表当前授权；以宿主回执为准。')}</p><pre data-user-content>${esc(String(last.summary||''))}</pre></details>`:''}</div>`;
+ return `<div class="agent-context-usage" data-source="${source}"><span class="agent-context-meter" title="${esc(I18n.text('上下文用量'))}">${I18n.text('上下文')} ${tokens}/${window} · ${percent}%</span><span class="agent-context-source" data-source="${source}" title="${esc(I18n.text(source==='usage'?'来自服务商的实际用量':'未获得实际用量，按结构估算'))}">${I18n.text(source==='usage'?'实测':'估算')}</span>${agent.job&&!['research','deepagents'].includes(agent.recovery?.options?.runtime)?`<button type="button" class="text-button" data-agent-compact title="${esc(I18n.text('压缩上下文'))}" aria-label="${esc(I18n.text('压缩上下文'))}">${I18n.text('压缩上下文')}</button>`:''}${last?`<details class="agent-context-summary"><summary>${I18n.text('上下文摘要 · ')}${esc(agentCompactReason(last.reason))}${last.current===false?' · '+I18n.text('已失效'):''}</summary><p class="agent-context-untrusted">${I18n.text('以下为不可信摘要，仅供参考，不代表当前授权；以宿主回执为准。')}</p><pre data-user-content>${esc(String(last.summary||''))}</pre></details>`:''}</div>`;
 }
 // M2: cache-hit share for the usage footnote. Hidden when the provider reported no cached input
 // tokens (or an unknown input total); never estimate a percentage from zero/unknown data.
@@ -807,7 +812,7 @@ async function agentDecide(id,run,batch=false,grant=false){
  const m=agent.messages.find(x=>x.id===id);if(!m||m.status!=='pending')return;
  // A card from a task that is no longer running cannot be approved; resuming re-plans instead of replaying it.
  if(!m.taskId||agent.job?.id!==m.taskId){m.status='skipped';agentPaint({scroll:false});return;}
- if(run&&(!agentAvailable()||batch&&['mcp_call','delegate_task','run_code'].includes(m.tool)))return;
+ if(run&&(!agentAvailable()||batch&&['mcp_call','delegate_task','run_code','start_command_job'].includes(m.tool)))return;
  if(run&&grant)await agentPresence(true);m.status=run?'running':'skipped';agentPaint({scroll:false});
  const session=agent.sessionId;
  try{agentApplySnapshot(await native('agentTaskDecide',{taskId:m.taskId,callId:id,approve:run,batch,grant}));if(run){await refresh();const approved=agent.messages.find(row=>row.id===id&&['create_document','replace_document_text','create_presentation','copy_presentation','edit_presentation'].includes(row.tool)&&row.status==='done');if(approved&&agent.sessionId===session)await AgentArtifacts.open(approved.result?.id);}}
@@ -962,6 +967,7 @@ async function runAgent(goal,skillOverride=null){
  const scopeKey=agentScopeKey();if(agent.lastScope!==scopeKey){agent.history=[];agent.lastScope=scopeKey;}
  const instruction=skillOverride?agentNativeSkillInstruction(skillOverride.name):nativeSkill?agentNativeSkillInstruction(nativeSkill.name):skill&&!preset?('[Skill: '+skill.name+'] '+skill.instructions).slice(0,800):'';
  const options={approvalPolicy:agent.approvalPolicy,semanticCompression:agent.semanticCompression,contextTokens:agent.contextTokens,reserveTokens:agentCompactionSetting('reserveTokens'),keepRecentTokens:agentCompactionSetting('keepRecentTokens'),useMemory:agent.useMemory,allowDelegation:agent.allowDelegation,allowSandbox:agent.allowSandbox,...(agent.allowedTools?{allowedTools:agent.allowedTools}:{}),sessionId:agent.sessionId,sessionLeafId:[...agent.messages].reverse().find(m=>['user','agent'].includes(m.role)&&/^[a-f0-9]{32}$/.test(String(m.id||'')))?.id||'',goal:goal.trim(),intent:agent.intent,protocol:agent.protocol,handoff:agent.handoff,...(agent.project?.id?{projectId:agent.project.id}:{}),workflow:!skillOverride&&preset?skill.name:'',instruction,scope,history:AgentModel.history(agent.history,Math.min(6000,Math.floor(agent.budget/3))).slice(-10),budget:agent.budget,requestLimit:agent.requestLimit,costLimit:agent.costLimit,inputRate:agent.inputRate,outputRate:agent.outputRate};
+ options.runtime='auto';
  agent.handoff=null;agent.recovery=null;agent.usage=null;
  if(nativeSkill)agent.messages.push({id:uid(),role:'agent',meta:true,text:I18n.text('使用技能')+' · '+nativeSkill.name+(nativeSkill.description?' — '+String(nativeSkill.description).slice(0,200):'')});
  else if(skill&&!preset)agent.messages.push({id:uid(),role:'agent',meta:true,text:I18n.text('使用技能')+' · '+I18n.text(skill.title||skill.name)+' — '+I18n.text(skill.description||'')});

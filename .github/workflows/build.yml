@@ -42,6 +42,10 @@ jobs:
       - name: Compile, test and package
         shell: pwsh
         run: ./package.ps1
+      - name: Check and test the typed Agent runtime
+        run: |
+          npm --prefix runtime/research run check
+          npm --prefix runtime/research test
       - uses: actions/upload-artifact@v7
         with:
           name: kok-${{ matrix.os }}-win-x64

@@ -30,7 +30,7 @@ class AgentTests {
   check(Rejects(()=>AgentRules.Parse("{\"reply\":\"x\",\"actions\":[{\"tool\":\"create_document\",\"args\":{\"name\":\"../escape\",\"format\":\"md\",\"text\":\"x\"}}]}",exists)),"document names cannot escape the managed folder");
   var readSchemas=Library.Json.Serialize(AgentRules.Schemas(false));
   check(readSchemas.Contains("read_items")&&!readSchemas.Contains("write_note")&&AgentRules.Schemas(true,null,true).Length==AgentRules.Tools.Length&&!readSchemas.Contains("mcp_call"),"discussion requests offer only read tools; connected assist requests offer every registered tool");
-  check(AgentRules.ReadTools.SequenceEqual(ModuleRegistry.Builtins.Tools.Where(t=>!t.Write).Select(t=>t.Name))&&AgentRules.ReadTools.Contains("read_clips")&&AgentRules.Protocol(false).Contains("read_items{ids[<=8],question?}"),"the registry drives both tool groups and the JSON fallback protocol");
+  check(AgentRules.ReadTools.SequenceEqual(ModuleRegistry.Builtins.Tools.Where(t=>!t.Write).Select(t=>t.Name))&&AgentRules.ReadTools.Contains("read_clips")&&AgentRules.Protocol(false).Contains("read_items{ids[<=8],offset?,max_chars?"),"the registry drives both tool groups and the JSON fallback protocol");
   AgentReply invalidReply;string problem;
   check(!AgentRules.TryParse("{\"reply\":\"x\",\"actions\":[{\"tool\":\"open_item\",\"args\":{\"id\":\""+new string('a',32)+"\"}}]}",exists,out invalidReply,out problem)&&problem.Contains("action 1 (open_item)")&&problem.Contains("unknown or out-of-scope file ID"),"invalid replies name the action and argument for a repair round");
   var provider=new FixedProvider();var service=new TranslationService(Path.Combine(root,"ai"),()=>provider);

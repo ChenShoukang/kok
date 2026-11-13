@@ -6,9 +6,27 @@ using System.Threading;
 namespace kok {public partial class Library {
  Entry PresentationItem(string id){var item=Find(id);if(item==null||item.ext!="PPTX")throw new InvalidDataException("请使用 PPTX 格式；旧版 PPT 请先转换。");return item;}
  internal string PresentationSignature(string id){lock(gate){return DocumentHash(ManagedOwnedFile(id,"PPTX").path);}}
- internal Dictionary<string,object> ReadAgentPresentation(AgentCall call){lock(gate){var item=PresentationItem(Convert.ToString(call.args["id"]));var deck=PresentationFiles.Read(item.path,false);int start=AgentDocumentTools.Number(call.args,"start_page",1,1,100),max=AgentDocumentTools.Number(call.args,"max_pages",4,1,8);if(start>deck.slides.Count)throw new InvalidDataException("幻灯片页码超出范围。");int left=16000;var pages=new List<object>();
-  foreach(var slide in deck.slides.Skip(start-1).Take(max)){var shapes=new List<object>();foreach(var shape in slide.shapes){string text=shape.text??"";int take=Math.Min(left,Math.Min(6000,text.Length));left-=take;shapes.Add(new{id=shape.id,kind=shape.kind,text=text.Substring(0,take),truncated=take<text.Length,x=shape.x,y=shape.y,w=shape.w,h=shape.h,fontSize=shape.fontSize,color=shape.color});}int notes=Math.Min(left,Math.Min(4000,slide.notes.Length));left-=notes;pages.Add(new{page=deck.slides.IndexOf(slide)+1,id=slide.id,title=slide.title,notes=slide.notes.Substring(0,notes),notes_truncated=notes<slide.notes.Length,background=slide.background,shapes=shapes});}
-  return new Dictionary<string,object>{{"text",Json.Serialize(new{id=item.id,name=item.name,total_pages=deck.slides.Count,next_page=start+max<=deck.slides.Count?start+max:-1,editable=item.ownedDocument,has_draft=DraftValue(item.editDraft,"kind")=="presentation",width=deck.width,height=deck.height,unsupported=deck.unsupported,slides=pages})},{"references",new List<ChatReference>{new ChatReference{id=item.id,fileId=item.id,label=item.name,page=start,excerpt=deck.slides[start-1].title}}}};
+ // Page coverage needs a version token for EVERY readable deck (an imported PPTX source cannot be edited through
+ // kok but its file bytes can still change on disk). Managed decks use the same PresentationSignature as edits;
+ // imported originals fall back to the raw file hash. DeckCoverage compares this token to invalidate old reads.
+ internal string PresentationCoverageDigest(string id){lock(gate){var item=PresentationItem(id);try{return PresentationSignature(id);}catch{return DocumentHash(item.path);}}}
+ internal int PresentationPageCount(string id){lock(gate){return PresentationFiles.Read(PresentationItem(id).path,false).slides.Count;}}
+ internal Dictionary<string,object> ReadAgentPresentation(AgentCall call){lock(gate){var item=PresentationItem(Convert.ToString(call.args["id"]));var deck=PresentationFiles.Read(item.path,false);int start=AgentDocumentTools.Number(call.args,"start_page",1,1,100),max=AgentDocumentTools.Number(call.args,"max_pages",4,1,8);if(start>deck.slides.Count)throw new InvalidDataException("幻灯片页码超出范围。");int left=16000;var pages=new List<object>();var selected=deck.slides.Skip(start-1).Take(max).ToList();int pagesRead=selected.Count;
+  foreach(var slide in selected){var shapes=new List<object>();foreach(var shape in slide.shapes){string text=shape.text??"";int take=Math.Min(left,Math.Min(6000,text.Length));left-=take;shapes.Add(new{id=shape.id,kind=shape.kind,text=text.Substring(0,take),truncated=take<text.Length,x=shape.x,y=shape.y,w=shape.w,h=shape.h,fontSize=shape.fontSize,color=shape.color});}int notes=Math.Min(left,Math.Min(4000,slide.notes.Length));left-=notes;pages.Add(new{page=deck.slides.IndexOf(slide)+1,id=slide.id,title=slide.title,notes=slide.notes.Substring(0,notes),notes_truncated=notes<slide.notes.Length,background=slide.background,shapes=shapes});}
+  int totalPages=deck.slides.Count;int next=start+pagesRead<=totalPages?start+pagesRead:-1;string digest=PresentationCoverageDigest(item.id);
+  // Per-page exact coverage rows (#7A/#7B, C-B data base). Top-level mode is "exact-read" (NOT "exact") so
+  // CallContents never treats a page window as a character-exact page and never skips its normal budget clip.
+  var coverage=new List<Dictionary<string,object>>{new Dictionary<string,object>{
+   {"id",item.id},{"name",item.name},{"totalChars",totalPages},
+   {"readStart",start-1},{"readEnd",start-1+pagesRead},{"readChars",pagesRead},
+   {"full",start==1&&start-1+pagesRead==totalPages},{"hasMore",next>=0},{"nextOffset",next},
+   {"digest",digest},{"mode","exact"},{"sampled",false},{"capped",false},{"domain",AgentReading.DomainPresentation},
+   {"startPage",start},{"pageMax",max}}};
+  return new Dictionary<string,object>{
+   {"text",Json.Serialize(new{id=item.id,name=item.name,total_pages=totalPages,next_page=next,editable=item.ownedDocument,has_draft=DraftValue(item.editDraft,"kind")=="presentation",width=deck.width,height=deck.height,unsupported=deck.unsupported,slides=pages})},
+   {"mode","exact-read"},{"domain",AgentReading.DomainPresentation},{"coverage",coverage},
+   {"references",new List<ChatReference>{new ChatReference{id=item.id,fileId=item.id,label=item.name,page=start,excerpt=deck.slides[start-1].title}}},
+   {"start_page",start},{"total_pages",totalPages},{"pages_read",pagesRead},{"next_page",next}};
  }}
  internal byte[] PresentationEditPreview(Dictionary<string,object> args){var item=ManagedOwnedFile(Convert.ToString(args["id"]),"PPTX");if(DraftValue(item.editDraft,"kind")=="presentation")throw new InvalidOperationException("演示文稿有未写入文件的草稿，请先保存 PPTX 后再交给 Agent。");if(new FileInfo(item.path).Length>32*1024*1024)throw new InvalidDataException("PPTX 超过 32 MB，请使用系统应用。");return AgentPresentationXml.Edit(File.ReadAllBytes(item.path),args);}
  internal void PrepareAgentPresentation(AgentCall call){PresentationEditPreview(call.args);string id=Convert.ToString(call.args["id"]);call.documentSignature=PresentationSignature(id);call.documentBeforeStamp=AgentCreatedStamp(id);call.beforeText=String.Join("\n",PresentationFiles.Read(Find(id).path,false).slides.Select((s,n)=>(n+1)+". "+s.title));call.afterText=Json.Serialize(call.args["edits"]);}

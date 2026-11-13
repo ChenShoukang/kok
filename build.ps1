@@ -51,6 +51,7 @@ $forms = Join-Path $sdk 'lib\net462\Microsoft.Web.WebView2.WinForms.dll'
 & (Join-Path $root 'tools\prepare-youtube.ps1')
 & (Join-Path $root 'tools\prepare-media.ps1')
 & (Join-Path $root 'tools\prepare-agent.ps1')
+& (Join-Path $root 'tools\prepare-research-runtime.ps1')
 & (Join-Path $root 'tools\prepare-pdfium.ps1')
 $tagLibrary=Join-Path $root 'tools\media-source\TagLibSharp.dll'
 $agentLibraries=@((Get-Content -LiteralPath (Join-Path $root 'tools\agent-dependencies.json') -Raw | ConvertFrom-Json) | ForEach-Object {Join-Path $root ('tools\agent-source\lib\'+$_.id+'.dll')})
@@ -123,6 +124,15 @@ if ($Test) {
     $testArgs += Join-Path $root 'tests\AgentHeadlessTests.cs'
     $testArgs += Join-Path $root 'tests\AgentPlatformTests.cs'
     $testArgs += Join-Path $root 'tests\AgentReliability090Tests.cs'
+    $testArgs += Join-Path $root 'tests\AgentScopeV012Tests.cs'
+    $testArgs += Join-Path $root 'tests\AgentReadingV012Tests.cs'
+    $testArgs += Join-Path $root 'tests\AgentDeliveryV012Tests.cs'
+    $testArgs += Join-Path $root 'tests\AgentIntentV013Tests.cs'
+    $testArgs += Join-Path $root 'tests\AgentReadingV013Tests.cs'
+    $testArgs += Join-Path $root 'tests\AgentRecoveryV013Tests.cs'
+    $testArgs += Join-Path $root 'tests\AgentAcceptanceV122Tests.cs'
+    $testArgs += Join-Path $root 'tests\AgentResearchTests.cs'
+    $testArgs += Join-Path $root 'tests\AgentFoundationTests.cs'
     $testArgs += Join-Path $root 'tests\McpTests.cs'
     $testArgs += Join-Path $root 'tests\McpRemoteTests.cs'
     $testArgs += Join-Path $root 'tests\McpOAuthTests.cs'

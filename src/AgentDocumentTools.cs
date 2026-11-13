@@ -10,7 +10,7 @@ namespace kok {
   internal static AgentToolSpec[] ConcatDocumentEdits(this AgentToolSpec[] tools){return tools.Concat(new[]{Read(),Replace()}).ToArray();}
   static object Integer(string description,int minimum,int maximum){return new Dictionary<string,object>{{"type","integer"},{"description",description},{"minimum",minimum},{"maximum",maximum}};}
   static AgentToolSpec Read(){return new AgentToolSpec{Name="read_document",Title="读取文档原文",CapabilityId="documents.documentSource",Requires=Need.NormalLibrary,Write=false,
-   Signature="read_document{id,offset?,max_chars?}",Description="Read exact source of a kok-created MD/TXT/DOCX before editing its body. Returns a bounded text window, total_chars and next_offset; notes are not document body.",
+   Signature="read_document{id,offset?,max_chars?}",Description="Read exact source of a kok-created MD/TXT/DOCX before editing its body. Returns a bounded text window, total_chars and next_offset; notes are not document body. The result carries mode=exact and per-source coverage (same schema as read_items) so full/document read-back counts for delivery checks; page with offset/max_chars until has_more=false.",
    Properties=AgentRules.Props("id",AgentRules.Id,"offset",Integer("UTF-16 source offset; default 0",0,380000),"max_chars",Integer("Source characters; default 6000",2,12000)),Required=new[]{"id"},Validate=Validate,
    Read=(lib,state,call,token)=>Task.FromResult(lib.ReadAgentDocument(call,token))};}
   static AgentToolSpec Replace(){return new AgentToolSpec{Name="replace_document_text",Title="修改文档正文",CapabilityId="documents.saveDocument",Requires=Need.NormalLibrary,Write=true,
@@ -36,7 +36,28 @@ namespace kok {
    token.ThrowIfCancellationRequested();lock(gate){string id=Convert.ToString(call.args["id"]);var item=ManagedDocument(id);var source=DocumentSource(id);int offset=AgentDocumentTools.Number(call.args,"offset",0,0,DocumentTextLimit),max=AgentDocumentTools.Number(call.args,"max_chars",6000,2,12000);
     if(offset>source.text.Length)throw new InvalidDataException("文档原文偏移超出范围。");if(offset>0&&offset<source.text.Length&&Char.IsLowSurrogate(source.text[offset])&&Char.IsHighSurrogate(source.text[offset-1]))offset--;
     int end=Math.Min(source.text.Length,offset+max);if(end>offset&&end<source.text.Length&&Char.IsHighSurrogate(source.text[end-1])&&Char.IsLowSurrogate(source.text[end]))end--;
-    string text=source.text.Substring(offset,end-offset);return new Dictionary<string,object>{{"text",Json.Serialize(new{id=item.id,name=item.name,offset=offset,total_chars=source.text.Length,next_offset=end<source.text.Length?end:-1,text=text,signature=source.signature,recovery=source.recovery})},{"references",new List<ChatReference>{new ChatReference{id=item.id,fileId=item.id,label=item.name,excerpt=text.Substring(0,Math.Min(160,text.Length))}}}};
+    string text=source.text.Substring(offset,end-offset);int next=end<source.text.Length?end:-1;
+    // Exact paging result: raw document body offsets stay in the inner payload (replace_document_text needs the
+    // exact body text), while the coverage row is expressed in the normalized document domain so it can be
+    // validated by AgentReading.FullCoverage/ReadBackSufficient together with read_items ranges.
+    string canonical=AgentReading.NormalizeSourceText(source.text);
+    int canonicalStart=offset>=source.text.Length?canonical.Length:AgentReading.NormalizedOffset(source.text,offset),canonicalEnd=end>=source.text.Length?canonical.Length:AgentReading.NormalizedOffset(source.text,end);
+    if(canonicalEnd<canonicalStart)canonicalEnd=canonicalStart;
+    string digest=AgentReading.SourceDigest(item.id,canonical,false);
+    var coverage=new List<Dictionary<string,object>>{new Dictionary<string,object>{
+     {"id",item.id},{"name",item.name},{"totalChars",canonical.Length},
+     {"readStart",canonicalStart},{"readEnd",canonicalEnd},{"readChars",canonicalEnd-canonicalStart},
+     {"full",canonicalStart==0&&canonicalEnd==canonical.Length},
+     {"hasMore",canonicalEnd<canonical.Length},{"nextOffset",canonicalEnd<canonical.Length?canonicalEnd:-1},
+     {"digest",digest},{"mode","exact"},{"sampled",false},{"capped",false},{"domain",AgentReading.DomainDocument},
+     {"offset",offset},{"pageMax",max}}};
+    string opening=source.text.Substring(0,Math.Min(AgentReading.OpeningChars,source.text.Length));
+    return new Dictionary<string,object>{
+     {"text",Json.Serialize(new{id=item.id,name=item.name,offset=offset,total_chars=source.text.Length,next_offset=next,text=text,signature=source.signature,recovery=source.recovery})},
+     {"mode","exact"},{"domain",AgentReading.DomainDocument},{"coverage",coverage},
+     {"openings",new List<Dictionary<string,object>>{new Dictionary<string,object>{{"id",item.id},{"name",item.name},{"text",opening}}}},
+     {"references",new List<ChatReference>{new ChatReference{id=item.id,fileId=item.id,label=item.name,excerpt=text.Substring(0,Math.Min(160,text.Length))}}},
+     {"offset",offset},{"total_chars",source.text.Length},{"max_chars",max},{"has_more",next>=0},{"next_offset",next}};
    }
   }
   internal AgentToolReceipt ReplaceAgentDocument(AgentTaskState state,AgentCall call,CancellationToken token){

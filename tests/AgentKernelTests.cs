@@ -591,7 +591,7 @@ static class AgentKernelTests {
   Func<AgentTaskEngine,CancellationToken,Task<AgentModelTurn>> parallelModel=(e,t)=>{parallelRounds++;return parallelRounds==1?Reply(e,Action("hook_parallel_a",new{}),Action("hook_parallel_b",new{})):Reply(e,Finish("partial"));};
   var parallelEngine=new AgentTaskEngine(parallelState,journal,()=>{},parallelModel,parallelRead,write,Prepare,()=>{});
   parallelEngine.Start();await parallelEngine.Completion;
-  check(parallelOrder.SequenceEqual(new[]{"b","a"})&&parallelState.status=="partial"&&AgentRules.Tools.Single(t=>t.Name=="hook_serial_a").Mode=="serial"&&AgentRules.Tools.Single(t=>t.Name=="hook_parallel_a").Mode==""&&AgentRules.Tools.Where(t=>t.Name.StartsWith("hook_",StringComparison.Ordinal)).All(t=>!t.TerminateHint),"default Mode=\"\" keeps the existing parallel batch and TerminateHint stays reserved (false)");
+  check(parallelOrder.SequenceEqual(new[]{"b","a"})&&parallelState.status=="partial"&&AgentRules.Tools.Single(t=>t.Name=="hook_serial_a").Mode=="serial"&&AgentRules.Tools.Single(t=>t.Name=="hook_parallel_a").Mode=="","default Mode=\"\" keeps the existing parallel batch");
   async Task<string> HookBaseline(AgentToolHooks hooks){
    var st=Seed(journal);int rounds=0;
    Func<AgentTaskEngine,CancellationToken,Task<AgentModelTurn>> model=(e,t)=>{rounds++;if(rounds==1)return Reply(e,Action("update_plan",new{steps=new[]{new{id="read",title="Read the source",status="in_progress",evidence=new string[0]}}}),Action("read_items",new{ids=new[]{new string('a',32)}}));string receipt=st.calls.Single(c=>c.tool=="read_items").id;return Reply(e,Action("update_plan",new{steps=new[]{new{id="read",title="Read the source",status="done",evidence=new[]{receipt}}}}),Finish("completed",receipt));};

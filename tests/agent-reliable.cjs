@@ -54,7 +54,9 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
   assert.equal(await page.evaluate(()=>window.agentInputBefore===$('#agent-input')&&$('#agent-input').selectionStart===2&&$('#agent-input').selectionEnd===7),true);assert.equal(await page.locator('#agent-input').inputValue(),'DRAFT_DURING_STREAM');assert.equal(await page.evaluate(()=>AgentUi.state.usage.inputTokens),125);assert.equal(await page.evaluate(()=>AgentUi.state.usage.estimated),false);
   console.log('PASS: genuine stream progress, input DOM/selection retention and provider token usage.');
   // Steering no longer cancels an in-flight proposal: it survives the approval boundary and is injected next round.
-  await fresh();mode='steer';slow=0;const steeringStart=requests.length;await send('Summarize');await page.waitForSelector('[data-agent-run]');
+  // v0.12 P1 profiles hide write tools for pure read/summarize goals, so use an organize+read mixed goal that
+  // keeps write_note exposed while preserving the "steering across an approval boundary" scenario.
+  await fresh();mode='steer';slow=0;const steeringStart=requests.length;await send('Organize and summarize this note');await page.waitForSelector('[data-agent-run]');
   const steerTask=await page.evaluate(()=>AgentUi.state.watch);
   await page.locator('#agent-input').fill('Only summarize, no edits');await page.locator('button[type=submit]').click();
   await page.waitForFunction(()=>$('#agent-input').value==='');await drawerCount(1);

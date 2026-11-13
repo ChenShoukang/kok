@@ -8,7 +8,7 @@
 
 [下载已发布版本](https://github.com/ChenShoukang/kok/releases) · [帮助中心](docs/help/index.md) · [使用指南](docs/GUIDE.md) · [English](README.en.md) · [格式支持](docs/FORMATS.md)
 
-**v0.11.2 Preview** 新增「用示例试一次」，在本机做出第一篇可编辑的笔记。「全部项目」支持搜索，项目交付记录会保存已导出副本的位置和时间。[入门教程](docs/help/getting-started/first-work.md) · [项目交付](docs/help/works/continue-editing.md#项目搜索与交付记录)
+**v0.14.0 Preview** 建立通用 Agent 基础：TypeScript 运行时、版本化任务与资产协议、可恢复检查点、需审批的后台命令作业，以及九类能力的真实状态。文档和研究保持可用；视频、照片、音乐、代码和电脑操作按[详细规划](docs/PROJECT_PLAN_0.14_TO_1.0.md)逐步接入。[本版验证与边界](docs/VALIDATION_0.14.0.md) · [版本记录](CHANGELOG.md)
 
 ![kok 我的作品，使用内置原创示例](docs/screenshots/works-zh.png)
 
@@ -38,11 +38,11 @@
 
 ## 开始使用
 
-1. 从 [Releases](https://github.com/ChenShoukang/kok/releases/tag/v0.11.2) 下载 `kok-0.11.2-win-x64.zip` 和 SHA-256 校验文件。完整解压后运行 `kok.exe`。
+1. 从 [Releases](https://github.com/ChenShoukang/kok/releases) 下载 `kok-0.14.0-win-x64.zip` 和 SHA-256 校验文件。完整解压后运行 `kok.exe`。
 2. 首次选择**纯净模式**或**智能模式**；不配置 AI 也能使用本地基础功能。
 3. 从「我的作品」点「用示例试一次」写一份笔记，或在资料库导入自己的文件。
 
-需要 **Windows 10 / 11 x64、.NET Framework 4.8、[WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/)**。运行软件不需要 Node.js 或 .NET SDK。当前是未签名的 **Preview 预览版**。
+需要 **Windows 10 / 11 x64、.NET Framework 4.8、[WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/)**。研究内核所需的 Node.js 随包提供，无需另行安装 Node.js 或 .NET SDK。当前是未签名的 **Preview 预览版**。
 
 ## 本地使用，AI 由你选择
 
@@ -65,7 +65,7 @@
 
 ## 文档与开发
 
-[帮助中心](docs/help/index.md) · [使用指南](docs/GUIDE.md) · [文档目录](docs/README.md) · [创作项目](docs/CREATIVE_PROJECTS_0.10.10.md) · [版本与局部改稿](docs/VERSIONS_0.10.11.md) · [无界面 CLI](docs/AGENT_CLI_0.10.7.md) · [扩展包](docs/PLUGINS_0.10.8.md) · [验证记录](docs/VALIDATION_0.11.2.md) · [路线图](ROADMAP.md)
+[帮助中心](docs/help/index.md) · [使用指南](docs/GUIDE.md) · [文档目录](docs/README.md) · [创作项目](docs/CREATIVE_PROJECTS_0.10.10.md) · [版本与局部改稿](docs/VERSIONS_0.10.11.md) · [无界面 CLI](docs/AGENT_CLI_0.10.7.md) · [扩展包](docs/PLUGINS_0.10.8.md) · [验证记录](docs/VALIDATION_0.14.0.md) · [路线图](ROADMAP.md)
 
 ```powershell
 npm ci --omit=optional
