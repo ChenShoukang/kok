@@ -8,6 +8,7 @@ Start with the [user guide](GUIDE.en.md). Find help by the task you want to comp
 
 | Goal | Read |
 | --- | --- |
+| v0.15.0 code workspace and local web verification | [Validation and limits](VALIDATION_0.15.0.md) |
 | v0.14.0 general Agent foundation, background jobs and capability status | [Validation and limits](VALIDATION_0.14.0.md) · [Release notes](RELEASE_NOTES.md) |
 | v0.13.0 research kernel, resource tradeoffs and language migration | [Kernel guide](RESEARCH_KERNEL_0.13.0.md) · [Validation](VALIDATION_0.13.0.md) |
 | First time here, or a structured overview | [**kok help center** (Chinese)](help/index.md): setup, modes, interface, the three areas, settings and reference |

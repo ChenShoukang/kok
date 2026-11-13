@@ -33,6 +33,7 @@ namespace kok {
             try{requirement=AgentDeliveryRules.Derive(t.options,t.adjustments??Enumerable.Empty<string>());}
             catch{return "";}
             if(requirement==null)return "";
+            string codeProblem=AgentCodeDelivery.Problem(normalLibrary,t);if(codeProblem.Length>0)return codeProblem;
             var operations=t.calls.Where(c=>!AgentCognition.IsControl(c.tool)).ToList();
 
             // 1) Document delivery: all conditions on the last owned create_document's current version.
@@ -76,7 +77,7 @@ namespace kok {
             }
             // 3) Targeted revision: the latest still-current edit needs a post-edit read-back. A write receipt
             // alone is not verification (#8).
-            if(!requirement.chatOnly&&requirement.requiresTargetedEdit){
+            if(!requirement.chatOnly&&requirement.requiresTargetedEdit&&t.options.workspaceVersion!=1){
                 AgentCall edit=LastCurrentEdit(t);
                 if(edit==null)return "这是定点改稿任务，但本任务没有成功且当前有效的改稿记录（replace_document_text / edit_presentation）。请先读取目标文件，再提交精确替换并等待用户审批通过，然后回读并重新 finish_task(completed)。已通过的读取与手动修改保留，只需补未通过的改稿。";
                 string target=ResultId(edit);

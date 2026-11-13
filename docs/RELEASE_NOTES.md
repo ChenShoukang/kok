@@ -1,23 +1,31 @@
-# kok v0.14.0 Preview
+# kok v0.15.0 Preview
 
-本版落地通用 Agent 的第一阶段基础，继续使用 Deep Agents / LangGraph。运行时主体迁入 TypeScript，C# 保留 Windows 桌面、审批、资料范围与真实文件操作。
+本版重点是可验证的代码工作区流程与本地网页验证，继续使用 Deep Agents / LangGraph，运行时主体为 TypeScript。
 
-- **任务与资产协议**：版本化 TaskSpec 反映当前要求；资料和工作区产出带真实版本、来源、可用状态与项目关联。
-- **公开检查点接口**：新状态通过 LangGraph 公开写入接口记录与恢复，支持 v0.13.0 审批检查点迁移。
-- **后台命令作业**：在已配置工作区内，逐项批准明确的可执行文件和参数后运行。可查询、等待、停止，并查看真实输出、退出码和声明产出。结果在本机加密保存；重启不会自动重跑未完成命令。
-- **真实能力目录**：研究、文档、PPT、照片、视频、音乐、代码、表格和电脑操作分别显示基础可用、部分可用、未配置或待接入。
-- **兼容历史任务**：保留既有文件、编辑器和旧任务运行方式。
+- 加入工作区与环境识别、代码搜索、分段读取、Git 状态和差异读取。Python 商店占位符不再被误识别为实际解释器。
+- 加入 SHA-256 和工作区身份保护的精确补丁，保留无关改动、UTF-8 BOM 与换行；预览后文件变化会拒绝覆盖，恢复时已应用的补丁不会重复写入。
+- 代码验证绑定实际输入文件版本与退出码；文件在验证期间或验证后变化时，旧结果不能证明当前代码通过。
+- 加入独立 WebView2 本地验证会话，支持页面观察、输入、选择、点击及后置条件等待；限制为批准的本机 HTTP 来源。
+- 研究任务不再自动附加工作区命令；保存默认能力设置时保留按需选择工具。
+- 修复命令输出读取可能阻塞桌面界面的问题；代码任务按需载入工具，减少无关资料库上下文。
+- 补丁预览显示实际替换内容，作业和网页结果显示真实状态；完成后可直接定位修改文件与生成文件。
+- 既有研究、文档、PPT 和旧任务继续保留。通用远程网页、桌面 UIA 与专业媒体引擎仍按后续计划推进。
 
-完整解压 `kok-0.14.0-win-x64.zip` 后运行 `kok.exe`，保留其中的 runtime 目录。无需另外安装 Node.js。命令执行需在“能力与权限”中配置并启用工作区；未启用系统沙箱时，命令具有当前用户权限。
+完整解压 kok-0.15.0-win-x64.zip 后运行 kok.exe，保留 runtime 目录。先在“能力与权限”中配置并启用工作区。修改文件和运行命令需审批；未启用 AppContainer 时，外部命令具有当前用户权限。
 
-这是基础重构版本。专业视频时间线、音乐生成与分轨、完整表格编辑、通用电脑操作等仍按规划推进，尚未作为完整 Agent 能力交付。
+浏览器当前仅用于 127.0.0.1 / [::1] 的本地 HTTP 应用验证，不复用个人浏览器会话。普通远程网站、通用桌面操作与自动下载尚未交付。
 
-[验证与已知边界](VALIDATION_0.14.0.md) · [详细开发计划](PROJECT_PLAN_0.14_TO_1.0.md) · [版本记录](../CHANGELOG.md) · [帮助中心](help/index.md)
+[实现、验证与边界](VALIDATION_0.15.0.md) · [详细规划](PROJECT_PLAN_0.14_TO_1.0.md)
 
 ## English
 
-This release establishes the general Agent foundation on Deep Agents / LangGraph. The runtime moves to TypeScript while C# retains Windows integration, approval, scope enforcement and actual file operations.
+- Add project/executable discovery, bounded code search, paged UTF-8 reads and read-only Git status/diffs. Windows Store aliases no longer count as real Python interpreters.
+- Add exact patches guarded by raw-byte SHA-256 and workspace identity. Preserve unrelated user changes, BOM and newlines, reject stale approval and avoid replaying an already-applied patch.
+- Bind successful command checks to actual source versions and exit codes; changed inputs invalidate old verification.
+- Add task-owned isolated WebView2 sessions for explicitly approved local HTTP apps, with fresh observations, fill/select/click and postcondition waits.
+- Unrelated research tasks omit workspace command tools; saving default settings retains automatic tool selection.
+- Fix a desktop deadlock while reading command output and reduce irrelevant library context in code tasks.
+- Show exact patch previews and actual command/browser state, with direct access to changed files and generated outputs.
+- Preserve existing research, document, PPT and legacy workflows. General remote websites, desktop UIA and professional media engines remain future milestones.
 
-Versioned task and asset contracts reflect current requirements and actual files. New checkpoints use public LangGraph write interfaces and migrate v0.13.0 approval checkpoints. Individually approved background commands expose durable job IDs, local waits, cancellation, actual output and exit codes, and declared output assets. Results are encrypted locally; unfinished commands never replay automatically after restart.
-
-The capability catalog reports actual support across nine domains, including music. Professional media, music generation, full workbook editing and general computer use remain future milestones. Extract the complete ZIP, including its runtime directory. No separate Node installation is required. Unsandboxed commands run with the current user's privileges.
+Extract the complete ZIP, including runtime. Configure a workspace before using code and local browser tools. Patches and commands require approval. Unsandboxed commands run with the current user permissions.

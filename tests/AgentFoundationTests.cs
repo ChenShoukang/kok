@@ -20,7 +20,7 @@ static class AgentFoundationTests {
         string before=inputs[0].version;File.WriteAllText(source.path,"最终预算调整为9万元，采用最新版本。",Encoding.UTF8);
         check(AgentContracts.Assets(state,library).Single().version!=before,"foundation: asset projection reflects the actual current file version");
         var caps=AgentContracts.Capabilities(library,AppDomain.CurrentDomain.BaseDirectory);
-        check(caps.Count==9&&caps.Single(c=>c.id=="music").status=="partial"&&caps.Single(c=>c.id=="computer").status=="planned"&&caps.Single(c=>c.id=="coding").status=="unconfigured","foundation: all nine domains are catalogued without pretending missing engines are available");
+        check(caps.Count==9&&caps.Single(c=>c.id=="music").status=="partial"&&caps.Single(c=>c.id=="computer").status=="unconfigured"&&caps.Single(c=>c.id=="coding").status=="unconfigured","foundation: all nine domains are catalogued without pretending missing engines are available");
         var workspace=Path.Combine(root,"workspace");Directory.CreateDirectory(workspace);AgentExecution.Save(library,true,workspace,false);
         var context=new ModuleContext(library,new TranslationService(library.DataDir),new ModulePolicy(library),null,CancellationToken.None,null,new Operations(library,null),null,appDirectory:AppDomain.CurrentDomain.BaseDirectory);
         var jobs=AgentCommandJobs.For(library);string executable=Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"kok.Tests.exe");

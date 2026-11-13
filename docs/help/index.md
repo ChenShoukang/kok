@@ -4,7 +4,7 @@ kok 是一个本地优先的工作台。你可以读、看、听电脑里的资�
 
 [入门](#由此开始) · [Agent](#agent) · [我的作品](#我的作品) · [资料库](#资料库) · [设置](#设置) · [常见问题](reference/faq.md)
 
-这份帮助适用于 **v0.14.0 Preview**。下载、系统要求和更新方式见[安装 kok](getting-started/install.md)。
+这份帮助适用于 **v0.15.0 Preview**。下载、系统要求和更新方式见[安装 kok](getting-started/install.md)。
 
 
 ## 由此开始

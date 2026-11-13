@@ -133,6 +133,7 @@ if ($Test) {
     $testArgs += Join-Path $root 'tests\AgentAcceptanceV122Tests.cs'
     $testArgs += Join-Path $root 'tests\AgentResearchTests.cs'
     $testArgs += Join-Path $root 'tests\AgentFoundationTests.cs'
+    $testArgs += Join-Path $root 'tests\AgentCodeV15Tests.cs'
     $testArgs += Join-Path $root 'tests\McpTests.cs'
     $testArgs += Join-Path $root 'tests\McpRemoteTests.cs'
     $testArgs += Join-Path $root 'tests\McpOAuthTests.cs'

@@ -193,7 +193,7 @@ class AgentScopeV012Tests {
         // never be silently trimmed (#19).
         var execDir=Path.Combine(library.DataDir,"exec-workspace");Directory.CreateDirectory(execDir);
         AgentExecution.Save(library,true,execDir,false);
-        var capped=profile(new AgentTaskOptions{goal="根据资料写一份完整的报告",allowed=new List<string>{source.id},useMemory=true});
+        var capped=profile(new AgentTaskOptions{goal="根据资料写一份完整的报告，并查看工作区代码",allowed=new List<string>{source.id},useMemory=true});
         check(capped.Contains("create_document")&&capped.Contains("replace_document_text")&&capped.Contains("read_document")&&capped.Contains("read_items")&&capped.Contains("finish_task")&&capped.Contains("search_memory")&&capped.Contains("remember_memory")&&capped.Contains("list_folder")&&capped.Contains("read_text_file")&&capped.Contains("write_text_file"),"the base-profile cap trims only the base profile: configured memory/execution capabilities and the delivery write/read tools all survive");
         // Mixed intents take the union of every matched profile: organizing AND writing must keep both groups.
         var mixed=profile(new AgentTaskOptions{goal="给这份笔记打标签并写一份摘要",allowed=new List<string>{source.id}});

@@ -32,7 +32,7 @@
 | 模式、私密文件夹与数据边界 | [模式与隐私](../MODES.md) |
 | AI 服务配置与兼容性 | [AI 服务配置](../AI_PROVIDERS.md) |
 | Agent 能力边界与审核 | [Agent 能力](../AGENT_0.9.3.md) · [审核交互](../AGENT_INTERACTIONS.md) |
-| 本版验证记录 | [v0.14.0 验证](../VALIDATION_0.14.0.md) |
+| 本版验证记录 | [v0.15.0 验证](../VALIDATION_0.15.0.md) |
 | 版本变化 | [更新记录](../../CHANGELOG.md) |
 
 ## 许可与致谢

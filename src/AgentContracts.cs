@@ -36,7 +36,7 @@ namespace kok {
             var caps=intents.Where(pair=>Regex.IsMatch(intent,pair.Value,RegexOptions.IgnoreCase|RegexOptions.CultureInvariant)).Select(pair=>pair.Key).ToList();
             if(caps.Count==0||current.requiresFullSourceCoverage)caps.Insert(0,"research");
             var spec=new AgentTaskSpec{revision=task.steerVersion,goal=o.goal??"",projectId=o.projectId??"",capabilities=caps.Distinct().ToArray(),
-                scope=new AgentSpecScope{mode=o.scope==null?"all":o.scope.mode,collection=o.scope==null?"":o.scope.collection??"",ids=task.TaskScope.ToArray()},
+                scope=new AgentSpecScope{mode=o.scope==null?"all":o.scope.mode,collection=o.scope==null?"":o.scope.collection??"",ids=o.scope!=null&&o.scope.mode=="selected"?task.TaskScope.ToArray():task.calls.Where(c=>c.status=="done"&&c.sources!=null).SelectMany(c=>c.sources.Keys).Concat(task.createdArtifactIds).Distinct().Take(200).ToArray()},
                 fullRead=current.requiresFullSourceCoverage,targetedEdit=current.requiresTargetedEdit,
                 limits=new AgentSpecLimits{requests=o.requestLimit,contextTokens=o.contextTokens}};
             string unit=current.lengthUnit.ToString().ToLowerInvariant();
@@ -53,13 +53,13 @@ namespace kok {
             foreach(string id in ids){var entry=library.Find(id);string stamp;stamps.TryGetValue(id,out stamp);var creator=task.calls.LastOrDefault(c=>c.status=="done"&&AgentTaskState.ArtifactId(c)==id);
                 rows.Add(new AgentAssetRef{id=id,role=artifacts.Contains(id)?"artifact":"source",kind=entry==null?"":entry.kind??"",format=entry==null?"":entry.ext??"",version=stamp??"",available=entry!=null&&File.Exists(entry.path),originCallId=creator==null?"":creator.id,projectId=task.options.projectId??""});
             }
-            foreach(var call in task.calls.Where(c=>c.status=="done"&&c.result!=null&&(c.tool=="read_text_file"||c.tool=="write_text_file"||AgentCommandJobTools.Names.Contains(c.tool)))){
+            foreach(var call in task.calls.Where(c=>c.status=="done"&&c.result!=null&&(AgentWorkspaceTools.Names.Contains(c.tool)||c.tool=="read_text_file"||c.tool=="write_text_file"||AgentCommandJobTools.Names.Contains(c.tool)))){
                 var result=call.result;
                 if(result.ContainsKey("result")&&result["result"]!=null)result=AgentTaskState.Get<Dictionary<string,object>>(result,"result");
                 foreach(var saved in AgentTaskState.Get<List<AgentAssetRef>>(result,"assets")??new List<AgentAssetRef>()){
                     if(!saved.id.StartsWith("workspace:",StringComparison.Ordinal)||String.IsNullOrEmpty(saved.path))continue;
                     var asset=saved;try{var current=AgentExecution.WorkspaceAsset(library,saved.path,saved.role);if(current.id==saved.id)asset=current;else asset.available=false;}catch{asset.available=false;}
-                    asset.originCallId=call.id;asset.projectId=task.options.projectId??"";rows.RemoveAll(r=>r.id==asset.id);rows.Add(asset);
+                    asset.originCallId=String.IsNullOrEmpty(saved.originCallId)?call.id:saved.originCallId;asset.projectId=task.options.projectId??"";var previous=rows.FirstOrDefault(r=>r.id==asset.id);if(previous!=null&&previous.role=="artifact"&&asset.role=="source"){asset.role="artifact";asset.originCallId=previous.originCallId;}rows.RemoveAll(r=>r.id==asset.id);rows.Add(asset);
                 }
             }
             return rows;
@@ -74,9 +74,9 @@ namespace kok {
             add("image","照片与图像","partial","已有照片编辑界面与图片读取，专用 Agent 像素编辑和生成尚未接入。",new[]{"read_image"});
             add("video","视频制作","partial","已有媒体剪辑界面、索引与导出基础，尚无完整 Agent 时间线工具。",new[]{"index_video_frames","generate_subtitles"});
             add("music","音乐与音频","partial","已有播放与音频片段编辑，音乐生成、编曲和分轨引擎尚未接入。",new string[0]);
-            add("coding","代码与工作区",execution?"partial":"unconfigured",execution?"可读写工作区并执行已批准命令，完整代码工作流待加固。":"需在能力与权限中配置并启用工作区。",execution?new[]{"list_folder","read_text_file","write_text_file","run_command","start_command_job","read_command_job","wait_command_job","cancel_command_job"}:new string[0]);
+            add("coding","代码与工作区",execution?"partial":"unconfigured",execution?"支持代码搜索、版本保护补丁、Git 差异及绑定文件版本的实际测试。":"需在能力与权限中配置并启用工作区。",execution?new[]{"workspace_info","search_workspace","read_workspace_file","git_workspace","apply_workspace_patch","list_folder","read_text_file","write_text_file","run_command","start_command_job","read_command_job","wait_command_job","cancel_command_job"}:new string[0]);
             add("spreadsheet","表格与数据","planned","已有基础计算，专用工作簿编辑器尚未接入。",new[]{"calculate"});
-            add("computer","电脑操作","planned","通用浏览器和桌面操作执行器尚未接入。",new string[0]);
+            add("computer","电脑操作",execution?"partial":"unconfigured","支持独立会话中的本地网页观察、输入和点击验证；通用网页与桌面操作待接入。",execution?AgentBrowser.Names:new string[0]);
             return rows;
         }
     }

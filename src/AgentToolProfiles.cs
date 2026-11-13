@@ -67,6 +67,7 @@ namespace kok {
             bool read=Matches(actions,ReadPattern)||(contract!=null&&!contract.RequiresDocument&&!contract.RequiresPresentation&&String.IsNullOrWhiteSpace(goal));
             bool media=Matches(actions,MediaPattern)||ScopeOnlyMedia(o.allowed,library);
             bool organize=Matches(actions,OrganizePattern);
+            bool coding=AgentWorkspaceTools.Coding(actions),browser=Regex.IsMatch(actions,@"浏览器|本地网页|browser|127\.0\.0\.1|localhost",RegexOptions.IgnoreCase);
             var tools=new List<string>();
             Add(tools,library,Core);
             bool categorized=false;
@@ -93,13 +94,18 @@ namespace kok {
             bool pureRead=!categorized&&read&&!discuss&&!readOnly;
             if((pureReport||pureRead)&&tools.Count>14)tools=tools.Take(14).ToList();
             if(chatOnly)tools=tools.Where(name=>!CreationTools.Contains(name)).ToList();
+            bool pureCoding=coding&&!AgentWorkspaceTools.NeedsLibrary(actions)&&!deck&&(contract==null||!contract.RequiresDocument&&!contract.RequiresPresentation)&&!(o.scope!=null&&o.scope.mode=="selected"&&o.scope.ids!=null&&o.scope.ids.Count>0);
+            if(pureCoding){tools.Clear();Add(tools,library,new[]{"calculate","recall_result","update_plan","finish_task"});}
             if(o.useMemory)Add(tools,library,discuss||readOnly?MemReadTools:MemReadTools.Concat(MemWriteTools).ToArray());
             if(!discuss&&!readOnly&&o.allowDelegation&&String.IsNullOrEmpty(o.parentTaskId))Add(tools,library,DelegateTools);
             if(!discuss&&!readOnly&&o.allowSandbox)Add(tools,library,new[]{"run_code"});
             if(!String.IsNullOrEmpty(o.searchEndpoint))Add(tools,library,WebTools);
-            if(library!=null&&AgentExecution.Configured(library)){
-                Add(tools,library,FolderReadTools);
-                if(!discuss&&!readOnly)Add(tools,library,FolderWriteTools);
+            if(library!=null&&AgentExecution.Configured(library)&&(coding||browser)){
+                Add(tools,library,pureCoding?new[]{"list_folder"}:FolderReadTools);
+                Add(tools,library,AgentWorkspaceTools.Names.Where(n=>n!="apply_workspace_patch").ToArray());
+                if(!discuss&&!readOnly)Add(tools,library,pureCoding?new[]{"run_command"}:FolderWriteTools);
+                if(!discuss&&!readOnly)Add(tools,library,new[]{"apply_workspace_patch"});
+                if(browser){Add(tools,library,new[]{"read_browser"});if(!discuss&&!readOnly)Add(tools,library,new[]{"open_browser","browser_action"});}
                 if(Regex.IsMatch(goal+"\n"+String.Join("\n",adjustmentList),@"后台|长任务|作业|命令|编译|构建|测试|运行|代码|工作区|command|build|test|job|process|workspace|coding|code",RegexOptions.IgnoreCase|RegexOptions.CultureInvariant)){
                     Add(tools,library,JobReadTools);if(!discuss&&!readOnly)Add(tools,library,JobWriteTools);
                 }
