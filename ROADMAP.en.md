@@ -4,18 +4,25 @@
 
 ## Next direction: a general-purpose personal agent
 
-Core scope includes research, documents, presentations, spreadsheets, photo editing,
-video, music and audio creation, coding, browser automation and computer use.
-Use one execution kernel with on-demand capability packs and domain-specific
-validation of real outputs. Preserve useful local media and workspace tools.
+Updated 2026-11-16. **v0.16.0** is the released TypeScript business-migration baseline; C# retains the desktop and native adapters. **v0.16.1** implements the first requirement-change, repeated-read and diagnostic fixes; see the [scope and validation](docs/VALIDATION_0.16.1.md).
 
-The [detailed plan 2.0](docs/PROJECT_PLAN_0.14_TO_1.0.md) (Chinese) defines v0.14–v1.0
-milestones, individual music and computer-use workstreams, quality gates and rollout.
-An initial set of general workflows can arrive earlier; the complete proposed scope
-requires a revised, acceptance-based estimate of roughly 7–10 months for one primary
-developer with AI assistance.
+The scope includes research, documents, presentations, spreadsheets, photos, video, music, coding and computer use. **The next priority is completing tasks and delivering usable results.** Extend one kernel with professional executors, verified outputs and editable projects.
 
-The detailed plan takes priority over the historical progress and backlog below.
+| Stage | Main deliverable | Desktop/language migration |
+| --- | --- | --- |
+| v0.14–v0.16.0, released | Shared foundation, code/local web, TypeScript business rules and artifact checks | Agent business rules migrated; native host retained |
+| v0.16.x, planned | Completion, context efficiency, targeted recovery, evidence and document/PPT quality | Measure bridge costs; stabilize tool/event interfaces |
+| v0.17, planned | Photo/poster projects, accurate exports, batches; PPT data and visual refinement | Time-box a new-shell prototype; evaluate Tauri first, Electron as fallback |
+| v0.18, planned | 1080p shorts from existing material, captions/audio and recoverable rendering | Optional new-shell preview after validation |
+| v0.19, planned | Independent music/audio projects, listening, creation and stem adapters | Consider changing the default shell only after migration gates pass |
+| v0.20, planned | CSV/XLSX recalculation, remote browser/desktop use and combined workflows | Retire replaced code; keep useful native adapters |
+| v0.21 → v1.0, planned | Per-domain evaluation, performance, recovery, upgrades and release readiness | Validate compatibility retirement and historical data migration |
+
+For one primary developer with AI assistance, the remaining initial scope is estimated at 23–35 working weeks plus 4–6 weeks of contingency, roughly 6–10 months. Re-estimate each stage; these are not calendar commitments. Measure the complete application's shell tradeoffs. Photo, video and music delivery does not depend on replacing the shell.
+
+[Detailed plan 3.0](docs/PROJECT_PLAN_0.14_TO_1.0.md) · [Next-phase execution plan: v0.16.x–v0.18](docs/NEXT_PHASE_0.16_TO_0.18.md) · [Language migration](docs/AGENT_TYPESCRIPT_0.16.0.md) (Chinese).
+
+The execution plan defines task IDs, source entry points, dependencies, deliverables, 18 initial scenarios and release gates. Success-rate, efficiency and resource targets are proposed, not measured results. This plan takes priority over the historical progress and backlog below.
 
 ## v0.9.8 Preview deliverables
 
@@ -73,7 +80,7 @@ The original [peer review and acceptance plan](docs/PEER_GAPS_0.9.0.md) is retai
 
 ## Later: broader playback inside kok
 
-Broader built-in playback remains a future goal. **The current version uses WebView2 without a separate decoding engine**; see the current [format matrix](docs/FORMATS.en.md). Optional FFmpeg only handles download merging / conversion.
+Broader built-in playback remains a future goal. **The current version uses WebView2 without a separate decoding engine**; see the current [format matrix](docs/FORMATS.en.md). Optional FFmpeg handles download merging and some media-file processing; it is not an embedded playback engine.
 
 - Evaluate embedded engines and codec libraries for size, memory, startup time, hardware acceleration, stability and redistribution licenses.
 - Prioritize MKV / AVI / MOV / MP4, HEVC / H.265 and common audio codecs; record container, video-codec and audio-codec results separately.

@@ -8,10 +8,13 @@ Start with the [user guide](GUIDE.en.md). Find help by the task you want to comp
 
 | Goal | Read |
 | --- | --- |
+| v0.16.1 requirement changes, repeated reads and execution diagnostics | [Implementation, validation and limits (Chinese)](VALIDATION_0.16.1.md) |
 | v0.16.0 TypeScript core, source and artifact checks | [Validation and limits](VALIDATION_0.16.0.md) · [Migration](AGENT_TYPESCRIPT_0.16.0.md) |
 | v0.15.0 code workspace and local web verification | [Validation and limits](VALIDATION_0.15.0.md) |
 | v0.14.0 general Agent foundation, background jobs and capability status | [Validation and limits](VALIDATION_0.14.0.md) · [Release notes](RELEASE_NOTES.md) |
 | v0.13.0 research kernel, resource tradeoffs and language migration | [Kernel guide](RESEARCH_KERNEL_0.13.0.md) · [Validation](VALIDATION_0.13.0.md) |
+| General-agent roadmap: productivity, photos, video, music, coding and computer use | [Detailed plan 3.0 (Chinese)](PROJECT_PLAN_0.14_TO_1.0.md) |
+| What follows v0.16: implementation tasks, acceptance and desktop-shell migration | [v0.16.x–v0.18 execution plan (Chinese)](NEXT_PHASE_0.16_TO_0.18.md) |
 | First time here, or a structured overview | [**kok help center** (Chinese)](help/index.md): setup, modes, interface, the three areas, settings and reference |
 | Keep working on one piece (goal/requirements/materials/artifacts, cross-session) | [Creative projects](CREATIVE_PROJECTS_0.10.10.md) · [Validation](VALIDATION_0.10.10.md) |
 | Browse versions, restore one, revise a selected passage with Agent | [Versions and local revision](VERSIONS_0.10.11.md) · [Validation](VALIDATION_0.10.11.md) |

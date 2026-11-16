@@ -41,7 +41,7 @@ namespace kok {
     }
     // P1: a failed step that a later successful same-tool/same-args call repaired no longer blocks
     // completed. Skipped/undone/uncertain/unrepaired failures still do; partial is unaffected.
-    var unresolved=operations.Where(c=>c.status!="done"&&!Repaired(engine,c)).ToList();
+    var unresolved=operations.Where(c=>c.status!="done"&&!s.SupersededProposal(c)&&!Repaired(engine,c)).ToList();
     if(unresolved.Count>0)throw new AgentFailure("verification","有未解决的失败、跳过或撤销步骤，不能标记 completed："+UnresolvedSummary(unresolved)+"。请先补救失败项：用相同参数的读取重试，或对写操作重新发起并获得审批；skipped/undone/uncertain 无法补救，请改标 partial 并在 summary 说明。已通过的步骤、成果和回读会保留，只需处理这些未通过项。");
     if(operations.Count>0&&!checks.Any(c=>c.evidence.Count>0))throw new AgentFailure("verification","任务完成需要引用实际工具结果。");
     if(!AgentService.ResearchRuntime(s)&&operations.Count(c=>!c.hostGenerated&&c.status=="done")>1&&s.plan.Count==0)throw new AgentFailure("verification","多步骤任务需要先维护计划。");

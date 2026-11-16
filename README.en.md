@@ -8,7 +8,7 @@ The top level is organized by what you are doing — Agent, My works and Library
 
 [Published releases](https://github.com/ChenShoukang/kok/releases) · [Help center (Chinese)](docs/help/index.md) · [User guide](docs/GUIDE.en.md) · [中文](README.md) · [Supported formats](docs/FORMATS.en.md)
 
-**v0.16.0 Preview** moves task requirements, tool selection, delivery acceptance and artifact inspection into TypeScript, retaining Deep Agents / LangGraph. Same-chat code follow-ups retain verified workspace context. Saved documents and PPTX files receive structural checks; targeted geometry/font fixes preserve other pages. An optional adapter renders approved pages with an installed, idle PowerPoint. [Validation and limits](docs/VALIDATION_0.16.0.md) · [TypeScript migration](docs/AGENT_TYPESCRIPT_0.16.0.md) · [Development plan](docs/PROJECT_PLAN_0.14_TO_1.0.md) · [Changelog](CHANGELOG.en.md)
+**v0.16.1 Preview** improves mid-task changes and repeated execution: cancelled reports/decks no longer leave obsolete delivery requirements, inspecting existing files does not demand new ones, and superseded proposals that never ran cannot block delivery. Repeated identical reads receive a warning, then stop with saved work retained if no progress follows. Traces report model/tool time, approval waits and the first saved artifact. [Validation and limits](docs/VALIDATION_0.16.1.md) · [TypeScript migration](docs/AGENT_TYPESCRIPT_0.16.0.md) · [Next-phase plan](docs/NEXT_PHASE_0.16_TO_0.18.md) · [Changelog](CHANGELOG.en.md)
 
 ![kok library home with continue-watching rows, using bundled original samples](docs/screenshots/library-en.png)
 
@@ -38,7 +38,7 @@ See the [kok help center (Chinese)](docs/help/index.md) and the [user guide](doc
 
 ## Get started
 
-1. Download `kok-0.16.0-win-x64.zip` and its SHA-256 from [Releases](https://github.com/ChenShoukang/kok/releases). Extract the full ZIP and run `kok.exe`.
+1. Download `kok-0.16.1-win-x64.zip` and its SHA-256 from [Releases](https://github.com/ChenShoukang/kok/releases). Extract the full ZIP and run `kok.exe`.
 2. Choose **Pure** or **Smart**. Local essentials work without configuring AI.
 3. Explore the original samples or drop in your own files, then create a Space or save a Clip.
 
@@ -65,7 +65,7 @@ Choose light/dark themes, background and glass colors, bundled Smiley Sans/LXGW 
 
 ## Documentation and development
 
-[Help center (Chinese)](docs/help/index.md) · [User guide](docs/GUIDE.en.md) · [Documentation](docs/README.en.md) · [Creative projects](docs/CREATIVE_PROJECTS_0.10.10.md) · [Versions and revision](docs/VERSIONS_0.10.11.md) · [Agent CLI](docs/AGENT_CLI_0.10.7.md) · [Validation](docs/VALIDATION_0.16.0.md) · [Roadmap](ROADMAP.en.md)
+[Help center (Chinese)](docs/help/index.md) · [User guide](docs/GUIDE.en.md) · [Documentation](docs/README.en.md) · [Creative projects](docs/CREATIVE_PROJECTS_0.10.10.md) · [Versions and revision](docs/VERSIONS_0.10.11.md) · [Agent CLI](docs/AGENT_CLI_0.10.7.md) · [Validation](docs/VALIDATION_0.16.1.md) · [Roadmap](ROADMAP.en.md)
 
 ```powershell
 npm ci --omit=optional

@@ -47,7 +47,7 @@ static class AgentResearchTests {
             var ai=new TranslationService(Lib.DataDir);ai.SaveConfig(D(new{endpoint="http://127.0.0.1:"+server.Port+"/v1",model="kok-research-fixture",clearKey=true}));
             Service=new AgentService(new ModuleContext(Lib,ai,new ModulePolicy(Lib),null,CancellationToken.None,null,new Operations(Lib,null),null,appDirectory:AppDomain.CurrentDomain.BaseDirectory));
         }
-        public async Task<Dictionary<string,object>> Start(int limit=6){return D(await Service.HandleAgentTaskAction("agentTaskStart",D(new{runtime="research",sessionId=Guid.NewGuid().ToString("N"),goal="根据这份资料创建100-300字的DOCX报告，采用最终修订预算，保留禁止事项。",scope=new{mode="selected",ids=new[]{Source}},requestLimit=limit,budget=14000,contextTokens=32000})));}
+        public async Task<Dictionary<string,object>> Start(int limit=6,string goal=null){return D(await Service.HandleAgentTaskAction("agentTaskStart",D(new{runtime="research",sessionId=Guid.NewGuid().ToString("N"),goal=goal??"根据这份资料创建100-300字的DOCX报告，采用最终修订预算，保留禁止事项。",scope=new{mode="selected",ids=new[]{Source}},requestLimit=limit,budget=14000,contextTokens=32000})));}
         public async Task<Dictionary<string,object>> Read(string id){return D(await Service.HandleAgentTaskAction("agentTaskRead",D(new{taskId=id})));}
         public async Task<Dictionary<string,object>> Wait(string id,bool pending=false){
             var watch=Stopwatch.StartNew();while(watch.ElapsedMilliseconds<30000){var state=await Read(id);if(!Convert.ToBoolean(state["running"])||pending&&AgentTaskState.Get<List<AgentCall>>(state,"calls").Any(c=>c.status=="pending"))return state;await Task.Delay(15);}
@@ -95,6 +95,32 @@ static class AgentResearchTests {
             var fixture=new Fixture(Path.Combine(root,"budget"),server);server.Script=n=>Reply("read_items",new{ids=new[]{fixture.Source}});
             string id=Convert.ToString((await fixture.Start(1))["id"]);var done=await fixture.Wait(id);
             check(Convert.ToString(done["status"])=="limited"&&server.Count==1,"research: request cap stops the SDK before its next HTTP call");fixture.Service.Stop();
+        }
+        using(var server=new Server()){
+            var fixture=new Fixture(Path.Combine(root,"no-progress"),server);server.Script=n=>Reply("read_items",new{ids=new[]{fixture.Source}});
+            string id=Convert.ToString((await fixture.Start(8))["id"]);var done=await fixture.Wait(id);
+            var state=AgentTaskState.Replay(id,new AgentJournal(fixture.Lib.DataDir).Events(id));
+            check(Convert.ToString(done["status"])=="partial"&&server.Count==3,"research: exact repeated current reads stop as partial before a fourth model request");
+            check(server.Bodies[2].Contains("Host progress check")&&state.calls.Count(c=>c.tool=="read_items"&&c.status=="done")==3,"research: progress warning offers a different range while preserving all original receipts");
+            var metrics=D(AgentTrace.Performance(state));check(Convert.ToInt32(metrics["progressWarnings"])==1&&Convert.ToInt32(metrics["progressStops"])==1&&Convert.ToInt32(metrics["nonCachedInputTokens"])==300,"research: progress and exact request use can be diagnosed without exporting source content");
+            server.Script=n=>Reply(text:"最终修订预算8万元，60人，遵守来源限制。");
+            await fixture.Service.HandleAgentTaskAction("agentTaskAdjust",D(new{taskId=id,text="只读取已有来源，直接回复结论，不创建文件"}));var resumed=await fixture.Wait(id);
+            check(Convert.ToString(resumed["status"])=="completed"&&server.Count==4,"research: an explicit adjusted continuation resets progress without replaying old reads");
+            fixture.Service.Stop();
+        }
+        using(var server=new Server()){
+            var fixture=new Fixture(Path.Combine(root,"cancel-deliverable"),server);
+            server.Script=n=>n==1?Reply("read_items",new{ids=new[]{fixture.Source}}):n==2?Reply("create_document",new{name="取消的报告",format="docx",text=new string('文',500)}):n==3?Reply("create_presentation",new{title="保留的演示",slides=Enumerable.Range(1,8).Select(i=>new{title="活动方案 "+i,bullets=new[]{"最终预算8万元，不收集手机号，日期待确认。"},notes="依据所选最终修订资料。"}).ToArray()}):Reply(text:"已交付8页PPT；报告按新要求取消，未创建报告文件。");
+            string id=Convert.ToString((await fixture.Start(6,"根据资料生成8页PPT，并写500字DOCX报告"))["id"]);var pending=await fixture.Wait(id,true);
+            check(AgentTaskState.Get<List<AgentCall>>(pending,"calls").Any(c=>c.tool=="create_document"&&c.status=="pending"),"research: cancellation fixture starts with a real pending report proposal");
+            await fixture.Service.HandleAgentTaskAction("agentTaskAdjust",D(new{taskId=id,text="报告先取消，只保留PPT"}));pending=await fixture.Wait(id,true);
+            var deck=AgentTaskState.Get<List<AgentCall>>(pending,"calls").Last(c=>c.tool=="create_presentation"&&c.status=="pending");
+            await fixture.Service.HandleAgentTaskAction("agentTaskDecide",D(new{taskId=id,callId=deck.id,approve=true}));var done=await fixture.Wait(id);
+            var state=AgentTaskState.Replay(id,new AgentJournal(fixture.Lib.DataDir).Events(id));
+            check(Convert.ToString(done["status"])=="completed"&&server.Count==4&&state.createdArtifactIds.Count==1,"research: cancelled unexecuted report cannot block the real PPT-only delivery or create an extra file");
+            check(state.calls.Any(state.SupersededProposal)&&!AgentTaskState.Get<List<Dictionary<string,object>>>(D(Library.Json.DeserializeObject(server.Bodies[2])),"tools").Any(t=>ModuleContext.Text(AgentTaskState.Get<Dictionary<string,object>>(t,"function"),"name")=="create_document"),"research: superseded proposals survive replay and cancelled automatic creation tools are removed");
+            var rejected=state.calls.First(c=>c.tool=="create_document");rejected.error="user";check(!state.SupersededProposal(rejected),"research: an actual user rejection is never treated as an obsolete unexecuted proposal");
+            fixture.Service.Stop();
         }
         var legacy=new AgentTaskState{options=new AgentTaskOptions()};
         check(!AgentService.ResearchRuntime(legacy),"research: pre-0.13 tasks retain the native execution semantics");

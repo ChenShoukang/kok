@@ -1,5 +1,10 @@
 {
   "messages": {
+    "模型耗时": "Model time",
+    "工具耗时": "Tool time",
+    "首个成果": "First saved artifact",
+    "非缓存输入": "Uncached input",
+    "各项耗时可能重叠，不能直接相加。": "Durations may overlap and cannot be added together.",
     "可编辑 PPTX、结构检查和定点修复；实际渲染需本机安装且空闲的 PowerPoint。": "Editable PPTX files, structural checks and targeted repairs. Rendering requires an installed, idle local PowerPoint.",
     "检查资料阅读状态": "Inspect source reading status",
     "检查暂不可用": "Inspection unavailable",
