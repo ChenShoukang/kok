@@ -16,6 +16,13 @@ namespace kok {
         public string parentTaskId="",parentCallId="",sessionLeafId="",skillsIndex="";public int parentSteering;
         public int budget=14000,requestLimit=6,kernelVersion,workspaceVersion,reserveTokens,keepRecentTokens;public double costLimit,inputRate,outputRate;public AgentHandoff handoff;
         public string projectId="",projectBrief="";
+        public string continuationTaskId="",continuationGoal="",continuationDomain="",continuationWorkspaceId="";
+        public List<string> continuationFiles=new List<string>();
+        public int artifactReviewVersion;
+        public int businessVersion;
+        public AgentBusinessEnvironment businessEnvironment;
+        internal string businessCacheKey;
+        internal AgentBusinessPlan businessCache;
         // Set once by the host (AgentDelivery.PrepareDelivery) from the goal/scope; nullable for replay of older tasks.
         public AgentDeliveryRequirement delivery;
     }

@@ -286,6 +286,19 @@ namespace kok {
             if(detail.Length>1600)detail=detail.Substring(0,1600)+"…";
             return false;
         }
+        internal static List<Dictionary<string,object>> ReviewSources(Library lib,AgentTaskState task,IEnumerable<string> ids){
+            var result=new List<object>();
+            foreach(string id in ids.Distinct().Take(24)){
+                var source=lib.AgentReadSourceText(id);
+                var rows=task.calls.Where(call=>call.status=="done"&&new[]{"read_items","read_document","read_presentation"}.Contains(call.tool)).SelectMany(CoverageRows).Where(row=>row.id==id).ToList();
+                var readable=ReadableView(lib,id,source);var document=DocumentView(lib,id);var presentation=PresentationView(lib,id);
+                var valid=rows.Where(row=>row.domain==DomainPresentation?presentation!=null&&row.digest==presentation.digest:row.domain==DomainDocument?document!=null&&row.digest==document.digest:readable!=null&&row.digest==readable.digest).ToList();
+                string detail;bool full=FullCoverage(lib,task,new[]{id},out detail);
+
+                result.Add(new{id=id,name=source.name,removed=source.removed,parsed=source.readable||presentation!=null,complete=full,valid=valid.Count,stale=rows.Count-valid.Count,detail=detail});
+            }
+            return AgentBusinessCore.Invoke<List<Dictionary<string,object>>>("review_sources",new{sources=result});
+        }
         // Artifact read-back sufficiency (#7): after `afterSequence`, the merge of read_items (readable) and
         // read_document (document) exact ranges must continuously cover [0,min(total,minChars)); the whole file
         // when it is no longer than minChars. Stale digests (content changed) never count. `detail` names the

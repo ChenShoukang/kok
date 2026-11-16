@@ -42,6 +42,7 @@ namespace kok {
         internal static List<string> ForTask(AgentTaskOptions options,Library library){return ForTask(options,library,null);}
         internal static List<string> ForTask(AgentTaskOptions options,Library library,IEnumerable<string> adjustments){
             var o=options??new AgentTaskOptions();
+            if(o.businessVersion>=1)return AgentBusinessCore.Plan(o,adjustments).tools.Where(name=>Registered(name)&&(library==null||ModuleRegistry.Builtins.ToolEnabled(name,library))).ToList();
             // An explicit caller allow-list wins; only drop names that are no longer registered. An automatic
             // profile is re-derived so a mid-task adjustment can open the newly needed tool group (#13).
             if(!o.allowedToolsAuto&&o.allowedTools!=null)return o.allowedTools.Where(Registered).Distinct().ToList();
@@ -50,7 +51,7 @@ namespace kok {
             string actions;
             AgentTaskContract contract=null;
             try{
-                actions=AgentTaskIntent.Actions(AgentTaskIntent.Combined(goal,adjustmentList));
+                actions=AgentContinuation.Actions(o,adjustmentList);
                 // v0.12.2 C-A: categories and chatOnly come from the ONE current contract, not from an OR over
                 // the whole message history (#1). An auto profile (allowedToolsAuto=true) with a stale persisted
                 // list is re-derived too, so chat->save restores create_document and save->chat removes it.
@@ -61,9 +62,9 @@ namespace kok {
             }
             bool discuss=o.intent=="discuss",readOnly=o.approvalPolicy=="read_only";
             bool chatOnly=contract!=null&&contract.ChatOnly;
-            bool deck=AgentTaskIntent.IsPresentation(actions)||(contract!=null&&contract.RequiresPresentation)||ScopeHas(o.allowed,"PPTX",library);
+            bool deck=AgentTaskIntent.IsPresentation(actions)||(contract!=null&&contract.RequiresPresentation)||ScopeHas(o.allowed,"PPTX",library)||o.continuationDomain=="presentation";
             bool edit=(contract!=null&&contract.RequiresTargetedEdit)||Matches(actions,EditPattern);
-            bool report=(contract!=null&&contract.RequiresDocument)||Matches(actions,ReportPattern);
+            bool report=(contract!=null&&contract.RequiresDocument)||Matches(actions,ReportPattern)||o.continuationDomain=="document";
             bool read=Matches(actions,ReadPattern)||(contract!=null&&!contract.RequiresDocument&&!contract.RequiresPresentation&&String.IsNullOrWhiteSpace(goal));
             bool media=Matches(actions,MediaPattern)||ScopeOnlyMedia(o.allowed,library);
             bool organize=Matches(actions,OrganizePattern);

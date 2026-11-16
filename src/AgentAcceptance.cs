@@ -26,6 +26,7 @@ namespace kok {
         internal string DeliveryProblem(AgentTaskState t){
             // t.status is still the pre-finish running/paused state here, so it is never gated on.
             if(t==null||t.options==null)return "";
+            if(t.options.businessVersion>=1)return BusinessDeliveryProblem(t);
             // Compatibility: a task journaled by a pre-0.12 host has no persisted requirement. Deriving one
             // now would suddenly block a resumed legacy task, so keep the old finish behavior.
             if(t.options.delivery==null)return "";

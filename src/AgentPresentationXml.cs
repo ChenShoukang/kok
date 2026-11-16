@@ -12,6 +12,22 @@ namespace kok {
  // Untouched slides, media, charts, masters and relationships remain intact.
  internal static class AgentPresentationXml {
   internal static readonly XNamespace P="http://schemas.openxmlformats.org/presentationml/2006/main",A="http://schemas.openxmlformats.org/drawingml/2006/main",R="http://schemas.openxmlformats.org/officeDocument/2006/relationships",K="http://schemas.openxmlformats.org/package/2006/relationships",C="http://schemas.openxmlformats.org/package/2006/content-types";
+  static void SetBounds(XElement shape,Dictionary<string,object> edit){
+   var properties=shape.Element(P+"spPr");if(properties==null)throw new InvalidDataException("指定对象缺少可编辑的原生位置属性。");
+   var transform=properties.Element(A+"xfrm");if(transform==null){transform=new XElement(A+"xfrm");properties.AddFirst(transform);}
+   var offset=transform.Element(A+"off");if(offset==null){offset=new XElement(A+"off");transform.AddFirst(offset);}
+   var extent=transform.Element(A+"ext");if(extent==null){extent=new XElement(A+"ext");transform.Add(extent);}
+   offset.SetAttributeValue("x",(long)Math.Round(Convert.ToDouble(edit["x"])*914400));offset.SetAttributeValue("y",(long)Math.Round(Convert.ToDouble(edit["y"])*914400));
+   extent.SetAttributeValue("cx",(long)Math.Round(Convert.ToDouble(edit["w"])*914400));extent.SetAttributeValue("cy",(long)Math.Round(Convert.ToDouble(edit["h"])*914400));
+  }
+  static void SetFont(XElement shape,double size){
+   if(shape.Name!=P+"sp"||shape.Element(P+"txBody")==null)throw new InvalidDataException("指定对象不支持文字字号修改。");
+   long value=(long)Math.Round(size*100);
+   foreach(var run in shape.Descendants().Where(node=>node.Name==A+"r"||node.Name==A+"fld")){
+    var properties=run.Element(A+"rPr");if(properties==null){properties=new XElement(A+"rPr");run.AddFirst(properties);}properties.SetAttributeValue("sz",value);
+   }
+   foreach(var properties in shape.Descendants().Where(node=>node.Name==A+"defRPr"||node.Name==A+"endParaRPr"))properties.SetAttributeValue("sz",value);
+  }
   internal static XElement Read(ZipArchive zip,string part){var entry=zip.GetEntry(part);if(entry==null)throw new InvalidDataException("PPTX 文件结构无效。");using(var input=entry.Open())using(var reader=XmlReader.Create(input,new XmlReaderSettings{DtdProcessing=DtdProcessing.Prohibit,XmlResolver=null,MaxCharactersInDocument=2*1024*1024}))return XElement.Load(reader);}
   internal static void Write(ZipArchive zip,string part,XElement xml){var old=zip.GetEntry(part);if(old!=null)old.Delete();using(var output=zip.CreateEntry(part,CompressionLevel.Optimal).Open())using(var writer=new StreamWriter(output,new UTF8Encoding(false)))writer.Write("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"+xml.ToString(SaveOptions.DisableFormatting));}
   static string RelPath(string part){return Path.GetDirectoryName(part).Replace('\\','/')+"/_rels/"+Path.GetFileName(part)+".rels";}
@@ -51,7 +67,7 @@ namespace kok {
      if(action=="move_slide"){int to=Convert.ToInt32(edit["to"]);if(to<1||to>rows.Count||to==page)throw new InvalidDataException("幻灯片页码超出范围。");current.Remove();if(to==1)order.AddFirst(current);else order.Elements(P+"sldId").ElementAt(to-2).AddAfterSelf(current);continue;}
      if(action=="replace_slide"){var value=AgentTaskState.Get<Dictionary<string,object>>(edit,"slide");Write(zip,source,AgentSlideDesign.Slide(value,page,theme,deck.width,deck.height));Notes(zip,source,AgentSlideDesign.Value(value,"notes"));continue;}
      if(action=="notes"){Notes(zip,source,AgentSlideDesign.Value(edit,"new_text"));continue;}
-     var xml=Read(zip,source);var shapes=xml.Descendants(P+"spTree").First().Elements().Where(e=>e.Name==P+"sp"||e.Name==P+"pic").ToList();string prefix="slide-"+(string)current.Attribute("id")+"-",shapeId=AgentSlideDesign.Value(edit,"shape_id");int index;if(!shapeId.StartsWith(prefix,StringComparison.Ordinal)||!Int32.TryParse(shapeId.Substring(prefix.Length),out index)||index<0||index>=shapes.Count||shapes[index].Name!=P+"sp")throw new InvalidDataException("指定的幻灯片元素已变化，请重新读取。");ReplaceText(shapes[index],AgentSlideDesign.Value(edit,"old_text"),AgentSlideDesign.Value(edit,"new_text"));Write(zip,source,xml);
+     var xml=Read(zip,source);var shapes=xml.Descendants(P+"spTree").First().Elements().Where(e=>e.Name==P+"sp"||e.Name==P+"pic").ToList();string prefix="slide-"+(string)current.Attribute("id")+"-",shapeId=AgentSlideDesign.Value(edit,"shape_id");int index;if(!shapeId.StartsWith(prefix,StringComparison.Ordinal)||!Int32.TryParse(shapeId.Substring(prefix.Length),out index)||index<0||index>=shapes.Count)throw new InvalidDataException("指定的幻灯片元素已变化，请重新读取。");if(action=="bounds")SetBounds(shapes[index],edit);else if(action=="font_size")SetFont(shapes[index],Convert.ToDouble(edit["font_size"]));else {if(shapes[index].Name!=P+"sp")throw new InvalidDataException("图片不支持文字替换。");ReplaceText(shapes[index],AgentSlideDesign.Value(edit,"old_text"),AgentSlideDesign.Value(edit,"new_text"));}Write(zip,source,xml);
     }
     Write(zip,"ppt/presentation.xml",presentation);Write(zip,RelPath("ppt/presentation.xml"),links);
    }byte[] bytes=memory.ToArray();using(var input=new MemoryStream(bytes))PresentationFiles.Read(input,false);return bytes;}

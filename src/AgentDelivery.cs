@@ -74,6 +74,7 @@ namespace kok {
                 }
                 return requirement;
             }catch{
+                if(o.businessVersion>=1)throw;
                 var fallback=new AgentTaskOptions{goal=o.goal,allowed=o.allowed,intent=o.intent,approvalPolicy=o.approvalPolicy};
                 var allowed=(o.allowed??new List<string>()).Where(id=>!String.IsNullOrEmpty(id)).Distinct(StringComparer.Ordinal).ToList();
                 requirement.requiredSourceIds=allowed;

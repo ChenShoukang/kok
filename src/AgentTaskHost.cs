@@ -135,12 +135,12 @@ namespace kok {
         void CheckReview(AgentTaskState task){if(task.verification==null)return;var memory=task.events.LastOrDefault(e=>e.kind=="memory.recalled");if(memory!=null&&AgentTaskState.Get<string>(memory.data,"signature")!=MemorySignature(task)){(taskEngine!=null&&taskEngine.State==task?taskEngine:MakeEngine(task)).Emit("task.review_invalidated",new{reason="memory_changed"});return;}var evidence=new HashSet<string>(task.verification.checks.SelectMany(c=>c.evidence));if(task.calls.Any(c=>!AgentCognition.IsControl(c.tool)&&c.status=="done"&&(evidence.Contains(c.id)||AgentRules.WriteTools.Contains(c.tool))&&!EvidenceCurrentFor(c,task)))(taskEngine!=null&&taskEngine.State==task?taskEngine:MakeEngine(task)).Emit("task.review_invalidated",new{reason="source_changed"});}
         object TaskSnapshot(AgentTaskState t){return taskEngine!=null&&taskEngine.State==t?taskEngine.ReadSnapshot(()=>ProjectSnapshot(t)):ProjectSnapshot(t);}
         static Dictionary<string,object> ToolResultView(AgentCall call){
-            if(call.result==null)return null;var keys=new HashSet<string>(new[]{"id","name","memoryId","revision","childTaskId","artifact","sandbox"});
+            if(call.result==null)return null;var keys=new HashSet<string>(new[]{"id","name","memoryId","revision","childTaskId","artifact","sandbox","artifactReview","sourceReview","render"});
             if(AgentWorkspaceTools.Names.Contains(call.tool))keys.UnionWith(new[]{"path","workspaceId","sha256","beforeHash","reused","readBackVerified","startLine","totalLines","nextLine","hasMore","assets"});
             if(AgentCommandJobTools.Names.Contains(call.tool))keys.UnionWith(new[]{"jobId","state","title","error","result"});
             if(AgentBrowser.Names.Contains(call.tool))keys.UnionWith(new[]{"sessionId","pageVersion","url","title","text","controls","conditionVerified","actionApplied"});
             var view=call.result.Where(p=>keys.Contains(p.Key)).ToDictionary(p=>p.Key,p=>p.Value);
-            if(AgentCommandJobTools.Names.Contains(call.tool)&&view.ContainsKey("result")&&view["result"]!=null){var result=AgentTaskState.Get<Dictionary<string,object>>(call.result,"result");view["result"]=result.Where(p=>new[]{"exitCode","inputsCurrent","checkedInputs","assets"}.Contains(p.Key)).ToDictionary(p=>p.Key,p=>p.Value);}
+if(AgentCommandJobTools.Names.Contains(call.tool)&&view.ContainsKey("result")&&view["result"]!=null){var result=AgentTaskState.Get<Dictionary<string,object>>(call.result,"result");view["result"]=result.Where(p=>new[]{"exitCode","inputsCurrent","checkedInputs","assets","outputsVerified","missingOutputs"}.Contains(p.Key)).ToDictionary(p=>p.Key,p=>p.Value);}
             return view;
         }
         object ProjectSnapshot(AgentTaskState t){
@@ -154,7 +154,7 @@ namespace kok {
             var messages=entries.OrderBy(x=>Convert.ToInt32(x.GetType().GetProperty("sequence").GetValue(x,null))).Select(x=>x.GetType().GetProperty("message").GetValue(x,null)).ToList();
             if(live&&t.phase=="生成方案")messages.Add(new{id=t.id+"-stream",role="thinking"});
             int contextTokens=ContextTokens(t),contextWindow=t.options.contextTokens,reserveTokens=ReserveTokens(t),keepRecentTokens=KeepRecentTokens(t);
-            return new{id=t.id,sessionId=t.options.sessionId,projectId=t.options.projectId??"",status=t.status,phase=t.phase,error=error,errorKind=errorKind,retryable=t.retryable,running=live,resumable=!live&&String.IsNullOrEmpty(t.options.parentTaskId)&&CanResume(t),respondable=!live&&String.IsNullOrEmpty(t.options.parentTaskId)&&CanRespond(t),messages=messages,sequence=t.sequence,options=t.options,taskSpec=AgentContracts.Task(t),assets=AgentContracts.Assets(t,normalLibrary),plan=t.plan,planCurrent=t.PlanCurrent,planInvalidation=t.planInvalidation,reviewInvalidation=t.reviewInvalidation,verification=t.verification,contextCheckpoint=t.checkpoint==null?null:new{id=t.checkpoint.id,through=t.checkpoint.through,current=CheckpointCurrent(t),summary=t.checkpoint.summary},contextUpperBound=ContextUpperBound(t),contextUsage=new{tokens=contextTokens,window=contextWindow,reserveTokens=reserveTokens,keepRecentTokens=keepRecentTokens,percent=contextWindow>0?Math.Round(100.0*contextTokens/contextWindow,1):0,source=t.lastUsageInputTokens>0&&!t.lastUsageEstimated?"usage":"estimate",lastCompaction=t.checkpoint==null?null:new{id=t.checkpoint.id,through=t.checkpoint.through,reason=t.checkpoint.reason,tokensBefore=t.checkpoint.tokensBefore,summary=t.checkpoint.summary,current=CheckpointCurrent(t)}},children=t.calls.Where(c=>c.childTaskId!=null).Select(c=>new{callId=c.id,taskId=c.childTaskId,status=c.status}).ToArray(),metrics=AgentTrace.Requests(t),usage=new{inputTokens=t.inputTokens,outputTokens=t.outputTokens,cachedTokens=t.cachedTokens,estimated=t.estimated,cost=t.cost,requests=t.requests,repairs=t.repairs},calls=t.calls.Select(c=>new{id=c.id,tool=c.tool,status=c.status,resultEventId=c.resultEventId,errorKind=c.errorKind,error=c.error,hostGenerated=c.hostGenerated}).ToArray(),queue=t.QueuedInputs.Select(i=>new{id=i.id,text=i.text,mode=i.mode,created=i.created}).ToArray(),restoredInputs=t.RestoredInputs.Select(i=>new{id=i.id,text=i.text,mode=i.mode}).ToArray(),protocol=t.protocol};
+return new{id=t.id,sessionId=t.options.sessionId,projectId=t.options.projectId??"",continuation=new{taskId=t.options.continuationTaskId,goal=t.options.continuationGoal,domain=t.options.continuationDomain,files=t.options.continuationFiles},status=t.status,phase=t.phase,error=error,errorKind=errorKind,retryable=t.retryable,running=live,resumable=!live&&String.IsNullOrEmpty(t.options.parentTaskId)&&CanResume(t),respondable=!live&&String.IsNullOrEmpty(t.options.parentTaskId)&&CanRespond(t),messages=messages,sequence=t.sequence,options=t.options,taskSpec=AgentContracts.Task(t),assets=AgentContracts.Assets(t,normalLibrary),plan=t.plan,planCurrent=t.PlanCurrent,planInvalidation=t.planInvalidation,reviewInvalidation=t.reviewInvalidation,verification=t.verification,contextCheckpoint=t.checkpoint==null?null:new{id=t.checkpoint.id,through=t.checkpoint.through,current=CheckpointCurrent(t),summary=t.checkpoint.summary},contextUpperBound=ContextUpperBound(t),contextUsage=new{tokens=contextTokens,window=contextWindow,reserveTokens=reserveTokens,keepRecentTokens=keepRecentTokens,percent=contextWindow>0?Math.Round(100.0*contextTokens/contextWindow,1):0,source=t.lastUsageInputTokens>0&&!t.lastUsageEstimated?"usage":"estimate",lastCompaction=t.checkpoint==null?null:new{id=t.checkpoint.id,through=t.checkpoint.through,reason=t.checkpoint.reason,tokensBefore=t.checkpoint.tokensBefore,summary=t.checkpoint.summary,current=CheckpointCurrent(t)}},children=t.calls.Where(c=>c.childTaskId!=null).Select(c=>new{callId=c.id,taskId=c.childTaskId,status=c.status}).ToArray(),metrics=AgentTrace.Requests(t),usage=new{inputTokens=t.inputTokens,outputTokens=t.outputTokens,cachedTokens=t.cachedTokens,estimated=t.estimated,cost=t.cost,requests=t.requests,repairs=t.repairs},calls=t.calls.Select(c=>new{id=c.id,tool=c.tool,status=c.status,resultEventId=c.resultEventId,errorKind=c.errorKind,error=c.error,hostGenerated=c.hostGenerated}).ToArray(),queue=t.QueuedInputs.Select(i=>new{id=i.id,text=i.text,mode=i.mode,created=i.created}).ToArray(),restoredInputs=t.RestoredInputs.Select(i=>new{id=i.id,text=i.text,mode=i.mode}).ToArray(),protocol=t.protocol};
         }
         AgentTaskEngine MakeEngine(AgentTaskState t){var engine=new AgentTaskEngine(t,TaskJournal,()=>ValidateTask(t),RunTaskModel,
             async(s,c,token)=>{
@@ -164,7 +164,7 @@ namespace kok {
             },
             async(s,c,token)=>{ValidateTask(s);if(!ToolAllowed(s,AgentRules.Tools.First(x=>x.Name==c.tool)))throw new AgentFailure("policy","此工具未获得当前任务授权。");if(AgentAdvancedTools.Names.Contains(c.tool))return await PlatformWrite(s,c,token);using(context.BeginWrite()){if(c.tool=="open_item"){token.ThrowIfCancellationRequested();await context.OpenItem(new Dictionary<string,object>{{"id",Convert.ToString(c.args["id"])},{"play",false}});return new AgentToolReceipt{result=new Dictionary<string,object>{{"text","Opened by approved user action"}}};}
                 var tool=AgentRules.Tools.First(t=>t.Name==c.tool);context.Policy.Ensure(tool.Requires.Value,tool.Module);if(c.tool=="mcp_call")return await Mcp.Call(c,token);if(tool.ExecuteWithContext!=null){var result=await tool.ExecuteWithContext(context,s,c,token);Notify("libraryChanged",null);return result;}
-                var receipt=await Task.Run(()=>normalLibrary.WriteAgentTool(s,c,token,context.Ops));Notify("libraryChanged",null);return receipt;
+                var receipt=await Task.Run(()=>ReviewWrittenArtifact(s,c,normalLibrary.WriteAgentTool(s,c,token,context.Ops)));Notify("libraryChanged",null);return receipt;
             }},PrepareTaskCall,()=>TaskChanged(t),call=>EvidenceCurrentFor(call,t),()=>Foreground(t),call=>normalLibrary.OperationStatus(call.id)!="undone",taskHooks);engine.DeliveryCheck=s=>DeliveryProblem(s);return engine;}
         void RunTask(AgentTaskState t){if(taskEngine!=null&&taskEngine.IsRunning)throw new InvalidOperationException("Agent 正在处理，请等待或停止当前任务。");ValidateTask(t);taskEngine=MakeEngine(t);var started=taskEngine;taskEngine.Start();taskEngine.Completion.ContinueWith(_=>{CloseResearchKernel(started);if(new[]{"stopped","cancelled","failed","limited"}.Contains(started.State.status))AgentCommandJobs.Stop(normalLibrary,started.State.id);});}
         public async Task<object> HandleAgentTaskAction(string action,Dictionary<string,object> a){
@@ -204,7 +204,7 @@ namespace kok {
                 normalLibrary.RequireAiMode();if(taskEngine!=null&&taskEngine.IsRunning)throw new InvalidOperationException("Agent 正在处理，请等待或停止当前任务。");
                 var o=Library.Json.Deserialize<AgentTaskOptions>(Library.Json.Serialize(a));
                 o.vision=translations.VisionEnabled;o.searchEndpoint=translations.SearchEndpoint;
-                o.kernelVersion=3;o.workspaceVersion=0;
+                o.kernelVersion=3;o.workspaceVersion=0;o.artifactReviewVersion=1;o.businessVersion=0;o.businessEnvironment=null;
                 if(String.IsNullOrEmpty(o.runtime)||o.runtime=="auto")o.runtime=Environment.GetEnvironmentVariable("KOK_AGENT_RUNTIME")=="native"||o.protocol=="json"?"native":"research";
                 if(!new[]{"native","research","deepagents"}.Contains(o.runtime))throw new InvalidDataException("任务运行时无效。");
                 if(ResearchRuntime(new AgentTaskState{options=o})&&!AgentResearchKernel.Available(appDir))throw new InvalidDataException("研究内核运行组件缺失，请完整解压新版安装包。");
@@ -231,8 +231,14 @@ namespace kok {
                 // C1/P1: derive delivery acceptance requirements, then narrow the tool set by goal/intent/scope.
                 // An explicit caller allow-list always wins over the automatic profile; an automatic profile is
                 // marked so a later task.adjusted can re-derive both delivery and tools (#12/#13).
+                o.delivery=new AgentDeliveryRequirement();
+                PrepareContinuation(o);
+                if(ResearchRuntime(new AgentTaskState{options=o})){
+                    AgentBusinessCore.Prepare(o,normalLibrary,appDir);var plan=AgentBusinessCore.Plan(o,null);
+                    o.continuationTaskId=plan.context.taskId;o.continuationGoal=plan.context.goal;o.continuationDomain=plan.context.domain;o.continuationFiles=plan.context.files;
+                    if(plan.coding&&AgentExecution.Configured(normalLibrary))o.workspaceVersion=1;
+                }else if(AgentExecution.Configured(normalLibrary)&&AgentWorkspaceTools.Coding(AgentContinuation.Actions(o))&&!(o.scope.mode=="selected"&&o.scope.ids!=null&&o.scope.ids.Count>0))o.workspaceVersion=1;
                 PrepareDelivery(o);
-                if(AgentExecution.Configured(normalLibrary)&&AgentWorkspaceTools.Coding(o.goal)&&!(o.scope.mode=="selected"&&o.scope.ids!=null&&o.scope.ids.Count>0)&&!o.delivery.requiresDocumentArtifact&&!o.delivery.requiresPresentationArtifact)o.workspaceVersion=1;
                 if(o.allowedTools==null){o.allowedTools=AgentToolProfiles.ForTask(o,normalLibrary);o.allowedToolsAuto=true;}
                 SessionStore.Ensure(o.sessionId,SessionTitleFrom(o.goal));
                 if(project!=null)try{normalLibrary.ProjectLinkSession(project.id,o.sessionId);}catch(Exception error){RuntimeLog.Write("agent-project-session-link",error);}
@@ -394,7 +400,7 @@ namespace kok {
             if(text.Length>AgentSessionStore.MaxMessageText)text=text.Substring(0,AgentSessionStore.MaxMessageText);
             if(!known.Add(e.id))return;
             if(last==null){if(parent==null){string preferred=task.options.sessionLeafId;parent=!String.IsNullOrEmpty(preferred)&&preferred!=e.id&&known.Contains(preferred)?preferred:store.Leaf(sessionId);}}else parent=last;
-            store.Append(sessionId,"message",parent,new Dictionary<string,object>{{"role",role},{"text",text}},e.id);
+            store.Append(sessionId,"message",parent,new Dictionary<string,object>{{"role",role},{"text",text},{"taskId",task.id}},e.id);
             last=e.id;
         }
         // The live (still running) task's already-emitted messages must exist in the session before a

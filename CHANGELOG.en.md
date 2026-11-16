@@ -1,5 +1,16 @@
 # kok changelog
 
+## v0.16.0 · Preview
+
+- Keeps bounded restart checkpoints and reports native document length measurements in the requested unit to reduce unnecessary rewrites.
+
+- Moves task requirements, tool routing, delivery acceptance and source/artifact inspection into TypeScript. Deep Agents / LangGraph remains the model runtime; C# retains desktop, permissions, journaling and local tool adapters. Existing tasks keep their compatibility behavior.
+- Resolves same-branch follow-ups from actual native task records without copying old approvals or verification.
+- Adds source-reading status and saved document/PPTX inspection. Clipped presentation text no longer proves full reading.
+- Adds targeted native PPT geometry/font edits and optional approved PNG rendering with an installed, idle PowerPoint. Office is not bundled.
+- Treats a missing declared command output as failure even when the process exits zero.
+- See [validation](docs/VALIDATION_0.16.0.md) and [migration boundaries](docs/AGENT_TYPESCRIPT_0.16.0.md).
+
 ## v0.15.0 · Preview
 
 - Add project/executable discovery, bounded code search, paged UTF-8 reads and read-only Git status/diffs. Windows Store aliases no longer count as real Python interpreters.
