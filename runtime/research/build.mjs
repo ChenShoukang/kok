@@ -13,6 +13,8 @@ const destination = path.join(root, 'dist/kok/runtime/research');
 const pkg = JSON.parse(await fs.readFile(path.join(runtime, 'package.json'), 'utf8'));
 execFileSync(process.execPath, [path.join(runtime, 'node_modules/typescript/bin/tsc'), '--project', path.join(runtime, 'tsconfig.json'), '--noEmit'], { stdio: 'inherit' });
 await fs.mkdir(destination, { recursive: true });
+await build({ entryPoints: [path.join(runtime, 'src/business-worker.ts')], outfile: path.join(destination, 'business.mjs'),
+  bundle: true, platform: 'node', format: 'esm', target: 'node24', minify: true, legalComments: 'eof' });
 await build({ entryPoints: [path.join(runtime, 'src/worker.ts')], outfile: path.join(destination, 'worker.mjs'),
   bundle: true, platform: 'node', format: 'esm', target: 'node24', minify: true, legalComments: 'eof',
   banner: { js: 'import { createRequire as __kokCreateRequire } from "node:module"; const require = __kokCreateRequire(import.meta.url);' },
@@ -44,6 +46,7 @@ await fs.writeFile(path.join(destination, 'manifest.json'), JSON.stringify({
   langgraph: pkg.dependencies['@langchain/langgraph'], language: 'TypeScript', protocolVersion: 1, checkpointFormat: 2, node: process.version,
   nodeSha256: await sha(path.join(destination, 'node.exe')),
   workerSha256: await sha(path.join(destination, 'worker.mjs')),
+  businessCoreVersion: 1, businessWorkerSha256: await sha(path.join(destination, 'business.mjs')),
   dependencyLockSha256: await sha(path.join(runtime, 'package-lock.json')),
 }, null, 2) + '\n', 'utf8');
 console.log('Research kernel bundled: ' + destination);

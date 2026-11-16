@@ -11,22 +11,45 @@ namespace kok {public partial class Library {
  // imported originals fall back to the raw file hash. DeckCoverage compares this token to invalidate old reads.
  internal string PresentationCoverageDigest(string id){lock(gate){var item=PresentationItem(id);try{return PresentationSignature(id);}catch{return DocumentHash(item.path);}}}
  internal int PresentationPageCount(string id){lock(gate){return PresentationFiles.Read(PresentationItem(id).path,false).slides.Count;}}
- internal Dictionary<string,object> ReadAgentPresentation(AgentCall call){lock(gate){var item=PresentationItem(Convert.ToString(call.args["id"]));var deck=PresentationFiles.Read(item.path,false);int start=AgentDocumentTools.Number(call.args,"start_page",1,1,100),max=AgentDocumentTools.Number(call.args,"max_pages",4,1,8);if(start>deck.slides.Count)throw new InvalidDataException("幻灯片页码超出范围。");int left=16000;var pages=new List<object>();var selected=deck.slides.Skip(start-1).Take(max).ToList();int pagesRead=selected.Count;
-  foreach(var slide in selected){var shapes=new List<object>();foreach(var shape in slide.shapes){string text=shape.text??"";int take=Math.Min(left,Math.Min(6000,text.Length));left-=take;shapes.Add(new{id=shape.id,kind=shape.kind,text=text.Substring(0,take),truncated=take<text.Length,x=shape.x,y=shape.y,w=shape.w,h=shape.h,fontSize=shape.fontSize,color=shape.color});}int notes=Math.Min(left,Math.Min(4000,slide.notes.Length));left-=notes;pages.Add(new{page=deck.slides.IndexOf(slide)+1,id=slide.id,title=slide.title,notes=slide.notes.Substring(0,notes),notes_truncated=notes<slide.notes.Length,background=slide.background,shapes=shapes});}
-  int totalPages=deck.slides.Count;int next=start+pagesRead<=totalPages?start+pagesRead:-1;string digest=PresentationCoverageDigest(item.id);
-  // Per-page exact coverage rows (#7A/#7B, C-B data base). Top-level mode is "exact-read" (NOT "exact") so
-  // CallContents never treats a page window as a character-exact page and never skips its normal budget clip.
-  var coverage=new List<Dictionary<string,object>>{new Dictionary<string,object>{
-   {"id",item.id},{"name",item.name},{"totalChars",totalPages},
-   {"readStart",start-1},{"readEnd",start-1+pagesRead},{"readChars",pagesRead},
-   {"full",start==1&&start-1+pagesRead==totalPages},{"hasMore",next>=0},{"nextOffset",next},
-   {"digest",digest},{"mode","exact"},{"sampled",false},{"capped",false},{"domain",AgentReading.DomainPresentation},
-   {"startPage",start},{"pageMax",max}}};
+ internal Dictionary<string,object> ReadAgentPresentation(AgentCall call){lock(gate){
+  var item=PresentationItem(Convert.ToString(call.args["id"]));var deck=PresentationFiles.Read(item.path,false);
+  int start=AgentDocumentTools.Number(call.args,"start_page",1,1,100),max=AgentDocumentTools.Number(call.args,"max_pages",4,1,8);
+  if(start>deck.slides.Count)throw new InvalidDataException("幻灯片页码超出范围。");
+  int left=16000;var pages=new List<object>();var selected=deck.slides.Skip(start-1).Take(max).ToList();
+  var complete=new List<int>();var incomplete=new List<int>();
+  foreach(var slide in selected){
+   int page=deck.slides.IndexOf(slide)+1;bool full=true;var shapes=new List<object>();
+   foreach(var shape in slide.shapes){
+    string text=shape.text??"";int take=Math.Min(left,Math.Min(6000,text.Length));
+    if(take>0&&take<text.Length&&Char.IsHighSurrogate(text[take-1]))take--;
+    left-=take;full&=take==text.Length;
+    shapes.Add(new{id=shape.id,kind=shape.kind,text=text.Substring(0,take),truncated=take<text.Length,x=shape.x,y=shape.y,w=shape.w,h=shape.h,fontSize=shape.fontSize,color=shape.color});
+   }
+   int notes=Math.Min(left,Math.Min(4000,slide.notes.Length));
+   if(notes>0&&notes<slide.notes.Length&&Char.IsHighSurrogate(slide.notes[notes-1]))notes--;
+   left-=notes;full&=notes==slide.notes.Length;
+   (full?complete:incomplete).Add(page);
+   pages.Add(new{page=page,id=slide.id,title=slide.title,notes=slide.notes.Substring(0,notes),notes_truncated=notes<slide.notes.Length,background=slide.background,shapes=shapes});
+  }
+  int pagesRead=selected.Count,totalPages=deck.slides.Count,next=start+pagesRead<=totalPages?start+pagesRead:-1;
+  string digest=PresentationCoverageDigest(item.id);
+  // Only pages whose emitted text and notes are complete prove page coverage. Adjacent complete pages
+  // share a row; clipped pages need a smaller page window or exact read_items text paging.
+  var coverage=new List<Dictionary<string,object>>();
+  foreach(int page in complete){
+   var previous=coverage.LastOrDefault();
+   if(previous!=null&&Convert.ToInt32(previous["readEnd"])==page-1){previous["readEnd"]=page;previous["readChars"]=Convert.ToInt32(previous["readChars"])+1;previous["full"]=Convert.ToInt32(previous["readStart"])==0&&page==totalPages;continue;}
+   coverage.Add(new Dictionary<string,object>{{"id",item.id},{"name",item.name},{"totalChars",totalPages},
+    {"readStart",page-1},{"readEnd",page},{"readChars",1},{"full",page==1&&totalPages==1},
+    {"hasMore",next>=0||incomplete.Count>0},{"nextOffset",next},{"digest",digest},{"mode","exact"},
+    {"sampled",false},{"capped",false},{"domain",AgentReading.DomainPresentation},{"startPage",start},{"pageMax",max}});
+  }
+  string hint=incomplete.Count==0?"":"Some page text or notes were clipped. Retry these pages with max_pages=1; if still clipped, use read_items with ids, offset and max_chars until has_more=false. Clipped pages do not prove complete reading.";
   return new Dictionary<string,object>{
-   {"text",Json.Serialize(new{id=item.id,name=item.name,total_pages=totalPages,next_page=next,editable=item.ownedDocument,has_draft=DraftValue(item.editDraft,"kind")=="presentation",width=deck.width,height=deck.height,unsupported=deck.unsupported,slides=pages})},
+   {"text",Json.Serialize(new{id=item.id,name=item.name,total_pages=totalPages,next_page=next,incomplete_pages=incomplete,reading_hint=hint,editable=item.ownedDocument,has_draft=DraftValue(item.editDraft,"kind")=="presentation",width=deck.width,height=deck.height,unsupported=deck.unsupported,slides=pages})},
    {"mode","exact-read"},{"domain",AgentReading.DomainPresentation},{"coverage",coverage},
    {"references",new List<ChatReference>{new ChatReference{id=item.id,fileId=item.id,label=item.name,page=start,excerpt=deck.slides[start-1].title}}},
-   {"start_page",start},{"total_pages",totalPages},{"pages_read",pagesRead},{"next_page",next}};
+   {"start_page",start},{"total_pages",totalPages},{"pages_read",pagesRead},{"next_page",next},{"incomplete_pages",incomplete},{"reading_hint",hint}};
  }}
  internal byte[] PresentationEditPreview(Dictionary<string,object> args){var item=ManagedOwnedFile(Convert.ToString(args["id"]),"PPTX");if(DraftValue(item.editDraft,"kind")=="presentation")throw new InvalidOperationException("演示文稿有未写入文件的草稿，请先保存 PPTX 后再交给 Agent。");if(new FileInfo(item.path).Length>32*1024*1024)throw new InvalidDataException("PPTX 超过 32 MB，请使用系统应用。");return AgentPresentationXml.Edit(File.ReadAllBytes(item.path),args);}
  internal void PrepareAgentPresentation(AgentCall call){PresentationEditPreview(call.args);string id=Convert.ToString(call.args["id"]);call.documentSignature=PresentationSignature(id);call.documentBeforeStamp=AgentCreatedStamp(id);call.beforeText=String.Join("\n",PresentationFiles.Read(Find(id).path,false).slides.Select((s,n)=>(n+1)+". "+s.title));call.afterText=Json.Serialize(call.args["edits"]);}

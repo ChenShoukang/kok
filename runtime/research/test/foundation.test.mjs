@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import { gunzipSync } from 'node:zlib';
+import { randomBytes } from 'node:crypto';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { AIMessage } from '@langchain/core/messages';
 import { ResearchKernel, monitoredFetch } from '../kernel.mjs';
@@ -39,4 +40,21 @@ test('denied host permission prevents dispatch entirely',async()=>{
   let dispatched=0;
   const fetcher=monitoredFetch({endpoint:'https://configured.invalid/v1',pending:[],emit:()=>{},permit:async()=>{throw Error('cap');},fetchImpl:async()=>{dispatched++;return new Response('{}');}});
   await assert.rejects(fetcher('https://configured.invalid/v1/chat/completions',{body:'{}'}),/cap/);assert.equal(dispatched,0);
+});
+
+test('large multi-step tasks keep bounded public checkpoints and resume every pending tool after restart',async()=>{
+ const tools=[{type:'function',function:{name:'read_items',description:'Read native evidence',parameters:{type:'object',properties:{ids:{type:'array',items:{type:'string'}}},required:['ids']}}}];
+ const input={taskId:'bounded-public-checkpoints',systemPrompt:'Read the next source.',tools,messages:[{role:'user',content:'Read sources.'}]};
+ let calls=0,received='',snapshot,result;
+ const expected=[];
+ for(let turn=0;turn<16;turn++){
+  const model=new FixtureModel(messages=>{calls++;received=JSON.stringify(messages);return turn===15?{content:'All native results preserved.'}:{content:'',tool_calls:[{id:'read-'+turn,name:'read_items',args:{ids:['S'+turn]}}]};});
+  const kernel=new ResearchKernel({snapshot,modelFactory:()=>model});
+  let resume;
+  if(result){const marker='NATIVE_'+turn+'_'+randomBytes(4000).toString('base64');expected.push(marker);resume={[result.calls[0].interruptId]:{status:'done',text:marker}};}
+  result=await kernel.step({...input,messages:turn?[]:input.messages,...(resume?{resume}:{})});snapshot=result.snapshot;
+  assert(Buffer.from(snapshot.data,'base64').length<250000,'checkpoints must not accumulate every historical full state');
+  const saved=JSON.parse(gunzipSync(Buffer.from(snapshot.data,'base64')));assert(saved.operations.filter(op=>op.kind==='put').length<=2);
+ }
+ assert.equal(result.kind,'final');assert.equal(calls,16);for(const marker of expected)assert(received.includes(marker),'compaction must preserve every actual native result without replaying tools');
 });

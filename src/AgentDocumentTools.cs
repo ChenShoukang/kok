@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace kok {
  internal static class AgentDocumentTools {
-  internal static AgentToolSpec[] ConcatDocumentEdits(this AgentToolSpec[] tools){return tools.Concat(new[]{Read(),Replace()}).ToArray();}
+  internal static AgentToolSpec[] ConcatDocumentEdits(this AgentToolSpec[] tools){return tools.Concat(new[]{Read(),Replace(),AgentArtifactReview.DocumentTool()}).ToArray();}
   static object Integer(string description,int minimum,int maximum){return new Dictionary<string,object>{{"type","integer"},{"description",description},{"minimum",minimum},{"maximum",maximum}};}
   static AgentToolSpec Read(){return new AgentToolSpec{Name="read_document",Title="读取文档原文",CapabilityId="documents.documentSource",Requires=Need.NormalLibrary,Write=false,
    Signature="read_document{id,offset?,max_chars?}",Description="Read exact source of a kok-created MD/TXT/DOCX before editing its body. Returns a bounded text window, total_chars and next_offset; notes are not document body. The result carries mode=exact and per-source coverage (same schema as read_items) so full/document read-back counts for delivery checks; page with offset/max_chars until has_more=false.",

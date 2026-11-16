@@ -7,7 +7,7 @@ import { SnapshotSchema, type Snapshot } from './contracts.ts';
 
 const MAX_BYTES = 512_000;
 const ConfigSchema = z.object({ thread_id: z.string().min(1), checkpoint_ns: z.string(), checkpoint_id: z.string().optional() });
-const OperationSchema = z.object({ kind: z.enum(['put', 'writes']), config: ConfigSchema, encoding: z.string(), data: z.string(), taskId: z.string().optional(), taskPath: z.string().optional() });
+const OperationSchema = z.object({ kind: z.enum(['put', 'writes']), config: ConfigSchema, encoding: z.string(), data: z.string(), checkpointId: z.string().optional(), taskId: z.string().optional(), taskPath: z.string().optional() });
 type Operation = z.infer<typeof OperationSchema>;
 function portableConfig(config: RunnableConfig) { return ConfigSchema.parse({ thread_id: config.configurable?.thread_id, checkpoint_ns: config.configurable?.checkpoint_ns ?? '', checkpoint_id: config.configurable?.checkpoint_id }); }
 
@@ -18,7 +18,7 @@ export class PortableSaver extends MemorySaver {
   override async put(config: RunnableConfig, checkpoint: Checkpoint, metadata: CheckpointMetadata): Promise<RunnableConfig> {
     const [encoding, data] = await this.serde.dumpsTyped({ checkpoint, metadata });
     const result = await super.put(config, checkpoint, metadata);
-    this.operations.push({ kind: 'put', config: portableConfig(config), encoding, data: Buffer.from(data).toString('base64') });
+    this.operations.push({ kind: 'put', config: portableConfig(config), encoding, data: Buffer.from(data).toString('base64'), checkpointId: checkpoint.id });
     return result;
   }
   override async putWrites(config: RunnableConfig, writes: PendingWrite[], taskId: string, taskPath = ''): Promise<void> {
@@ -30,6 +30,17 @@ export class PortableSaver extends MemorySaver {
     await super.deleteThread(threadId); this.operations = this.operations.filter(op => op.config.thread_id !== threadId);
   }
   snapshot(): Snapshot {
+    // Each public put stores a full checkpoint. Persist the latest state and its immediate parent,
+    // plus their pending writes, rather than a second growing history of every full conversation.
+    // The native journal already owns history. Keep every namespace so pending interrupts resume.
+    const retained = new Set<Operation>(), ids = new Set<string>(), counts = new Map<string, number>();
+    const key = (op: Operation, id: string) => JSON.stringify([op.config.thread_id, op.config.checkpoint_ns, id]);
+    for (let index = this.operations.length - 1; index >= 0; index--) {
+      const op = this.operations[index]; if (op.kind !== 'put' || !op.checkpointId) continue;
+      const namespace = JSON.stringify([op.config.thread_id, op.config.checkpoint_ns]), count = counts.get(namespace) || 0;
+      if (count < 2) { retained.add(op); ids.add(key(op, op.checkpointId)); counts.set(namespace, count + 1); }
+    }
+    this.operations = this.operations.filter(op => op.kind === 'put' ? retained.has(op) : !!op.config.checkpoint_id && ids.has(key(op, op.config.checkpoint_id)));
     const bytes = gzipSync(Buffer.from(JSON.stringify({ version: 1, operations: this.operations }), 'utf8'));
     if (bytes.length > MAX_BYTES) throw new Error('研究内核检查点已达到上限，请保留成果并新建任务继续。');
     return { version: 2, codec: 'langgraph-public-operations-v1', data: bytes.toString('base64') };

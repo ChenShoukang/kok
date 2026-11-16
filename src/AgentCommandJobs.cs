@@ -64,7 +64,10 @@ namespace kok {
                 var result=AgentExecution.RunCommand(context,call,cancellation.Token,3600,row.root);foreach(string key in result.Keys.ToArray())if(result[key] is string)result[key]=Redact((string)result[key]);
                 var assets=new List<AgentAssetRef>();
                 if(String.Equals(AgentExecution.Root(library),row.root,StringComparison.OrdinalIgnoreCase))foreach(string path in AgentTaskState.Get<List<string>>(row.args,"outputs")??new List<string>()){cancellation.Token.ThrowIfCancellationRequested();var asset=AgentExecution.WorkspaceAsset(library,path,"artifact");asset.originCallId=row.callId;assets.Add(asset);}result["assets"]=assets;
-                lock(gate){row.result=result;cancellation.Token.ThrowIfCancellationRequested();row.state=Convert.ToInt32(result["exitCode"])==0&&AgentTaskState.Get<bool>(result,"inputsCurrent")?"completed":"failed";row.error=row.state=="failed"?(Convert.ToInt32(result["exitCode"])!=0?"命令以非零退出码结束。":"命令执行期间输入文件已变化，请重新验证。"):"";row.updated=Now();Persist();}
+                bool outputsVerified=assets.Count==(AgentTaskState.Get<List<string>>(row.args,"outputs")??new List<string>()).Count&&assets.All(asset=>asset.available);
+                result["outputsVerified"]=outputsVerified;
+                result["missingOutputs"]=assets.Where(asset=>!asset.available).Select(asset=>asset.path).ToArray();
+                lock(gate){row.result=result;cancellation.Token.ThrowIfCancellationRequested();row.state=Convert.ToInt32(result["exitCode"])==0&&AgentTaskState.Get<bool>(result,"inputsCurrent")&&outputsVerified?"completed":"failed";row.error=row.state=="failed"?(Convert.ToInt32(result["exitCode"])!=0?"命令以非零退出码结束。":!AgentTaskState.Get<bool>(result,"inputsCurrent")?"命令执行期间输入文件已变化，请重新验证。":"命令未生成声明的成果文件，请检查输出路径或命令。"):"";row.updated=Now();Persist();}
             }catch(OperationCanceledException){lock(gate){row.state="cancelled";row.updated=Now();try{Persist();}catch(IOException){}}}
             catch(Exception error){lock(gate){row.state=cancellation.IsCancellationRequested?"cancelled":"failed";row.error=cancellation.IsCancellationRequested?"":Redact(error.Message);row.updated=Now();try{Persist();}catch(IOException){}}}
             finally{lock(gate){tokens.Remove(row.jobId);}cancellation.Dispose();context.Jobs?.Changed();context.Notify("job.changed",null);}
@@ -81,7 +84,7 @@ namespace kok {
             var args=AgentTaskState.Get<List<string>>(action.args,"args")??new List<string>();if(args.Count>32||args.Any(a=>a==null||a.Length>1024||a.Any(Char.IsControl)))throw new FormatException("Invalid command arguments");
             if(args.Sum(a=>a.Length)>4000)throw new FormatException("argument list is too long");
             if(action.args.ContainsKey("cwd"))AgentExecution.ValidateRelative(ModuleContext.Text(action.args,"cwd"),true);
-            var outputs=AgentTaskState.Get<List<string>>(action.args,"outputs")??new List<string>();if(outputs.Count>16)throw new FormatException("outputs allows at most 16 workspace paths");foreach(string path in outputs)AgentExecution.ValidateRelative(path,false);
+            var outputs=AgentTaskState.Get<List<string>>(action.args,"outputs")??new List<string>();if(outputs.Count>16)throw new FormatException("outputs allows at most 16 workspace paths");foreach(string path in outputs)AgentWorkspaceTools.SafePath(path);
             var inputs=AgentTaskState.Get<List<string>>(action.args,"inputs")??new List<string>();if(inputs.Count>16)throw new FormatException("inputs allows at most 16 files");foreach(string path in inputs)AgentWorkspaceTools.SafePath(path);
             int timeout=action.args.ContainsKey("timeoutSeconds")?Convert.ToInt32(action.args["timeoutSeconds"]):600;if(timeout<1||timeout>3600)throw new FormatException("timeoutSeconds must be 1-3600");
         }

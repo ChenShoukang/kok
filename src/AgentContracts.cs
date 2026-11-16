@@ -34,6 +34,8 @@ namespace kok {
             var o=task.options;var current=AgentDeliveryRules.Derive(o,task.adjustments);
             string intent=(o.goal??"")+"\n"+String.Join("\n",task.adjustments);
             var caps=intents.Where(pair=>Regex.IsMatch(intent,pair.Value,RegexOptions.IgnoreCase|RegexOptions.CultureInvariant)).Select(pair=>pair.Key).ToList();
+            if(o.workspaceVersion==1&&!caps.Contains("coding"))caps.Add("coding");
+            if(!String.IsNullOrEmpty(o.continuationDomain)&&!caps.Contains(o.continuationDomain))caps.Add(o.continuationDomain);
             if(caps.Count==0||current.requiresFullSourceCoverage)caps.Insert(0,"research");
             var spec=new AgentTaskSpec{revision=task.steerVersion,goal=o.goal??"",projectId=o.projectId??"",capabilities=caps.Distinct().ToArray(),
                 scope=new AgentSpecScope{mode=o.scope==null?"all":o.scope.mode,collection=o.scope==null?"":o.scope.collection??"",ids=o.scope!=null&&o.scope.mode=="selected"?task.TaskScope.ToArray():task.calls.Where(c=>c.status=="done"&&c.sources!=null).SelectMany(c=>c.sources.Keys).Concat(task.createdArtifactIds).Distinct().Take(200).ToArray()},
@@ -68,9 +70,9 @@ namespace kok {
             var tools=new HashSet<string>(AgentRules.Tools.Where(t=>ModuleRegistry.Builtins.ToolEnabled(t.Name,library)).Select(t=>t.Name));
             bool execution=AgentExecution.Configured(library);var rows=new List<AgentCapabilityInfo>();
             Action<string,string,string,string,string[]> add=(id,title,status,reason,names)=>rows.Add(new AgentCapabilityInfo{id=id,title=title,status=status,reason=reason,tools=names.Where(tools.Contains).ToArray()});
-            add("research","资料研究",tools.Contains("read_items")?"available":"disabled","精确读取、检索和来源处理。",new[]{"search_library","read_items","read_document","web_search","fetch_url"});
-            add("document","文档写作",tools.Contains("create_document")?"available":"disabled","原生文件创建、精确改稿与回读。",new[]{"create_document","read_document","replace_document_text"});
-            add("presentation","PPT 制作",tools.Contains("create_presentation")?"available":"disabled","可编辑 PPTX 基础能力，专业视觉质量仍需逐步验证。",new[]{"create_presentation","read_presentation","edit_presentation","copy_presentation"});
+            add("research","资料研究",tools.Contains("read_items")?"available":"disabled","精确读取、检索和来源处理。",new[]{"search_library","read_items","read_document","review_sources","web_search","fetch_url"});
+            add("document","文档写作",tools.Contains("create_document")?"available":"disabled","原生文件创建、精确改稿与回读。",new[]{"create_document","read_document","replace_document_text","inspect_document"});
+            add("presentation","PPT 制作",tools.Contains("create_presentation")?"available":"disabled","可编辑 PPTX、结构检查和定点修复；实际渲染需本机安装且空闲的 PowerPoint。",new[]{"create_presentation","read_presentation","edit_presentation","copy_presentation","inspect_presentation","render_presentation"});
             add("image","照片与图像","partial","已有照片编辑界面与图片读取，专用 Agent 像素编辑和生成尚未接入。",new[]{"read_image"});
             add("video","视频制作","partial","已有媒体剪辑界面、索引与导出基础，尚无完整 Agent 时间线工具。",new[]{"index_video_frames","generate_subtitles"});
             add("music","音乐与音频","partial","已有播放与音频片段编辑，音乐生成、编曲和分轨引擎尚未接入。",new string[0]);

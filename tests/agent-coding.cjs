@@ -23,6 +23,10 @@ const {chromium}=require('./browser.cjs');
   if(n===3)calls=[{name:'start_command_job',args:{command:executable,args:['verify.mjs'],timeoutSeconds:15,inputs:['sum.ts'],outputs:['result.json']}}];
   if(n===4)calls=[{name:'wait_command_job',args:{jobId,waitSeconds:5}}];
   if(n===5)calls=[{name:'git_workspace',args:{mode:'diff',path:'sum.ts'}}];
+  if(n===7)calls=[{name:'read_workspace_file',args:{path:'sum.ts'}}];
+  if(n===8)calls=[{name:'apply_workspace_patch',args:{path:'sum.ts',workspaceId,expectedHash:sha,edits:[{oldText:'return a+b;',newText:'const result = a+b; return result;'}]}}];
+  if(n===9)calls=[{name:'start_command_job',args:{command:executable,args:['verify.mjs'],timeoutSeconds:15,inputs:['sum.ts'],outputs:['result.json']}}];
+  if(n===10)calls=[{name:'wait_command_job',args:{jobId,waitSeconds:5}}];
   const delta=calls.length?{role:'assistant',tool_calls:calls.map((c,index)=>({index,id:'call-'+randomUUID(),type:'function',function:{name:c.name,arguments:JSON.stringify(c.args)}}))}:{role:'assistant',content:'已精确修复加法，保留原有未提交注释，实际验证退出码为0，result.json 的结果为5。'};
   res.writeHead(200,{'content-type':'text/event-stream'});res.end('data: '+JSON.stringify({id:randomUUID(),object:'chat.completion.chunk',model:'code-fixture',choices:[{index:0,delta,finish_reason:calls.length?'tool_calls':'stop'}],usage:{prompt_tokens:100,completion_tokens:50}})+'\n\ndata: [DONE]\n\n');
  });});await new Promise(r=>model.listen(0,'127.0.0.1',r));
@@ -39,7 +43,19 @@ const {chromium}=require('./browser.cjs');
   const job=task.messages.find(m=>m.tool==='wait_command_job').result;assert.equal(job.state,'completed');assert.equal(job.result.exitCode,0);assert.equal(job.result.checkedInputs[0].sha256,task.messages.find(m=>m.tool==='apply_workspace_patch').result.sha256);assert(job.result.inputsCurrent);
   assert(task.messages.filter(m=>m.tool==='git_workspace').at(-1).readPreview.includes('USER_UNCOMMITTED_CHANGE_KEEP'));assert(task.assets.some(a=>a.path==='sum.ts'&&a.role==='artifact'));assert.deepEqual(errors,[]);
   assert.equal(await page.locator('[data-agent-workspace-reveal]').count(),2,'changed source and generated output are directly discoverable as workspace results');
+  // A separate task in the same native chat must retain the real code workspace from the chosen
+  // conversation branch. The new goal deliberately contains no language, extension or workspace keyword.
+  await page.locator('#agent-input').fill('继续优化这个函数，并运行验证');await page.locator('.agent-send').click();
+  await page.waitForFunction(()=>AgentUi.state.messages.some(m=>m.tool==='apply_workspace_patch'&&m.status==='pending'));
+  await page.locator('[data-agent-run]').click();await page.waitForFunction(()=>AgentUi.state.messages.some(m=>m.tool==='start_command_job'&&m.status==='pending'));
+  await page.locator('[data-agent-run]').click();await page.waitForFunction(()=>!AgentUi.state.job);
+  const follow=await page.evaluate(()=>native('agentTaskRead',{taskId:AgentUi.state.watch}));
+  assert.equal(follow.status,'completed',follow.error);assert.notEqual(follow.id,task.id);assert.equal(follow.options.businessVersion,1);assert.equal(follow.continuation.taskId,task.id);
+  assert.equal(follow.continuation.domain,'coding');assert(follow.continuation.files.includes('sum.ts'));assert.equal(bodies.length,11);
+  assert(bodies[6].tools.some(t=>t.function.name==='apply_workspace_patch'));assert(!bodies[6].tools.some(t=>t.function.name==='create_document'));
+  assert.equal(fs.readFileSync(path.join(workspace,'sum.ts'),'utf8'),expected.replace('return a+b;','const result = a+b; return result;'));
+  assert.equal(await page.locator('[data-agent-continuation]').count(),1);assert.match(await page.locator('[data-agent-continuation]').innerText(),/sum\.ts/);assert.deepEqual(errors,[]);
   await page.screenshot({path:path.join(output,'code-result.png'),fullPage:true});fs.writeFileSync(path.join(output,'result.json'),JSON.stringify({passed:true,requests:bodies.length,workspaceVersion:task.options.workspaceVersion,sourcePreserved:true,checkedHash:job.result.checkedInputs[0].sha256,exitCode:0},null,2));
-  console.log('Code desktop: repository discovery, existing dirty work, hash-guarded patch, actual TypeScript test, output asset and validated completion passed.');
+  console.log('Code desktop: repository discovery, dirty-work preservation, actual verification, output assets and a separate same-chat TypeScript continuation task passed.');
  }catch(error){if(page){await page.screenshot({path:path.join(output,'failure.png')}).catch(()=>{});const state=await page.evaluate(async()=>({state:AgentUi.state.recovery,task:AgentUi.state.watch?await native('agentTaskRead',{taskId:AgentUi.state.watch}):null})).catch(()=>null);fs.writeFileSync(path.join(output,'failure.json'),JSON.stringify({requests:bodies,state},null,2));}throw error;}finally{if(browser)await browser.close();model.closeAllConnections();await new Promise(r=>model.close(r));}
 })().catch(e=>{console.error(e);process.exitCode=1;});

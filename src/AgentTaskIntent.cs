@@ -547,6 +547,7 @@ namespace kok {
             return Current(o,null);
         }
         internal static AgentTaskContract Current(AgentTaskOptions o,IEnumerable<string> adjustments){
+            if(o!=null&&o.businessVersion>=1)return AgentBusinessCore.Plan(o,adjustments).contract;
             var contract=new AgentTaskContract();
             if(o==null)return contract;
             var allowed=AllowedSources(o.allowed);
