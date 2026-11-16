@@ -9,6 +9,7 @@ import { createMiddleware } from 'langchain';
 import { PortableSaver } from './checkpoints.ts';
 import { StepSchema, PROTOCOL_VERSION, isRecord, type Emit, type Permit, type Snapshot, type StepInput, type StepResult, type NativeInterrupt } from './contracts.ts';
 import { capabilityInstructions, selectNativeTools } from './capabilities.ts';
+import { projectRepeatedReceipts, orderToolResults } from './receipts.ts';
 
 const BLOCKED_TOOLS = new Set(['task', 'execute']);
 registerHarnessProfile('openai', { generalPurposeSubagent: { enabled: false }, excludedTools: ['task', 'execute'] });
@@ -35,8 +36,13 @@ export function monitoredFetch({ emit, permit, endpoint, pending, fetchImpl = fe
     if (target.origin !== expected.origin || !target.pathname.startsWith(expected.pathname.replace(/\/$/, '') + '/')) throw new Error('模型请求超出了已配置的服务地址。');
     let body: Record<string, unknown>;
     try { const value: unknown = JSON.parse(String(init.body)); if (!isRecord(value)) throw new Error(); body = value; } catch { throw new Error('模型请求格式无效。'); }
+    const wireMessages = Array.isArray(body.messages) && body.messages.every(isRecord) ? body.messages : [];
+    const canRecall = Array.isArray(body.tools) && body.tools.some(tool => isRecord(tool) && isRecord(tool.function) && tool.function.name === 'recall_result');
+    const ordered = orderToolResults(wireMessages), projection = projectRepeatedReceipts(ordered, canRecall);
+    if (projection.duplicates || ordered.some((message,index) => message !== wireMessages[index])) { body = { ...body, messages: projection.messages }; init = { ...init, body: JSON.stringify(body) }; }
     const requestId = randomUUID().replaceAll('-', ''), start = performance.now(), outputLimit = Number(body.max_tokens || body.max_completion_tokens || 4000);
     await permit({ requestId, inputCharacters: JSON.stringify(body.messages || []).length + JSON.stringify(body.tools || []).length, outputLimit });
+    if (projection.duplicates) emit({ type: 'context_projected', savedCharacters: projection.savedCharacters, duplicates: projection.duplicates });
     let response: Response;
     try { response = await fetchImpl(url, { ...init, redirect: 'error' }); }
     catch (error) { emit({ type: 'model_finished', requestId, outcome: 'failed', errorKind: 'network', durationMs: Math.round(performance.now() - start), inputTokens: 0, outputTokens: 0, cachedTokens: 0, estimated: true }); throw error; }
@@ -90,14 +96,16 @@ export class ResearchKernel {
       configuration: { baseURL: input.endpoint, fetch: monitoredFetch({ emit: this.emit, permit: this.permit, endpoint: input.endpoint!, pending }) },
     }, { maxInputTokens: input.contextTokens || 64000, maxOutputTokens: input.outputLimit || 6000 });
     const selected = selectNativeTools(input.tools);
-    const nativeTools = selected.map(spec => {
+    const retired = selectNativeTools(input.resumeTools || []).filter(spec => !selected.some(current => current.function.name === spec.function.name));
+    const retiredNames = new Set(retired.map(spec => spec.function.name));
+    const nativeTools = [...selected, ...retired].map(spec => {
       const definition = spec.function, schema = definition.parameters as JSONSchema;
       new Validator(definition.parameters as ConstructorParameters<typeof Validator>[0]); // The two SDK schema types describe the same wire JSON with different optional members.
       return tool(async (args: unknown) => JSON.stringify(interrupt({ kind: 'kok_tool', name: definition.name, args })), { name: definition.name, description: definition.description, schema });
     });
     const boundary = createMiddleware({
       name: 'KokNativeBoundary',
-      wrapModelCall: (request, handler) => handler({ ...request, tools: request.tools.filter(t => typeof t.name !== 'string' || !BLOCKED_TOOLS.has(t.name)) }),
+      wrapModelCall: (request, handler) => handler({ ...request, tools: request.tools.filter(t => typeof t.name !== 'string' || !BLOCKED_TOOLS.has(t.name) && !retiredNames.has(t.name)) }),
       wrapToolCall: (request, handler) => { if (BLOCKED_TOOLS.has(request.toolCall.name)) throw new Error('当前研究内核不执行委派或任意命令；请使用已注册的 kok 工具。'); return handler(request); },
     });
     const agent = await createDeepAgent({ model, tools: nativeTools, checkpointer: saver, backend: undefined, middleware: [boundary], subagents: [], name: 'kok-agent',

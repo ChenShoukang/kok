@@ -131,7 +131,11 @@ namespace kok {
             }catch(Exception error){RuntimeLog.Write("agent-session-artifacts-read",error);return new object[0];}
         }
         static bool CanResume(AgentTaskState task){return !task.Terminal&&task.errorKind!="uncertain_external"&&task.errorKind!="uncertain_write"&&task.errorKind!="budget"&&!task.calls.Any(c=>c.tool=="mcp_call"&&c.status=="running")&&(task.requests<task.options.requestLimit||task.calls.Any(c=>c.status=="pending"));}
-        static bool CanRespond(AgentTaskState task){return task.status=="needs_input"&&task.requests<task.options.requestLimit&&!task.cancelRequested&&!task.calls.Any(c=>c.status=="running"||c.status=="pending"||c.errorKind=="uncertain_external");}
+        static bool CanRespond(AgentTaskState task){
+            int continued=task.events.Where(e=>e.kind=="task.continued").Select(e=>e.sequence).DefaultIfEmpty(0).Max();
+            bool progressStopped=task.status=="partial"&&task.options.businessVersion>=1&&task.events.Any(e=>e.sequence>continued&&e.kind=="task.note"&&AgentTaskState.Get<string>(e.data,"category")=="progress"&&AgentTaskState.Get<string>(e.data,"action")=="stop");
+            return (task.status=="needs_input"||progressStopped)&&task.requests<task.options.requestLimit&&!task.cancelRequested&&!task.calls.Any(c=>c.status=="running"||c.status=="pending"||c.errorKind=="uncertain_external"||c.errorKind=="uncertain_write");
+        }
         void CheckReview(AgentTaskState task){if(task.verification==null)return;var memory=task.events.LastOrDefault(e=>e.kind=="memory.recalled");if(memory!=null&&AgentTaskState.Get<string>(memory.data,"signature")!=MemorySignature(task)){(taskEngine!=null&&taskEngine.State==task?taskEngine:MakeEngine(task)).Emit("task.review_invalidated",new{reason="memory_changed"});return;}var evidence=new HashSet<string>(task.verification.checks.SelectMany(c=>c.evidence));if(task.calls.Any(c=>!AgentCognition.IsControl(c.tool)&&c.status=="done"&&(evidence.Contains(c.id)||AgentRules.WriteTools.Contains(c.tool))&&!EvidenceCurrentFor(c,task)))(taskEngine!=null&&taskEngine.State==task?taskEngine:MakeEngine(task)).Emit("task.review_invalidated",new{reason="source_changed"});}
         object TaskSnapshot(AgentTaskState t){return taskEngine!=null&&taskEngine.State==t?taskEngine.ReadSnapshot(()=>ProjectSnapshot(t)):ProjectSnapshot(t);}
         static Dictionary<string,object> ToolResultView(AgentCall call){

@@ -2,6 +2,7 @@ import { createInterface } from 'node:readline';
 import { planTask, type PlanningInput } from './business/planning.ts';
 import { reviewArtifact, reviewSources, type ReviewInput } from './business/review.ts';
 import { codeProblem, deliveryProblem, type CodeEvidence, type DeliveryEvidence } from './business/completion.ts';
+import { progressDecision } from './business/progress.ts';
 
 // Pure, local business rules. No model client, network, user plugins, file IO or secrets are loaded here.
 const lines = createInterface({ input: process.stdin, crlfDelay: Infinity });
@@ -18,6 +19,7 @@ lines.once('line', line => {
       case 'review_sources': value = reviewSources(message.input as Parameters<typeof reviewSources>[0]); break;
       case 'code_problem': value = codeProblem(message.input as CodeEvidence); break;
       case 'delivery_problem': value = deliveryProblem(message.input as DeliveryEvidence); break;
+      case 'progress': value = progressDecision(message.input as Parameters<typeof progressDecision>[0]); break;
       default: throw new Error('Unknown business operation');
     }
     response = { version: 1, ok: true, value };

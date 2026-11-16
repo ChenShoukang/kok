@@ -84,6 +84,13 @@ namespace kok {
             string resolverId;if(!resolvedBy.TryGetValue(failed.id,out resolverId)||String.IsNullOrEmpty(resolverId))return false;
             var resolver=calls.FirstOrDefault(c=>c.id==resolverId);return resolver!=null&&resolver.status=="done";
         }
+        // Only a host-cancelled proposal that never started can leave the current outcome.
+        // A user rejection, executed/uncertain write or caller-supplied status is not supersession.
+        public bool SupersededProposal(AgentCall call){
+            return options!=null&&options.businessVersion>=1&&call!=null&&call.status=="skipped"&&call.error=="superseded"&&call.steering<steerVersion
+                &&!events.Any(e=>e.kind=="tool.started"&&Get<string>(e.data,"callId")==call.id)
+                &&events.Any(e=>e.kind=="tool.skipped"&&Get<string>(e.data,"callId")==call.id&&Get<string>(e.data,"reason")=="superseded");
+        }
         // Read tools whose successful call can repair an earlier failed read of the same source (#14).
         public static readonly string[] ReadTools={"read_items","read_document","read_presentation"};
         static bool ResolutionExcluded(string errorKind){return errorKind=="uncertain_write"||errorKind=="uncertain_external"||errorKind=="conflict";}

@@ -1,0 +1,30 @@
+{
+  "format": "kok.agent.reliability.samples",
+  "version": 1,
+  "baseline": "v0.16.0",
+  "scope": "Development scenarios. Planning checks are not end-to-end or live-model success rates. Fresh held-out material is required for generalization claims.",
+  "sources": [
+    { "id": "source-a", "name": "活动初稿", "text": "活动初稿：预算12万元，计划80人。地点与日期未确认。" },
+    { "id": "source-b", "name": "最终修订", "text": "最终修订替代初稿：预算8万元，60人，不收集手机号。准备、实施、复盘三个阶段。地点和日期仍待确认。" }
+  ],
+  "cases": [
+    { "id": "research-conflict", "group": "research", "goal": "完整阅读全部资料，在聊天里回答最终预算、人数和禁止事项，引用实际来源。", "expected": { "RequiresDocument": false, "RequiresPresentation": false, "RequiresFullSourceCoverage": true }, "acceptance": ["8万元", "60人", "不收集手机号", "实际来源"] },
+    { "id": "research-paging", "group": "research", "goal": "完整阅读长资料，核对中间限制和末尾修订，不生成文件，直接回复结论。", "expected": { "RequiresDocument": false, "RequiresPresentation": false, "RequiresFullSourceCoverage": true, "ChatOnly": true }, "acceptance": ["全文覆盖", "中间限制", "末尾修订"] },
+    { "id": "research-unknown", "group": "research", "goal": "只读资料并回答：活动地点和日期是否确定？未知信息如实说明。", "expected": { "RequiresDocument": false, "RequiresPresentation": false, "RequiresTargetedEdit": false }, "acceptance": ["地点和日期待确认", "没有写入"] },
+    { "id": "document-length", "group": "document", "goal": "根据资料创建400-600汉字DOCX活动报告，采用最终修订。", "expected": { "RequiresDocument": true, "RequiresPresentation": false, "RequiresTargetedEdit": false, "RequiredDocumentFormat": "DOCX", "MinLength": 400, "MaxLength": 600, "LengthUnit": 1 }, "acceptance": ["实际DOCX", "当前版本回读", "400-600汉字"] },
+    { "id": "document-inspect-only", "group": "document", "goal": "创建一份500字DOCX报告", "adjustments": ["不要新增成果，只检查已生成的文件"], "expected": { "RequiresDocument": false, "RequiresPresentation": false, "RequiresTargetedEdit": false, "MinLength": 0, "MaxLength": 0 }, "acceptance": ["原文件可读", "不重复创建"] },
+    { "id": "document-format", "group": "document", "goal": "根据资料写500-800汉字DOCX报告", "adjustments": ["报告格式改为TXT"], "expected": { "RequiresDocument": true, "RequiredDocumentFormat": "TXT", "RequiresTargetedEdit": false, "MinLength": 500, "MaxLength": 800 }, "acceptance": ["实际TXT", "保留长度要求", "不强制原地改稿"] },
+    { "id": "presentation-create", "group": "presentation", "goal": "阅读资料，制作8页可编辑PPT（含封面），保留待确认事项。", "expected": { "RequiresDocument": false, "RequiresPresentation": true, "RequestedPages": 8 }, "acceptance": ["实际8页PPTX", "可编辑对象", "当前版本回读"] },
+    { "id": "presentation-pages", "group": "presentation", "goal": "生成8页PPT", "adjustments": ["页数改为6页，其他要求不变"], "expected": { "RequiresPresentation": true, "RequestedPages": 6, "RequiresTargetedEdit": false }, "acceptance": ["实际6页", "不强制额外改稿记录"] },
+    { "id": "presentation-target", "group": "presentation", "goal": "只修改已有PPT第3页预算，其他页保持原样，不要新建文件。", "expected": { "RequiresDocument": false, "RequiresPresentation": false, "RequiresTargetedEdit": true }, "acceptance": ["第3页修改", "未改页面保留", "改后回读"] },
+    { "id": "code-fix", "group": "coding", "goal": "修复工作区sum.ts的加法错误，保留用户注释，并运行测试。", "scope": "all", "expected": { "RequiresDocument": false, "RequiresPresentation": false }, "coding": true, "acceptance": ["用户注释保留", "实际测试", "当前源码版本"] },
+    { "id": "code-steering", "group": "coding", "goal": "修复代码但不要运行测试", "adjustments": ["现在运行测试"], "scope": "all", "expected": { "RequiresDocument": false, "RequiresPresentation": false }, "coding": true, "acceptance": ["后续测试指令生效", "实际退出码"] },
+    { "id": "code-continuation", "group": "coding", "goal": "继续优化这个函数，并运行验证", "scope": "all", "context": { "taskId": "trusted-task", "goal": "修复sum.ts", "domain": "coding", "workspaceId": "workspace-a", "files": ["sum.ts"] }, "expected": { "RequiresDocument": false, "RequiresPresentation": false }, "coding": true, "acceptance": ["可信工作区", "当前版本验证", "用户改动保留"] },
+    { "id": "combined-cancel-report", "group": "combined", "goal": "生成8页PPT，并写500字DOCX报告", "adjustments": ["报告先取消，只保留PPT"], "expected": { "RequiresDocument": false, "RequiresPresentation": true, "RequestedPages": 8, "MinLength": 0, "MaxLength": 0, "RequiredDocumentFormat": "" }, "acceptance": ["仅交付PPT", "不受旧报告长度阻塞"] },
+    { "id": "combined-switch-report", "group": "combined", "goal": "生成8页PPT", "adjustments": ["不做PPT了，只写400-600汉字DOCX报告"], "expected": { "RequiresDocument": true, "RequiresPresentation": false, "RequestedPages": 0, "RequiredDocumentFormat": "DOCX", "MinLength": 400, "MaxLength": 600 }, "acceptance": ["DOCX交付", "不继续制作PPT"] },
+    { "id": "combined-chat", "group": "combined", "goal": "写一份DOCX报告", "adjustments": ["不用报告，改为在聊天里用200字回答"], "expected": { "RequiresDocument": false, "RequiresPresentation": false, "ChatOnly": true, "RequiredDocumentFormat": "", "MinLength": 200, "MaxLength": 200 }, "acceptance": ["聊天回复", "不再要求文件"] },
+    { "id": "boundary-budget", "group": "boundary", "goal": "完整读取资料并创建DOCX报告和8页PPT", "requestLimit": 1, "expected": { "RequiresDocument": true, "RequiresPresentation": true, "RequestedPages": 8 }, "acceptance": ["limited", "没有越过请求上限", "成果保留"] },
+    { "id": "boundary-stop", "group": "boundary", "goal": "创建DOCX报告和8页PPT", "adjustments": ["先不做PPT，只交付报告"], "expected": { "RequiresDocument": true, "RequiresPresentation": false, "RequestedPages": 0 }, "acceptance": ["停止或调整生效", "报告保留", "不重复执行"] },
+    { "id": "boundary-component", "group": "boundary", "goal": "检查现有8页PPT，不修改、不生成文件，并说明PowerPoint不可用时的渲染限制。", "expected": { "RequiresDocument": false, "RequiresPresentation": false, "RequiresTargetedEdit": false }, "acceptance": ["不虚报渲染成功", "原文件可访问"] }
+  ]
+}

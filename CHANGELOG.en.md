@@ -1,5 +1,15 @@
 # kok changelog
 
+## v0.16.1 · Preview
+
+- Fixes report/deck cancellation, switching to chat, inspection-only follow-ups and format changes; removes obsolete length/page requirements and automatic creation tools.
+- Superseded proposals that never started cannot block the new deliverable. Actual rejections, failures and uncertain operations retain their checks.
+- Completes pending tool responses before transmitting steering updates, avoiding incomplete tool_calls conversations after retiring a proposed tool.
+- Warns on identical current reads across turns, then ends partial with saved results retained if no progress follows. Explicit follow-ups can continue. Paging, changed versions, writes, job polling and browser observations are exempt.
+- Projects only exact duplicate successful native receipts out of model input, retaining the latest full result. Checkpoints, journals, errors and different versions remain intact.
+- Adds model/tool durations, approval waits, first saved artifact, uncached input and progress diagnostics to content-free traces.
+- Adds 18 deterministic planning scenarios and a business-bridge measurement tool, plus updated long-term and next-phase plans. See [validation and limits](docs/VALIDATION_0.16.1.md).
+
 ## v0.16.0 · Preview
 
 - Keeps bounded restart checkpoints and reports native document length measurements in the requested unit to reduce unnecessary rewrites.

@@ -8,13 +8,15 @@
 
 | 想做什么 | 从这里开始 |
 | --- | --- |
+| v0.16.1 需求调整、重复读取和执行诊断 | [实现、验证与边界](VALIDATION_0.16.1.md) |
 | v0.16.0 TypeScript 主体、来源与成果检查 | [实现、验证与边界](VALIDATION_0.16.0.md) · [主体迁移](AGENT_TYPESCRIPT_0.16.0.md) |
 | v0.15.0 代码工作区与本地网页验证 | [实现、验证与边界](VALIDATION_0.15.0.md) |
 | v0.14.0 通用 Agent 基础、后台作业与能力状态 | [验证与实现边界](VALIDATION_0.14.0.md) · [发布说明](RELEASE_NOTES.md) |
 | 第一次使用，或想系统了解 kok | [**kok 帮助中心**](help/index.md)：安装、模式、界面、三个区域、设置与参考 |
 | 看一份资料、写笔记，或从资料做出报告和 PPT | [第一篇笔记](help/getting-started/first-work.md) · [第一个创作项目](help/getting-started/first-agent-project.md) |
 | v0.13.0 研究内核、资源取舍与语言迁移 | [内核说明](RESEARCH_KERNEL_0.13.0.md) · [本版验证](VALIDATION_0.13.0.md) |
-| 通用 Agent 规划：代码、电脑操作、PPT、照片、视频与音乐 | [详细计划 2.2](PROJECT_PLAN_0.14_TO_1.0.md) |
+| 通用 Agent 规划：研究、文档、PPT、表格、照片、视频、音乐、代码与电脑操作 | [总规划 3.0](PROJECT_PLAN_0.14_TO_1.0.md) |
+| v0.16 之后先做什么、每项怎样实现和验收、什么时候换桌面壳 | [v0.16.x–v0.18 详细执行计划](NEXT_PHASE_0.16_TO_0.18.md) |
 | v0.12.2 当前要求更新与最终交付物验收 | [版本与更新](help/reference/versions.md) · [本版验证](VALIDATION_0.12.2.md) |
 | v0.12.1 中途调整、读取覆盖与评测口径修复 | [版本与更新](help/reference/versions.md) · [本版验证](VALIDATION_0.12.1.md) |
 | v0.12.0 Agent 成果回读、原文分页读取与交付验收 | [版本与更新](help/reference/versions.md) · [本版验证](VALIDATION_0.12.0.md) |

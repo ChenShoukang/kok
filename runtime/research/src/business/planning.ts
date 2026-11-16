@@ -11,15 +11,15 @@ export interface PlanningInput {
   environment: { workspace: boolean; rendering: boolean; tools: string[]; selectedFormats: string[] };
   context: { taskId: string; goal: string; domain: string; workspaceId: string; files: string[] };
 }
-export const actions = (text: string): string => text.replace(/(?:不要|请勿|无需|无须|不必|不得|禁止|不再|避免|不用|不需要|不创建|不新建|不生成|不保存|不写|不改|不修改|不编辑|不渲染|别(?=[做创写用生保改加删动])|\bdo\s+not\b|\bdon['’]t\b|\bnever\b|\bwithout\b|\bno\s+need\s+to\b)[^。！？；;，,\.\r\n]*?(?=而是|但是|但要|instead|\bbut\b|\bhowever\b|[。！？；;，,\.\r\n]|$)/gi, clause => ' '.repeat(clause.length));
-const pres = /PPTX?|PowerPoint|presentations?|slides?|幻灯|演示文稿|演示稿|课件|演示/i;
+export const actions = (text: string): string => text.replace(/(?:不要|请勿|无需|无须|不必|不得|禁止|不再|避免|不用|不需要|不创建|不新建|不新增|不生成|不制作|不输出|不导出|不保存|不做|不写|不改|不修改|不编辑|不渲染|别(?=[做创写用生保改加删动])|\bdo\s+not\b|\bdon['’]t\b|\bnever\b|\bwithout\b|\bno\s+need\s+to\b)[^。！？；;，,\.\r\n]*?(?=而是|但是|但要|instead|\bbut\b|\bhowever\b|[。！？；;，,\.\r\n]|$)/gi, clause => ' '.repeat(clause.length));
+const pres = /PPTX?|PowerPoint|presentations?|slides?|\bdeck\b|幻灯|演示文稿|演示稿|课件|演示/i;
 const doc = /报告|文档|文章|纪要|总结|摘要|笔记|方案|简报|讲稿|说明|手册|备忘|记录|清单|report|document|essay|summary|memo|brief|notes?|article|proposal/i;
 const create = /生成|制作|创建|新建|起草|撰写|写|整理成|汇总成|输出|保存|另存|导出|做成|交付|convert|create|make|build|generate|save|export|write|draft|compose|produce|deliver/i;
 const edit = /修改|改成|改为|改到|替换|修订|更正|编辑|改写|重写|润色|排版|扩写|精简|缩短|删除|插入|追加|添加|增加|补充|更新|调整|续写|replace|revise|edit|change|update|remove|delete|insert|append|rewrite|polish|adjust/i;
 const metadata = /标签|分类|收藏|备注|重命名|文件名|移入|移出|归档|\b(?:notes?|tags?|collections?|favorites?)\b/i;
 const body = /正文|内容|文字|段落|预算|人数|金额|数字|日期|开头|结尾|章节|句子|表格|第\s*\d+\s*(?:段|节|行|章)|body|paragraph|sentence|text/i;
-const chat = /(?:聊天|对话|会话)(?:里|中|内)?(?:直接)?(?:回复|回答|说明|给出)|直接(?:在)?(?:聊天|对话|会话)|(?:仅|只)回复|直接回复|回复即可|(?:reply|answer|respond)\s+(?:only\s+)?in\s+(?:the\s+)?(?:chat|conversation)|chat[- ]only|just\s+(?:reply|answer)|reply\s+directly/i;
-const noFile = /(?:不要|不用|不需要|无需|无须|不必|别|勿)(?:再)?(?:创建|新建|生成|保存|输出|写|导出|做)(?:为|成|到)?(?:任何|一个|一份)?(?:新)?(?:的)?(?:文件|文档|报告|成果|成品)|(?:do\s+not|don['’]t|never|without|no\s+need\s+to)\s+(?:create|save|write|export|produce)\s+(?:a\s+|an\s+|any\s+)?(?:new\s+)?(?:file|document|report|artifact)|不需要(?:任何)?文件|不用文件|(?:no|without)\s+(?:new\s+)?(?:file|document|artifact)/i;
+const chat = /(?:聊天|对话|会话)(?:里|中|内)?[^。；;\n]{0,24}(?:回复|回答|说明|给出)|直接(?:在)?(?:聊天|对话|会话)|(?:仅|只)回复|直接回复|回复即可|(?:reply|answer|respond)\s+(?:only\s+)?in\s+(?:the\s+)?(?:chat|conversation)|chat[- ]only|just\s+(?:reply|answer)|reply\s+directly/i;
+const noFile = /(?:不要|不用|不需要|无需|无须|不必|别|勿)(?:再)?(?:创建|新建|新增|生成|保存|输出|写|导出|做)(?:为|成|到)?(?:任何|一个|一份)?(?:新)?(?:的)?(?:文件|文档|报告|成果|成品)|(?:do\s+not|don['’]t|never|without|no\s+need\s+to)\s+(?:create|save|write|export|produce)\s+(?:a\s+|an\s+|any\s+)?(?:new\s+)?(?:file|document|report|artifact)|不需要(?:任何)?文件|不用文件|(?:no|without)\s+(?:new\s+)?(?:file|document|artifact)/i;
 const full = /全文|全部|完整|每份|每一份|所有资料|所有来源|所有文档|所有文件|逐字|逐份|通读|读全|精读|\bfull[- ]?text\b|\bcomplete\b|\bentire\b|\bwhole\b/i;
 const source = /资料|文档|来源|材料|素材|报告|sources?|documents?|files?|materials?|reports?/i;
 export const coding = (text: string): boolean => /代码|程序|工作区|仓库|TypeScript|JavaScript|Python|C#|\b(?:coding|code|repository|workspace|bug)\b|\.(?:ts|js|py|cs)\b/i.test(text);
@@ -31,6 +31,23 @@ const number = (value: string): number => {
 };
 const empty = (allowed: string[]): Contract => ({ RequiresDocument: false, RequiresPresentation: false, RequiredDocumentFormat: '', RequestedPages: 0, MinLength: 0, MaxLength: 0, LengthUnit: 0, RequiresTargetedEdit: false, EditVersionHint: '', RequiresFullSourceCoverage: false, RequiredSourceIds: [...allowed], ChatOnly: false, RequiredCount: 1 });
 
+// A later message updates only the named deliverable. Negation is evaluated per clause,
+// so cancelling a deck cannot hide the report requested after the comma (or vice versa).
+function cancelledKind(raw: string, kind: RegExp): boolean {
+  const modifiers = '(?:这份|那份|当前的|新的|一份|一套|一个|任何|新|再|the\\s+|a\\s+|an\\s+|new\\s+|\\s)*';
+  const direct = new RegExp('(?:取消|不做|不制作|不生成|(?:不要|不用|不需要|无需)(?:再)?(?:创建|新建|生成|制作|交付|输出|导出|做)?|\\b(?:cancel|drop|skip)\\s+)' + modifiers + '(?:' + kind.source + ')', 'i');
+  const reversed = new RegExp('(?:' + kind.source + ')(?:先|暂时|现在|这次|目前|也|都|就|暂|\\s)*(?:取消|不做|不制作|不生成|不用了|不要了)', 'i');
+  return raw.split(/[，,。；;\n]|\bbut\b|但(?:是)?/i).some(clause => {
+    if (!kind.test(clause) || /不要取消|别取消|不取消|do not cancel|don['’]t cancel/i.test(clause)) return false;
+    if (/重新|重复|再次|重做|\bagain\b/i.test(clause) && /保留|已有|现有|原有|\b(?:existing|keep|retain)\b/i.test(raw)) return false;
+    return direct.test(clause) || reversed.test(clause);
+  });
+}
+function specificationOnly(clause: string): boolean {
+  return /格式|页数|字数|长度|篇幅|输出类型|\b(?:format|page count|word count|length)\b/i.test(clause)
+    && !/正文|内容|段落|标题|排版|字体|布局|\b(?:body|paragraph|layout|font)\b/i.test(clause);
+}
+
 export function deriveContract(input: PlanningInput): Contract {
   let result = empty(input.allowed), fullRead: boolean | undefined;
   const messages = [input.goal, ...(input.adjustments || [])].filter(Boolean);
@@ -40,7 +57,7 @@ export function deriveContract(input: PlanningInput): Contract {
     const positiveDoc = clauses.some(clause => create.test(clause) && doc.test(clause) && !pres.test(clause)) || /(?:保存|创建|生成|写|导出|create|write|save|export)[^。\n]{0,40}\b(?:DOCX|Markdown|MD|TXT)\b/i.test(positive);
     const pages = [...positive.matchAll(/([0-9]{1,3}|[一二三四五六七八九十两]{1,3})\s*(?:页|张|片|slides?)/gi)].at(-1);
     const requestedPages = pages ? number(pages[1]) : 0;
-    const bodyAction = positive.split(/[，,。；;、\n]/).some(part => { const action = part.replace(/最终修订|最新修订|修订版/g, '资料版本'); return edit.test(action) && (!metadata.test(action) || body.test(action)) && (/这份|该份|上述|刚才|已有|现有|原文|文档|报告|幻灯片|第\s*\d+\s*(?:页|段|章)|existing|current|this|selected/i.test(action) || body.test(action)); });
+    const bodyAction = positive.split(/[，,。；;、\n]/).some(part => { const action = part.replace(/最终修订|最新修订|修订版/g, '资料版本'); return !specificationOnly(action) && edit.test(action) && (!metadata.test(action) || body.test(action)) && (/这份|该份|上述|刚才|已有|现有|原文|文档|报告|幻灯片|第\s*\d+\s*(?:页|段|章)|existing|current|this|selected/i.test(action) || body.test(action)); });
     const readingReference = /读取|阅读|读完|回读|检查|核对|分析|解读|\b(?:read|inspect|check|review|analy[sz]e)\b/i.test(positive);
     const makePresentation = clauses.some(clause => pres.test(clause) && (create.test(clause) || /做\s*(?:一[份套个]|[0-9一二三四五六七八九十两]+\s*页)?\s*(?:PPT|幻灯片|演示文稿)|^\s*(?:请|帮我|给我)?\s*(?:要|来)[^。；;\n]{0,20}(?:PPT|幻灯片|演示文稿)/i.test(clause)));
     const positivePres = pres.test(positive) && (makePresentation || requestedPages > 0 && !bodyAction && !readingReference);
@@ -51,11 +68,12 @@ export function deriveContract(input: PlanningInput): Contract {
     if (positiveDoc || replaceDoc) { result.RequiresDocument = true; result.ChatOnly = false; }
     if (positivePres || replacePres) { result.RequiresPresentation = true; result.ChatOnly = false; }
     if (positivePres && positiveDoc && !/并|同时|以及|另外|和|、|\band\b|\balso\b/i.test(positive) && !replaceDoc) result.RequiresDocument = false;
-    const negatives = raw.match(/(?:不要|无需|无须|不必|不用|不需要|别|勿|do\s+not|don['’]t|without)[^。；;，,\n]*/gi) || [];
+    const negatives = (raw.match(/(?:不要|无需|无须|不必|不用|不需要|别|勿|do\s+not|don['’]t|without)[^。；;，,\n]*/gi) || [])
+      .filter(part => !(/重新|重复|再次|重做|\bagain\b/i.test(part) && /保留|已有|现有|原有|\b(?:existing|keep|retain)\b/i.test(raw)));
     if (!positiveDoc && negatives.some(part => /创建|新建|生成|保存|输出|写|导出|做|create|save|write|export|produce/i.test(part) && /文档|报告|文件|文章|总结|摘要|document|report|file|article|summary/i.test(part))) result.RequiresDocument = false;
     if (!positivePres && negatives.some(part => /做|创建|新建|生成|制作|写|输出|导出|make|create|build|generate/i.test(part) && pres.test(part))) result.RequiresPresentation = false;
-    if (/取消(?:这份|那份|当前的|旧的|新)?\s*(?:报告|文档|文件)|(?:cancel|drop)\s+(?:the\s+)?(?:report|document|file)/i.test(raw) && !positiveDoc) result.RequiresDocument = false;
-    if (/取消(?:这份|那份|当前的|旧的|新)?\s*(?:PPT|幻灯片|演示文稿)|(?:cancel|drop)\s+(?:the\s+)?deck/i.test(raw) && !positivePres) result.RequiresPresentation = false;
+    if (!positiveDoc && (cancelledKind(raw, doc) || /(?:只|仅)保留[^。；;\n]{0,16}(?:PPT|幻灯片|演示文稿)/i.test(raw))) result.RequiresDocument = false;
+    if (!positivePres && (cancelledKind(raw, pres) || /(?:只|仅)保留[^。；;\n]{0,16}(?:报告|文档)/i.test(raw))) result.RequiresPresentation = false;
     if (requestedPages > 0 && requestedPages <= 100 && (positivePres || result.RequiresPresentation && !bodyAction && !readingReference)) result.RequestedPages = requestedPages;
     if (/取消.{0,6}页数|不限页数|不限制页数/.test(raw)) result.RequestedPages = 0;
     const lengthEvents: { index: number; min: number; max: number; unit: number }[] = [];
@@ -84,7 +102,12 @@ export function deriveContract(input: PlanningInput): Contract {
     if (fullEvents.length) fullRead = fullEvents.sort((a, b) => a.index - b.index).at(-1)!.value;
     if (bodyAction && !((positiveDoc || positivePres) && !body.test(positive))) { result.RequiresTargetedEdit = true; result.ChatOnly = false; }
     else if (/先不要修改|暂不修改|不要修改|别修改|无需修改|只分析|仅分析|先分析|只阅读|只读不写|分析即可/.test(raw)) result.RequiresTargetedEdit = false;
-    if ((chat.test(raw) || noFile.test(raw)) && !edit.test(positive) && !create.test(positive)) { result.ChatOnly = true; result.RequiresDocument = false; result.RequiresPresentation = false; result.RequiresTargetedEdit = false; result.RequestedPages = 0; result.RequiredDocumentFormat = ''; }
+    if ((chat.test(raw) || noFile.test(raw)) && !bodyAction && !positiveDoc && !positivePres) {
+      result.ChatOnly = true; result.RequiresDocument = false; result.RequiresPresentation = false; result.RequiresTargetedEdit = false;
+      if (!chat.test(raw) || !length) { result.MinLength = 0; result.MaxLength = 0; result.LengthUnit = 0; }
+    }
+    if (!result.RequiresPresentation) result.RequestedPages = 0;
+    if (!result.RequiresDocument && !result.ChatOnly) { result.MinLength = 0; result.MaxLength = 0; result.LengthUnit = 0; result.RequiredCount = 1; }
     const hint = [...raw.matchAll(/最终修订|最终版|最新版|旧版|新版|原版|第\s*\d+\s*版/g)].at(-1); if (hint && result.RequiresTargetedEdit) result.EditVersionHint = hint[0];
   }
   result.RequiresFullSourceCoverage = fullRead ?? ((result.RequiresDocument || result.RequiresPresentation) && input.scope.mode === 'selected' && input.allowed.length > 0 && source.test(messages.join('\n')) && !sample.test(messages.join('\n')));
@@ -126,7 +149,8 @@ export function planTask(input: PlanningInput) {
   if (input.environment.workspace && (isCode || browser)) { add(groups.workspace.filter(name => !readonly || !['run_command', 'apply_workspace_patch', 'start_command_job', 'cancel_command_job'].includes(name))); if (!pureCode) add(readonly ? ['read_text_file'] : ['read_text_file', 'write_text_file']); if (browser) add(readonly ? ['read_browser'] : ['open_browser', 'read_browser', 'browser_action']); }
   if (isDeck && !readonly && input.environment.rendering && /渲染|视觉|预览|高质量|render|visual|preview/i.test(text)) selected.add('render_presentation');
   add(readonly ? ['list_mcp_tools'] : ['list_mcp_tools', 'mcp_call']);
-  if (contract.ChatOnly) for (const name of ['create_document', 'create_presentation', 'copy_presentation']) selected.delete(name);
+  if (!contract.RequiresDocument && !contract.RequiresTargetedEdit) selected.delete('create_document');
+  if (!contract.RequiresPresentation && !contract.RequiresTargetedEdit) for (const name of ['create_presentation', 'copy_presentation']) selected.delete(name);
   let tools = input.explicitTools ? [...new Set(input.explicitTools)] : [...selected]; tools = tools.filter(name => input.environment.tools.includes(name));
   return { version: 1, language: 'TypeScript', contract, tools, context, coding: pureCode, renderingRequired: renderingRequired([input.goal, ...input.adjustments]) };
 }

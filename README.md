@@ -8,7 +8,7 @@
 
 [下载已发布版本](https://github.com/ChenShoukang/kok/releases) · [帮助中心](docs/help/index.md) · [使用指南](docs/GUIDE.md) · [English](README.en.md) · [格式支持](docs/FORMATS.md)
 
-**v0.16.0 Preview** 将任务需求、工具选择、交付验收和成果检查主体迁到 TypeScript，继续复用 Deep Agents / LangGraph。支持同一会话接续代码任务、区分来源解析与实际阅读，并检查已保存文档和 PPT；PPT 可按对象修复位置和字号，在本机安装且空闲的 PowerPoint 中批准渲染实际页面。[本版验证与边界](docs/VALIDATION_0.16.0.md) · [主体迁移与后续步骤](docs/AGENT_TYPESCRIPT_0.16.0.md) · [详细规划](docs/PROJECT_PLAN_0.14_TO_1.0.md) · [版本记录](CHANGELOG.md)
+**v0.16.1 Preview** 改善任务中途调整与重复执行：取消报告或 PPT 后清除对应交付要求，检查已有文件不再强制生成新成果；被新要求取消且从未执行的提案不阻塞当前交付。重复相同读取时先提醒，持续无进展则保留成果并结束本轮；执行追踪补充模型、工具、确认等待与首个保存成果耗时。[本版验证与边界](docs/VALIDATION_0.16.1.md) · [TypeScript 主体与后续迁移](docs/AGENT_TYPESCRIPT_0.16.0.md) · [近期执行计划](docs/NEXT_PHASE_0.16_TO_0.18.md) · [版本记录](CHANGELOG.md)
 
 ![kok 我的作品，使用内置原创示例](docs/screenshots/works-zh.png)
 
@@ -38,7 +38,7 @@
 
 ## 开始使用
 
-1. 从 [Releases](https://github.com/ChenShoukang/kok/releases) 下载 `kok-0.16.0-win-x64.zip` 和 SHA-256 校验文件。完整解压后运行 `kok.exe`。
+1. 从 [Releases](https://github.com/ChenShoukang/kok/releases) 下载 `kok-0.16.1-win-x64.zip` 和 SHA-256 校验文件。完整解压后运行 `kok.exe`。
 2. 首次选择**纯净模式**或**智能模式**；不配置 AI 也能使用本地基础功能。
 3. 从「我的作品」点「用示例试一次」写一份笔记，或在资料库导入自己的文件。
 
@@ -65,7 +65,7 @@
 
 ## 文档与开发
 
-[帮助中心](docs/help/index.md) · [使用指南](docs/GUIDE.md) · [文档目录](docs/README.md) · [创作项目](docs/CREATIVE_PROJECTS_0.10.10.md) · [版本与局部改稿](docs/VERSIONS_0.10.11.md) · [无界面 CLI](docs/AGENT_CLI_0.10.7.md) · [扩展包](docs/PLUGINS_0.10.8.md) · [验证记录](docs/VALIDATION_0.16.0.md) · [路线图](ROADMAP.md)
+[帮助中心](docs/help/index.md) · [使用指南](docs/GUIDE.md) · [文档目录](docs/README.md) · [创作项目](docs/CREATIVE_PROJECTS_0.10.10.md) · [版本与局部改稿](docs/VERSIONS_0.10.11.md) · [无界面 CLI](docs/AGENT_CLI_0.10.7.md) · [扩展包](docs/PLUGINS_0.10.8.md) · [验证记录](docs/VALIDATION_0.16.1.md) · [路线图](ROADMAP.md)
 
 ```powershell
 npm ci --omit=optional

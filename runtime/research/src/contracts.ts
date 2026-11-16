@@ -29,6 +29,7 @@ export const StepSchema = z.object({
   taskId: text.min(1).max(128), endpoint: text.optional(), apiKey: text.optional(), model: text.optional(),
   contextTokens: z.number().int().min(8000).max(128000).optional(), outputLimit: z.number().int().positive().optional(),
   systemPrompt: text, tools: z.array(NativeToolSchema).max(256),
+  resumeTools: z.array(NativeToolSchema).max(256).optional(),
   messages: z.array(z.object({ role: z.enum(['user', 'assistant']), content: text })),
   resume: z.record(text, z.unknown()).optional(), snapshot: SnapshotSchema.nullish(),
   taskSpec: TaskSpecSchema.optional(), assets: z.array(AssetSchema).optional(), capabilities: z.array(CapabilitySchema).optional(),
