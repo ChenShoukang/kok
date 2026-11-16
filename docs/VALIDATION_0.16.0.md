@@ -23,7 +23,9 @@ TypeScript / 运行时 **32 项通过**，包括需求随消息顺序改变、�
 
 此前调试用去 30 次请求，包含检查点达到上限、读取已有 PPT 被误判为新建要求，以及报告计数不明确导致达到额度的未完成任务；这些不计为成功样例。修复后最终验收使用 8 次请求，原总账累计 **38 次**，未重置。临时 API 配置及备份已清除，密钥不进入仓库或安装包。
 
-发布门禁要求 Windows 2022 / 2025 双构建及实际发行 ZIP 的 **31 组桌面集成检查**通过，覆盖研究、执行基础、同会话代码接续、本地网页、成果检查、恢复、MCP、文档和 PPT 等流程。官方构建、完整包测试和发布状态见 [GitHub Actions](https://github.com/ChenShoukang/kok/actions/workflows/build.yml)；发布仅在这些门禁通过后进行。
+本地候选 ZIP 的 **31 组桌面集成检查全部通过**，覆盖研究、执行基础、同会话代码接续、本地网页、成果检查、恢复、MCP、文档和 PPT 等流程。随后修复了干净 Windows 环境的 SQLite 解压准备，使用 Framework ZIP 接口及实际 x64 DLL 校验；在 PowerShell 5 / 7、含空格与中文的空缓存目录中提取通过，DLL 与固定版本原件字节一致。
+
+发布门禁还要求 Windows 2022 / 2025 双构建及官方实际发行 ZIP 的完整 31 组检查通过。官方构建、完整包测试和发布状态见 [GitHub Actions](https://github.com/ChenShoukang/kok/actions/workflows/build.yml)；发布仅在这些门禁通过后进行。
 
 ## 使用与质量边界
 
