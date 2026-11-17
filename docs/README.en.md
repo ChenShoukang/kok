@@ -8,6 +8,7 @@ Start with the [user guide](GUIDE.en.md). Find help by the task you want to comp
 
 | Goal | Read |
 | --- | --- |
+| v0.16.3 typed requirement refinements, provenance and recovery | [Implementation, validation and limits (Chinese)](VALIDATION_0.16.3.md) |
 | Reuse established open-source projects and replace custom mechanisms | [Reuse-first implementation plan (Chinese)](OPEN_SOURCE_REUSE_PLAN.md) |
 | v0.16.2 quotation evidence, report sections and complete-task evaluation | [Implementation, validation and limits (Chinese)](VALIDATION_0.16.2.md) |
 | v0.16.1 requirement changes, repeated reads and execution diagnostics | [Implementation, validation and limits (Chinese)](VALIDATION_0.16.1.md) |

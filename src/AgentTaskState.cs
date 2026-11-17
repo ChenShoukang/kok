@@ -20,6 +20,8 @@ namespace kok {
         public List<string> continuationFiles=new List<string>();
         public int artifactReviewVersion;
         public int businessVersion;
+        public int requirementsVersion;
+        public List<Dictionary<string,object>> requirementUpdates=new List<Dictionary<string,object>>();
         public AgentBusinessEnvironment businessEnvironment;
         internal string businessCacheKey;
         internal AgentBusinessPlan businessCache;
@@ -31,13 +33,15 @@ namespace kok {
         public string childTaskId;public string id,providerId,turnId,tool,why,status="queued",error="",errorKind="",resultEventId,stamp,externalStamp;
         public Dictionary<string,object> args=new Dictionary<string,object>(),result;
         public List<AgentChange> changes;public string beforeText,afterText,documentSignature,documentBeforeStamp;
-        public int sequence,attempt,steering;public bool retryable,hostGenerated;public Dictionary<string,string> sources=new Dictionary<string,string>();
+        public int sequence,attempt,steering,requirementRevision;public bool retryable,hostGenerated;public Dictionary<string,string> sources=new Dictionary<string,string>();
     }
     public class AgentDialogue {public string id,role,text,turnId,requestId;public int sequence;public bool meta,interrupted;public List<string> sourceIds=new List<string>();}
     public class AgentInput {public string id,text,mode,status="queued",created,turnId;}
     public class AgentTaskState {
         public string id,status="created",error="",errorKind="",phase="",protocol="json";public bool retryable,needsModel=true,modelDone,estimated,cancelRequested,lastUsageEstimated,contextRecovered,compactRequested;public string compactInstructions="";
         public AgentTaskOptions options;public int sequence,requests,round,inputTokens,outputTokens,cachedTokens,repairs,steerVersion,replySteering,lastUsageSequence,lastUsageInputTokens,lastUsageOutputTokens;
+        public int RequirementRevision {get{return options==null||options.requirementUpdates==null?0:options.requirementUpdates.Count;}}
+        public int SpecRevision {get{return steerVersion+RequirementRevision;}}
         public double cost;public List<AgentCall> calls=new List<AgentCall>();public List<AgentDialogue> dialogue=new List<AgentDialogue>();public List<string> adjustments=new List<string>();public List<AgentInput> inputs=new List<AgentInput>();
         public List<AgentInput> QueuedInputs {get{return inputs.Where(i=>i.status=="queued").ToList();}}
         public List<AgentInput> RestoredInputs {get{return inputs.Where(i=>i.status=="restored").ToList();}}
@@ -87,7 +91,7 @@ namespace kok {
         // Only a host-cancelled proposal that never started can leave the current outcome.
         // A user rejection, executed/uncertain write or caller-supplied status is not supersession.
         public bool SupersededProposal(AgentCall call){
-            return options!=null&&options.businessVersion>=1&&call!=null&&call.status=="skipped"&&call.error=="superseded"&&call.steering<steerVersion
+            return options!=null&&options.businessVersion>=1&&call!=null&&call.status=="skipped"&&call.error=="superseded"&&(call.steering<steerVersion||options.requirementsVersion>=1&&call.requirementRevision<RequirementRevision)
                 &&!events.Any(e=>e.kind=="tool.started"&&Get<string>(e.data,"callId")==call.id)
                 &&events.Any(e=>e.kind=="tool.skipped"&&Get<string>(e.data,"callId")==call.id&&Get<string>(e.data,"reason")=="superseded");
         }
@@ -171,6 +175,13 @@ namespace kok {
                 case "task.protocol":protocol=Get<string>(d,"protocol");break;
                 case "request.repair":repairs++;break;
                 case "task.adjusted":AddInstruction(e);break;
+                case "task.requirements_updated":{
+                    options.requirementUpdates.Add(Get<Dictionary<string,object>>(d,"proposal"));options.businessCache=null;options.businessCacheKey=null;
+                    InvalidateReview("requirements");grants.Clear();
+                    options.delivery=AgentDeliveryRules.Derive(options,adjustments);
+                    if(options.allowedToolsAuto)options.allowedTools=AgentToolProfiles.ForTask(options,null,adjustments);
+                    break;
+                }
                 // Native queue reduction: the engine emits task.adjusted for every consumed item too, so
                 // plan/verification invalidation, grant revocation and transcript insertion keep one path.
                 case "input.queued":inputs.Add(new AgentInput{id=Get<string>(d,"inputId"),text=Get<string>(d,"text"),mode=Get<string>(d,"mode"),created=e.created});break;

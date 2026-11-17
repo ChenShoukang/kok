@@ -4,10 +4,11 @@ import { reviewArtifact, reviewSources, type ReviewInput } from './business/revi
 import { codeProblem, deliveryProblem, type CodeEvidence, type DeliveryEvidence } from './business/completion.ts';
 import { progressDecision } from './business/progress.ts';
 import { reviewEvidence } from './business/evidence.ts';
+import { preserveAcceptance } from './business/requirements.ts';
 
 // Pure, local business rules. No model client, network, user plugins, file IO or secrets are loaded here.
 const lines = createInterface({ input: process.stdin, crlfDelay: Infinity });
-lines.once('line', line => {
+lines.once('line', async line => {
   let response: unknown;
   try {
     if (line.length > 16_000_000) throw new Error('Business input exceeds size limit');
@@ -16,6 +17,17 @@ lines.once('line', line => {
     let value: unknown;
     switch (message.operation) {
       case 'plan': value = planTask(message.input as PlanningInput); break;
+      case 'requirements_update': {
+        try {
+          const { validateRequirementUpdate } = await import('./business/requirement-schema.ts');
+          const input = message.input as { plan: PlanningInput; revision: number; proposal: unknown };
+          const proposal = validateRequirementUpdate(input.plan, input.revision, input.proposal), before = planTask(input.plan);
+          const plan = planTask({ ...input.plan, requirementUpdates: [...(input.plan.requirementUpdates || []), proposal] });
+          preserveAcceptance(before.contract, plan.contract);
+          value = { valid: true, proposal, plan, changed: JSON.stringify(before.contract) !== JSON.stringify(plan.contract) };
+        } catch (error) { value = { valid: false, error: (error instanceof Error ? error.message : 'Invalid requirement update').slice(0, 1200) }; }
+        break;
+      }
       case 'review_artifact': value = reviewArtifact(message.input as ReviewInput); break;
       case 'review_sources': value = reviewSources(message.input as Parameters<typeof reviewSources>[0]); break;
       case 'code_problem': value = codeProblem(message.input as CodeEvidence); break;

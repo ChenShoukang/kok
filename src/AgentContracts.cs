@@ -6,14 +6,15 @@ using System.Collections.Generic;
 
 namespace kok {
     public sealed class AgentTaskSpec {
-        public int version=1,revision;public string goal="",projectId="";
+        public int version=1,revision,userRevision,requirementsVersion;public string goal="",projectId="";
+        public bool? verifyCode;
         public string[] capabilities=new string[0];public AgentSpecScope scope=new AgentSpecScope();
         public List<AgentSpecDeliverable> deliverables=new List<AgentSpecDeliverable>();
         public bool fullRead,targetedEdit;public AgentSpecLimits limits=new AgentSpecLimits();
     }
     public sealed class AgentSpecScope {public string mode="all",collection="";public string[] ids=new string[0];}
     public sealed class AgentSpecLimits {public int requests,contextTokens;}
-    public sealed class AgentSpecDeliverable {public string kind="",format="",unit="none";public int pages,minLength,maxLength;}
+    public sealed class AgentSpecDeliverable {public string kind="",format="",unit="none";public int pages,minLength,maxLength;public List<string> sections=new List<string>();}
     public sealed class AgentAssetRef {public string id="",role="source",kind="",format="",version="",originCallId="",projectId="",path="";public bool available;}
     public sealed class AgentCapabilityInfo {public string id="",title="",status="planned",reason="";public string[] tools=new string[0];}
 
@@ -35,14 +36,16 @@ namespace kok {
             string intent=(o.goal??"")+"\n"+String.Join("\n",task.adjustments);
             var caps=intents.Where(pair=>Regex.IsMatch(intent,pair.Value,RegexOptions.IgnoreCase|RegexOptions.CultureInvariant)).Select(pair=>pair.Key).ToList();
             if(o.workspaceVersion==1&&!caps.Contains("coding"))caps.Add("coding");
+            if(current.requiresDocumentArtifact&&!caps.Contains("document"))caps.Add("document");
+            if(current.requiresPresentationArtifact&&!caps.Contains("presentation"))caps.Add("presentation");
             if(!String.IsNullOrEmpty(o.continuationDomain)&&!caps.Contains(o.continuationDomain))caps.Add(o.continuationDomain);
             if(caps.Count==0||current.requiresFullSourceCoverage)caps.Insert(0,"research");
-            var spec=new AgentTaskSpec{revision=task.steerVersion,goal=o.goal??"",projectId=o.projectId??"",capabilities=caps.Distinct().ToArray(),
+            var spec=new AgentTaskSpec{revision=task.SpecRevision,userRevision=task.adjustments.Count,requirementsVersion=o.requirementsVersion,verifyCode=o.businessVersion>=1?AgentBusinessCore.Plan(o,task.adjustments).contract.CodeVerification:null,goal=o.goal??"",projectId=o.projectId??"",capabilities=caps.Distinct().ToArray(),
                 scope=new AgentSpecScope{mode=o.scope==null?"all":o.scope.mode,collection=o.scope==null?"":o.scope.collection??"",ids=o.scope!=null&&o.scope.mode=="selected"?task.TaskScope.ToArray():task.calls.Where(c=>c.status=="done"&&c.sources!=null).SelectMany(c=>c.sources.Keys).Concat(task.createdArtifactIds).Distinct().Take(200).ToArray()},
                 fullRead=current.requiresFullSourceCoverage,targetedEdit=current.requiresTargetedEdit,
                 limits=new AgentSpecLimits{requests=o.requestLimit,contextTokens=o.contextTokens}};
             string unit=current.lengthUnit.ToString().ToLowerInvariant();
-            if(current.requiresDocumentArtifact)spec.deliverables.Add(new AgentSpecDeliverable{kind="document",format=current.requiredFormat??"",minLength=current.minChars,maxLength=current.maxChars,unit=unit});
+            if(current.requiresDocumentArtifact)spec.deliverables.Add(new AgentSpecDeliverable{kind="document",format=current.requiredFormat??"",minLength=current.minChars,maxLength=current.maxChars,unit=unit,sections=current.requiredSections});
             if(current.requiresPresentationArtifact)spec.deliverables.Add(new AgentSpecDeliverable{kind="presentation",format="PPTX",pages=current.requestedPages});
             if(current.chatOnly||spec.deliverables.Count==0)spec.deliverables.Add(new AgentSpecDeliverable{kind=current.requiresTargetedEdit?"edit":"answer",minLength=current.minChars,maxLength=current.maxChars,unit=unit});
             return spec;

@@ -4,7 +4,7 @@
 
 ## Next direction: a general-purpose personal agent
 
-Updated 2026-11-17. **v0.16.0** is the TypeScript business-migration baseline; C# retains the desktop and native adapters. **v0.16.1** hardened requirement changes, repeated reads and diagnostics; **v0.16.2** adds quotation evidence, required-section checks and complete-task model evaluation. See [scope and remaining limits](docs/VALIDATION_0.16.2.md).
+Updated 2026-11-17. **v0.16.0** is the TypeScript business-migration baseline; C# retains the desktop and native adapters. **v0.16.1** hardened requirement changes, repeated reads and diagnostics; **v0.16.2** added quotation evidence, required-section checks and complete-task evaluation; **v0.16.3** implements the first OS01 typed refinements through existing LangChain/Zod APIs and prevents framework scratch files from substituting for deliverables. See [results and limits](docs/VALIDATION_0.16.3.md) and the [open-source reuse route](docs/OPEN_SOURCE_REUSE_PLAN.md) for further requirement handling and kernel comparisons.
 
 The scope includes research, documents, presentations, spreadsheets, photos, video, music, coding and computer use. **The next priority is completing tasks and delivering usable results.** Extend one kernel with professional executors, verified outputs and editable projects.
 

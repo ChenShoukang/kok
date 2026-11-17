@@ -57,12 +57,15 @@ namespace kok {
             options.businessCache=null;options.businessCacheKey=null;
             Plan(options,null);
         }
-        internal static AgentBusinessPlan Plan(AgentTaskOptions options,IEnumerable<string> adjustments){
+        internal static object Input(AgentTaskOptions options,IEnumerable<string> adjustments){
             if(options.businessEnvironment==null)throw new AgentFailure("runtime","Agent 业务环境尚未初始化。",false);
-            var input=new{goal=options.goal??"",adjustments=(adjustments??Enumerable.Empty<string>()).ToArray(),allowed=options.allowed??new List<string>(),intent=options.intent,approvalPolicy=options.approvalPolicy,scope=options.scope,
+            return new{goal=options.goal??"",adjustments=(adjustments??Enumerable.Empty<string>()).ToArray(),allowed=options.allowed??new List<string>(),intent=options.intent,approvalPolicy=options.approvalPolicy,scope=options.scope,requirementsVersion=options.requirementsVersion,requirementUpdates=options.requirementUpdates,
                 features=new{memory=options.useMemory,delegation=options.allowDelegation,sandbox=options.allowSandbox,search=!String.IsNullOrEmpty(options.searchEndpoint),parent=!String.IsNullOrEmpty(options.parentTaskId)},
                 explicitTools=options.allowedToolsAuto?null:options.allowedTools,environment=options.businessEnvironment,
                 context=new{taskId=options.continuationTaskId??"",goal=options.continuationGoal??"",domain=options.continuationDomain??"",workspaceId=options.continuationWorkspaceId??"",files=options.continuationFiles??new List<string>()}};
+        }
+        internal static AgentBusinessPlan Plan(AgentTaskOptions options,IEnumerable<string> adjustments){
+            var input=Input(options,adjustments);
             string key=Library.Json.Serialize(input);
             lock(options){
                 if(options.businessCache!=null&&options.businessCacheKey==key)return options.businessCache;

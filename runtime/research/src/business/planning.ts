@@ -1,11 +1,13 @@
+import { applyRequirementChanges, verificationDirective, type RequirementUpdate } from './requirements.ts';
 export interface Contract {
   RequiresDocument: boolean; RequiresPresentation: boolean; RequiredDocumentFormat: string;
   RequestedPages: number; MinLength: number; MaxLength: number; LengthUnit: number;
   RequiresTargetedEdit: boolean; EditVersionHint: string; RequiresFullSourceCoverage: boolean;
-  RequiredSourceIds: string[]; RequiredSections: string[]; ChatOnly: boolean; RequiredCount: number;
+  RequiredSourceIds: string[]; RequiredSections: string[]; ChatOnly: boolean; RequiredCount: number; CodeVerification: boolean | null;
 }
 export interface PlanningInput {
   goal: string; adjustments: string[]; allowed: string[]; intent: string; approvalPolicy: string;
+  requirementsVersion?: number; requirementUpdates?: RequirementUpdate[];
   scope: { mode: string; ids?: string[] }; explicitTools: string[] | null;
   features: { memory: boolean; delegation: boolean; sandbox: boolean; search: boolean; parent: boolean };
   environment: { workspace: boolean; rendering: boolean; tools: string[]; selectedFormats: string[] };
@@ -29,7 +31,7 @@ const number = (value: string): number => {
   const digits: Record<string, number> = { 零: 0, 一: 1, 二: 2, 两: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9 };
   const parts = value.split('十'); return parts.length === 2 ? (parts[0] ? digits[parts[0]] || 0 : 1) * 10 + (digits[parts[1]] || 0) : digits[value] || 0;
 };
-const empty = (allowed: string[]): Contract => ({ RequiresDocument: false, RequiresPresentation: false, RequiredDocumentFormat: '', RequestedPages: 0, MinLength: 0, MaxLength: 0, LengthUnit: 0, RequiresTargetedEdit: false, EditVersionHint: '', RequiresFullSourceCoverage: false, RequiredSourceIds: [...allowed], RequiredSections: [], ChatOnly: false, RequiredCount: 1 });
+const empty = (allowed: string[]): Contract => ({ RequiresDocument: false, RequiresPresentation: false, RequiredDocumentFormat: '', RequestedPages: 0, MinLength: 0, MaxLength: 0, LengthUnit: 0, RequiresTargetedEdit: false, EditVersionHint: '', RequiresFullSourceCoverage: false, RequiredSourceIds: [...allowed], RequiredSections: [], ChatOnly: false, RequiredCount: 1, CodeVerification: null });
 
 // Only explicit section lists become acceptance criteria. Ordinary lists of facts are not headings.
 function sectionEvents(raw: string) {
@@ -65,8 +67,9 @@ function specificationOnly(clause: string): boolean {
 
 export function deriveContract(input: PlanningInput): Contract {
   let result = empty(input.allowed), fullRead: boolean | undefined;
-  const messages = [input.goal, ...(input.adjustments || [])].filter(Boolean);
-  for (const raw of messages) {
+  const messages = [input.goal, ...(input.adjustments || [])];
+  for (const [messageIndex, raw] of messages.entries()) {
+    if (!raw) continue;
     const positive = actions(raw).replace(/(?:已经|刚刚|刚才|上次|之前|此前|已)(?:生成|创建|制作|保存|导出|写好|写完)|\b(?:already|previously)\s+(?:created|generated|saved|exported|written)\b/gi, reference => ' '.repeat(reference.length));
     const clauses = positive.split(/[，,。；;\n]|并|同时|以及|另外|\band\b|\balso\b/i);
     const positiveDoc = clauses.some(clause => create.test(clause) && doc.test(clause) && !pres.test(clause)) || /(?:保存|创建|生成|写|导出|create|write|save|export)[^。\n]{0,40}\b(?:DOCX|Markdown|MD|TXT)\b/i.test(positive);
@@ -126,6 +129,10 @@ export function deriveContract(input: PlanningInput): Contract {
     if (!result.RequiresDocument) result.RequiredSections = [];
     if (!result.RequiresDocument && !result.ChatOnly) { result.MinLength = 0; result.MaxLength = 0; result.LengthUnit = 0; result.RequiredCount = 1; }
     const hint = [...raw.matchAll(/最终修订|最终版|最新版|旧版|新版|原版|第\s*\d+\s*版/g)].at(-1); if (hint && result.RequiresTargetedEdit) result.EditVersionHint = hint[0];
+    const verification = verificationDirective(raw, positive); if (input.requirementsVersion === 1 && verification !== undefined) result.CodeVerification = verification;
+    if (input.requirementsVersion === 1) for (const update of input.requirementUpdates || []) if (update.userRevision === messageIndex) {
+      result = applyRequirementChanges(result, update.changes); if (update.changes.fullRead !== undefined) fullRead = update.changes.fullRead;
+    }
   }
   result.RequiresFullSourceCoverage = fullRead ?? ((result.RequiresDocument || result.RequiresPresentation) && input.scope.mode === 'selected' && input.allowed.length > 0 && source.test(messages.join('\n')) && !sample.test(messages.join('\n')));
   if (!result.RequiresDocument) { result.RequiredDocumentFormat = ''; result.RequiredSections = []; } if (!result.RequiresTargetedEdit) result.EditVersionHint = '';

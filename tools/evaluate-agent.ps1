@@ -1,11 +1,12 @@
-param([switch]$Live,[string]$ApiKeyFile,[string]$Model='deepseek-flash',[string]$Round='round-1',[string[]]$Cases=@(),[ValidateSet('reliability','quality')][string]$Suite='reliability',[int]$MaxRequests=150,[string]$OutputDirectory)
+param([switch]$Live,[string]$ApiKeyFile,[string]$Model='deepseek-flash',[string]$Round='round-1',[string[]]$Cases=@(),[ValidateSet('reliability','quality','requirements')][string]$Suite='reliability',[int]$MaxRequests=150,[string]$OutputDirectory)
 $ErrorActionPreference='Stop'
 $projectRoot=Split-Path $PSScriptRoot -Parent
 if(-not $Live){throw 'This evaluator makes paid DeepSeek requests. Pass -Live with an authorized local API key file.'}
 if(-not $ApiKeyFile -or -not(Test-Path -LiteralPath $ApiKeyFile -PathType Leaf)){throw 'A readable local DeepSeek API key file is required.'}
 if($Round -notmatch '^[a-zA-Z0-9][a-zA-Z0-9-]{0,60}$' -or $Model -notmatch '^[a-zA-Z0-9][a-zA-Z0-9._-]{0,80}$' -or $MaxRequests -lt 1 -or $MaxRequests -gt 150){throw 'Invalid evaluation settings.'}
 if($Cases | Where-Object {$_ -notmatch '^[a-z][a-z0-9-]{0,60}$'}){throw 'Invalid case selector.'}
-$outputRoot=if($OutputDirectory){[IO.Path]::GetFullPath($OutputDirectory)}else{Join-Path $projectRoot 'test-output\evaluation-v0162'}
+$evaluationVersion=(Get-Content -LiteralPath (Join-Path $projectRoot 'package.json') -Raw|ConvertFrom-Json).version.Replace('.','')
+$outputRoot=if($OutputDirectory){[IO.Path]::GetFullPath($OutputDirectory)}else{Join-Path $projectRoot ('test-output\evaluation-v'+$evaluationVersion)}
 $testBoundary=[IO.Path]::GetFullPath((Join-Path $projectRoot 'test-output')).TrimEnd('\')+'\'
 if(-not($outputRoot+'\').StartsWith($testBoundary,[StringComparison]::OrdinalIgnoreCase)){throw 'Evaluation evidence must stay inside the project test-output directory.'}
 $roundRoot=Join-Path $outputRoot $Round
@@ -27,7 +28,7 @@ try{
     $fingerprint=& node (Join-Path $projectRoot 'tools\source-fingerprint.cjs') --runtime $app
     if($LASTEXITCODE -ne 0){throw 'Unable to fingerprint this evaluation candidate.'}
     [IO.File]::WriteAllText((Join-Path $roundRoot 'fingerprint.json'),($fingerprint -join "`n"),(New-Object Text.UTF8Encoding($false)))
-    $samples=if($Suite -eq 'quality'){'tests\fixtures\quality-v0162.json'}else{'tests\fixtures\reliability-v0161.json'}
+    $samples=if($Suite -eq 'requirements'){'tests\fixtures\requirements-v0163.json'}elseif($Suite -eq 'quality'){'tests\fixtures\quality-v0162.json'}else{'tests\fixtures\reliability-v0161.json'}
     & $target $roundRoot $app (Join-Path $projectRoot $samples) ([IO.Path]::GetFullPath($ApiKeyFile)) $Model ($Cases -join ',')
     if($LASTEXITCODE -ne 0){throw 'Some evaluation cases did not meet their checks. All attempts and requests remain in the evidence and cumulative ledger.'}
 }finally{foreach($name in $previous.Keys){[Environment]::SetEnvironmentVariable($name,$previous[$name],'Process')}}

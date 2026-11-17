@@ -1,5 +1,5 @@
 export interface ProgressFact { tool: string; fingerprint: string; current: boolean; turnId: string }
-const stableReads = new Set(['read_items', 'read_document', 'read_presentation', 'read_workspace_file', 'inspect_document', 'inspect_presentation', 'review_sources', 'recall_result']);
+const stableReads = new Set(['read_items', 'read_document', 'read_presentation', 'read_workspace_file', 'inspect_document', 'inspect_presentation', 'review_sources', 'recall_result', 'update_task_spec']);
 
 // Job polling, browser observations and writes are deliberately outside this guard.
 // Any intervening different result, offset, file version, tool or user revision resets the run.

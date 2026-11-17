@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Save to kok / 保存到 kok",
-  "version": "0.16.2",
+  "version": "0.16.3",
   "description": "Save selected text, readable pages and images into a paired local kok library.",
   "permissions": [
     "activeTab",
