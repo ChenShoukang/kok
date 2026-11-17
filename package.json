@@ -63,7 +63,7 @@
     "quickjs-emscripten-core": "0.32.0"
   },
   "release": {
-    "publish": true,
+    "publish": false,
     "channel": "preview"
   },
   "overrides": {
