@@ -95,7 +95,11 @@ namespace kok {
                 if(automatic){var permit=AgentApproval.Find(State,call);if(permit==null||!CanAutoApprove(call))return;Emit("approval.used",new{grantId=permit.id,callId=call.id});}
                 if(grant)Emit("approval.granted",new{grant=new AgentApprovalGrant{id=Guid.NewGuid().ToString("N"),tool=call.tool,ids=AgentApproval.Targets(call),steering=State.steerVersion}});
                 if(Blocked(call)){Signal();return;}
-                journal.CheckCapacity(State.id,600000);Emit("tool.started",new{callId=call.id});
+                lock(gate){
+                    RetireObsoleteRequirementProposals();
+                    if(call.status!="pending")throw new InvalidOperationException("交付要求已更新，请继续任务并重新确认操作。");
+                    journal.CheckCapacity(State.id,600000);Emit("tool.started",new{callId=call.id});
+                }
                 bool applied=false;try{var receipt=await write(State,call,Cancellation.Token);var result=Patched(call,receipt.result);Emit("tool.completed",new{callId=call.id,result,stamp=receipt.stamp});applied=true;}
                 catch(OperationCanceledException){throw;}catch(Exception error){RevokeGrants("failed");var f=AgentFailure.Classify(error);var toolFailure=error as AgentToolFailure;Emit("tool.failed",new{callId=call.id,kind=f.kind,message=f.Message,retryable=false,result=toolFailure==null?null:toolFailure.result});}
                 if(applied&&State.options.kernelVersion>=3&&read!=null){
@@ -133,6 +137,7 @@ namespace kok {
         async Task Run(){
             try{
                 validate();Emit("task.running",new{});
+                lock(gate)RetireObsoleteRequirementProposals();
                 // A restarted write may have committed before its receipt reached the journal. Never replay it.
                 if(State.calls.Any(c=>c.status=="running"&&!AgentRules.ReadTools.Contains(c.tool)))throw new AgentFailure("uncertain_write","上次写入结果尚未核对，不能自动重放。请核对改动后重新规划。");
                 foreach(var c in State.calls.Where(c=>c.status=="running"||c.status=="failed"&&c.retryable).ToList())Emit("tool.retry",new{callId=c.id});

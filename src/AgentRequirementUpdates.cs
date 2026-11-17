@@ -15,11 +15,17 @@ namespace kok {
         };}
     }
     public sealed partial class AgentTaskEngine {
+        // Call while holding gate. The requirement event can survive a crash before these auxiliary
+        // skips; recovery reconciles them without repeating the accepted update or a started write.
+        void RetireObsoleteRequirementProposals(){
+            if(State.options.requirementsVersion!=1)return;
+            foreach(var pending in State.calls.Where(c=>c.status=="pending"&&c.requirementRevision<State.RequirementRevision&&!State.events.Any(e=>e.kind=="tool.started"&&AgentTaskState.Get<string>(e.data,"callId")==c.id)).ToList())Emit("tool.skipped",new{callId=pending.id,reason="superseded"});
+        }
         internal Dictionary<string,object> UpdateTaskSpec(AgentCall call){lock(gate){
             var task=State;var options=task.options;
             if(options.requirementsVersion!=1||!AgentService.ResearchRuntime(task))throw new AgentFailure("policy","该任务版本不支持结构化需求变更。");
             var applied=task.events.LastOrDefault(e=>e.kind=="task.requirements_updated"&&AgentTaskState.Get<string>(e.data,"callId")==call.id);
-            if(applied!=null)return AgentTaskState.Get<Dictionary<string,object>>(applied.data,"result");
+            if(applied!=null){RetireObsoleteRequirementProposals();return AgentTaskState.Get<Dictionary<string,object>>(applied.data,"result");}
             if(call.steering!=task.steerVersion)throw new AgentFailure("superseded","用户要求已更新，请使用当前版本。");
             var validation=AgentBusinessCore.Invoke<Dictionary<string,object>>("requirements_update",new{plan=AgentBusinessCore.Input(options,task.adjustments),revision=task.SpecRevision,proposal=call.args});
             if(!AgentTaskState.Get<bool>(validation,"valid"))throw new AgentFailure("validation",ModuleContext.Text(validation,"error"));
@@ -30,7 +36,7 @@ namespace kok {
             if(changed){
                 Emit("task.requirements_updated",new{callId=call.id,proposal=proposal,result=result});
                 // A sibling write was prepared against the old requirements; it has not run or been approved.
-                foreach(var pending in task.calls.Where(c=>c.status=="pending"&&c.requirementRevision<task.RequirementRevision&&!task.events.Any(e=>e.kind=="tool.started"&&AgentTaskState.Get<string>(e.data,"callId")==c.id)).ToList())Emit("tool.skipped",new{callId=pending.id,reason="superseded"});
+                RetireObsoleteRequirementProposals();
             }
             return result;
         }}

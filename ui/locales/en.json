@@ -2,6 +2,7 @@
   "messages": {
     "更新交付要求": "Update delivery requirements",
     "交付要求已更新": "Delivery requirements updated",
+    "交付要求已更新，请继续任务并重新确认操作。": "Delivery requirements changed. Continue the task and review the operation again.",
     "当前要求无需重复更新": "Current requirements already include this",
     "模型按本轮用户原话整理，实际成果仍需核对。": "Interpreted by the model from the current user message; actual artifacts still need verification.",
     "必需章节": "Required sections",
