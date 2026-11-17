@@ -24,6 +24,7 @@ namespace kok {
                     var source=normalLibrary.DocumentSource(id);readable=!source.recovery;
                     length=AgentDeliveryRules.MeasuredLength(source.text,requirement.lengthUnit);
                     readBack=AgentReading.ReadBackSufficient(normalLibrary,task,id,after,8000,out detail);
+                    if(task.options.artifactReviewVersion>=2){var review=AgentArtifactReview.Document(normalLibrary,id,requirement.requiredSections,requirement);errors=review.findings.Where(finding=>finding.severity=="error").Select(finding=>finding.message).ToList();}
                 }
             }catch(Exception error){readable=false;detail=AgentWorkspaceTools.Redact(error.Message);}
             return new{id=id,name=item==null?id:item.name,exists=exists,owned=owned,format=item==null?"":item.ext,length=length,pages=pages,readable=readable,readBack=readBack,detail=detail,qualityErrors=errors};

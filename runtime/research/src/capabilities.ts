@@ -5,7 +5,7 @@ const groups: Record<string, string[]> = {
   coding: ['workspace_info', 'search_workspace', 'read_workspace_file', 'git_workspace', 'apply_workspace_patch', 'list_folder', 'read_text_file', 'write_text_file', 'run_command', 'start_command_job', 'read_command_job', 'wait_command_job', 'cancel_command_job'],
   computer: ['open_browser', 'read_browser', 'browser_action'],
   document: ['inspect_document', 'create_document', 'replace_document_text'],
-  research: ['review_sources', 'search_library', 'search_items', 'read_items', 'read_document', 'web_search', 'fetch_url', 'index_pdf_pages'],
+  research: ['review_claims', 'review_sources', 'search_library', 'search_items', 'read_items', 'read_document', 'web_search', 'fetch_url', 'index_pdf_pages'],
   video: ['index_video_frames'],
 };
 const guidance: Record<string, string> = {

@@ -1,0 +1,18 @@
+{
+  "format": "kok.agent.quality.samples",
+  "version": 1,
+  "scope": "Additional development cases, counted separately from the unchanged 18-scenario reliability manifest. Uses the evaluator's same recorded source fixtures. Literal file/structure/evidence checks, no semantic or visual certification.",
+  "cases": [
+    {
+      "id": "quality-report-sections",
+      "group": "quality",
+      "goal": "完整阅读全部资料，为社区活动负责人创建400-600汉字DOCX报告。报告应包含目标、流程、风险和待确认事项。用当前最终修订，不编造未知信息。保存后核对关键结论的精确原文、来源版本与实际阅读记录，并确认关键结论原句确实位于已保存报告中，缺项只局部修复。"
+    },
+    {
+      "id": "quality-sections-change",
+      "group": "quality",
+      "goal": "根据资料创建400-600汉字DOCX报告，章节要求：目标、流程、风险和待确认事项。保存前阅读资料，保留不确定信息。",
+      "adjustments": ["章节要求改为背景、结论、待确认事项，长度和DOCX格式保持。保存后核对关键结论原句在成品中的位置以及对应的真实已读原文。"]
+    }
+  ]
+}

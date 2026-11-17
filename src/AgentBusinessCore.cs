@@ -25,6 +25,7 @@ namespace kok {
     // Transport and native permission facts only. Business decisions run in the bundled TypeScript core.
     internal static class AgentBusinessCore {
         static string application=AppDomain.CurrentDomain.BaseDirectory;
+        internal static string NodePath {get{return Path.Combine(application,"runtime","research","node.exe");}}
         internal static void Configure(string directory){if(!String.IsNullOrWhiteSpace(directory))application=Path.GetFullPath(directory);}
         internal static bool Available(string directory){return File.Exists(Path.Combine(directory,"runtime","research","business.mjs"))&&File.Exists(Path.Combine(directory,"runtime","research","node.exe"));}
         internal static T Invoke<T>(string operation,object input){

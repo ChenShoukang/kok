@@ -3,6 +3,7 @@ import { planTask, type PlanningInput } from './business/planning.ts';
 import { reviewArtifact, reviewSources, type ReviewInput } from './business/review.ts';
 import { codeProblem, deliveryProblem, type CodeEvidence, type DeliveryEvidence } from './business/completion.ts';
 import { progressDecision } from './business/progress.ts';
+import { reviewEvidence } from './business/evidence.ts';
 
 // Pure, local business rules. No model client, network, user plugins, file IO or secrets are loaded here.
 const lines = createInterface({ input: process.stdin, crlfDelay: Infinity });
@@ -20,6 +21,7 @@ lines.once('line', line => {
       case 'code_problem': value = codeProblem(message.input as CodeEvidence); break;
       case 'delivery_problem': value = deliveryProblem(message.input as DeliveryEvidence); break;
       case 'progress': value = progressDecision(message.input as Parameters<typeof progressDecision>[0]); break;
+      case 'review_claims': value = reviewEvidence(message.input as Parameters<typeof reviewEvidence>[0]); break;
       default: throw new Error('Unknown business operation');
     }
     response = { version: 1, ok: true, value };

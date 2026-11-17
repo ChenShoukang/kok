@@ -1,0 +1,356 @@
+{
+  "format": "kok.agent.live-evaluation.summary",
+  "version": 1,
+  "appVersion": "0.16.2",
+  "model": "deepseek-flash",
+  "date": "2026-11-17",
+  "scope": "Development material; actual SDK, host approvals and saved-file checks. Literal, structural and preservation checks, not blinded semantic or visual evaluation. Targeted reruns do not make a second full round.",
+  "cumulativeRequestLimit": 150,
+  "cumulativeRequests": 132,
+  "initialRound": {
+    "deliveries": 15,
+    "rawPassed": 12,
+    "regradedPassed": 13,
+    "boundaryPassed": 3,
+    "boundaryTotal": 3,
+    "regradeReason": "research-paging: only whitespace in 8 万元 caused the literal fact check to fail; actual full source coverage and final values passed, original results retained",
+    "interruptedCodeCases": "Initial approval guard allowed only the exact bundled Node and sum.ts; subsequently accepted the discovered Node and version checks."
+  },
+  "sourceAndSavedArtifactVersionChecks": "quality-2: both passed independent original-source ID plus final saved artifact signature check",
+  "rounds": [
+    {
+      "name": "round-1",
+      "sampleSha256": "974dbabf084c81f6ba94b6ceb3aa2f132af269914637324f2034c44e7b530be5",
+      "runtimeSha256": "486dcd09c47263878596697d5d6bafd0df5430b5758b786394ce4ebdaf771b0e",
+      "sourceSha256": "b2f0ecfb92186ed41bcef49263d550d256459df4b9c85da523100601a817c8b1",
+      "requests": 79.0,
+      "cases": [
+        {
+          "id": "research-conflict",
+          "group": "research",
+          "passed": true,
+          "status": "completed",
+          "requests": 3,
+          "seconds": 9.88,
+          "pages": 0,
+          "hanzi": 0,
+          "failedChecks": []
+        },
+        {
+          "id": "research-paging",
+          "group": "research",
+          "passed": false,
+          "status": "completed",
+          "requests": 5,
+          "seconds": 85.24,
+          "pages": 0,
+          "hanzi": 0,
+          "failedChecks": [
+            "finalFacts"
+          ]
+        },
+        {
+          "id": "research-unknown",
+          "group": "research",
+          "passed": true,
+          "status": "completed",
+          "requests": 3,
+          "seconds": 8.1,
+          "pages": 0,
+          "hanzi": 0,
+          "failedChecks": []
+        },
+        {
+          "id": "document-length",
+          "group": "document",
+          "passed": true,
+          "status": "completed",
+          "requests": 4,
+          "seconds": 21.75,
+          "pages": 0,
+          "hanzi": 459,
+          "failedChecks": []
+        },
+        {
+          "id": "document-inspect-only",
+          "group": "document",
+          "passed": true,
+          "status": "completed",
+          "requests": 4,
+          "seconds": 45.58,
+          "pages": 0,
+          "hanzi": 0,
+          "failedChecks": []
+        },
+        {
+          "id": "document-format",
+          "group": "document",
+          "passed": true,
+          "status": "completed",
+          "requests": 4,
+          "seconds": 17.19,
+          "pages": 0,
+          "hanzi": 716,
+          "failedChecks": []
+        },
+        {
+          "id": "presentation-create",
+          "group": "presentation",
+          "passed": true,
+          "status": "completed",
+          "requests": 4,
+          "seconds": 24.6,
+          "pages": 8,
+          "hanzi": 0,
+          "failedChecks": []
+        },
+        {
+          "id": "presentation-pages",
+          "group": "presentation",
+          "passed": true,
+          "status": "completed",
+          "requests": 6,
+          "seconds": 37.84,
+          "pages": 6,
+          "hanzi": 0,
+          "failedChecks": []
+        },
+        {
+          "id": "presentation-target",
+          "group": "presentation",
+          "passed": true,
+          "status": "completed",
+          "requests": 4,
+          "seconds": 12.01,
+          "pages": 0,
+          "hanzi": 0,
+          "failedChecks": []
+        },
+        {
+          "id": "code-fix",
+          "group": "coding",
+          "passed": true,
+          "status": "completed",
+          "requests": 7,
+          "seconds": 13.62,
+          "pages": 0,
+          "hanzi": 0,
+          "failedChecks": []
+        },
+        {
+          "id": "code-steering",
+          "group": "coding",
+          "passed": false,
+          "status": "waiting",
+          "requests": 9,
+          "seconds": 17.24,
+          "pages": 0,
+          "hanzi": 0,
+          "failedChecks": [
+            "runnerCompleted"
+          ]
+        },
+        {
+          "id": "code-continuation",
+          "group": "coding",
+          "passed": false,
+          "status": "running",
+          "requests": 2,
+          "seconds": 6.89,
+          "pages": 0,
+          "hanzi": 0,
+          "failedChecks": [
+            "runnerCompleted"
+          ]
+        },
+        {
+          "id": "combined-cancel-report",
+          "group": "combined",
+          "passed": true,
+          "status": "completed",
+          "requests": 8,
+          "seconds": 44.77,
+          "pages": 8,
+          "hanzi": 0,
+          "failedChecks": []
+        },
+        {
+          "id": "combined-switch-report",
+          "group": "combined",
+          "passed": true,
+          "status": "completed",
+          "requests": 4,
+          "seconds": 35.27,
+          "pages": 0,
+          "hanzi": 543,
+          "failedChecks": []
+        },
+        {
+          "id": "combined-chat",
+          "group": "combined",
+          "passed": true,
+          "status": "completed",
+          "requests": 4,
+          "seconds": 37.91,
+          "pages": 0,
+          "hanzi": 0,
+          "failedChecks": []
+        },
+        {
+          "id": "boundary-budget",
+          "group": "boundary",
+          "passed": true,
+          "status": "limited",
+          "requests": 1,
+          "seconds": 2.5,
+          "pages": 0,
+          "hanzi": 0,
+          "failedChecks": []
+        },
+        {
+          "id": "boundary-stop",
+          "group": "boundary",
+          "passed": true,
+          "status": "stopped",
+          "requests": 3,
+          "seconds": 22.04,
+          "pages": 0,
+          "hanzi": 0,
+          "failedChecks": []
+        },
+        {
+          "id": "boundary-component",
+          "group": "boundary",
+          "passed": true,
+          "status": "completed",
+          "requests": 4,
+          "seconds": 23,
+          "pages": 0,
+          "hanzi": 0,
+          "failedChecks": []
+        }
+      ]
+    },
+    {
+      "name": "targeted-code-2",
+      "sampleSha256": "974dbabf084c81f6ba94b6ceb3aa2f132af269914637324f2034c44e7b530be5",
+      "runtimeSha256": "ccee5ebc870e86faefad6399c015aea65596db11178f1a24ebc12e2821cff5b6",
+      "sourceSha256": "d3519014ae5db9d6166417f04b836181828887899685fda9ad90ca65fb3a03e8",
+      "requests": 18.0,
+      "cases": [
+        {
+          "id": "code-steering",
+          "group": "coding",
+          "passed": true,
+          "status": "completed",
+          "requests": 9,
+          "seconds": 20.44,
+          "pages": 0,
+          "hanzi": 0,
+          "failedChecks": []
+        },
+        {
+          "id": "code-continuation",
+          "group": "coding",
+          "passed": false,
+          "status": "limited",
+          "requests": 9,
+          "seconds": 33.06,
+          "pages": 0,
+          "hanzi": 0,
+          "failedChecks": [
+            "terminalExpected",
+            "hostDeliveryAccepted",
+            "actualSuccessfulTest"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "quality-1",
+      "sampleSha256": "6ccf8bbdab525d41d131b59f8092497d92a5bd7c61e51a04f285081bf6bd0d91",
+      "runtimeSha256": "ccee5ebc870e86faefad6399c015aea65596db11178f1a24ebc12e2821cff5b6",
+      "sourceSha256": "ca37c1b29e9f3a5e54ae5c820ba493dad4492a4742529a73d2941983fcf98f7d",
+      "requests": 13.0,
+      "cases": [
+        {
+          "id": "quality-report-sections",
+          "group": "quality",
+          "passed": false,
+          "status": "completed",
+          "requests": 6,
+          "seconds": 41.03,
+          "pages": 0,
+          "hanzi": 556,
+          "failedChecks": [
+            "savedClaimAnchoredToReadSource"
+          ]
+        },
+        {
+          "id": "quality-sections-change",
+          "group": "quality",
+          "passed": false,
+          "status": "completed",
+          "requests": 7,
+          "seconds": 45.64,
+          "pages": 0,
+          "hanzi": 575,
+          "failedChecks": [
+            "currentRequiredSections"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "quality-2",
+      "sampleSha256": "6ccf8bbdab525d41d131b59f8092497d92a5bd7c61e51a04f285081bf6bd0d91",
+      "runtimeSha256": "98975addcc4a21c6a4e5fb3132b918895c411e60ed504b83afe553d03d1f7342",
+      "sourceSha256": "6e9f3dd32480fc7fe9da85062397e7f59b0cc3a281b28f74042a083a69c7fc20",
+      "requests": 13.0,
+      "cases": [
+        {
+          "id": "quality-report-sections",
+          "group": "quality",
+          "passed": true,
+          "status": "completed",
+          "requests": 6,
+          "seconds": 46.63,
+          "pages": 0,
+          "hanzi": 568,
+          "failedChecks": []
+        },
+        {
+          "id": "quality-sections-change",
+          "group": "quality",
+          "passed": true,
+          "status": "completed",
+          "requests": 7,
+          "seconds": 50.42,
+          "pages": 0,
+          "hanzi": 463,
+          "failedChecks": []
+        }
+      ]
+    },
+    {
+      "name": "targeted-code-3",
+      "sampleSha256": "974dbabf084c81f6ba94b6ceb3aa2f132af269914637324f2034c44e7b530be5",
+      "runtimeSha256": "98975addcc4a21c6a4e5fb3132b918895c411e60ed504b83afe553d03d1f7342",
+      "sourceSha256": "e0f5d753e6b2bfbae39dad6a64782fa51d1892ef76bd1f22c0254ae541d5ba40",
+      "requests": 9.0,
+      "cases": [
+        {
+          "id": "code-continuation",
+          "group": "coding",
+          "passed": true,
+          "status": "completed",
+          "requests": 9,
+          "seconds": 24.97,
+          "pages": 0,
+          "hanzi": 0,
+          "failedChecks": []
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,82 @@
+# kok：开源复用优先的实施路线
+
+更新：2026-11-17。本文把“优先复用成熟实现”落实到选型、代码边界和下一批任务。调研结论与已接入能力分别列出；候选项目不等于已经安装，也不依据项目热度宣称效率最高。
+
+## 当前判断
+
+用户提出的方向应成为开发原则。kok 已经复用了 Deep Agents / LangGraph、PptxGenJS、QuickJS、SQLite 等组件，但有些上层规则仍过度自建。v0.16.2 真实任务中，章节列表被后面的格式要求污染、代码提示重述旧要求，以及模型拿报告作为报告的依据，都说明不能靠持续堆正则与提示词补丁形成长期架构。
+
+本版修复这些已复现的问题，并保留真实失败记录；下一批优先改造这些机制。产品需要自己掌握资料库、用户授权、成品归属和版本验收，但模型循环、会话队列、上下文压缩、文档解析和通用生产工具，应先考察现有实现。
+
+## 已在使用什么
+
+| 部分 | 当前复用 | kok 仍负责什么 |
+| --- | --- | --- |
+| Agent 模型循环 | `deepagents` 1.16.4、LangGraph 1.7.3，TypeScript SDK | 原生工具端口、资料范围、审批、实际写入、账本和交付判断 |
+| PPT 导出 | PptxGenJS 4.0.1，已保留 MIT 许可 | 当前编辑器与对象模型、原文件定点编辑、来源和版本 |
+| Agent 界面 | 指定历史提交的 Pi web-ui 布局/交互适配 | kok 的 DOM、资料库和桌面交互；没有接入 Pi 运行时 |
+| 媒体工具 | 可选 FFmpeg/FFprobe 子进程 | 安装验证、作业、工程约束与输出回读；媒体生产完整工作流尚未完成 |
+
+已接入依赖以锁文件和 [第三方说明](../THIRD_PARTY_NOTICES.md)为准。不要把“界面参考 Pi”写成“Pi 已是 Agent 内核”。
+
+## 重点参考与复用决定
+
+| 项目 | 已检查的能力 | 对 kok 的决定 | 接入边界 |
+| --- | --- | --- | --- |
+| [Deep Agents JS](https://github.com/langchain-ai/deepagentsjs) | 中间件、backend、基于 backend 的历史卸载与压缩 | 保持当前主运行时，优先使用其公开扩展点；与现有自写压缩/回执逻辑逐项比较 | 历史和覆盖证据继续由宿主保留；不能让摘要变成读过全文的证明 |
+| [Pi SDK](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/sdk.md) | TypeScript 嵌入、会话分支、当前提示、steering/follow-up 队列和压缩 | 代码代理与会话效率的首选对照；做相同原生工具端口的候选原型 | 比较代理执行部分，保留同一审批、额度、源码版本及成品检查；暂不把第二套运行时塞进默认包 |
+| [OpenHands Software Agent SDK](https://github.com/OpenHands/software-agent-sdk) | Python 运行核心、工具/工作区/事件、Agent Server 和 TypeScript 客户端 | 参考代码任务的动作—观察与验证闭环；复杂代码工作可评估独立执行端 | TypeScript 客户端不代表全部核心是 TypeScript；先测服务和部署成本，再决定是否接入 |
+| [Docling 文档模型](https://github.com/docling-project/docling/blob/main/docs/concepts/docling_document.md) | 章节、表格、图片、页/位置及 provenance 的统一表达 | 用作复杂 PDF/文档解析候选，避免长期自己写版面和表格识别 | 按需 Python worker，输出统一资产/块/来源 JSON；常规文本仍走现有快速通道，安装体积、模型与许可分别评估 |
+| [PptxGenJS](https://github.com/gitbrent/PptxGenJS) | 现成文字、表格、图片、图表与模板输出 | 扩展已接入的导出能力，优先复用图表/母版 API，减少手写 OOXML 生成 | 现有原文件局部编辑仍保留；高质量还需数据校验、渲染与视觉评审，库本身不保证设计水平 |
+| [Playwright MCP](https://github.com/microsoft/playwright-mcp) 与其指向的 [CLI](https://github.com/microsoft/playwright-cli) | 结构化网页观察；官方 README 比较 MCP 和 CLI 工作方式 | 远程浏览器与代码网页验证先比较现成适配层，不继续自建整套浏览器驱动 | 代码场景优先试 CLI 的上下文开销；通用网页操作评估 MCP。两者均需映射 kok 的任务范围和授权 |
+
+[OpenCode 权限实现](https://github.com/anomalyco/opencode/blob/dev/packages/core/src/permission.ts)也作为机制对照，关注请求、回复、会话归属和规则表达。不会直接把其他产品的授权语义覆盖到 kok；复制代码前核对目标提交许可。
+
+以上为本轮阅读上游源码/文档后的项目判断，并非已完成的速度排名。调研时读取的仓库提交如下，实施前再锁定实际采用版本：
+
+| 仓库 | 2026-11-17 调研提交 |
+| --- | --- |
+| langchain-ai/deepagentsjs | `67d83a25ac29617c46e71a0e1f749f12a1dc53f6` |
+| earendil-works/pi | `1f6f319bb28992a40b99c147fffb23b65a23129d` |
+| OpenHands/software-agent-sdk | `0275e714df62d3dd66eb51d518dd1da953ec2c16` |
+| docling-project/docling | `c79492e711d69b204fd07a21bf18b84257119f15` |
+| gitbrent/PptxGenJS | `3c9ec1b687c174952166f6a34b5e87ebf69fa469` |
+| microsoft/playwright-mcp | `a62ea28698af6d9bc89438bcec50c63377cef957` |
+
+## 下一批具体改造
+
+### OS01：用有类型的需求变更减少关键词解析（P0）
+
+先对照 [LangChain 的结构化输出](https://github.com/langchain-ai/docs/blob/main/src/oss/langchain/structured-output.mdx)，复用已有 Zod / JSON Schema 和 tool strategy 能力。产物是明确的 `TaskSpec` 变更：交付物类型、格式、长度单位、章节、来源范围、编辑范围及验证要求。
+
+初始需求与后续修改应统一应用有类型的增量；确定无歧义的短指令仍可走本地规则。复杂语义在已有模型回合内提出增量，经宿主校验，再变成新的要求版本，不为每个简单任务固定多花一次规划请求。模型不能借变更扩大资料范围、授权或额度。
+
+当前 `business/planning.ts` 和旧 C# `AgentTaskIntent.cs` 是适配/逐步收敛的入口，后续不再把新增正则当成主要架构。先覆盖“取消一类成果”“格式保持但栏目变更”“先不测试后要求测试”，再补未见表达和多轮组合。
+
+### OS02：用公开会话机制做执行和上下文对照（P0）
+
+以 Deep Agents 为默认实现，用 Pi SDK 做代码任务候选。复用同一宿主工具端口；模型、资料、请求上限和验证条件相同，至少跑一轮完整开发题、受影响重测和另一批保留素材。
+
+比较交付完成率、关键事实、修改范围、请求/重试、非缓存输入、墙钟时间和恢复行为。Pi 的分支与 steering 队列可作为参考，不能直接改 SDK 私有消息存储。若替换内核未形成可复现收益，就保留现有内核，采用验证有效的局部机制。
+
+### OS03：专业生产工具通过 worker 接入（P1）
+
+文档解析先试 Docling 的页/块与表格来源表达；PPT 数据与图表先扩展已有 PptxGenJS；视频/音频工程先依赖已验证的 FFmpeg/FFprobe 参数与作业。每项先交付一个端到端成品样例，再扩展通用入口。
+
+主业务继续 TypeScript。Python 可以用于有明显生态优势的解析、分析和媒体工具，不要求它取代主运行时。专业能力按需加载，分别记录冷启动、内存与安装大小，避免一次引入多个常驻服务。
+
+### OS04：建立替换与删除清单（P1）
+
+把现有实现按“已有成熟库可替换”“kok 的宿主适配”“旧任务兼容”“未实际使用”逐项标注。优先调查通用会话/压缩、重复格式解析、重复导出，以及已经由 TypeScript 接管的 C# 业务副本。
+
+旧原生任务仍可能依赖 C# 路径；不因存在 TypeScript 版本就直接删除。替换完成后先验证历史任务读取、接续和导出，再去除无调用实现。删除需要调用关系与迁移证据，不能只凭文件大小或语言偏好。
+
+## 开发流程的长期约束
+
+1. 新建通用机制前，先找一个已有依赖中的实现和一个独立开源对照；记录源码/文档链接及采用或放弃的理由。
+2. 优先直接使用库/SDK，其次薄适配，再考虑少量自建。确有 Windows、资料库或授权边界差异时保留宿主实现。
+3. 实际复制或引入组件时锁版本/提交，保留许可及来源；调研不等于接入，源码许可与模型/素材许可分别核对。
+4. 开源方案也必须跑 kok 的真实任务。保留失败、累计费用/请求及未改内容检查，不把第三方排行榜当成本项目成绩。
+5. 每次替换交付实现边界、兼容/回退办法和需要删除的旧路径；不用多个框架同时长期承担相同职责。
+
+长期范围仍见[总规划](PROJECT_PLAN_0.14_TO_1.0.md)，阶段验收见[近期执行计划](NEXT_PHASE_0.16_TO_0.18.md)。本路线改变后续实现方法，照片、视频、音乐、PPT、表格与电脑操作的目标继续保留。

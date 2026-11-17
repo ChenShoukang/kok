@@ -1,5 +1,6 @@
 export interface Finding { code: string; severity: string; message: string; page: number; shapeId: string }
 export interface Shape { id: string; kind: string; text: string; x: number; y: number; w: number; h: number; fontSize: number; rotation: number }
+export interface SectionCheck { title: string; status: 'present' | 'missing' | 'empty'; line: number; bodyCharacters: number }
 export interface ReviewInput {
   id: string; kind: 'document' | 'presentation'; fileVersion: string; text?: string; recovery?: boolean; sections?: string[];
   format?: string; measurements?: { hanzi: number; characters: number; words: number };
@@ -11,7 +12,7 @@ export function reviewArtifact(input: ReviewInput) {
     method: input.kind === 'document' ? 'saved-document-source' : 'saved-pptx-ooxml',
     status: '', scope: '', rendered: false, visualReviewed: false, truncated: false,
     errors: 0, warnings: 0, pages: 0, characters: 0, words: 0, measurements: input.measurements || null,
-    deliveryCheck: null as null | { unit: string; value: number; min: number; max: number; withinBounds: boolean; formatMatches: boolean }, headings: [] as string[], findings: [] as Finding[] };
+    deliveryCheck: null as null | { unit: string; value: number; min: number; max: number; withinBounds: boolean; formatMatches: boolean }, headings: [] as string[], sectionChecks: [] as SectionCheck[], findings: [] as Finding[] };
   const add = (code: string, message: string, severity = 'warning', page = 0, shapeId = '') => {
     severity === 'error' ? report.errors++ : report.warnings++;
     const finding = { code, severity, message, page, shapeId };
@@ -30,12 +31,38 @@ export function reviewArtifact(input: ReviewInput) {
     }
     report.words = (text.match(/[\p{L}\p{N}]+/gu) || []).length;
     report.scope = '结构与文本检查，不验证事实正确性或 DOCX 分页外观。';
-    report.headings = text.replaceAll('\r\n', '\n').split('\n').filter(line => /^\s*(?:#{1,6}\s+|第[一二三四五六七八九十\d]+[章节]|[一二三四五六七八九十]+[、.．])/.test(line)).map(line => line.trim()).slice(0, 40);
+    const sections = [...new Set(input.sections || [])], key = (value: string) => value.trim().replace(/[：:]$/, '').replace(/\s+/g, ' ').toLowerCase();
+    const lines = text.replaceAll('\r\n', '\n').replaceAll('\r', '\n').split('\n');
+    const headings: { title: string; line: number; level: number }[] = []; let fence = '', fenceLength = 0;
+    lines.forEach((raw, index) => {
+      const line = raw.trim(), fenced = line.match(/^(`{3,}|~{3,})/);
+      if (fenced) { if (!fence) { fence = fenced[1][0]; fenceLength = fenced[1].length; } else if (fenced[1][0] === fence && fenced[1].length >= fenceLength) fence = ''; return; }
+      if (fence) return;
+      const markdown = line.match(/^(#{1,6})\s+(.+?)(?:\s+#+)?$/);
+      const numbered = line.match(/^(?:第[一二三四五六七八九十百\d]+[章节]\s*|[一二三四五六七八九十百]+[、.．]\s*|[（(][一二三四五六七八九十百\d]+[）)]\s*|\d+(?:\.\d+)*[.．、]\s+)(.+)$/);
+      if (markdown) headings.push({ title: markdown[2].trim(), line: index, level: markdown[1].length });
+      else if (numbered) headings.push({ title: numbered[1].trim(), line: index, level: 2 });
+      // DOCX/TXT often have plain headings. A standalone exact required title is still required.
+      else if (sections.some(section => key(section) === key(line))) headings.push({ title: line, line: index, level: 2 });
+    });
+    report.headings = headings.slice(0, 40).map(heading => lines[heading.line].trim());
+    report.sectionChecks = sections.map(title => {
+      const matches = headings.filter(heading => key(heading.title) === key(title));
+      let bodyCharacters = 0, line = 0;
+      for (const heading of matches) {
+        const end = headings.find(next => next.line > heading.line && next.level <= heading.level)?.line ?? lines.length;
+        // Headings/markup alone do not supply a section body. Nested headings may contain real content.
+        const headingLines = new Set(headings.filter(next => next.line > heading.line && next.line < end).map(next => next.line));
+        const count = lines.slice(heading.line + 1, end).filter((_, offset) => !headingLines.has(heading.line + 1 + offset)).join('\n').replace(/[\s#*_`~\-]/g, '').length;
+        if (!line || count > bodyCharacters) { line = heading.line + 1; bodyCharacters = count; }
+      }
+      return { title, status: !matches.length ? 'missing' : bodyCharacters ? 'present' : 'empty', line, bodyCharacters };
+    });
     if (input.recovery) add('unsaved_recovery', '文档含有尚未写入成品文件的恢复内容。', 'error');
     if (!text.trim()) add('empty_document', '文档正文为空；若不是空白模板，请补充内容。');
     if (text.includes('\uFFFD')) add('replacement_character', '正文含有字符替换符，请检查编码或复制内容。');
     if ((text.match(/^\s*```+/gm) || []).length % 2) add('unclosed_code_fence', 'Markdown 代码围栏可能没有闭合。');
-    for (const section of input.sections || []) if (!text.toLowerCase().includes(section.toLowerCase())) add('missing_section', '未检出检查栏目：“' + section + '”。');
+    for (const section of report.sectionChecks) if (section.status !== 'present') add(section.status === 'missing' ? 'missing_section' : 'empty_section', (section.status === 'missing' ? '未检出独立章节：' : '章节缺少正文：') + '“' + section.title + '”。', 'error');
   } else {
     const deck = input.deck; if (!deck) throw new Error('Missing actual presentation snapshot');
     report.pages = deck.slides.length; report.scope = '实际 PPTX 的文字与几何检查；文字容量为估算，不等同于 Office 渲染或视觉审核。';
