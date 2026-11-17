@@ -1,6 +1,8 @@
 # kok changelog
 
-## v0.16.3 · Preview
+## v0.16.3 · In development, unpublished
+
+- Publication is on hold at the user's request. The main branch disables publishing while the [v0.16 completion checklist](docs/V016_COMPLETION_CHECKLIST.md) is implemented and verified.
 
 - OS01 first batch reuses existing LangChain tools and one Zod schema for optional typed refinements grounded in the latest user message, with independent revisions and no mandatory extra planner round.
 - The host validates quotation/revision/scope/bounds. Model updates cannot relax active delivery, length, section, reading or verification obligations, or change permissions, tools, scope or budgets. Explicit user steering is applied first.

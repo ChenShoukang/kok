@@ -8,6 +8,7 @@ namespace kok {
     public sealed class AgentTaskSpec {
         public int version=1,revision,userRevision,requirementsVersion;public string goal="",projectId="";
         public bool? verifyCode;
+        public string purpose="",audience="";
         public string[] capabilities=new string[0];public AgentSpecScope scope=new AgentSpecScope();
         public List<AgentSpecDeliverable> deliverables=new List<AgentSpecDeliverable>();
         public bool fullRead,targetedEdit;public AgentSpecLimits limits=new AgentSpecLimits();
@@ -40,7 +41,7 @@ namespace kok {
             if(current.requiresPresentationArtifact&&!caps.Contains("presentation"))caps.Add("presentation");
             if(!String.IsNullOrEmpty(o.continuationDomain)&&!caps.Contains(o.continuationDomain))caps.Add(o.continuationDomain);
             if(caps.Count==0||current.requiresFullSourceCoverage)caps.Insert(0,"research");
-            var spec=new AgentTaskSpec{revision=task.SpecRevision,userRevision=task.adjustments.Count,requirementsVersion=o.requirementsVersion,verifyCode=o.businessVersion>=1?AgentBusinessCore.Plan(o,task.adjustments).contract.CodeVerification:null,goal=o.goal??"",projectId=o.projectId??"",capabilities=caps.Distinct().ToArray(),
+            var spec=new AgentTaskSpec{revision=task.SpecRevision,userRevision=task.adjustments.Count,requirementsVersion=o.requirementsVersion,verifyCode=o.businessVersion>=1?AgentBusinessCore.Plan(o,task.adjustments).contract.CodeVerification:null,purpose=current.purpose,audience=current.audience,goal=o.goal??"",projectId=o.projectId??"",capabilities=caps.Distinct().ToArray(),
                 scope=new AgentSpecScope{mode=o.scope==null?"all":o.scope.mode,collection=o.scope==null?"":o.scope.collection??"",ids=o.scope!=null&&o.scope.mode=="selected"?task.TaskScope.ToArray():task.calls.Where(c=>c.status=="done"&&c.sources!=null).SelectMany(c=>c.sources.Keys).Concat(task.createdArtifactIds).Distinct().Take(200).ToArray()},
                 fullRead=current.requiresFullSourceCoverage,targetedEdit=current.requiresTargetedEdit,
                 limits=new AgentSpecLimits{requests=o.requestLimit,contextTokens=o.contextTokens}};

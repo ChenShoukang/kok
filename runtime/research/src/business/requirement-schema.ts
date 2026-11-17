@@ -3,6 +3,7 @@ import type { PlanningInput } from './planning.ts';
 
 // One public SDK schema shared by tool registration and independent native-boundary validation.
 export const RequirementChangesSchema = z.strictObject({
+  purpose: z.string().trim().min(1).max(200).optional(), audience: z.string().trim().min(1).max(200).optional(),
   document: z.strictObject({ required: z.boolean().optional(), format: z.enum(['', 'MD', 'TXT', 'DOCX']).optional(), sections: z.array(z.string().trim().min(1).max(60)).max(12).optional() }).optional(),
   presentation: z.strictObject({ required: z.boolean().optional(), pages: z.number().int().min(0).max(100).optional() }).optional(),
   length: z.strictObject({ min: z.number().int().min(0).max(380000), max: z.number().int().min(0).max(380000), unit: z.enum(['none', 'hanzi', 'characters', 'words']) }).refine(value => (!value.max || value.min <= value.max) && (value.unit !== 'none' || !value.min && !value.max), 'Invalid length range/unit').optional(),

@@ -3,7 +3,7 @@ export interface Contract {
   RequiresDocument: boolean; RequiresPresentation: boolean; RequiredDocumentFormat: string;
   RequestedPages: number; MinLength: number; MaxLength: number; LengthUnit: number;
   RequiresTargetedEdit: boolean; EditVersionHint: string; RequiresFullSourceCoverage: boolean;
-  RequiredSourceIds: string[]; RequiredSections: string[]; ChatOnly: boolean; RequiredCount: number; CodeVerification: boolean | null;
+  RequiredSourceIds: string[]; RequiredSections: string[]; ChatOnly: boolean; RequiredCount: number; CodeVerification: boolean | null; Purpose: string; Audience: string;
 }
 export interface PlanningInput {
   goal: string; adjustments: string[]; allowed: string[]; intent: string; approvalPolicy: string;
@@ -31,7 +31,7 @@ const number = (value: string): number => {
   const digits: Record<string, number> = { 零: 0, 一: 1, 二: 2, 两: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9 };
   const parts = value.split('十'); return parts.length === 2 ? (parts[0] ? digits[parts[0]] || 0 : 1) * 10 + (digits[parts[1]] || 0) : digits[value] || 0;
 };
-const empty = (allowed: string[]): Contract => ({ RequiresDocument: false, RequiresPresentation: false, RequiredDocumentFormat: '', RequestedPages: 0, MinLength: 0, MaxLength: 0, LengthUnit: 0, RequiresTargetedEdit: false, EditVersionHint: '', RequiresFullSourceCoverage: false, RequiredSourceIds: [...allowed], RequiredSections: [], ChatOnly: false, RequiredCount: 1, CodeVerification: null });
+const empty = (allowed: string[]): Contract => ({ RequiresDocument: false, RequiresPresentation: false, RequiredDocumentFormat: '', RequestedPages: 0, MinLength: 0, MaxLength: 0, LengthUnit: 0, RequiresTargetedEdit: false, EditVersionHint: '', RequiresFullSourceCoverage: false, RequiredSourceIds: [...allowed], RequiredSections: [], ChatOnly: false, RequiredCount: 1, CodeVerification: null, Purpose: '', Audience: '' });
 
 // Only explicit section lists become acceptance criteria. Ordinary lists of facts are not headings.
 function sectionEvents(raw: string) {
@@ -136,7 +136,7 @@ export function deriveContract(input: PlanningInput): Contract {
   }
   result.RequiresFullSourceCoverage = fullRead ?? ((result.RequiresDocument || result.RequiresPresentation) && input.scope.mode === 'selected' && input.allowed.length > 0 && source.test(messages.join('\n')) && !sample.test(messages.join('\n')));
   if (!result.RequiresDocument) { result.RequiredDocumentFormat = ''; result.RequiredSections = []; } if (!result.RequiresTargetedEdit) result.EditVersionHint = '';
-  if (input.intent === 'discuss' || input.approvalPolicy === 'read_only') result = { ...empty(input.allowed), RequiresFullSourceCoverage: result.RequiresFullSourceCoverage, RequiredSourceIds: result.RequiredSourceIds };
+  if (input.intent === 'discuss' || input.approvalPolicy === 'read_only') result = { ...empty(input.allowed), RequiresFullSourceCoverage: result.RequiresFullSourceCoverage, RequiredSourceIds: result.RequiredSourceIds, Purpose: result.Purpose, Audience: result.Audience };
   return result;
 }
 

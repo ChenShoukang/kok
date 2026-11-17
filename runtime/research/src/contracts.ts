@@ -13,6 +13,7 @@ export const CapabilitySchema = z.object({
 export const TaskSpecSchema = z.object({
   version: z.literal(1), revision: z.number().int().nonnegative(), goal: text.min(1),
   userRevision: z.number().int().nonnegative().optional(), requirementsVersion: z.number().int().nonnegative().optional(), verifyCode: z.boolean().nullable().optional(),
+  purpose: text.max(200).optional(), audience: text.max(200).optional(),
   projectId: text.default(''), capabilities: z.array(text),
   scope: z.object({ mode: z.enum(['all', 'selected', 'collection']), ids: z.array(text), collection: text.default('') }),
   deliverables: z.array(z.object({ kind: text, format: text, pages: z.number().int().nonnegative(), minLength: z.number().int().nonnegative(), maxLength: z.number().int().nonnegative(), unit: text, sections: z.array(text).optional() })),

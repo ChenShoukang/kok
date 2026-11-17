@@ -57,8 +57,19 @@ test('requirements: typed code verification is consumed by acceptance and later 
 test('requirements: repeated identical no-op updates are bounded by the existing progress guard',()=>{
  const calls=Array.from({length:3},(_,i)=>({tool:'update_task_spec',current:true,turnId:'turn-'+i,fingerprint:'same-noop'}));assert.equal(progressDecision({calls}).action,'stop');
 });
+
+test('requirements: purpose and audience retain their user revision and survive unrelated edits without relaxing delivery',()=>{
+ const goal='创建400-600汉字DOCX报告，面向活动负责人，用于决定是否启动。';
+ const u=update('面向活动负责人，用于决定是否启动',{purpose:'决定是否启动活动',audience:'活动负责人'});
+ const first=apply(input(goal),u).contract;assert.equal(first.Purpose,'决定是否启动活动');assert.equal(first.Audience,'活动负责人');assert.equal(first.RequiredDocumentFormat,'DOCX');assert.equal(first.MinLength,400);
+ const next=planTask(input(goal,{requirementUpdates:[u],adjustments:['改为TXT格式']})).contract;assert.equal(next.Purpose,first.Purpose);assert.equal(next.Audience,first.Audience);assert.equal(next.RequiredDocumentFormat,'TXT');
+ const changed=update('现在给志愿者看',{audience:'志愿者'},{baseRevision:2,userRevision:1});
+ const later=apply(input(goal,{requirementUpdates:[u],adjustments:['现在给志愿者看']}),changed).contract;assert.equal(later.Audience,'志愿者');assert.equal(later.Purpose,first.Purpose);assert.equal(later.MinLength,400);
+ assert.equal(apply(input(goal,{approvalPolicy:'read_only'}),u).contract.Audience,'活动负责人');
+ for(const changes of [{purpose:' '},{audience:'人'.repeat(201)},{purpose:'决策',semanticCertified:true}])assert.equal(RequirementUpdateSchema.safeParse(update(goal,changes)).success,false);
+});
 test('requirements: real LangChain tool adapter sends the Zod schema and resumes the same call across restart',async()=>{
- const requests=[],goal='交付可直接发送的文字材料。';const proposal=update(goal,{document:{required:true,format:'DOCX',sections:['研究范围','证据质量']}});
+ const requests=[],goal='交付可直接发送的文字材料，面向活动负责人，用于决定是否启动。';const proposal=update(goal,{document:{required:true,format:'DOCX',sections:['研究范围','证据质量']},purpose:'决定是否启动活动',audience:'活动负责人'});
  const server=createServer(async(req,res)=>{let raw='';for await(const part of req)raw+=part;requests.push(JSON.parse(raw));const first=requests.length===1;
   const delta=first?{role:'assistant',tool_calls:[{index:0,id:'spec-call',type:'function',function:{name:'update_task_spec',arguments:JSON.stringify(proposal)}}]}:{role:'assistant',content:'Current requirements acknowledged.'};
   res.writeHead(200,{'content-type':'text/event-stream'});res.end('data: '+JSON.stringify({id:'fixture',object:'chat.completion.chunk',model:'requirements-fixture',choices:[{index:0,delta,finish_reason:first?'tool_calls':'stop'}],usage:{prompt_tokens:100,completion_tokens:20}})+'\n\ndata: [DONE]\n\n');
@@ -68,7 +79,9 @@ test('requirements: real LangChain tool adapter sends the Zod schema and resumes
   const first=await new ResearchKernel().step(request);assert.equal(first.kind,'tools');assert.deepEqual(first.calls[0].args,proposal);
   const schema=requests[0].tools.find(t=>t.function.name==='update_task_spec').function.parameters;assert(schema.properties.baseRevision);assert(schema.properties.changes.properties.document.properties.sections);assert.equal(schema.additionalProperties,false);assert.equal(schema.properties.changes.additionalProperties,false);
   assert(!requests[0].tools.some(t=>['write_file','edit_file'].includes(t.function.name)),'Framework scratch writes cannot substitute for native deliverables');
-  const last=await new ResearchKernel({snapshot:first.snapshot}).step({...request,messages:[],resume:{[first.calls[0].interruptId]:{status:'done',result:{revision:1,requirements:apply(input(goal),proposal).contract}}}});
+  const last=await new ResearchKernel({snapshot:first.snapshot}).step({...request,taskSpec:{...request.taskSpec,revision:1,purpose:proposal.changes.purpose,audience:proposal.changes.audience},messages:[],resume:{[first.calls[0].interruptId]:{status:'done',result:{revision:1,requirements:apply(input(goal),proposal).contract}}}});
   assert.equal(last.kind,'final');assert.equal(requests.length,2);assert(requests[1].messages.some(m=>m.role==='tool'&&m.tool_call_id==='spec-call'));
+  const prompt=requests[1].messages.filter(m=>['system','developer'].includes(m.role)).map(m=>typeof m.content==='string'?m.content:m.content.filter(part=>part.type==='text').map(part=>part.text).join('\n')).join('\n');
+  assert.match(prompt,/决定是否启动活动/,'SDK receives the current purpose after host resume');assert.match(prompt,/活动负责人/,'SDK receives the current audience after host resume');
  }finally{server.closeAllConnections();await new Promise(resolve=>server.close(resolve));}
 });

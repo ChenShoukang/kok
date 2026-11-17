@@ -3,6 +3,8 @@ import type { RequirementUpdate } from './requirement-schema.ts';
 export type { RequirementUpdate } from './requirement-schema.ts';
 export function applyRequirementChanges(current: Contract, changes: RequirementUpdate['changes']): Contract {
   const result = { ...current, RequiredSourceIds: [...current.RequiredSourceIds], RequiredSections: [...current.RequiredSections] };
+  if (changes.purpose !== undefined) result.Purpose = changes.purpose;
+  if (changes.audience !== undefined) result.Audience = changes.audience;
   if (changes.document?.required !== undefined) { result.RequiresDocument = changes.document.required; if (changes.document.required) result.ChatOnly = false; }
   if (changes.document?.format !== undefined) result.RequiredDocumentFormat = changes.document.format;
   if (changes.document?.sections !== undefined) result.RequiredSections = [...new Set(changes.document.sections)];

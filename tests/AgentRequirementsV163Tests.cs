@@ -13,13 +13,13 @@ static class AgentRequirementsV163Tests {
     public static void Run(string root,Action<bool,string> check){
         var library=new Library(root);library.SetAppMode("smart",true);AgentBusinessCore.Configure(AppDomain.CurrentDomain.BaseDirectory);
         var source=library.CreateDocument("输入资料","md","","最终预算8万元，60人，不收集手机号。未知信息待确认。");string hash=AgentWorkspaceTools.Hash(File.ReadAllBytes(source.path));
-        string goal="根据资料创建400-600汉字DOCX报告。按研究范围和证据质量组织。";
+        string goal="根据资料创建400-600汉字DOCX报告。按研究范围和证据质量组织。供活动负责人决策使用，面向运营团队。";
         var options=new AgentTaskOptions{runtime="research",requirementsVersion=1,artifactReviewVersion=2,goal=goal,sessionId=Id(),allowedToolsAuto=true,allowed=new List<string>{source.id},scope=new AgentScope{mode="selected",ids=new List<string>{source.id}}};
         AgentBusinessCore.Prepare(options,library,AppDomain.CurrentDomain.BaseDirectory);var journal=new AgentJournal(root);var state=new AgentTaskState{id=Id(),options=options};var engine=Engine(state,journal);engine.Emit("task.created",new{options,protocol="tools"});
         var schema=AgentRules.Tools.Single(tool=>tool.Name=="update_task_spec");check(!schema.Write&&AgentCognition.IsControl(schema.Name),"v163: typed requirement changes use the existing native control boundary without granting file writes");
         var initial=AgentContracts.Task(state);check(initial.requirementsVersion==1&&initial.revision==0&&initial.userRevision==0,"v163: new TaskSpec exposes independent current spec and user revisions");
         var pending=new AgentCall{id=Id(),tool="create_presentation",status="pending",steering=0};engine.Emit("tool.proposed",new{call=pending});
-        var call=new AgentCall{id=Id(),tool="update_task_spec",steering=0,args=D(new{baseRevision=0,userRevision=0,basis="按研究范围和证据质量组织",changes=new{document=new{sections=new[]{"研究范围","证据质量"}}}})};engine.Emit("tool.proposed",new{call});engine.Emit("tool.started",new{callId=call.id});
+        var call=new AgentCall{id=Id(),tool="update_task_spec",steering=0,args=D(new{baseRevision=0,userRevision=0,basis=goal,changes=new{document=new{sections=new[]{"研究范围","证据质量"}},purpose="供活动负责人决策使用",audience="运营团队"}})};engine.Emit("tool.proposed",new{call});engine.Emit("tool.started",new{callId=call.id});
         var result=engine.UpdateTaskSpec(call);check(Convert.ToBoolean(result["changed"])&&state.RequirementRevision==1,"v163: the host independently validates the SDK delta and durably increments its requirement revision");
         var spec=AgentContracts.Task(state);check(spec.revision==1&&spec.deliverables.Single().sections.SequenceEqual(new[]{"研究范围","证据质量"})&&spec.deliverables.Single().minLength==400&&spec.deliverables.Single().format=="DOCX","v163: typed section gaps preserve the existing real format and length acceptance conditions");
         var storedPending=state.calls.Single(c=>c.id==pending.id);check(storedPending.status=="skipped"&&state.SupersededProposal(storedPending),"v163: an unstarted sibling write prepared against the old requirement version is superseded safely");
@@ -47,6 +47,9 @@ static class AgentRequirementsV163Tests {
         check(!Convert.ToBoolean(noop["changed"])&&replay.RequirementRevision==1,"v163: an already-satisfied update adds no event or revision");
         restored.Emit("task.adjusted",new{text="格式改为TXT，其他不变"});var adjusted=AgentContracts.Task(replay);
         check(adjusted.revision==2&&adjusted.userRevision==1&&adjusted.deliverables.Single().format=="TXT"&&adjusted.deliverables.Single().sections.Count==2,"v163: later user format steering preserves typed sections and advances the combined revision");
+        check(adjusted.purpose=="供活动负责人决策使用"&&adjusted.audience=="运营团队"&&AgentDeliveryRules.Derive(replay.options,replay.adjustments).purpose==adjusted.purpose,"v016: purpose and audience survive replay and unrelated steering in the native TaskSpec and delivery projection");
+        var reviewed=AgentArtifactReview.Document(library,source.id,requirement:AgentDeliveryRules.Derive(replay.options,replay.adjustments));
+        check(ModuleContext.Text(reviewed.contentRequirements,"purpose")==adjusted.purpose&&ModuleContext.Text(reviewed.contentRequirements,"audience")==adjusted.audience&&ModuleContext.Text(reviewed.contentRequirements,"assessment")=="not_assessed","v016: actual saved-document checks expose purpose/audience without claiming semantic review");
         check(AgentWorkspaceTools.Hash(File.ReadAllBytes(source.path))==hash&&options.requestLimit==6&&options.approvalPolicy=="each"&&options.allowed.SequenceEqual(new[]{source.id}),"v163: metadata updates preserve source bytes, approvals, request limits and native scope");
         var oldState=new AgentTaskState{id=Id(),options=new AgentTaskOptions{runtime="research",requirementsVersion=0}};bool oldBlocked=false;try{Engine(oldState,journal).UpdateTaskSpec(call);}catch(AgentFailure error){oldBlocked=error.kind=="policy";}check(oldBlocked,"v163: old tasks cannot opt into structured updates during replay");
     }

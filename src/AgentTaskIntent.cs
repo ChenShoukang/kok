@@ -59,6 +59,7 @@ namespace kok {
         public bool ChatOnly;
         public int RequiredCount=1;
         public bool? CodeVerification;
+        public string Purpose="",Audience="";
     }
 
     internal static class AgentTaskIntent {

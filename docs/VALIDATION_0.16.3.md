@@ -1,5 +1,7 @@
 # v0.16.3：OS01 结构化需求增量首批实现
 
+**状态：开发候选，未发布。** 用户要求先完成 v0.16 整体目标；自动发布流程已取消，主分支已关闭发布开关。整体收尾以[完成清单](V016_COMPLETION_CHECKLIST.md)为准。
+
 本版落实[开源复用路线](OPEN_SOURCE_REUSE_PLAN.md)的 OS01 首批工作。默认内核继续使用现有 Deep Agents / LangGraph；复用已有 LangChain `tool` 的 Zod schema 接口，未引入第二套运行时或新依赖。OS02 的 Pi 对照尚未实施。
 
 ## 实际链路
@@ -48,5 +50,9 @@
 本地证据在 `test-output/evaluation-v0163/round-1/evaluation.json`、`targeted-word-2/evaluation.json`、各题 `requirement-updates.json` 和 `request-ledger.txt`。每版本独立目录，v0.16.2 的 132 次请求和此前账本继续保留。测试密钥只在进程内读取，测试设置与备份在结束时清理。
 
 ## 接下来的边界
+
+整体收尾中的 Q02 已开始补用途和受众：两项进入同一有类型增量、TaskSpec、交付投影与 SDK 提示；改格式等未提及它们的消息保留原值，后续用户消息可单独更新。原生文档检查回传这两项要求及 `assessment=not_assessed`，界面明确尚未评审符合性。结构通过不会变成内容质量通过。`inspect_document` 只给本任务实际创建/修改的成果带入当前交付条件，避免拿报告要求误判原始资料。对应检查在收尾分支继续执行，不把 Q02 全部标为完成。
+
+此批已通过完整原生 1425 项、运行时 56 项，以及 `agent-requirements`、`agent-reviews`、`agent-evidence`、`agent-document-edit`、`agent-foundation` 五组受影响的桌面检查。SDK 恢复测试核对实际系统文本块中包含当前用途/受众；桌面核对已保存 DOCX 和明确的未评审标记。真实模型累计仍为 23 次，没有为此批新增付费请求。R07 的扩展测量与保留短进程决定见[业务桥记录](BUSINESS_BRIDGE_DECISION_0.16.md)。
 
 OS01 后续要扩展复杂用户修改的受控表达、减少本地规则对主流程的承担，并用保留素材评估误解析和额外回合。OS02 将在同一宿主端口上对照 Pi 的会话/队列/压缩机制，再依据实际成品与成本决定采用方式。照片、视频、音乐、表格和通用电脑操作继续按[总规划](PROJECT_PLAN_0.14_TO_1.0.md)推进。
