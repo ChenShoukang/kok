@@ -18,6 +18,7 @@ namespace kok {
         public bool requiresFullSourceCoverage;     // "全文/全部/完整/每份" goals (cancelable)
         public bool requiresTargetedEdit;           // "把 X 改成 Y" goals (cancelable)
         public List<string> requiredSourceIds=new List<string>();
+        public List<string> requiredSections=new List<string>();
         public bool requiresDocumentArtifact;
         public bool requiresPresentationArtifact;
         public bool chatOnly;
@@ -44,6 +45,7 @@ namespace kok {
             try{
                 AgentTaskContract contract=AgentTaskIntent.Current(o,adjustmentList);
                 requirement.requiredSourceIds=contract.RequiredSourceIds.ToList();
+                requirement.requiredSections=o.artifactReviewVersion>=2?contract.RequiredSections.ToList():new List<string>();
                 requirement.requiresDocumentArtifact=contract.RequiresDocument;
                 requirement.requiresPresentationArtifact=contract.RequiresPresentation;
                 requirement.requiresArtifact=contract.RequiresDocument||contract.RequiresPresentation;
@@ -68,6 +70,7 @@ namespace kok {
                     requirement.chatOnly=false;
                     requirement.requestedPages=0;
                     requirement.requiredFormat="";
+                    requirement.requiredSections.Clear();
                     requirement.minChars=0;requirement.maxChars=0;
                     requirement.lengthUnit=AgentMeasureUnit.None;
                     requirement.kind="read";
@@ -174,6 +177,7 @@ namespace kok {
                     (range==""?"":", the measured body length must be "+range)+
                     ", and there must be a sufficient read-back of THAT file after its creation/last edit (read_items/read_document covering at least the first 8000 characters or the whole file).";
                 parts.Add(text);
+                if(requirement.requiredSections.Count>0)parts.Add("REQUIRED REPORT SECTIONS (host-verified against the actual saved file): "+String.Join("; ",requirement.requiredSections)+". Each needs a standalone heading and nonempty body text. A title mentioned in prose is insufficient. Repair missing/empty sections locally and preserve other content.");
             }
             if(contract.RequiresPresentation){
                 parts.Add("DELIVERY ACCEPTANCE (host-verified): the CURRENT requirement needs a real editable PPTX; the FINAL deliverable is the LAST deck this task creates and its actual slide count must be"+(contract.RequestedPages>0?" exactly "+contract.RequestedPages+" pages (including a cover)":" whatever the current requirement asks")+". A completed result needs a full-page read-back via read_presentation (cover every page; max_pages must reach the end) or a full-text read_items/read_document read-back of that same deck.");

@@ -55,6 +55,7 @@ namespace kok {
         public bool RequiresTargetedEdit;public string EditVersionHint="";
         public bool RequiresFullSourceCoverage;
         public List<string> RequiredSourceIds=new List<string>();
+        public List<string> RequiredSections=new List<string>();
         public bool ChatOnly;
         public int RequiredCount=1;
     }

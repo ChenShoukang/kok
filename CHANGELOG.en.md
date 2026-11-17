@@ -1,5 +1,13 @@
 # kok changelog
 
+## v0.16.2 · Preview
+
+- Added review_claims for exact current text quotations, source versions, locations and native reading ranges, with optional verbatim claim lookup in saved MD/TXT/DOCX files. Stale, unread, repeated and missing quotations remain explicit; checking does not grant reading coverage.
+- Source cards show quotation evidence and caller-proposed support, conflict, inference or uncertainty. Deterministic location checks do not certify semantic support.
+- Required report sections need separate headings and nonempty bodies. Current requirements produce targeted repair feedback; old persisted tasks retain their acceptance version.
+- Added an opt-in real-model evaluator for the 18 development scenarios, using actual files, workspaces, preservation checks, boundary checks and a cumulative request ledger that retains failures.
+- See [scope, measurements and limits](docs/VALIDATION_0.16.2.md).
+
 ## v0.16.1 · Preview
 
 - Fixes report/deck cancellation, switching to chat, inspection-only follow-ups and format changes; removes obsolete length/page requirements and automatic creation tools.

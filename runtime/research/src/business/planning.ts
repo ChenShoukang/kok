@@ -2,7 +2,7 @@ export interface Contract {
   RequiresDocument: boolean; RequiresPresentation: boolean; RequiredDocumentFormat: string;
   RequestedPages: number; MinLength: number; MaxLength: number; LengthUnit: number;
   RequiresTargetedEdit: boolean; EditVersionHint: string; RequiresFullSourceCoverage: boolean;
-  RequiredSourceIds: string[]; ChatOnly: boolean; RequiredCount: number;
+  RequiredSourceIds: string[]; RequiredSections: string[]; ChatOnly: boolean; RequiredCount: number;
 }
 export interface PlanningInput {
   goal: string; adjustments: string[]; allowed: string[]; intent: string; approvalPolicy: string;
@@ -29,7 +29,22 @@ const number = (value: string): number => {
   const digits: Record<string, number> = { 零: 0, 一: 1, 二: 2, 两: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9 };
   const parts = value.split('十'); return parts.length === 2 ? (parts[0] ? digits[parts[0]] || 0 : 1) * 10 + (digits[parts[1]] || 0) : digits[value] || 0;
 };
-const empty = (allowed: string[]): Contract => ({ RequiresDocument: false, RequiresPresentation: false, RequiredDocumentFormat: '', RequestedPages: 0, MinLength: 0, MaxLength: 0, LengthUnit: 0, RequiresTargetedEdit: false, EditVersionHint: '', RequiresFullSourceCoverage: false, RequiredSourceIds: [...allowed], ChatOnly: false, RequiredCount: 1 });
+const empty = (allowed: string[]): Contract => ({ RequiresDocument: false, RequiresPresentation: false, RequiredDocumentFormat: '', RequestedPages: 0, MinLength: 0, MaxLength: 0, LengthUnit: 0, RequiresTargetedEdit: false, EditVersionHint: '', RequiresFullSourceCoverage: false, RequiredSourceIds: [...allowed], RequiredSections: [], ChatOnly: false, RequiredCount: 1 });
+
+// Only explicit section lists become acceptance criteria. Ordinary lists of facts are not headings.
+function sectionEvents(raw: string) {
+  const events: { index: number; sections: string[] }[] = [];
+  const pattern = /(?:(?:报告|文档)(?:应|需|须|必须|需要)?(?:包含|包括|分为)|(?:必需|必须|要求的|报告|文档)?(?:章节|栏目)(?:要求)?\s*(?:改为|改成|包括|包含|为|是|[:：])|(?:required\s+sections?|sections?\s+required)\s*[:：])\s*([^。；;\n]+)/gi;
+  for (const match of raw.matchAll(pattern)) {
+    const list = match[1].split(/[，,]\s*(?=(?:字数|长度|格式|页数|篇幅|其他|其余|保留|保持|不变|完成|保存|读取|阅读|核对|检查|不要|不用|同时|请|然后|length\b|format\b|keep\b|preserve\b|save\b|read\b|check\b))/i)[0].replace(/\.\s*$/, '').replace(/(?:这|等|共)?\s*[一二三四五六七八九十\d]*\s*(?:个|项|部分)?(?:章节|栏目|部分)\s*$/, '');
+    const sections = list.split(/、|，|,|和|以及|\s+and\s+/i).map(title => title.trim().replace(/^[“”"'「『]|[“”"'」』]$/g, '').trim());
+    const explicit = /章节|栏目|sections?/i.test(match[0]);
+    const sectionName = /^(?:背景|摘要|引言|目标|目的|用途|受众|范围|流程|步骤|执行计划|实施计划|风险|风险与应对|结论|建议|待确认事项|参考资料|来源|预算|人员安排|时间安排)$/;
+    if ((explicit || sections.every(title => sectionName.test(title))) && sections.length >= (explicit ? 1 : 2) && sections.length <= 12 && sections.every(title => title.length > 0 && title.length <= 30 && !/[。!?！？:：]/.test(title))) events.push({ index: match.index, sections: [...new Set(sections)] });
+  }
+  for (const match of raw.matchAll(/(?:取消|不限制|不限)(?:所有|全部)?(?:章节|栏目)(?:要求)?/g)) events.push({ index: match.index, sections: [] });
+  return events.sort((a, b) => a.index - b.index);
+}
 
 // A later message updates only the named deliverable. Negation is evaluated per clause,
 // so cancelling a deck cannot hide the report requested after the comma (or vice versa).
@@ -44,7 +59,7 @@ function cancelledKind(raw: string, kind: RegExp): boolean {
   });
 }
 function specificationOnly(clause: string): boolean {
-  return /格式|页数|字数|长度|篇幅|输出类型|\b(?:format|page count|word count|length)\b/i.test(clause)
+  return /格式|页数|字数|长度|篇幅|输出类型|(?:章节|栏目)(?:要求)?\s*(?:改为|改成|包含|包括|为|是|[:：])|\b(?:format|page count|word count|length)\b/i.test(clause)
     && !/正文|内容|段落|标题|排版|字体|布局|\b(?:body|paragraph|layout|font)\b/i.test(clause);
 }
 
@@ -90,6 +105,7 @@ export function deriveContract(input: PlanningInput): Contract {
     if (length) { result.MinLength = length.min; result.MaxLength = length.max; result.LengthUnit = length.unit; }
     const format = [...positive.matchAll(/(?<![A-Za-z])(DOCX|Markdown|MD|TXT)(?![A-Za-z])/gi)].at(-1)?.[1].toUpperCase();
     if (format) result.RequiredDocumentFormat = format === 'MARKDOWN' ? 'MD' : format;
+    if (result.RequiresDocument) for (const event of sectionEvents(raw)) result.RequiredSections = event.sections;
     const count = [...positive.matchAll(/([一二三四五六七八九十两\d]{1,3})\s*份\s*(?:报告|文档|总结|文章)/g)].at(-1);
     if (count) result.RequiredCount = Math.max(1, number(count[1]));
     const all = [...raw.matchAll(/全部|所有|\ball\s+(?:the\s+)?(?:sources?|documents?|files?|materials?)/gi)].at(-1);
@@ -107,17 +123,18 @@ export function deriveContract(input: PlanningInput): Contract {
       if (!chat.test(raw) || !length) { result.MinLength = 0; result.MaxLength = 0; result.LengthUnit = 0; }
     }
     if (!result.RequiresPresentation) result.RequestedPages = 0;
+    if (!result.RequiresDocument) result.RequiredSections = [];
     if (!result.RequiresDocument && !result.ChatOnly) { result.MinLength = 0; result.MaxLength = 0; result.LengthUnit = 0; result.RequiredCount = 1; }
     const hint = [...raw.matchAll(/最终修订|最终版|最新版|旧版|新版|原版|第\s*\d+\s*版/g)].at(-1); if (hint && result.RequiresTargetedEdit) result.EditVersionHint = hint[0];
   }
   result.RequiresFullSourceCoverage = fullRead ?? ((result.RequiresDocument || result.RequiresPresentation) && input.scope.mode === 'selected' && input.allowed.length > 0 && source.test(messages.join('\n')) && !sample.test(messages.join('\n')));
-  if (!result.RequiresDocument) result.RequiredDocumentFormat = ''; if (!result.RequiresTargetedEdit) result.EditVersionHint = '';
+  if (!result.RequiresDocument) { result.RequiredDocumentFormat = ''; result.RequiredSections = []; } if (!result.RequiresTargetedEdit) result.EditVersionHint = '';
   if (input.intent === 'discuss' || input.approvalPolicy === 'read_only') result = { ...empty(input.allowed), RequiresFullSourceCoverage: result.RequiresFullSourceCoverage, RequiredSourceIds: result.RequiredSourceIds };
   return result;
 }
 
 const groups = {
-  core: ['search_library', 'read_items', 'review_sources', 'list_collections', 'recall_result', 'calculate', 'update_plan', 'finish_task'],
+  core: ['search_library', 'read_items', 'review_sources', 'review_claims', 'list_collections', 'recall_result', 'calculate', 'update_plan', 'finish_task'],
   read: ['read_document', 'read_presentation', 'read_image', 'read_clips', 'load_skill'],
   document: ['read_document', 'create_document', 'replace_document_text', 'inspect_document', 'load_skill'],
   presentation: ['read_document', 'read_presentation', 'create_presentation', 'copy_presentation', 'edit_presentation', 'inspect_presentation', 'load_skill'],

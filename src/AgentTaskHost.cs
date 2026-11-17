@@ -139,7 +139,7 @@ namespace kok {
         void CheckReview(AgentTaskState task){if(task.verification==null)return;var memory=task.events.LastOrDefault(e=>e.kind=="memory.recalled");if(memory!=null&&AgentTaskState.Get<string>(memory.data,"signature")!=MemorySignature(task)){(taskEngine!=null&&taskEngine.State==task?taskEngine:MakeEngine(task)).Emit("task.review_invalidated",new{reason="memory_changed"});return;}var evidence=new HashSet<string>(task.verification.checks.SelectMany(c=>c.evidence));if(task.calls.Any(c=>!AgentCognition.IsControl(c.tool)&&c.status=="done"&&(evidence.Contains(c.id)||AgentRules.WriteTools.Contains(c.tool))&&!EvidenceCurrentFor(c,task)))(taskEngine!=null&&taskEngine.State==task?taskEngine:MakeEngine(task)).Emit("task.review_invalidated",new{reason="source_changed"});}
         object TaskSnapshot(AgentTaskState t){return taskEngine!=null&&taskEngine.State==t?taskEngine.ReadSnapshot(()=>ProjectSnapshot(t)):ProjectSnapshot(t);}
         static Dictionary<string,object> ToolResultView(AgentCall call){
-            if(call.result==null)return null;var keys=new HashSet<string>(new[]{"id","name","memoryId","revision","childTaskId","artifact","sandbox","artifactReview","sourceReview","render"});
+            if(call.result==null)return null;var keys=new HashSet<string>(new[]{"id","name","memoryId","revision","childTaskId","artifact","sandbox","artifactReview","sourceReview","claimReview","render"});
             if(AgentWorkspaceTools.Names.Contains(call.tool))keys.UnionWith(new[]{"path","workspaceId","sha256","beforeHash","reused","readBackVerified","startLine","totalLines","nextLine","hasMore","assets"});
             if(AgentCommandJobTools.Names.Contains(call.tool))keys.UnionWith(new[]{"jobId","state","title","error","result"});
             if(AgentBrowser.Names.Contains(call.tool))keys.UnionWith(new[]{"sessionId","pageVersion","url","title","text","controls","conditionVerified","actionApplied"});
@@ -208,7 +208,7 @@ return new{id=t.id,sessionId=t.options.sessionId,projectId=t.options.projectId??
                 normalLibrary.RequireAiMode();if(taskEngine!=null&&taskEngine.IsRunning)throw new InvalidOperationException("Agent 正在处理，请等待或停止当前任务。");
                 var o=Library.Json.Deserialize<AgentTaskOptions>(Library.Json.Serialize(a));
                 o.vision=translations.VisionEnabled;o.searchEndpoint=translations.SearchEndpoint;
-                o.kernelVersion=3;o.workspaceVersion=0;o.artifactReviewVersion=1;o.businessVersion=0;o.businessEnvironment=null;
+                o.kernelVersion=3;o.workspaceVersion=0;o.artifactReviewVersion=2;o.businessVersion=0;o.businessEnvironment=null;
                 if(String.IsNullOrEmpty(o.runtime)||o.runtime=="auto")o.runtime=Environment.GetEnvironmentVariable("KOK_AGENT_RUNTIME")=="native"||o.protocol=="json"?"native":"research";
                 if(!new[]{"native","research","deepagents"}.Contains(o.runtime))throw new InvalidDataException("任务运行时无效。");
                 if(ResearchRuntime(new AgentTaskState{options=o})&&!AgentResearchKernel.Available(appDir))throw new InvalidDataException("研究内核运行组件缺失，请完整解压新版安装包。");

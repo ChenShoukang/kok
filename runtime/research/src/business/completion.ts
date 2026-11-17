@@ -61,6 +61,7 @@ export function deliveryProblem(input: DeliveryEvidence): string {
     if (r.requiredFormat && doc.format.toUpperCase() !== r.requiredFormat.toUpperCase()) return '最终文档格式为 ' + doc.format + '，目标要求 ' + r.requiredFormat + '；请交付正确格式的实际文件。';
     if (!within(doc.length)) return '最终文档长度实测 ' + doc.length + '，要求 ' + r.minChars + '–' + (r.maxChars || '不限') + '；请只调整该成果后重新核对。';
     if (!doc.readBack) return '文档成果在创建或修改后还没有充分的当前版本回读，请继续读取正文：' + doc.id + '。' + doc.detail;
+    if (doc.qualityErrors.length) return '实际文档仍有必需章节或保存问题，请检查已保存正文并只修复缺项，保留其他内容：' + doc.qualityErrors.slice(0, 3).join('；');
   }
   if (!r.chatOnly && r.requiresPresentationArtifact) {
     const deck = input.presentation;

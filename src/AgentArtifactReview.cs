@@ -15,6 +15,7 @@ namespace kok {
         public string id="",kind="",fileVersion="",method="",status="",scope="";
         public bool rendered,visualReviewed,truncated;
         public List<string> headings=new List<string>();
+        public List<Dictionary<string,object>> sectionChecks=new List<Dictionary<string,object>>();
         public List<AgentArtifactFinding> findings=new List<AgentArtifactFinding>();
         public Dictionary<string,int> measurements;
         public Dictionary<string,object> deliveryCheck;
@@ -33,7 +34,7 @@ namespace kok {
             return AgentBusinessCore.Invoke<AgentArtifactReport>("review_artifact",new{id=id,kind="presentation",fileVersion=library.PresentationCoverageDigest(id),deck=saved});
         }
 
-        internal static AgentToolSpec DocumentTool(){return Tool("inspect_document","检查文档成果","Inspect the actual saved managed MD/TXT/DOCX: version, native measured Hanzi/non-whitespace character/English word counts, headings and optional literal section checks. Use the requested length unit, not raw string length. Does not certify facts, citations or DOCX page layout and does not increase source reading coverage.",true);}
+        internal static AgentToolSpec DocumentTool(){return Tool("inspect_document","检查文档成果","Inspect the actual saved managed MD/TXT/DOCX: version, native measured Hanzi/non-whitespace character/English word counts, headings and optional required section titles with nonempty bodies. A title mentioned in prose is not a section. Returns present/missing/empty, heading line and body size. Use the requested length unit, not raw string length. Does not certify facts, citations or DOCX page layout and does not increase source reading coverage.",true);}
         internal static AgentToolSpec PresentationTool(){return Tool("inspect_presentation","检查演示文稿","Inspect the actual PPTX version and every parsed slide for off-canvas objects, text intersections, small body text and estimated overflow. Returns exact page and shape IDs for targeted edits. This is structural inspection, not an Office rendering or semantic/visual quality verdict. Unsupported content is reported.",false);}
         static AgentToolSpec Tool(string name,string title,string description,bool document) {
             return new AgentToolSpec{Name=name,Title=title,Write=false,Requires=Need.NormalLibrary,CapabilityId=document?"documents.documentSource":"presentations.readPresentation",
@@ -49,7 +50,7 @@ namespace kok {
             if(task.options.artifactReviewVersion<1||receipt==null||receipt.result==null)return receipt;
             string id=ModuleContext.Text(receipt.result,"id");if(!AgentJournal.ValidId(id))return receipt;
             if(!new[]{"create_document","replace_document_text","create_presentation","copy_presentation","edit_presentation"}.Contains(call.tool))return receipt;
-            try{var item=normalLibrary.Find(id);if(item!=null)receipt.result["artifactReview"]=item.ext=="PPTX"?AgentArtifactReview.Presentation(normalLibrary,id):AgentArtifactReview.Document(normalLibrary,id,null,AgentDeliveryRules.Derive(task.options,task.adjustments));}
+            try{var item=normalLibrary.Find(id);var requirement=AgentDeliveryRules.Derive(task.options,task.adjustments);if(item!=null)receipt.result["artifactReview"]=item.ext=="PPTX"?AgentArtifactReview.Presentation(normalLibrary,id):AgentArtifactReview.Document(normalLibrary,id,requirement.requiredSections,requirement);}
             catch(Exception error){receipt.result["artifactReview"]=new Dictionary<string,object>{{"version",1},{"id",id},{"status","unavailable"},{"error",AgentWorkspaceTools.Redact(error.Message)},{"rendered",false},{"visualReviewed",false}};}
             return receipt;
         }

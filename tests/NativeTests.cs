@@ -137,6 +137,7 @@ class Tests {
             AgentFoundationTests.Run(Path.Combine(temp,"agent-foundation-v014"),Check);
             AgentCodeV15Tests.Run(Path.Combine(temp,"agent-code-v015"),Check);
             AgentV16Tests.Run(Path.Combine(temp,"agent-business-v016"),Check);
+            AgentQualityV162Tests.Run(Path.Combine(temp,"agent-quality-v0162"),Check);
             McpTests.Run(Path.Combine(temp,"mcp"),Check);
             McpRemoteTests.Run(Path.Combine(temp,"mcp-remote"),Check);
             McpOAuthTests.Run(Path.Combine(temp,"mcp-oauth"),Check);

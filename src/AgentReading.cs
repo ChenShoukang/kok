@@ -286,6 +286,15 @@ namespace kok {
             if(detail.Length>1600)detail=detail.Substring(0,1600)+"…";
             return false;
         }
+        internal static object ClaimSource(Library lib,AgentTaskState task,string id){
+            var source=lib.AgentReadSourceText(id);var readable=ReadableView(lib,id,source);var document=DocumentView(lib,id);
+            var calls=task.calls.Where(call=>call.status=="done"&&new[]{"read_items","read_document"}.Contains(call.tool)).ToList();
+            // Prefer the exact domain the model actually read. Notes and document body are not interchangeable.
+            var last=calls.LastOrDefault(call=>CoverageRows(call).Any(row=>row.id==id));
+            var view=last!=null&&CoverageRows(last).Any(row=>row.id==id&&row.domain==DomainDocument)&&document!=null?document:readable;
+            var reads=calls.SelectMany(call=>CoverageRows(call).Where(row=>view!=null&&row.id==id&&row.readStart>=0&&row.readEnd>row.readStart&&row.readEnd<=row.totalChars&&(row.domain==view.domain||SameText(readable,document)&&new[]{DomainDocument,DomainReadable}.Contains(row.domain))).Select(row=>new{start=row.readStart,end=row.readEnd,version=row.digest,callId=call.id})).ToArray();
+            return new{id=id,name=source.name,role=task.createdArtifactIds.Contains(id)?"artifact":"input",domain=view==null?"":view.domain,version=view==null?"":view.digest,text=view==null?"":view.text,available=view!=null&&!source.removed,reads=reads};
+        }
         internal static List<Dictionary<string,object>> ReviewSources(Library lib,AgentTaskState task,IEnumerable<string> ids){
             var result=new List<object>();
             foreach(string id in ids.Distinct().Take(24)){

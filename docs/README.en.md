@@ -8,6 +8,8 @@ Start with the [user guide](GUIDE.en.md). Find help by the task you want to comp
 
 | Goal | Read |
 | --- | --- |
+| Reuse established open-source projects and replace custom mechanisms | [Reuse-first implementation plan (Chinese)](OPEN_SOURCE_REUSE_PLAN.md) |
+| v0.16.2 quotation evidence, report sections and complete-task evaluation | [Implementation, validation and limits (Chinese)](VALIDATION_0.16.2.md) |
 | v0.16.1 requirement changes, repeated reads and execution diagnostics | [Implementation, validation and limits (Chinese)](VALIDATION_0.16.1.md) |
 | v0.16.0 TypeScript core, source and artifact checks | [Validation and limits](VALIDATION_0.16.0.md) · [Migration](AGENT_TYPESCRIPT_0.16.0.md) |
 | v0.15.0 code workspace and local web verification | [Validation and limits](VALIDATION_0.15.0.md) |
