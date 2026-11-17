@@ -6,6 +6,7 @@ import type { BaseChatModel } from '@langchain/core/language_models/chat_models'
 import { tool } from '@langchain/core/tools';
 import { Validator, type JSONSchema } from '@langchain/core/utils/json_schema';
 import { createMiddleware } from 'langchain';
+import { RequirementUpdateSchema } from './business/requirement-schema.ts';
 import { PortableSaver } from './checkpoints.ts';
 import { StepSchema, PROTOCOL_VERSION, isRecord, type Emit, type Permit, type Snapshot, type StepInput, type StepResult, type NativeInterrupt } from './contracts.ts';
 import { capabilityInstructions, selectNativeTools } from './capabilities.ts';
@@ -101,12 +102,13 @@ export class ResearchKernel {
     const nativeTools = [...selected, ...retired].map(spec => {
       const definition = spec.function, schema = definition.parameters as JSONSchema;
       new Validator(definition.parameters as ConstructorParameters<typeof Validator>[0]); // The two SDK schema types describe the same wire JSON with different optional members.
-      return tool(async (args: unknown) => JSON.stringify(interrupt({ kind: 'kok_tool', name: definition.name, args })), { name: definition.name, description: definition.description, schema });
+      return tool(async (args: unknown) => JSON.stringify(interrupt({ kind: 'kok_tool', name: definition.name, args })), { name: definition.name, description: definition.description, schema: definition.name === 'update_task_spec' ? RequirementUpdateSchema : schema });
     });
+    const blockedTools = new Set([...BLOCKED_TOOLS, ...(input.taskSpec?.requirementsVersion === 1 ? ['write_file', 'edit_file'] : [])]);
     const boundary = createMiddleware({
       name: 'KokNativeBoundary',
-      wrapModelCall: (request, handler) => handler({ ...request, tools: request.tools.filter(t => typeof t.name !== 'string' || !BLOCKED_TOOLS.has(t.name) && !retiredNames.has(t.name)) }),
-      wrapToolCall: (request, handler) => { if (BLOCKED_TOOLS.has(request.toolCall.name)) throw new Error('当前研究内核不执行委派或任意命令；请使用已注册的 kok 工具。'); return handler(request); },
+      wrapModelCall: (request, handler) => handler({ ...request, tools: request.tools.filter(t => typeof t.name !== 'string' || !blockedTools.has(t.name) && !retiredNames.has(t.name)) }),
+      wrapToolCall: (request, handler) => { if (blockedTools.has(request.toolCall.name)) throw new Error('当前研究内核不执行此框架工具；请使用已注册的 kok 工具交付实际成果。'); return handler(request); },
     });
     const agent = await createDeepAgent({ model, tools: nativeTools, checkpointer: saver, backend: undefined, middleware: [boundary], subagents: [], name: 'kok-agent',
       systemPrompt: input.systemPrompt + '\n[Active capability guidance]\n' + capabilityInstructions(selected, input.taskSpec) });

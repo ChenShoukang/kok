@@ -121,6 +121,15 @@ class AgentEvaluationRunner {
                 checks["savedClaimAnchoredToReadSource"]=claims.Any(row=>originals.ContainsKey(ModuleContext.Text(row,"sourceId"))&&ModuleContext.Text(row,"artifactId")==finalId&&ModuleContext.Text(row,"artifactVersion")==signature&&ModuleContext.Text(row,"status")=="anchored"&&ModuleContext.Text(row,"artifactStatus")=="located"&&!AgentTaskState.Get<bool>(row,"semanticVerified"));
                 string normalized=Regex.Replace(outputText,@"\s+","");checks["literalFinalFacts"]=normalized.Contains("8万")&&normalized.Contains("60")&&normalized.Contains("手机号")&&normalized.Contains("待确认");
             }
+            if(group=="requirements"){
+                checks["oneSavedDocx"]=artifacts.Count==1&&reopened.Find(ModuleContext.Text(artifacts[0].result,"id")).ext=="DOCX"&&hanzi>=400&&hanzi<=600;
+                var requirement=AgentDeliveryRules.Derive(state.options,state.adjustments);string[] sections=label=="requirements-word-material"?new[]{"研究范围","证据质量","待核实信息"}:label=="requirements-section-steering"?new[]{"研究边界","证据缺口","未决条件"}:new[]{"目标","流程","风险","待确认事项"};
+                checks["currentRequiredSections"]=requirement.requiredSections.SequenceEqual(sections);
+                if(artifacts.Count==1)checks["actualSavedSections"]=AgentArtifactReview.Document(reopened,ModuleContext.Text(artifacts[0].result,"id"),sections,requirement).errors==0;
+                if(label!="requirements-clear-task")checks["typedDeltaRecorded"]=state.events.Any(e=>e.kind=="task.requirements_updated");
+                string normalized=Regex.Replace(outputText,@"\s+","");checks["literalFinalFacts"]=normalized.Contains("8万")&&normalized.Contains("60")&&normalized.Contains("手机号");
+                Save(Path.Combine(profile,"requirement-updates.json"),new{updates=state.options.requirementUpdates,calls=state.calls.Where(c=>c.tool=="update_task_spec").Select(c=>new{c.status,c.error,c.args}),finalSpec=AgentContracts.Task(state)});
+            }
             if(label=="boundary-budget")checks["noUnapprovedWrites"]=artifacts.Count==0;
             if(label=="boundary-stop")checks["stoppedBeforeWrite"]=artifacts.Count==0&&!state.calls.Any(call=>call.tool=="create_presentation"&&call.status=="done");
             if(label=="boundary-component")checks["noFalseRender"]=Hash(existingDeck.path)==existingHash&&artifacts.Count==0&&!state.calls.Any(call=>call.tool=="render_presentation"&&call.status=="done")&&Regex.IsMatch(answer,"渲染|PowerPoint",RegexOptions.IgnoreCase)&&!Regex.IsMatch(answer,"已(?:经)?(?:成功)?(?:完成)?渲染");

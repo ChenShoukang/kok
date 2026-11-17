@@ -138,7 +138,7 @@ namespace kok {
                 foreach(var c in State.calls.Where(c=>c.status=="running"||c.status=="failed"&&c.retryable).ToList())Emit("tool.retry",new{callId=c.id});
                 while(true){
                     validate();Cancellation.Token.ThrowIfCancellationRequested();
-                    var queued=State.calls.Where(c=>c.status=="queued").ToList();if(queued.Count>0){Emit("task.phase",new{phase="阅读资料"});foreach(var c in queued.Where(c=>c.tool=="update_plan"))await ReadCall(c);var reads=queued.Where(c=>!AgentCognition.IsControl(c.tool)).ToList();foreach(var c in reads.Where(SerialRead))await ReadCall(c);await Task.WhenAll(reads.Where(c=>!SerialRead(c)).Select(ReadCall));foreach(var c in queued.Where(c=>c.tool=="finish_task"))await ReadCall(c);}
+                    var queued=State.calls.Where(c=>c.status=="queued").ToList();if(queued.Count>0){Emit("task.phase",new{phase="阅读资料"});foreach(var c in queued.Where(c=>c.tool=="update_task_spec"))await ReadCall(c);foreach(var c in queued.Where(c=>c.tool=="update_plan"))await ReadCall(c);var reads=queued.Where(c=>!AgentCognition.IsControl(c.tool)).ToList();foreach(var c in reads.Where(SerialRead))await ReadCall(c);await Task.WhenAll(reads.Where(c=>!SerialRead(c)).Select(ReadCall));foreach(var c in queued.Where(c=>c.tool=="finish_task"))await ReadCall(c);}
                     if(State.calls.Any(c=>c.status=="failed"&&c.errorKind=="uncertain_external"))throw new AgentFailure("uncertain_external","外部工具结果尚未确认，不能自动重放。请先检查外部服务。");
                     // Only retryable infrastructure failures stop the task; other tool errors are reported back to the model.
                     var failed=State.calls.FirstOrDefault(c=>c.status=="failed"&&c.retryable);if(failed!=null)throw new AgentFailure(failed.errorKind,failed.error,true);
@@ -170,7 +170,7 @@ namespace kok {
                         // parameter validation is recorded as a durable failed call instead of aborting the
                         // whole task. The next model round can reroute or finish partial; unknown exceptions
                         // still propagate so real bugs are never hidden.
-                        try{proposals.Add(prepare(State,action,turnId,providerId));}
+                        try{var proposed=prepare(State,action,turnId,providerId);proposed.requirementRevision=State.RequirementRevision;proposals.Add(proposed);}
                         catch(FormatException error){proposals.Add(RejectedProposal(action,turnId,providerId,"validation",error.Message));}
                         catch(AgentFailure failure)when(failure.kind=="policy"){proposals.Add(RejectedProposal(action,turnId,providerId,"policy",failure.Message));}
                     }

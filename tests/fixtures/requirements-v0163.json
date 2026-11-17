@@ -1,0 +1,10 @@
+{
+  "format": "kok.agent.requirements.samples",
+  "version": 1,
+  "scope": "Three targeted development tasks for typed requirement refinement; separate from the 18-scenario baseline and not a general completion-rate benchmark.",
+  "cases": [
+    {"id":"requirements-word-material","group":"requirements","goal":"完整阅读资料，交付可直接发给负责人的文字材料，Word能打开，四百到六百个汉字，按「研究范围」「证据质量」「待核实信息」组织。以资料最终修订为准。"},
+    {"id":"requirements-section-steering","group":"requirements","goal":"根据资料创建400-600汉字DOCX报告，以最终修订为准。","adjustments":["结构用「研究边界」「证据缺口」「未决条件」，面向活动负责人，原来长度和文件类型保持。"]},
+    {"id":"requirements-clear-task","group":"requirements","goal":"完整阅读资料，创建400-600汉字DOCX报告。报告应包含目标、流程、风险和待确认事项。采用最终修订，不编造未知信息。"}
+  ]
+}

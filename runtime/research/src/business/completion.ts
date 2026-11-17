@@ -1,4 +1,5 @@
 import { actions, type Contract } from './planning.ts';
+import { verificationDirective } from './requirements.ts';
 export interface CodeCall {
   tool: string; status: string; sequence: number; path: string; hash: string; workspaceId: string;
   jobState: string; exitCode: number | null; inputsCurrent: boolean; outputsVerified: boolean;
@@ -6,6 +7,7 @@ export interface CodeCall {
 }
 export interface CodeEvidence {
   goal: string; adjustments: string[]; intent: string; approvalPolicy: string; workspaceVersion: number; workspaceId: string;
+  verification?: boolean | null;
   calls: CodeCall[]; files: { path: string; hash: string; available: boolean }[];
 }
 export function codeProblem(input: CodeEvidence): string {
@@ -20,8 +22,7 @@ export function codeProblem(input: CodeEvidence): string {
     const positive = actions(raw);
     if (/先不要修改|暂不修改|不要修改|别修改|无需修改|只分析|仅分析|先分析|只阅读|只读不写|分析即可|\b(?:do not edit|don't edit|read.only)\b/i.test(raw)) writeRequested = false;
     else if (/修复|修改|实现|新增|添加|重构|优化|完善|\b(?:fix|implement|refactor|change|edit|optimize)\b|(?:^|[。！？；;\n])\s*(?:please\s+)?add\s+/i.test(positive)) writeRequested = true;
-    if (/(?:不要|无需|不必|不用)[^。；;，,\n]{0,30}(?:测试|运行|编译|验证)|do not run|skip tests/i.test(raw)) declined = true;
-    else if (/运行|执行|重跑|编译|构建|验证|\b(?:run|rerun|execute|build|verify|test|check)\b/i.test(positive)) declined = false;
+    const directive = verificationDirective(raw, positive); if (directive !== undefined) declined = !directive;
   }
   const analysis = /^(?:请|帮我|只|仅|先|\s)*(?:解释|分析|讨论|阅读|评估|审查|查看|explain\b|analy[sz]e\b|discuss\b|review\b|read\b|describe\b)/i.test(goal);
   const thenWrite = /(?:然后|并|再|\band\b|\bthen\b)[^。！？;\n]{0,30}(?:修复|修改|实现|新增|优化|完善|\bfix\b|\bedit\b|\bimplement\b|\boptimize\b)/i.test(goal);
@@ -35,7 +36,7 @@ export function codeProblem(input: CodeEvidence): string {
     if (!file?.available) return '代码文件当前不可读取：' + target.path;
     if (file.hash !== target.hash) return '代码文件在补丁后已变化，请重新读取并验证当前版本：' + target.path;
   }
-  const verify = !declined && (/测试|编译|运行|验证|\b(?:test|build|verify|run|check)\b/i.test(goal) || !mutations.length && writeRequested);
+  const verify = input.verification ?? (!declined && (/测试|编译|运行|验证|\b(?:test|build|verify|run|check)\b/i.test(goal) || !mutations.length && writeRequested));
   if (!verify) return '';
   const receipts = input.calls.filter(call => call.status === 'done' && call.exitCode === 0 && call.inputsCurrent && call.outputsVerified && (!call.jobState || call.jobState === 'completed'));
   const proven = (target: CodeCall) => receipts.some(receipt => receipt.checkedInputs.some(row => equal(row.path, target.path) && row.sha256 === target.hash && row.workspaceId === input.workspaceId));

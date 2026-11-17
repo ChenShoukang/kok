@@ -15,7 +15,7 @@ namespace kok {
    "Use apply_workspace_patch with the current raw SHA-256 for targeted changes; it supplies actual host read-back. Use expectedHash=missing only for new files. "+
    "When tests/build/verification are requested, run start_command_job with inputs listing changed source files and wait for the actual result. For directly executable TypeScript without another project toolchain, prefer workspace_info.bundledNode (the packaged Node runtime) if available. "+
    "A successful check only proves those exact file versions; after editing them, run the relevant checks again. Failed or unavailable checks must be reported honestly. Do not create a kok document unless the user explicitly asks for one. "+
-   "Browser tools verify local HTTP apps only; observe fresh pageVersion/control IDs and inspect the resulting state. Later user adjustments replace conflicting earlier requirements (including an earlier instruction not to run tests); preserve work already completed.\n[Initial user goal]\n"+task.options.goal+"\n[Later user adjustments, in chronological order]\n"+String.Join("\n",task.adjustments);}
+   "Browser tools verify local HTTP apps only; observe fresh pageVersion/control IDs and inspect the resulting state. Later user adjustments replace conflicting earlier requirements (including an earlier instruction not to run tests); preserve work already completed.\n[Initial user goal]\n"+task.options.goal+"\n[Later user adjustments, in chronological order]\n"+String.Join("\n",task.adjustments)+(task.options.requirementsVersion==1?"\n[Current code verification requirement]\n"+Convert.ToString(AgentBusinessCore.Plan(task.options,task.adjustments).contract.CodeVerification):"");}
   internal static string Problem(Library library,AgentTaskState task){
    if(task.options.businessVersion>=1)return BusinessProblem(library,task);
    string rawGoal=AgentTaskIntent.Combined(task.options.goal??"",task.adjustments),goal=AgentTaskIntent.Actions(rawGoal);
@@ -60,7 +60,7 @@ namespace kok {
    if(calls.Count==0&&task.options.workspaceVersion!=1)return "";
    string workspace="";try{workspace=AgentWorkspaceTools.RootId(library);}catch(InvalidOperationException){}
    var files=paths.Select(path=>{string hash="";bool available=false;try{hash=AgentWorkspaceTools.Hash(AgentWorkspaceTools.Bytes(library,path));available=true;}catch(IOException){}catch(FormatException){}return new{path=path,hash=hash,available=available};}).ToArray();
-   return AgentBusinessCore.Invoke<string>("code_problem",new{goal=task.options.goal??"",adjustments=task.adjustments,intent=task.options.intent,approvalPolicy=task.options.approvalPolicy,workspaceVersion=task.options.workspaceVersion,workspaceId=workspace,calls=calls,files=files});
+   return AgentBusinessCore.Invoke<string>("code_problem",new{goal=task.options.goal??"",adjustments=task.adjustments,intent=task.options.intent,approvalPolicy=task.options.approvalPolicy,workspaceVersion=task.options.workspaceVersion,workspaceId=workspace,calls=calls,files=files,verification=AgentBusinessCore.Plan(task.options,task.adjustments).contract.CodeVerification});
   }
  }
 }

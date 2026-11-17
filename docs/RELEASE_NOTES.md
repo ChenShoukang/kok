@@ -1,25 +1,25 @@
-# kok v0.16.2 Preview
+# kok v0.16.3 Preview
 
-- 新增关键结论原文核对：记录当前来源版本、引文位置和实际阅读记录，可确认原句是否存在于已保存的 MD/TXT/DOCX 报告。
-- 未读、过期、重复或找不到原文分别报告。支撑、冲突与推论仍明确标为调用者判断；定位和阅读记录不构成事实或逻辑证明。
-- 报告必需章节检查独立标题和非空正文，正文提及栏目名称不能代替章节。缺项反馈用于局部修复，旧任务保留原验收版本。
-- 新增显式启用的 18 题真实模型完整任务评测，检查实际成果、回读、未改页面及代码验证；边界题单列，累计保留失败和请求账本。
-- 实现、实测和剩余限制见 [v0.16.2 验证记录](VALIDATION_0.16.2.md)；后续见[近期执行计划](NEXT_PHASE_0.16_TO_0.18.md)和[总规划 3.0](PROJECT_PLAN_0.14_TO_1.0.md)。
+- 复用现有 LangChain 工具接口和 Zod，补齐自然表达中的文件格式、长度、自定义章节等交付要求；简单任务不强制增加一次模型规划。
+- 需求增量引用当前用户原话，记录独立版本；不能修改权限、额度或来源范围，也不能放宽已有验收或改掉明确的聊天交付/代码验证指令。
+- 更新先持久保存，再继续执行。暂停或重启沿用同一要求和调用；尚未开始的旧提案失效，已执行或结果不确定的操作不自动重跑。
+- 修复真实测试发现的临时文件交付问题：新默认任务使用原生成品工具；框架临时写入/编辑工具不能代替保存和回读。
+- 已用 DeepSeek 实测三个定点任务：首轮 2/3，失败的 Word 表达题修复后原题复测 1/1，累计 23 次请求，保留失败。此结果不是完整重跑的 3/3，也不代表通用质量或效率目标已经达成。
 
-完整解压 `kok-0.16.2-win-x64.zip` 后运行 `kok.exe`，保留 `runtime` 目录。Agent 业务使用 TypeScript 和既有 Deep Agents / LangGraph，Windows 桌面、权限、日志和本地工具保留 C#；本版未切换桌面壳。
+本版是 OS01 的首批实现，复杂取消、全面语义替换和 Pi 内核对照继续按[开源复用路线](OPEN_SOURCE_REUSE_PLAN.md)推进。当前内核仍为 Deep Agents / LangGraph，Agent 业务为 TypeScript，Windows 桌面、权限、日志和本地工具保留 C#。实现和验证范围见 [v0.16.3 记录](VALIDATION_0.16.3.md)。
 
-实际渲染需本机已安装且空闲的 PowerPoint，每次批准最多 8 页。Office 不随包分发；不接管个人正在使用的会话，不支持宏、OLE 或外部资源包。`rendered=true` 只表示已有真实图片，`visualReviewed=false` 表示尚未完成视觉评审。结构检查不代表事实和专业视觉质量已经通过。
+完整解压 `kok-0.16.3-win-x64.zip` 后运行 `kok.exe`，保留 `runtime` 目录。升级前退出程序并备份原资料库，继续使用原资料目录；旧任务保持其原要求机制。
 
-18 项确定性规划检查继续单列，不混入实际模型交付结果。原文定位和结构检查不代表专业成品质量；两轮同题与未见素材的质量验收、整体效率目标仍需继续测量。
-
-照片、视频、音乐、表格和通用电脑操作继续按[详细计划](PROJECT_PLAN_0.14_TO_1.0.md)实施。
+PPT 实际渲染需本机已安装且空闲的 PowerPoint，Office 不随包分发。原文定位、结构检查和已渲染页面不等于事实与专业视觉质量已经通过。照片、视频、音乐、表格和通用电脑操作继续按[详细计划](PROJECT_PLAN_0.14_TO_1.0.md)实施。
 
 ## English
 
-- Adds current text quotation checks, source versions, exact locations and native reading ranges, with optional verbatim claim lookup in saved MD/TXT/DOCX reports.
-- Stale, unread, repeated and missing quotations remain explicit. Support, contradiction and inference remain caller assessments, not deterministic semantic proof.
-- Required report sections need separate headings and nonempty bodies. Missing sections receive targeted repair feedback while old tasks retain their acceptance version.
-- Adds an opt-in 18-scenario real-model complete-task evaluator with actual files, read-back, page preservation and code verification, separate boundary outcomes and a persistent cumulative request ledger.
-- See [validation](VALIDATION_0.16.2.md), [next-phase execution](NEXT_PHASE_0.16_TO_0.18.md) and [migration boundaries](AGENT_TYPESCRIPT_0.16.0.md).
+- Reuses existing LangChain tools and Zod to fill complex delivery gaps: actual file format, measured length and custom sections. Clear tasks need no mandatory extra planning request.
+- Updates quote the latest user message and carry independent revisions. They cannot change permissions, budgets or source scope, relax active acceptance checks, or override explicit chat-only/code-verification directives.
+- Durable updates survive pause/restart with the same call. Only unstarted obsolete proposals are retired; executed or uncertain actions are not automatically replayed.
+- Fixes a live-test failure where framework scratch files were presented as final Word delivery. New default tasks use native artifact tools with real saved-file read-back.
+- Three targeted DeepSeek tasks: 2/3 in the first round, then 1/1 on the unchanged failing Word task after the fix; 23 cumulative requests including failure. This is not a complete 3/3 rerun or proof of general quality or efficiency.
 
-Extract the complete ZIP including runtime. The TypeScript kernel and C# native host remain. Rendering requires an installed, idle PowerPoint; Office is not bundled. Source location, structural checks and rendered pages do not certify semantic or professional visual quality. Full repeated-round and held-out-material evaluation and an overall efficiency improvement remain further work.
+This is the first OS01 implementation, not full semantic replacement or adoption of the Pi runtime. The kernel remains Deep Agents / LangGraph, with TypeScript agent business logic and the C# native desktop host. See [validation and limitations](VALIDATION_0.16.3.md) and the [reuse-first route](OPEN_SOURCE_REUSE_PLAN.md).
+
+Extract the complete ZIP including runtime. Back up the existing library before upgrading and keep using its data directory. PowerPoint rendering requires an installed, idle Office instance; source locations and structural checks do not certify semantic or visual quality.

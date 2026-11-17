@@ -58,6 +58,7 @@ namespace kok {
         public List<string> RequiredSections=new List<string>();
         public bool ChatOnly;
         public int RequiredCount=1;
+        public bool? CodeVerification;
     }
 
     internal static class AgentTaskIntent {

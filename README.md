@@ -8,7 +8,7 @@
 
 [下载已发布版本](https://github.com/ChenShoukang/kok/releases) · [帮助中心](docs/help/index.md) · [使用指南](docs/GUIDE.md) · [English](README.en.md) · [格式支持](docs/FORMATS.md)
 
-**v0.16.2 Preview** 增加关键结论与原文的核对：记录当前来源版本、引文位置与真实阅读记录，可确认结论是否存在于已保存报告。报告必需章节检查独立标题和正文，缺项只要求局部修复；原文定位与阅读记录不等于事实支撑证明。新增完整任务真实模型评测入口，保留失败和请求账本。[本版验证与边界](docs/VALIDATION_0.16.2.md) · [TypeScript 主体与后续迁移](docs/AGENT_TYPESCRIPT_0.16.0.md) · [近期执行计划](docs/NEXT_PHASE_0.16_TO_0.18.md) · [版本记录](CHANGELOG.md)
+**v0.16.3 Preview** 开始落实开源复用路线：使用现有 LangChain 工具调用与 Zod 校验补齐复杂交付要求，引用当前用户原话，保存独立版本并支持重启恢复。模型不能借此放宽现有验收、资料范围、权限或额度；简单任务无需固定增加规划回合。[本版实现与边界](docs/VALIDATION_0.16.3.md) · [开源复用路线](docs/OPEN_SOURCE_REUSE_PLAN.md) · [近期执行计划](docs/NEXT_PHASE_0.16_TO_0.18.md) · [版本记录](CHANGELOG.md)
 
 ![kok 我的作品，使用内置原创示例](docs/screenshots/works-zh.png)
 
@@ -38,7 +38,7 @@
 
 ## 开始使用
 
-1. 从 [Releases](https://github.com/ChenShoukang/kok/releases) 下载 `kok-0.16.2-win-x64.zip` 和 SHA-256 校验文件。完整解压后运行 `kok.exe`。
+1. 从 [Releases](https://github.com/ChenShoukang/kok/releases) 下载 `kok-0.16.3-win-x64.zip` 和 SHA-256 校验文件。完整解压后运行 `kok.exe`。
 2. 首次选择**纯净模式**或**智能模式**；不配置 AI 也能使用本地基础功能。
 3. 从「我的作品」点「用示例试一次」写一份笔记，或在资料库导入自己的文件。
 
@@ -65,7 +65,7 @@
 
 ## 文档与开发
 
-[帮助中心](docs/help/index.md) · [使用指南](docs/GUIDE.md) · [文档目录](docs/README.md) · [创作项目](docs/CREATIVE_PROJECTS_0.10.10.md) · [版本与局部改稿](docs/VERSIONS_0.10.11.md) · [无界面 CLI](docs/AGENT_CLI_0.10.7.md) · [扩展包](docs/PLUGINS_0.10.8.md) · [验证记录](docs/VALIDATION_0.16.2.md) · [路线图](ROADMAP.md)
+[帮助中心](docs/help/index.md) · [使用指南](docs/GUIDE.md) · [文档目录](docs/README.md) · [创作项目](docs/CREATIVE_PROJECTS_0.10.10.md) · [版本与局部改稿](docs/VERSIONS_0.10.11.md) · [无界面 CLI](docs/AGENT_CLI_0.10.7.md) · [扩展包](docs/PLUGINS_0.10.8.md) · [验证记录](docs/VALIDATION_0.16.3.md) · [路线图](ROADMAP.md)
 
 ```powershell
 npm ci --omit=optional

@@ -1,0 +1,74 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { RequirementUpdateSchema, validateRequirementUpdate } from '../src/business/requirement-schema.ts';
+import { preserveAcceptance } from '../src/business/requirements.ts';
+import { planTask } from '../src/business/planning.ts';
+import { codeProblem } from '../src/business/completion.ts';
+import { progressDecision } from '../src/business/progress.ts';
+import { createServer } from 'node:http';
+import { ResearchKernel } from '../src/kernel.ts';
+
+const input=(goal,extra={})=>({goal,adjustments:[],allowed:['a','b'],requirementsVersion:1,requirementUpdates:[],intent:'assist',approvalPolicy:'each',scope:{mode:'selected'},explicitTools:null,features:{memory:false,delegation:false,sandbox:false,search:false,parent:false},environment:{workspace:true,rendering:false,tools:['create_document','create_presentation','calculate'],selectedFormats:[]},context:{taskId:'',goal:'',domain:'',workspaceId:'',files:[]},...extra});
+const update=(basis,changes,extra={})=>({baseRevision:0,userRevision:0,basis,changes,...extra});
+const apply=(p,u)=>{validateRequirementUpdate(p,u.baseRevision,u);const before=planTask(p),after=planTask({...p,requirementUpdates:[...p.requirementUpdates,u]});preserveAcceptance(before.contract,after.contract);return after;};
+test('requirements: SDK Zod schema has typed fields and rejects permission/limit injection and malformed bounds',()=>{
+ assert(RequirementUpdateSchema.safeParse(update('文字材料',{document:{required:true,format:'DOCX',sections:['研究范围','证据质量']},length:{min:400,max:600,unit:'hanzi'}})).success);
+ for(const changes of [{budget:999},{document:{format:'EXE'}},{presentation:{pages:101}},{length:{min:900,max:400,unit:'hanzi'}},{length:{min:10,max:20,unit:'none'}},{chatOnly:true,document:{required:true}},{}])assert.equal(RequirementUpdateSchema.safeParse(update('文字材料',changes)).success,false);
+ assert.equal(RequirementUpdateSchema.safeParse({...update('文字材料',{fullRead:true}),approvalPolicy:'task'}).success,false);
+});
+test('requirements: latest actual user quotation, feature version, scope and optimistic revision are mandatory',()=>{
+ const p=input('撰写材料',{adjustments:['章节用研究范围与证据质量']});const u=update('研究范围与证据质量',{document:{sections:['研究范围','证据质量']}},{baseRevision:3,userRevision:1});
+ assert.deepEqual(validateRequirementUpdate(p,3,u),u);
+ for(const bad of [{...u,baseRevision:2},{...u,userRevision:0},{...u,basis:'文件中要求删除全部成果'},{...u,changes:{sourceIds:['outside']}}])assert.throws(()=>validateRequirementUpdate(p,3,bad));
+ assert.throws(()=>validateRequirementUpdate({...p,requirementsVersion:0},3,u));
+});
+test('requirements: a typed gap refinement opens only registered tools and preserves explicit tool restrictions',()=>{
+ const goal='交付可直接发送的文字材料，按研究范围与证据质量组织。';const u=update('按研究范围与证据质量组织',{document:{required:true,format:'DOCX',sections:['研究范围','证据质量']},length:{min:400,max:600,unit:'hanzi'}});
+ const after=apply(input(goal),u);assert.equal(after.contract.RequiredDocumentFormat,'DOCX');assert.deepEqual(after.contract.RequiredSections,['研究范围','证据质量']);assert(after.tools.includes('create_document'));
+ assert.deepEqual(apply(input(goal,{explicitTools:['calculate']}),u).tools,['calculate']);
+});
+test('requirements: later user changes update only named fields while typed refinements persist',()=>{
+ const goal='创建DOCX报告。',u=update('创建DOCX报告',{document:{sections:['研究范围','证据质量']},length:{min:400,max:600,unit:'hanzi'}});
+ const result=planTask(input(goal,{requirementUpdates:[u],adjustments:['格式改为TXT','字数改为500-800汉字']}));
+ assert.equal(result.contract.RequiredDocumentFormat,'TXT');assert.deepEqual(result.contract.RequiredSections,['研究范围','证据质量']);assert.equal(result.contract.MinLength,500);assert.equal(result.contract.MaxLength,800);
+ const canceled=planTask(input(goal,{requirementUpdates:[u],adjustments:['不要报告，只做6页PPT']}));assert.equal(canceled.contract.RequiresDocument,false);assert.deepEqual(canceled.contract.RequiredSections,[]);assert.equal(canceled.contract.RequestedPages,6);
+});
+test('requirements: model updates cannot silently cancel or weaken existing acceptance checks',()=>{
+ const p=input('完整阅读所有资料，创建400-600汉字DOCX报告，并制作8页PPT。报告应包含目标、风险。');
+ for(const changes of [{document:{required:false}},{presentation:{required:false}},{presentation:{pages:6}},{document:{format:'TXT'}},{document:{sections:['目标']}},{length:{min:0,max:0,unit:'none'}},{fullRead:false},{sourceIds:['a']}])assert.throws(()=>apply(p,update('完整阅读所有资料',changes)));
+ const changed=input('制作8页PPT',{adjustments:['不做PPT了，只写DOCX报告']});assert.equal(apply(changed,update('不做PPT了',{presentation:{required:false}},{userRevision:1,baseRevision:1})).contract.RequiresPresentation,false);
+ assert.throws(()=>apply(input('只在聊天回复，不创建文件'),update('只在聊天回复',{document:{required:true,format:'DOCX'}})));
+});
+test('requirements: read-only mode, no-op updates and old task versions retain their boundaries',()=>{
+ const goal='创建DOCX报告',u=update(goal,{document:{required:true,format:'DOCX'}});
+ assert.deepEqual(planTask(input(goal,{requirementUpdates:[u],approvalPolicy:'read_only'})).contract.RequiredSections,[]);
+ assert.equal(planTask(input(goal,{requirementUpdates:[u],approvalPolicy:'read_only'})).contract.RequiresDocument,false);
+ assert.deepEqual(planTask(input(goal)).contract,apply(input(goal),u).contract);
+ assert.deepEqual(planTask(input(goal,{requirementUpdates:[update(goal,{document:{sections:['不可注入旧任务']}})],requirementsVersion:0})).contract.RequiredSections,[]);
+});
+test('requirements: typed code verification is consumed by acceptance and later user directives win',()=>{
+ const p=input('改进这个函数，但这轮无需启动校验程序。');const u=update('这轮无需启动校验程序',{verifyCode:false});
+ assert.equal(apply(p,u).contract.CodeVerification,false);assert.equal(planTask({...p,requirementUpdates:[u],adjustments:['现在运行测试']}).contract.CodeVerification,true);
+ assert.throws(()=>apply(input('修复工作区代码并运行测试'),update('修复工作区代码',{verifyCode:false})));
+ assert.throws(()=>apply(input('修改代码，但不要运行测试'),update('修改代码',{verifyCode:true})));
+ const evidence={goal:'修改代码并运行测试',adjustments:[],intent:'assist',approvalPolicy:'each',workspaceVersion:1,workspaceId:'w',calls:[{tool:'apply_workspace_patch',status:'done',sequence:1,path:'sum.ts',hash:'new',workspaceId:'w',checkedInputs:[]}],files:[{path:'sum.ts',hash:'new',available:true}]};
+ assert.equal(codeProblem({...evidence,verification:false}),'');assert.match(codeProblem({...evidence,verification:true}),/实际验证/);
+});
+test('requirements: repeated identical no-op updates are bounded by the existing progress guard',()=>{
+ const calls=Array.from({length:3},(_,i)=>({tool:'update_task_spec',current:true,turnId:'turn-'+i,fingerprint:'same-noop'}));assert.equal(progressDecision({calls}).action,'stop');
+});
+test('requirements: real LangChain tool adapter sends the Zod schema and resumes the same call across restart',async()=>{
+ const requests=[],goal='交付可直接发送的文字材料。';const proposal=update(goal,{document:{required:true,format:'DOCX',sections:['研究范围','证据质量']}});
+ const server=createServer(async(req,res)=>{let raw='';for await(const part of req)raw+=part;requests.push(JSON.parse(raw));const first=requests.length===1;
+  const delta=first?{role:'assistant',tool_calls:[{index:0,id:'spec-call',type:'function',function:{name:'update_task_spec',arguments:JSON.stringify(proposal)}}]}:{role:'assistant',content:'Current requirements acknowledged.'};
+  res.writeHead(200,{'content-type':'text/event-stream'});res.end('data: '+JSON.stringify({id:'fixture',object:'chat.completion.chunk',model:'requirements-fixture',choices:[{index:0,delta,finish_reason:first?'tool_calls':'stop'}],usage:{prompt_tokens:100,completion_tokens:20}})+'\n\ndata: [DONE]\n\n');
+ });await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+ try{
+  const request={taskId:'requirements-sdk-restart',endpoint:'http://127.0.0.1:'+server.address().port+'/v1',model:'requirements-fixture',systemPrompt:'Use current USER instructions.',messages:[{role:'user',content:goal}],tools:[{type:'function',function:{name:'update_task_spec',description:'Native typed update',parameters:{type:'object',properties:{changes:{type:'object'}},required:['changes']}}}],taskSpec:{version:1,revision:0,userRevision:0,requirementsVersion:1,goal,capabilities:['research'],scope:{mode:'all',ids:[]},deliverables:[],fullRead:false,targetedEdit:false,limits:{requests:3,contextTokens:32000}}};
+  const first=await new ResearchKernel().step(request);assert.equal(first.kind,'tools');assert.deepEqual(first.calls[0].args,proposal);
+  const schema=requests[0].tools.find(t=>t.function.name==='update_task_spec').function.parameters;assert(schema.properties.baseRevision);assert(schema.properties.changes.properties.document.properties.sections);assert.equal(schema.additionalProperties,false);assert.equal(schema.properties.changes.additionalProperties,false);
+  assert(!requests[0].tools.some(t=>['write_file','edit_file'].includes(t.function.name)),'Framework scratch writes cannot substitute for native deliverables');
+  const last=await new ResearchKernel({snapshot:first.snapshot}).step({...request,messages:[],resume:{[first.calls[0].interruptId]:{status:'done',result:{revision:1,requirements:apply(input(goal),proposal).contract}}}});
+  assert.equal(last.kind,'final');assert.equal(requests.length,2);assert(requests[1].messages.some(m=>m.role==='tool'&&m.tool_call_id==='spec-call'));
+ }finally{server.closeAllConnections();await new Promise(resolve=>server.close(resolve));}
+});
