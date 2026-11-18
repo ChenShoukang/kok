@@ -38,7 +38,7 @@ See the [kok help center (Chinese)](docs/help/index.md) and the [user guide](doc
 
 ## Get started
 
-1. Download `kok-0.16.3-win-x64.zip` and its SHA-256 from [Releases](https://github.com/ChenShoukang/kok/releases). Extract the full ZIP and run `kok.exe`.
+1. Download `kok-0.16.2-win-x64.zip` and its SHA-256 checksum. Extract the full ZIP and run `kok.exe`. [Download v0.16.2](https://github.com/ChenShoukang/kok/releases/tag/v0.16.2)
 2. Choose **Pure** or **Smart**. Local essentials work without configuring AI.
 3. Explore the original samples or drop in your own files, then create a Space or save a Clip.
 

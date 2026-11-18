@@ -18,10 +18,11 @@ namespace kok {
    };
   }
   static AgentToolSpec Control(string name,string signature,string description,Dictionary<string,object> properties,string[] required){return new AgentToolSpec{Name=name,Title=name=="update_plan"?"更新任务计划":"核对任务结果",Requires=Need.NormalLibrary,Signature=signature,Description=description,Properties=properties,Required=required,Validate=(a,exists)=>{try{CapabilitySchema.Check(CapabilitySchema.Obj(properties,required),a.args);}catch{throw new FormatException("Invalid task-control arguments");}}};}
-  internal static bool IsControl(string tool){return tool=="update_plan"||tool=="finish_task"||tool=="update_task_spec";}
+  internal static bool IsControl(string tool){return tool=="update_plan"||tool=="finish_task"||AgentRequirementUpdates.IsTool(tool);}
   internal static Dictionary<string,object> Run(AgentTaskEngine engine,AgentCall call,Func<AgentCall,bool> current){
    var s=engine.State;
    if(call.tool=="update_task_spec")return engine.UpdateTaskSpec(call);
+   if(call.tool=="propose_task_spec")return engine.ConfirmTaskSpec(call);
    if(call.steering!=s.steerVersion)throw new AgentFailure("superseded","任务要求已更新，请重新规划和核对。");
    Action<IEnumerable<string>,bool> evidence=(ids,requireCurrent)=>{foreach(var id in ids){var receipt=s.calls.FirstOrDefault(c=>c.id==id&&!IsControl(c.tool));if(!AgentJournal.ValidId(id)||receipt==null)throw new AgentFailure("verification","Unknown evidence ID "+id+". Use an actual kok_call_id from the HOST RECEIPT INDEX.");if(receipt.status!="done")throw new AgentFailure("verification","Evidence "+id+" has status "+receipt.status+". Rejected/failed calls cannot be successful evidence, including for partial outcomes. Describe rejection in summary; set that check evidence=[] and finish partial without another proposal.");if(!requireCurrent&&!engine.Executed(receipt))throw new AgentFailure("verification","Evidence "+id+" was undone outside this task and cannot prove a completed plan step.");if(requireCurrent&&!current(receipt))throw new AgentFailure("verification","Evidence "+id+" is stale. Replace it in content checks with the latest done/current read receipt from HOST RECEIPT INDEX; reread the original ids if none is current.");}};
    if(call.tool=="update_plan"){

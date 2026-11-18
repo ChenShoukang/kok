@@ -56,6 +56,7 @@ namespace kok {
         public bool RequiresFullSourceCoverage;
         public List<string> RequiredSourceIds=new List<string>();
         public List<string> RequiredSections=new List<string>();
+        public List<string> ForbiddenArtifacts=new List<string>();
         public bool ChatOnly;
         public int RequiredCount=1;
         public bool? CodeVerification;

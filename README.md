@@ -38,7 +38,7 @@
 
 ## 开始使用
 
-1. 从 [Releases](https://github.com/ChenShoukang/kok/releases) 下载 `kok-0.16.3-win-x64.zip` 和 SHA-256 校验文件。完整解压后运行 `kok.exe`。
+1. 下载 `kok-0.16.2-win-x64.zip` 和对应的 SHA-256 校验文件，完整解压后运行 `kok.exe`。[v0.16.2 公开下载](https://github.com/ChenShoukang/kok/releases/tag/v0.16.2)
 2. 首次选择**纯净模式**或**智能模式**；不配置 AI 也能使用本地基础功能。
 3. 从「我的作品」点「用示例试一次」写一份笔记，或在资料库导入自己的文件。
 

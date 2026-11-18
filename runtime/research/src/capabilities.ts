@@ -27,6 +27,7 @@ export function selectNativeTools(tools: NativeTool[]): NativeTool[] {
 export function capabilityInstructions(tools: NativeTool[], spec?: TaskSpec): string {
   const active = new Set(spec?.capabilities ?? tools.map(t => toolCapability(t.function.name)).filter((id): id is string => !!id));
   const instructions = [...active].map(id => guidance[id] ? '[' + id + '] ' + guidance[id] : '').filter(Boolean);
+  if (spec?.excludedDeliverables?.length) instructions.push('[Explicitly excluded deliverables]\n' + spec.excludedDeliverables.join(', ') + '\nDo not reintroduce these artifacts through a requirement refinement. Follow a later accepted user change; conflicting proposals require individual confirmation.');
   if (spec?.purpose || spec?.audience) instructions.push('[Current content requirements; interpreted from USER instructions]\n' + JSON.stringify({ purpose: spec.purpose || '', audience: spec.audience || '' }) + '\nShape vocabulary, decision detail and suggested actions for this use and audience. Preserve unnamed requirements after later changes. Structural checks do not certify content suitability or editorial quality.');
   return instructions.join('\n');
 }
