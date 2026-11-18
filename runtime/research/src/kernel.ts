@@ -6,7 +6,7 @@ import type { BaseChatModel } from '@langchain/core/language_models/chat_models'
 import { tool } from '@langchain/core/tools';
 import { Validator, type JSONSchema } from '@langchain/core/utils/json_schema';
 import { createMiddleware } from 'langchain';
-import { RequirementUpdateSchema } from './business/requirement-schema.ts';
+import { RequirementUpdateSchema, RequirementProposalSchema } from './business/requirement-schema.ts';
 import { PortableSaver } from './checkpoints.ts';
 import { StepSchema, PROTOCOL_VERSION, isRecord, type Emit, type Permit, type Snapshot, type StepInput, type StepResult, type NativeInterrupt } from './contracts.ts';
 import { capabilityInstructions, selectNativeTools } from './capabilities.ts';
@@ -102,7 +102,7 @@ export class ResearchKernel {
     const nativeTools = [...selected, ...retired].map(spec => {
       const definition = spec.function, schema = definition.parameters as JSONSchema;
       new Validator(definition.parameters as ConstructorParameters<typeof Validator>[0]); // The two SDK schema types describe the same wire JSON with different optional members.
-      return tool(async (args: unknown) => JSON.stringify(interrupt({ kind: 'kok_tool', name: definition.name, args })), { name: definition.name, description: definition.description, schema: definition.name === 'update_task_spec' ? RequirementUpdateSchema : schema });
+      return tool(async (args: unknown) => JSON.stringify(interrupt({ kind: 'kok_tool', name: definition.name, args })), { name: definition.name, description: definition.description, schema: definition.name === 'update_task_spec' ? RequirementUpdateSchema : definition.name === 'propose_task_spec' ? RequirementProposalSchema : schema });
     });
     const blockedTools = new Set([...BLOCKED_TOOLS, ...(input.taskSpec?.requirementsVersion === 1 ? ['write_file', 'edit_file'] : [])]);
     const boundary = createMiddleware({

@@ -4,7 +4,7 @@ export interface SectionCheck { title: string; status: 'present' | 'missing' | '
 export interface ReviewInput {
   id: string; kind: 'document' | 'presentation'; fileVersion: string; text?: string; recovery?: boolean; sections?: string[];
   format?: string; measurements?: { hanzi: number; characters: number; words: number };
-  requirement?: { minChars: number; maxChars: number; lengthUnit: number; requiredFormat: string } | null;
+  requirement?: { minChars: number; maxChars: number; lengthUnit: number; requiredFormat: string; purpose?: string; audience?: string } | null;
   deck?: { width: number; height: number; unsupported: number; slides: { shapes: Shape[] }[] };
 }
 export function reviewArtifact(input: ReviewInput) {
@@ -12,6 +12,7 @@ export function reviewArtifact(input: ReviewInput) {
     method: input.kind === 'document' ? 'saved-document-source' : 'saved-pptx-ooxml',
     status: '', scope: '', rendered: false, visualReviewed: false, truncated: false,
     errors: 0, warnings: 0, pages: 0, characters: 0, words: 0, measurements: input.measurements || null,
+    contentRequirements: { purpose: input.requirement?.purpose || '', audience: input.requirement?.audience || '', assessment: 'not_assessed' },
     deliveryCheck: null as null | { unit: string; value: number; min: number; max: number; withinBounds: boolean; formatMatches: boolean }, headings: [] as string[], sectionChecks: [] as SectionCheck[], findings: [] as Finding[] };
   const add = (code: string, message: string, severity = 'warning', page = 0, shapeId = '') => {
     severity === 'error' ? report.errors++ : report.warnings++;

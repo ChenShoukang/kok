@@ -68,6 +68,12 @@ test('business: document review reports the requested native length unit without
  const outside=reviewArtifact({id:'doc',kind:'document',format:'TXT',fileVersion:'v',text:'text',measurements:{hanzi:0,characters:4,words:1},requirement:{minChars:400,maxChars:600,lengthUnit:2,requiredFormat:'DOCX'}});
  assert.equal(outside.deliveryCheck.withinBounds,false);assert.equal(outside.deliveryCheck.formatMatches,false);
 });
+
+test('business: document purpose and audience remain unassessed content requirements after structural checks pass',()=>{
+ const report=reviewArtifact({id:'doc',kind:'document',format:'DOCX',fileVersion:'saved-v2',text:'# 活动决策\n事实待核对。',requirement:{minChars:0,maxChars:0,lengthUnit:1,requiredFormat:'DOCX',purpose:'决定是否启动',audience:'活动负责人'}});
+ assert.deepEqual(report.contentRequirements,{purpose:'决定是否启动',audience:'活动负责人',assessment:'not_assessed'});assert.equal(report.status,'checked');assert.equal(report.fileVersion,'saved-v2');assert.equal(report.visualReviewed,false);
+ assert.equal(reviewArtifact({id:'old',kind:'document',fileVersion:'old-v1',text:'正文'}).contentRequirements.assessment,'not_assessed');
+});
 test('business: PPT review locates actual page/shape defects without treating decoration as text overlap',()=>{
  const shape=(id,x,y,text)=>({id,x,y,w:4,h:1,fontSize:24,rotation:0,kind:'rect',text});
  const report=reviewArtifact({id:'deck',kind:'presentation',fileVersion:'v',deck:{width:13.333,height:7.5,unsupported:0,slides:[{shapes:[shape('background',0,0,''),shape('outside',20,1,'Outside'),shape('a',1,1,'Alpha'),shape('b',1,1,'Beta')]}]}});

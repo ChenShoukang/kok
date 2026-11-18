@@ -1,12 +1,17 @@
 import type { Contract } from './planning.ts';
 import type { RequirementUpdate } from './requirement-schema.ts';
 export type { RequirementUpdate } from './requirement-schema.ts';
+export class RequirementValidationError extends Error {}
+class RequirementConflictError extends RequirementValidationError {}
 export function applyRequirementChanges(current: Contract, changes: RequirementUpdate['changes']): Contract {
-  const result = { ...current, RequiredSourceIds: [...current.RequiredSourceIds], RequiredSections: [...current.RequiredSections] };
+  const result = { ...current, RequiredSourceIds: [...current.RequiredSourceIds], RequiredSections: [...current.RequiredSections], ForbiddenArtifacts: [...(current.ForbiddenArtifacts || [])] };
+  if (changes.purpose !== undefined) result.Purpose = changes.purpose;
+  if (changes.audience !== undefined) result.Audience = changes.audience;
   if (changes.document?.required !== undefined) { result.RequiresDocument = changes.document.required; if (changes.document.required) result.ChatOnly = false; }
   if (changes.document?.format !== undefined) result.RequiredDocumentFormat = changes.document.format;
   if (changes.document?.sections !== undefined) result.RequiredSections = [...new Set(changes.document.sections)];
   if (changes.presentation?.required !== undefined) { result.RequiresPresentation = changes.presentation.required; if (changes.presentation.required) result.ChatOnly = false; }
+  for (const [kind, required] of [['document', changes.document?.required], ['presentation', changes.presentation?.required]] as const) if (required !== undefined) { result.ForbiddenArtifacts = result.ForbiddenArtifacts.filter(value => value !== kind); if (!required) result.ForbiddenArtifacts.push(kind); }
   if (changes.presentation?.pages !== undefined) result.RequestedPages = changes.presentation.pages;
   if (changes.length) { result.MinLength = changes.length.min; result.MaxLength = changes.length.max; result.LengthUnit = ['none', 'hanzi', 'characters', 'words'].indexOf(changes.length.unit); }
   if (changes.targetedEdit !== undefined) result.RequiresTargetedEdit = changes.targetedEdit;
@@ -14,7 +19,7 @@ export function applyRequirementChanges(current: Contract, changes: RequirementU
   if (changes.sourceIds) result.RequiredSourceIds = [...new Set(changes.sourceIds)];
   if (changes.verifyCode !== undefined) result.CodeVerification = changes.verifyCode;
   if (changes.chatOnly !== undefined) result.ChatOnly = changes.chatOnly;
-  if (result.ChatOnly) { result.RequiresDocument = false; result.RequiresPresentation = false; result.RequiresTargetedEdit = false; }
+  if (result.ChatOnly) { result.RequiresDocument = false; result.RequiresPresentation = false; result.RequiresTargetedEdit = false; result.ForbiddenArtifacts = ['document', 'presentation']; }
   if (!result.RequiresPresentation) result.RequestedPages = 0;
   if (!result.RequiresDocument) { result.RequiredDocumentFormat = ''; result.RequiredSections = []; result.RequiredCount = 1; if (!result.ChatOnly) { result.MinLength = 0; result.MaxLength = 0; result.LengthUnit = 0; } }
   return result;
@@ -22,11 +27,16 @@ export function applyRequirementChanges(current: Contract, changes: RequirementU
 // A model interpretation may fill gaps or add checks; it cannot silently remove an already
 // host-verifiable obligation. Explicit user changes are first replayed by the existing fast path.
 export function preserveAcceptance(before: Contract, after: Contract) {
-  if (before.ChatOnly && !after.ChatOnly || before.CodeVerification !== null && after.CodeVerification !== before.CodeVerification) throw new Error('This update conflicts with an explicit chat-only or code-verification directive; ask the user to clarify the change');
-  if (before.RequiresDocument && !after.RequiresDocument || before.RequiresPresentation && !after.RequiresPresentation || before.RequiresTargetedEdit && !after.RequiresTargetedEdit || before.RequiresFullSourceCoverage && !after.RequiresFullSourceCoverage) throw new Error('This update would remove an active delivery/read/edit requirement; ask the user to clarify the change');
-  if (before.RequiredDocumentFormat && after.RequiredDocumentFormat !== before.RequiredDocumentFormat || before.RequestedPages && after.RequestedPages !== before.RequestedPages) throw new Error('This update conflicts with the current explicit format/page requirement');
-  if (before.MinLength && after.MinLength < before.MinLength || before.MaxLength && (!after.MaxLength || after.MaxLength > before.MaxLength) || (before.MinLength || before.MaxLength) && after.LengthUnit !== before.LengthUnit) throw new Error('This update would relax an active measured-length requirement');
-  if (before.RequiredSections.some(section => !after.RequiredSections.includes(section)) || before.RequiresFullSourceCoverage && before.RequiredSourceIds.some(id => !after.RequiredSourceIds.includes(id))) throw new Error('This update would remove a required section or source');
+  if (before.ForbiddenArtifacts?.some(kind => !after.ForbiddenArtifacts?.includes(kind))) throw new RequirementConflictError('This update would reintroduce an explicitly excluded deliverable');
+  if (before.ChatOnly && !after.ChatOnly || before.CodeVerification !== null && after.CodeVerification !== before.CodeVerification) throw new RequirementConflictError('This update conflicts with an explicit chat-only or code-verification directive; ask the user to clarify the change');
+  if (before.RequiresDocument && !after.RequiresDocument || before.RequiresPresentation && !after.RequiresPresentation || before.RequiresTargetedEdit && !after.RequiresTargetedEdit || before.RequiresFullSourceCoverage && !after.RequiresFullSourceCoverage) throw new RequirementConflictError('This update would remove an active delivery/read/edit requirement; ask the user to clarify the change');
+  if (before.RequiredDocumentFormat && after.RequiredDocumentFormat !== before.RequiredDocumentFormat || before.RequestedPages && after.RequestedPages !== before.RequestedPages) throw new RequirementConflictError('This update conflicts with the current explicit format/page requirement');
+  if (before.MinLength && after.MinLength < before.MinLength || before.MaxLength && (!after.MaxLength || after.MaxLength > before.MaxLength) || (before.MinLength || before.MaxLength) && after.LengthUnit !== before.LengthUnit) throw new RequirementConflictError('This update would relax an active measured-length requirement');
+  if (before.RequiredSections.some(section => !after.RequiredSections.includes(section)) || before.RequiresFullSourceCoverage && before.RequiredSourceIds.some(id => !after.RequiredSourceIds.includes(id))) throw new RequirementConflictError('This update would remove a required section or source');
+}
+export function requirementConflict(before: Contract, after: Contract): string {
+  try { preserveAcceptance(before, after); return ''; }
+  catch (error) { if (error instanceof RequirementConflictError) return error.message; throw error; }
 }
 // Shared with the existing code acceptance rules; no second vocabulary for the same directives.
 export function verificationDirective(raw: string, positive: string): boolean | undefined {

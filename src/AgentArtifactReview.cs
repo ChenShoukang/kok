@@ -19,6 +19,7 @@ namespace kok {
         public List<AgentArtifactFinding> findings=new List<AgentArtifactFinding>();
         public Dictionary<string,int> measurements;
         public Dictionary<string,object> deliveryCheck;
+        public Dictionary<string,object> contentRequirements;
     }
 
     internal static class AgentArtifactReview {
@@ -41,7 +42,7 @@ namespace kok {
                 Signature=name+"{id"+(document?",required_sections?":"")+"}",Description=description,
                 Properties=document?AgentRules.Props("id",AgentRules.Id,"required_sections",AgentRules.Arr("Literal section titles to check; at most 12",12,AgentRules.Str("Section title",60))):AgentRules.Props("id",AgentRules.Id),Required=new[]{"id"},
                 Validate=(action,exists)=>{if(!AgentJournal.ValidId(ModuleContext.Text(action.args,"id"))||!exists(ModuleContext.Text(action.args,"id")))throw new FormatException("unknown or out-of-scope file ID");if(document){var sections=AgentTaskState.Get<List<string>>(action.args,"required_sections")??new List<string>();if(sections.Count>12||sections.Any(section=>String.IsNullOrWhiteSpace(section)||section.Length>60||section.Any(Char.IsControl)))throw new FormatException("Invalid section checks");}},
-                Read=(library,state,call,token)=>Task.Run(()=>{token.ThrowIfCancellationRequested();var report=document?Document(library,ModuleContext.Text(call.args,"id"),AgentTaskState.Get<List<string>>(call.args,"required_sections")):Presentation(library,ModuleContext.Text(call.args,"id"));return new Dictionary<string,object>{{"text",Library.Json.Serialize(report)},{"id",report.id},{"artifactReview",report}};},token)};
+                Read=(library,state,call,token)=>Task.Run(()=>{token.ThrowIfCancellationRequested();string id=ModuleContext.Text(call.args,"id");bool deliverable=state.createdArtifactIds.Contains(id)||state.calls.Any(c=>c.status=="done"&&AgentTaskState.EditTargetId(c)==id);var requirement=state.options.requirementsVersion==1&&deliverable?AgentDeliveryRules.Derive(state.options,state.adjustments):null;var sections=(AgentTaskState.Get<List<string>>(call.args,"required_sections")??new List<string>()).Concat(requirement==null?Enumerable.Empty<string>():requirement.requiredSections).Distinct();var report=document?Document(library,id,sections,requirement):Presentation(library,id);return new Dictionary<string,object>{{"text",Library.Json.Serialize(report)},{"id",report.id},{"artifactReview",report}};},token)};
         }
     }
 

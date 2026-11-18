@@ -8,7 +8,7 @@ The top level is organized by what you are doing — Agent, My works and Library
 
 [Published releases](https://github.com/ChenShoukang/kok/releases) · [Help center (Chinese)](docs/help/index.md) · [User guide](docs/GUIDE.en.md) · [中文](README.md) · [Supported formats](docs/FORMATS.en.md)
 
-**v0.16.3 Preview** starts the reuse-first implementation: existing LangChain tools and Zod validation refine complex delivery gaps using exact current user quotations, versioned updates and restart recovery. Model updates cannot relax active acceptance conditions, source scope, permissions or budgets. Simple tasks need no mandatory extra planning round. [Implementation and limits](docs/VALIDATION_0.16.3.md) · [Reuse-first plan](docs/OPEN_SOURCE_REUSE_PLAN.md) · [Next-phase plan](docs/NEXT_PHASE_0.16_TO_0.18.md) · [Changelog](CHANGELOG.en.md)
+**v0.16 is in development; current candidate 0.16.3 is unpublished.** The latest public version is v0.16.2. Continue the [completion checklist](docs/V016_COMPLETION_CHECKLIST.md) for reliability, efficiency and artifact quality. Existing LangChain / Zod APIs now carry typed requirements, current user quotations, revisions and recovery, without a mandatory planning round for clear tasks. [Current implementation and limits](docs/VALIDATION_0.16.3.md) · [Reuse-first plan](docs/OPEN_SOURCE_REUSE_PLAN.md) · [Next-phase plan](docs/NEXT_PHASE_0.16_TO_0.18.md) · [Changelog](CHANGELOG.en.md)
 
 ![kok library home with continue-watching rows, using bundled original samples](docs/screenshots/library-en.png)
 
@@ -38,7 +38,7 @@ See the [kok help center (Chinese)](docs/help/index.md) and the [user guide](doc
 
 ## Get started
 
-1. Download `kok-0.16.3-win-x64.zip` and its SHA-256 from [Releases](https://github.com/ChenShoukang/kok/releases). Extract the full ZIP and run `kok.exe`.
+1. Download `kok-0.16.2-win-x64.zip` and its SHA-256 checksum. Extract the full ZIP and run `kok.exe`. [Download v0.16.2](https://github.com/ChenShoukang/kok/releases/tag/v0.16.2)
 2. Choose **Pure** or **Smart**. Local essentials work without configuring AI.
 3. Explore the original samples or drop in your own files, then create a Space or save a Clip.
 

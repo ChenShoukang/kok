@@ -47,7 +47,7 @@
 
 ### OS01：用有类型的需求变更减少关键词解析（P0）
 
-v0.16.3 首批实现复用 LangChain `tool` + Zod，不增加新运行时：可选、版本化、引用当前用户原话的增量，经宿主独立校验后进入当前交付要求。允许补齐/收紧，禁止模型放宽已存在的验收；复杂取消和全面语义替换仍待后续。恢复、效率与实际验证见 [v0.16.3 记录](VALIDATION_0.16.3.md)。
+未发布的 0.16.3 候选复用 LangChain `tool` + Zod：可选、版本化、引用当前用户原话的增量，经宿主独立校验。安全补齐直接生效；复杂取消/替换复用现有原生确认流程，显示实际前后要求，单独确认后生效。提案使用精简传输定义，但仍执行同一完整 SDK/宿主校验。更广多轮语义和完整实测继续推进；恢复、效率与边界见 [候选记录](VALIDATION_0.16.3.md)。
 
 先对照 [LangChain 的结构化输出](https://github.com/langchain-ai/docs/blob/main/src/oss/langchain/structured-output.mdx)，复用已有 Zod / JSON Schema 和 tool strategy 能力。产物是明确的 `TaskSpec` 变更：交付物类型、格式、长度单位、章节、来源范围、编辑范围及验证要求。
 
