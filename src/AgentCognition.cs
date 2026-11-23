@@ -57,10 +57,7 @@ namespace kok {
    var result=new AgentVerification{status=status,summary=summary,checks=checks,steering=s.steerVersion,level=checks.Any(c=>c.evidence.Count>0)?"evidence_checked":"model_only"};
    engine.Emit("task.verified",new{verification=result});return new Dictionary<string,object>{{"text","Task result recorded as "+status+". Evidence references were checked locally; semantic claims remain the model's assessment."}};
   }
-  // P1: a failed call counts as repaired only when C1 recorded a later successful call with the same
-  // tool+args for it and that resolver is still a valid execution receipt (done and not undone). Content
-  // "currentness" is intentionally not required here: the failure is about the operation eventually
-  // succeeding, while current content is enforced by the finish checks and delivery read-back rules.
+  // A recorded repair needs a real execution receipt. Finish checks independently require current evidence.
   static bool Repaired(AgentTaskEngine engine,AgentCall failed){
    var s=engine.State;
    if(failed==null||failed.status!="failed"||s.FailureResolved==null||!s.FailureResolved(failed))return false;

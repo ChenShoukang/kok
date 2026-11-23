@@ -92,6 +92,43 @@ static class AgentResearchTests {
             fixture.Service.Stop();
         }
         using(var server=new Server()){
+            var fixture=new Fixture(Path.Combine(root,"combined-repair"),server);
+            var slides=Enumerable.Range(1,8).Select(i=>new{title="交接第"+i+"页",bullets=new[]{"最终修订预算8万元。"}}).ToArray();
+            server.Script=n=>{
+                if(n==1)return Reply("read_items",new{ids=new[]{fixture.Source}});
+                if(n==2)return Reply("create_document",new{name="交接报告",format="docx",text="最终修订预算为8万元，禁止收集手机号。"});
+                if(n==3)return Reply("create_presentation",new{title="展务交接",slides=new object[0]});
+                if(n==4)return Reply("create_presentation",new{title="展务交接",slides});
+                return Reply(text:"已交付报告和8页演示文稿。");
+            };
+            string id=Convert.ToString((await fixture.Start(7,"根据资料创建一份DOCX报告和8页可编辑PPT。"))["id"]);
+            var journal=new AgentJournal(fixture.Lib.DataDir);
+            var waiting=await fixture.Wait(id,true);
+            var reportCall=AgentTaskState.Get<List<AgentCall>>(waiting,"calls").Single(c=>c.tool=="create_document"&&c.status=="pending");
+            await fixture.Service.HandleAgentTaskAction("agentTaskDecide",D(new{taskId=id,callId=reportCall.id,approve=true}));
+            await fixture.Wait(id,true);
+            var before=AgentTaskState.Replay(id,journal.Events(id));
+            var failed=before.calls.Single(c=>c.tool=="create_presentation"&&c.status=="failed");
+            var corrected=before.calls.Single(c=>c.tool=="create_presentation"&&c.status=="pending");
+            string artifactId=AgentTaskState.ArtifactId(before.calls.Single(c=>c.id==reportCall.id));
+            string reportPath=fixture.Lib.Find(artifactId).path;
+            byte[] savedReport=File.ReadAllBytes(reportPath);
+            check(failed.errorKind=="validation"&&failed.attempt==0&&!before.FailureResolved(failed),"research: a rejected empty deck proposal has no file or repair receipt while approval is pending");
+            fixture.Service.Stop();await fixture.Wait(id);
+            await fixture.Service.HandleAgentTaskAction("agentTaskResume",D(new{taskId=id}));await fixture.Wait(id,true);
+            check(server.Count==4&&AgentTaskState.Replay(id,journal.Events(id)).calls.Any(c=>c.id==corrected.id&&c.status=="pending"),"research: restart keeps the corrected PPT proposal and waits for approval without another request");
+            await fixture.Service.HandleAgentTaskAction("agentTaskDecide",D(new{taskId=id,callId=corrected.id,approve=true}));
+            var result=await fixture.Wait(id);
+            var after=AgentTaskState.Replay(id,journal.Events(id));
+            var reopened=new Library(fixture.Lib.DataDir);
+            check(Convert.ToString(result["status"])=="completed"&&after.FailureResolved(failed)&&after.resolvedBy[failed.id]==corrected.id,
+                "research: an approved, saved correction repairs a rejected empty PPT proposal and completes the combined task");
+            check(after.createdArtifactIds.Count==2&&after.calls.Count(c=>c.tool=="create_document")==1&&savedReport.SequenceEqual(File.ReadAllBytes(reopened.Find(artifactId).path))&&
+                reopened.PresentationPageCount(AgentTaskState.ArtifactId(after.calls.Single(c=>c.id==corrected.id)))==8,
+                "research: the real eight-page PPT is saved without duplicating or changing the earlier DOCX");
+            fixture.Service.Stop();
+        }
+        using(var server=new Server()){
             var fixture=new Fixture(Path.Combine(root,"budget"),server);server.Script=n=>Reply("read_items",new{ids=new[]{fixture.Source}});
             string id=Convert.ToString((await fixture.Start(1))["id"]);var done=await fixture.Wait(id);
             check(Convert.ToString(done["status"])=="limited"&&server.Count==1,"research: request cap stops the SDK before its next HTTP call");fixture.Service.Stop();
