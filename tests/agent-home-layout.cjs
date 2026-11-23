@@ -25,6 +25,11 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
   await page.locator('#agent-advanced>summary').click();assert(await page.locator('#agent-skill').isVisible());
   await page.locator('#agent-advanced>summary').click();assert.equal(await page.locator('#agent-skill').isVisible(),false);
   const input=await page.locator('#agent-input').elementHandle();
+  await page.locator('#agent-input').fill('尚未发送的任务');
+  for(const selector of ['[data-agent-pick]','#agent-advanced>summary','[data-agent-scope-summary]','.agent-send','.agent-starters>button:first-child']){
+   await page.keyboard.press('Tab');
+   assert(await page.locator(selector).evaluate(el=>el===document.activeElement),'Agent keyboard focus follows the visible composer and suggestions');
+  }
   await page.locator('#agent-input').fill('统计资料库构成');await page.locator('.agent-send').click();
   await page.waitForSelector('[data-agent-local]');await page.waitForFunction(()=>!AgentUi.state.job);
   assert(await input.evaluate(el=>el===document.querySelector('#agent-input')),'Starting a task preserves the input node');
@@ -45,10 +50,15 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
   await page.setViewportSize({width:1440,height:1000});
   await page.locator('#close-player').click();await page.waitForFunction(()=>!document.body.classList.contains('has-player'));
   await page.locator('[data-agent-new]').click();await page.waitForSelector('.agent-page.is-empty');
-  for(const theme of ['light','dark'])for(const width of [960,650]){
-   await page.setViewportSize({width,height:width===650?620:800});await page.evaluate(async theme=>{await setting({theme});applyTheme();},theme);
+  for(const theme of ['light','dark'])for(const [width,height] of [[960,800],[650,620],[520,420]]){
+   await page.setViewportSize({width,height});await page.evaluate(async theme=>{await setting({theme});applyTheme();},theme);
    assert(await page.locator('.agent-send').isVisible());
    assert(await page.evaluate(()=>{const input=$('#agent-input').getBoundingClientRect();return input.width>150&&input.bottom<innerHeight&&document.documentElement.scrollWidth<=innerWidth;}),'The main action fits compact windows');
+   assert(await page.evaluate(()=>$('.agent-toolbar').getBoundingClientRect().bottom<$('.agent-start-heading').getBoundingClientRect().top),'The toolbar clears the welcome heading');
+   if(width===520){
+    await page.evaluate(()=>toast('测试通知已送达'));
+    assert(await page.evaluate(()=>$('#toasts').getBoundingClientRect().bottom<=$('.agent-start-heading').getBoundingClientRect().top),'Compact home notifications clear the welcome heading');
+   }
    await page.screenshot({path:path.join(output,`agent-${theme}-${width}.png`),animations:'disabled'});
   }
   await page.setViewportSize({width:1440,height:1000});await page.evaluate(()=>navigate('overview'));

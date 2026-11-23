@@ -654,11 +654,11 @@ function agentMessage(m){
   :m.status==='running'?`<div class="agent-card-actions"><span class="agent-status"><span class="spinner"></span>${I18n.text('执行中')}</span></div>`:'';
  return `<article class="agent-card ${read?'agent-card-read':''} agent-${m.status}" data-agent-card="${m.id}"><header>${m.status==='pending'&&!['mcp_call','delegate_task','run_code','start_command_job','open_browser','browser_action','render_presentation'].includes(m.tool)?`<input type="checkbox" data-agent-select="${m.id}" ${m.selected!==false?'checked':''} aria-label="${I18n.text('选择此修改')}">`:''}${svg(tool.icon)}<b>${I18n.text(tool.label)}</b><span data-user-content>${esc(agentSummary(m.tool,m.args))}</span></header>${m.why?`<p data-user-content>${esc(m.why)}</p>`:''}${read?'':agentPreview(m)}${m.tool==='mcp_call'&&m.readPreview?`<details class="agent-external-result"><summary>${I18n.text('外部返回')}</summary><pre data-user-content>${esc(m.readPreview)}</pre>${m.resultEventId?`<button type="button" class="text-button" data-agent-full-result="${m.id}">${I18n.text('完整外部结果')}</button>`:''}</details>`:''}${read?(m.status==='done'?`<small>${I18n.text('已自动读取，未修改任何内容')}</small><div class="agent-sources">${agentSourceButtons(m.sourceIds)}</div>${m.readPreview?`<details class="agent-read-preview"><summary>${I18n.text('查看读取节选')}</summary><pre data-user-content>${esc(m.readPreview)}</pre>${m.resultEventId?`<button type="button" class="text-button" data-agent-full-result="${m.id}">${I18n.text('完整读取结果')}</button>`:''}</details>`:''}`:m.status==='failed'?`<small class="agent-read-error">${esc(m.error)}</small>`:''):controls}${AgentPlatformUi.result(m)}</article>`;
 }
-function agentEmpty(){
+function agentStarters(empty){
+ if(!empty)return '<div class="agent-starters" hidden></div>';
  const suggestions=agentSuggestions();
  const example=globalThis.DocumentUi?.exampleAvailable()?`<button type="button" data-example-work>${glyph('document')}<span>${I18n.text('用示例试一次')}</span></button>`:'';
- return `<div class="agent-empty"><h1>${I18n.text('有什么想法？')}</h1>
- <div class="agent-starters">${example}${suggestions.map(([text,icon,label])=>`<button type="button" data-agent-starter="${esc(I18n.text(text))}">${glyph(icon)}<span>${I18n.text(label||text)}</span></button>`).join('')}</div></div>`;
+ return `<div class="agent-starters">${example}${suggestions.map(([text,icon,label])=>`<button type="button" data-agent-starter="${esc(I18n.text(text))}">${glyph(icon)}<span>${I18n.text(label||text)}</span></button>`).join('')}</div>`;
 }
 function agentMore(anchor){
  GlassMenu.open(anchor,[
@@ -691,6 +691,7 @@ function agentCacheUsageText(usage){
 function agentView(){
  if(!agentAvailable())return `<section class="agent-page agent-off"><div class="agent-empty"><h1>${I18n.text('Agent 需要智能模式')}</h1><p>${I18n.text('纯净模式和私密文件夹不会发送任何 AI 请求。切换到智能模式并配置 AI 服务后即可使用。')}</p><button class="button primary" data-agent-settings>${I18n.text('切换到智能模式')}</button></div></section>`;
  const busy=!!agent.job,skills=[...AgentModel.presets,...AgentSkills.custom()],localSkillNames=new Set(skills.map(s=>s.name)),discoveredSkills=agent.nativeSkills.filter(s=>!localSkillNames.has(s.name)&&s.name!=='auto'),scope=agentScope();
+ const empty=!agent.messages.length&&!busy;
  const usage=agent.usage;const used=usage?`${usage.estimated?I18n.text('保守估算'):I18n.text('服务商用量')} · ${usage.inputTokens} / ${usage.outputTokens} tokens${agent.inputRate&&agent.outputRate?' · '+usage.cost.toFixed(5):''}`:I18n.text('仅在发送后调用 API');
  // M2: the provider reports cached input tokens once prompt caching is enabled; show the hit share
  // against total input tokens, and keep the existing one-line usage footnote when there is nothing to report.
@@ -704,15 +705,29 @@ function agentView(){
   <div class="agent-advanced-row"><label class="agent-advanced-field"><span>${I18n.text('用量')}</span><select id="agent-budget" aria-label="${I18n.text('用量')}" ${busy?'disabled':''}>${[[6000,'省用量'],[14000,'均衡'],[24000,'更多上下文'],[48000,'长任务'],[64000,'超长任务']].map(([v,l])=>`<option value="${v}" ${agent.budget===v?'selected':''}>${I18n.text(l)}</option>`).join('')}</select></label><button type="button" class="text-button" data-agent-limits aria-expanded="${agent.options}" ${busy?'disabled':''}>${I18n.text('用量设置')}</button></div>
   <div class="agent-limits" ${agent.options?'':'hidden'}><label>${I18n.text('调用协议')}<select id="agent-protocol" ${busy?'disabled':''}>${[['auto','自动'],['tools','原生工具调用'],['json','兼容 JSON']].map(([v,l])=>`<option value="${v}" ${agent.protocol===v?'selected':''}>${I18n.text(l)}</option>`).join('')}</select></label>${[['requestLimit','请求上限',1,24,1],['inputRate','每百万输入 token 单价',0,10000,'any'],['outputRate','每百万输出 token 单价',0,10000,'any'],['costLimit','本次费用上限',0,10000,'any']].map(([k,l,min,max,step])=>`<label>${I18n.text(l)}<input data-agent-limit="${k}" type="number" min="${min}" max="${max}" step="${step}" value="${agent[k]}" ${busy?'disabled':''}></label>`).join('')}<small>${I18n.text('单价与额度使用同一货币，0 表示关闭费用限制；按保守额度拦截下一轮，实际费用以服务商为准。')}</small></div>
  ${Kok.enabled('mcp')?`<div class="agent-tools-row"><button type="button" class="text-button" data-mcp-settings>${I18n.text('外部工具 MCP')}</button></div>`:''}</div></details>`;
- return `<section class="agent-page${agent.messages.length||busy?'':' is-empty'}${agent.historyOpen?' has-history':''}${AgentArtifacts.active?' has-artifacts':''}">${agentHistoryView()}<div class="agent-main">
- <div class="agent-toolbar"><button type="button" class="icon-button" data-agent-sessions aria-label="${I18n.text('会话')}" title="${I18n.text('会话')}" aria-controls="agent-history" aria-expanded="${!!agent.historyOpen}">${svg('panel')}</button><div class="agent-heading">${glyph('agent')}<strong data-agent-title data-user-content>${esc(agent.messages.find(m=>m.role==='user')?.text||agent.job?.goal||'Agent')}</strong></div><span class="agent-progress" id="agent-progress" role="status" data-busy="${busy}">${I18n.text(agent.phase||'就绪')}</span><button type="button" class="text-button agent-tree-button" data-agent-tree aria-label="${I18n.text('分支树')}" title="${I18n.text('分支树')}" ${busy?'disabled':''}>${I18n.text('分支树')}</button><div class="agent-toolbar-actions"><button type="button" class="icon-button" data-agent-new aria-label="${I18n.text('新任务')}" title="${I18n.text('新任务')}" ${busy?'disabled':''}>${svg('plus')}</button>${AgentPlatformUi.button()}<button type="button" class="icon-button" data-agent-artifacts aria-label="${I18n.text('任务成果')}" title="${I18n.text('任务成果')}" aria-expanded="${AgentArtifacts.active}" ${AgentArtifacts.count?'':'hidden'}>${svg('document')}</button><button type="button" class="icon-button" data-agent-more aria-label="${I18n.text('更多')}" title="${I18n.text('更多')}" aria-haspopup="menu" aria-expanded="false">${svg('more')}</button></div></div>
+ return `<section class="agent-page${empty?' is-empty':''}${agent.historyOpen?' has-history':''}${AgentArtifacts.active?' has-artifacts':''}">${agentHistoryView()}<div class="agent-main">
+ <div class="agent-toolbar">
+  <button type="button" class="icon-button" data-agent-sessions aria-label="${I18n.text('会话')}" title="${I18n.text('会话')}" aria-controls="agent-history" aria-expanded="${!!agent.historyOpen}">${svg('panel')}</button>
+  <div class="agent-heading">${glyph('agent')}<strong data-agent-title data-user-content>${esc(agent.messages.find(m=>m.role==='user')?.text||agent.job?.goal||'Agent')}</strong></div>
+  <span class="agent-progress" id="agent-progress" role="status" data-busy="${busy}">${I18n.text(agent.phase||'就绪')}</span>
+  <div class="agent-toolbar-actions">
+   <button type="button" class="text-button agent-tree-button" data-agent-tree aria-label="${I18n.text('分支树')}" title="${I18n.text('分支树')}" ${busy?'disabled':''}>${I18n.text('分支树')}</button>
+   <button type="button" class="icon-button" data-agent-new aria-label="${I18n.text('新任务')}" title="${I18n.text('新任务')}" ${busy?'disabled':''}>${svg('plus')}</button>
+   ${AgentPlatformUi.button()}
+   <button type="button" class="icon-button" data-agent-artifacts aria-label="${I18n.text('任务成果')}" title="${I18n.text('任务成果')}" aria-expanded="${AgentArtifacts.active}" ${AgentArtifacts.count?'':'hidden'}>${svg('document')}</button>
+   <button type="button" class="icon-button" data-agent-more aria-label="${I18n.text('更多')}" title="${I18n.text('更多')}" aria-haspopup="menu" aria-expanded="false">${svg('more')}</button>
+  </div>
+ </div>
  ${agentContextUsageView()}
- <div class="agent-recovery">${agentRecoveryBar()}</div>${AgentOperations.view(agent.recovery&&(!agent.job||agent.job.id===agent.recovery.id)?agent.recovery:null)}<div class="agent-stream" id="agent-stream" aria-live="polite" aria-busy="${busy}">${agent.messages.length||busy?agentEntries():agentEmpty()}</div><div class="agent-review">${agentBatch()}</div>
+ <div class="agent-recovery">${agentRecoveryBar()}</div>${AgentOperations.view(agent.recovery&&(!agent.job||agent.job.id===agent.recovery.id)?agent.recovery:null)}
+ <h1 class="agent-start-heading"${empty?'':' hidden'}>${I18n.text('有什么想法？')}</h1>
+ <div class="agent-stream" id="agent-stream" aria-live="polite" aria-busy="${busy}">${empty?'':agentEntries()}</div><div class="agent-review">${agentBatch()}</div>
  <button type="button" class="agent-latest text-button" data-agent-latest hidden>${I18n.text('回到最新')}${svg('arrow')}</button><form class="agent-composer" id="agent-form">${agentProjectBar()}<div class="agent-context">${agentContextChips()}</div>
  <textarea id="agent-input" rows="2" maxlength="2000" placeholder="${esc(I18n.text('告诉我，你想完成什么…'))}" aria-label="${esc(I18n.text('给 Agent 的要求'))}">${esc(agent.draft)}</textarea>
- ${agentComposerControls()}
  <div class="agent-compose-options"><button type="button" class="agent-chip agent-add" data-agent-pick aria-label="${I18n.text('添加资料')}" title="${I18n.text('添加资料')}" ${busy?'disabled':''}>${svg('paperclip')}<b>${I18n.text('添加资料')}</b></button>${advanced}<button type="button" class="agent-chip agent-scope-chip" data-agent-scope-summary title="${esc(I18n.text('资料范围'))}">${svg('folder')}<b>${esc(agentScopeLabel())}</b></button></div>
- ${agentQueuedTasks()}<div class="agent-footnote" ${usage||cacheUsage?'':'hidden'}><small id="agent-usage" data-user-content>${esc(usageLine)}</small></div></form></div>${AgentArtifacts.view()}</section>`;
+ ${agentComposerControls()}
+ ${agentQueuedTasks()}<div class="agent-footnote" ${usage||cacheUsage?'':'hidden'}><small id="agent-usage" data-user-content>${esc(usageLine)}</small></div></form>
+ ${agentStarters(empty)}</div>${AgentArtifacts.view()}</section>`;
 }
 function agentPaint({scroll=true}={}){
  agentSaveSoon();if(state.route!=='agent'||state.isPrivate)return;
@@ -721,7 +736,7 @@ function agentPaint({scroll=true}={}){
  const template=document.createElement('template');template.innerHTML=agentView();
  if(!stream||!agentAvailable()){root.replaceChildren(template.content);I18n.localize(root);agentSyncInput();return;}
  const next=template.content,page=root.querySelector('.agent-page');page.classList.toggle('is-empty',!agent.messages.length&&!agent.job);page.classList.toggle('has-history',!!agent.historyOpen);page.classList.toggle('has-artifacts',AgentArtifacts.active);
- for(const selector of ['.agent-history','.agent-toolbar','.agent-context-usage','.agent-recovery','.agent-mission','.agent-project','.agent-context','.agent-add','.agent-scope-chip','.agent-controls','#agent-advanced','.agent-limits','.agent-queued','.agent-footnote','.agent-review','.pi-artifacts']){
+ for(const selector of ['.agent-history','.agent-toolbar','.agent-context-usage','.agent-recovery','.agent-mission','.agent-start-heading','.agent-starters','.agent-project','.agent-context','.agent-add','.agent-scope-chip','.agent-controls','#agent-advanced','.agent-limits','.agent-queued','.agent-footnote','.agent-review','.pi-artifacts']){
   const old=root.querySelector(selector),fresh=next.querySelector(selector);if(!old||!fresh)continue;
   if(selector==='.agent-limits'&&old.contains(document.activeElement))continue;
   if(selector==='#agent-advanced'&&old.contains(document.activeElement)&&document.activeElement?.matches?.('[data-agent-limit]'))continue;

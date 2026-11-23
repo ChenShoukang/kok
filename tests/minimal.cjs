@@ -11,7 +11,7 @@ const path=require('node:path');
  await page.reload({waitUntil:'commit'});await page.waitForSelector('#startup');
  assert.match(await page.locator('#startup img').getAttribute('src'),/^logo\.svg(?:\?|$)/);
  assert.equal((await page.locator('#startup').innerText()).trim(),'');
- await page.screenshot({path:'docs/screenshots/startup.jpg',type:'jpeg',quality:90,scale:'css',animations:'disabled'});
+ await page.screenshot({path:'test-output/minimal-startup.jpg',type:'jpeg',quality:90,scale:'css',animations:'disabled'});
  await page.waitForFunction(()=>!document.querySelector('#startup'));
  assert.equal(await page.locator('body').getAttribute('aria-busy'),'false');
  assert.equal(await page.locator('.hero,.quote-card,.category-grid,.workspace,.avatar,.bottom-line').count(),0);
@@ -37,7 +37,15 @@ const path=require('node:path');
  assert(await page.locator('#small-dialog').evaluate(el=>el.open));assert.equal(await page.locator('#small-dialog h2').innerText(),'Replacement');await page.evaluate(()=>closeSmall());
  console.log('PASS: rapid navigation and reopening a closing dialog preserve the newest view');
  await page.screenshot({path:'test-output/minimal-overview.jpg',fullPage:true,scale:'css',type:'jpeg',quality:90});
- for(const size of [{width:1440,height:1000},{width:1000,height:720},{width:960,height:512}]){await page.setViewportSize(size);const gear=await page.locator('#settings-button').boundingBox();assert(gear.y+gear.height<=size.height);const sidebar=await page.locator('.sidebar').boundingBox();assert(sidebar.width>=192);assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));}await page.screenshot({path:'test-output/minimal-compact.png',scale:'css'});
+ for(const size of [{width:1440,height:1000},{width:1000,height:720},{width:960,height:512}]){
+  await page.setViewportSize(size);
+  const gear=await page.locator('#settings-button').boundingBox();
+  assert(gear.y>=0&&gear.y+gear.height<=size.height);
+  const sidebar=await page.locator('.sidebar').boundingBox();
+  assert(sidebar.width>=gear.width&&sidebar.width<=80,'The settings button fits the compact navigation rail');
+  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+ }
+ await page.screenshot({path:'test-output/minimal-compact.png',scale:'css'});
  await page.emulateMedia({reducedMotion:'reduce'});await page.reload();await page.waitForFunction(()=>!document.querySelector('#startup'));assert.equal(await page.evaluate(()=>animateIn(document.querySelector('#main'))),undefined);console.log('PASS: reduced-motion preference and compact layout');
  await page.emulateMedia({reducedMotion:'no-preference'});await page.setViewportSize({width:1440,height:1000});await page.evaluate(()=>navigate('overview'));assert.deepEqual(errors,[]);
  fs.writeFileSync(path.resolve('test-output/minimal-validation.json'),JSON.stringify({motion,checked:true},null,2));await browser.close();console.log('Minimal interface checks passed.');

@@ -170,10 +170,10 @@ async function openProjectDialog(existing=null){
  };
 }
 function kindIcon(kind){return glyph(labels[kind]?kind:'document');}
-function newButton(attribute,secondary=false){return `<button type="button" class="button ${secondary?'secondary':'primary'} works-new-button" ${attribute}>${svg('plus')}<span>${t('新建作品')}</span></button>`;}
+function newButton(){return `<button type="button" class="button primary works-new-button" data-works-new>${svg('plus')}<span>${t('新建作品')}</span></button>`;}
 function headingRow(count){
- const subtitle=count?t(count+' 个可以继续的草稿'):t('还没有作品');
- return `<div class="collection-heading works-heading">${heading(t('我的作品'),subtitle)}${canCreate()?newButton('data-works-new'):''}</div>`;
+ const subtitle=count?t(count+' 个可以继续的草稿'):'';
+ return `<div class="collection-heading works-heading">${heading(t('我的作品'),subtitle)}${count&&canCreate()?newButton():''}</div>`;
 }
 function workCard(item){
  const draft=isDraft(item);
@@ -184,7 +184,7 @@ function continueSection(items){
 }
 function emptyState(){
  const example=globalThis.DocumentUi?.exampleAvailable()?`<button type="button" class="button secondary" data-example-work>${glyph('document')}${t('用示例试一次')}</button>`:'';
- return `<section class="works-empty"><span class="works-empty-icon" aria-hidden="true">${glyph('layers')}</span><h2>${t('从第一件作品开始')}</h2><p>${t('新建作品，或从已有文件开始编辑。')}</p><div class="works-example-actions">${example}${canCreate()?newButton('data-works-new-empty',true):''}</div>${Kok.enabled('editing')?`<small>${t('已有视频、音频、PDF 和文档也可以从下方工具开始编辑。')}</small>`:''}</section>`;
+ return `<section class="works-empty"><span class="works-empty-icon" aria-hidden="true">${glyph('layers')}</span><h2>${t('从第一件作品开始')}</h2><p>${t('新建作品，或从已有文件开始编辑。')}</p><div class="works-example-actions">${canCreate()?newButton():''}${example}</div></section>`;
 }
 function toolsSection(){
  const workspace=Kok.enabled('workspace'),editing=Kok.enabled('editing');
@@ -225,9 +225,9 @@ function installWorksClicks(){
  if(worksClicksInstalled)return;worksClicksInstalled=true;
  document.addEventListener('click',async event=>{
   try{
-   const button=event.target.closest('[data-works-new],[data-works-new-empty],[data-work-open],[data-works-tool],[data-works-media],[data-works-source],[data-project-new],[data-project-open],[data-project-continue],[data-project-resume],[data-project-edit],[data-project-item],[data-project-artifact],[data-project-directory],[data-project-add-artifact],[data-project-reveal]');
+   const button=event.target.closest('[data-works-new],[data-work-open],[data-works-tool],[data-works-media],[data-works-source],[data-project-new],[data-project-open],[data-project-continue],[data-project-resume],[data-project-edit],[data-project-item],[data-project-artifact],[data-project-directory],[data-project-add-artifact],[data-project-reveal]');
    if(!button)return;
-   if(button.hasAttribute('data-works-new')||button.hasAttribute('data-works-new-empty')){if(canCreate())await DocumentUi.open();return;}
+   if(button.hasAttribute('data-works-new')){if(canCreate())await DocumentUi.open();return;}
    if(button.dataset.workOpen)return await openCreativeEditor(button.dataset.workOpen);
    if(button.dataset.worksTool){if(Kok.enabled('workspace'))navigate(button.dataset.worksTool);return;}
    if(button.dataset.worksMedia)return await openSourcePicker(button.dataset.worksMedia);

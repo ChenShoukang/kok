@@ -53,6 +53,7 @@ const {chromium}=require('./browser.cjs'),assert=require('node:assert/strict'),f
   await page.locator('[data-save-collection="new"]').click();await page.waitForFunction(()=>state.collections.includes('界面检查分类')&&!$('#small-dialog').open);
   await page.locator('[data-collection="界面检查分类"]').click();await page.waitForFunction(()=>state.route==='collection'&&state.collection==='界面检查分类');
   assert.equal(await page.locator('#main h1').innerText(),'界面检查分类','Collection pages keep their heading');
+  assert.equal(await page.locator('[data-collection="界面检查分类"].collection-chip').getAttribute('aria-current'),'page');
   await page.locator('.nav-primary [data-route="overview"]').click();
   await page.locator('[data-filter="photo"]').click();assert.equal(await page.evaluate(()=>state.route),'photo');
   await page.evaluate(()=>navigate('overview'));await page.locator('[data-library-tools]').click();await page.locator('.glass-menu:popover-open').waitFor();

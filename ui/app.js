@@ -48,7 +48,9 @@ const state={items:[],settings:{},route:'overview',filter:'all',query:'',limit:6
 function toast(message,error=false){
  const stack=$('#toasts');let el=[...stack.children].find(e=>e.dataset.message===message&&e.classList.contains('error')===error);
  if(el){clearTimeout(el.dismissTimer);}else{while(stack.children.length>=3)stack.firstElementChild.remove();el=document.createElement('div');el.className='toast'+(error?' error':'');el.dataset.message=message;el.textContent=message;stack.append(el);if(typeof CalmMotion!=='undefined')CalmMotion.play(el,[{opacity:0,transform:'translateY(5px)'},{opacity:1,transform:'none'}],{duration:170});}
- if(!stack.matches(':popover-open'))stack.showPopover();el.dismissTimer=setTimeout(async()=>{if(el.isConnected)await dismissElement(el);if(!stack.children.length&&stack.matches(':popover-open'))stack.hidePopover();},error?8000:3500);return el;
+ if(!stack.matches(':popover-open'))stack.showPopover();
+ if(stack.scrollHeight>stack.clientHeight)stack.scrollTop=stack.scrollHeight;
+ el.dismissTimer=setTimeout(async()=>{if(el.isConnected)await dismissElement(el);if(!stack.children.length&&stack.matches(':popover-open'))stack.hidePopover();},error?8000:3500);return el;
 }
 document.addEventListener('submit',event=>event.preventDefault(),true);
 
@@ -79,7 +81,11 @@ window.addEventListener('resize',updateNavIndicator);
 function heading(title,subtitle=''){return `<div class="page-heading"><h1 ${state.route==='collection'&&!state.query?'data-user-content':''}>${esc(title)}</h1>${subtitle?`<span>${esc(subtitle)}</span>`:''}</div>`;}
 function viewOptions(...args){return Kok.invoke('viewOptions',this,args);}
 Kok.define('viewOptions',function(sort=state.settings.sort||'added'){
- return `<div class="view-options"><select class="sort-select" id="sort" aria-label="排序方式">${[['added','最近加入'],['opened','最近打开'],['name','名称'],['size','文件大小']].map(([key,label])=>`<option value="${key}" ${sort===key?'selected':''}>${label}</option>`).join('')}</select><div class="view-toggle" role="group" aria-label="${I18n.language==='en'?'View':'视图'}"><button class="${state.settings.view!=='list'?'active':''}" aria-pressed="${state.settings.view!=='list'}" data-view="grid" title="网格视图" aria-label="网格视图">${svg('grid')}</button><button class="${state.settings.view==='list'?'active':''}" aria-pressed="${state.settings.view==='list'}" data-view="list" title="列表视图" aria-label="列表视图">${svg('list')}</button></div><button class="icon-button library-tools-button" data-library-tools aria-haspopup="menu" aria-expanded="false" title="${I18n.language==='en'?'Library tools':'资料库工具'}" aria-label="${I18n.language==='en'?'Library tools':'资料库工具'}">${svg('more')}</button></div>`;
+ const options=[['added','最近加入'],['opened','最近打开'],['name','名称'],['size','文件大小']].map(([key,label])=>`<option value="${key}" ${sort===key?'selected':''}>${label}</option>`).join('');
+ return `<div class="view-options">
+ <div class="library-sort"><select class="sort-select" id="sort" aria-label="排序方式">${options}</select>${svg('chevron')}</div>
+ <div class="view-toggle" role="group" aria-label="${I18n.language==='en'?'View':'视图'}"><button class="${state.settings.view!=='list'?'active':''}" aria-pressed="${state.settings.view!=='list'}" data-view="grid" title="网格视图" aria-label="网格视图">${svg('grid')}</button><button class="${state.settings.view==='list'?'active':''}" aria-pressed="${state.settings.view==='list'}" data-view="list" title="列表视图" aria-label="列表视图">${svg('list')}</button></div>
+ <button class="icon-button library-tools-button" data-library-tools aria-haspopup="menu" aria-expanded="false" title="${I18n.language==='en'?'Library tools':'资料库工具'}" aria-label="${I18n.language==='en'?'Library tools':'资料库工具'}">${svg('more')}</button></div>`;
 });
 function fileCollection(items,includePrivate=false){
  const visible=items.slice(0,state.limit),more=items.length>state.limit?'<button class="button secondary load-more" data-action="loadMore">显示更多</button>':'';
@@ -97,11 +103,20 @@ function libraryContinue(){
 }
 function libraryCollections(){
  const names=state.navigation?.collections||state.collections||[],active=state.route==='collection'?state.collection:null;
- return `<div class="library-collections" role="group" aria-label="分类"><span class="library-collections-label">分类</span>${names.map(name=>`<button class="collection-chip ${active===name?'active':''}" data-collection="${esc(name)}" aria-label="${esc(name)}" data-user-content>${svg('folder')}<span>${esc(name)}</span></button>`).join('')}<button class="collection-chip add-collection" id="add-collection" aria-label="新建分类" title="新建分类">${svg('plus')}<span>新建分类</span></button></div>`;
+ return `<div class="library-collections" role="group" aria-label="分类"><span class="library-collections-label">分类</span>${names.map(name=>`<button type="button" class="collection-chip${active===name?' active':''}" data-collection="${esc(name)}" title="${esc(name)}"${active===name?' aria-current="page"':''} data-user-content>${svg('folder')}<span>${esc(name)}</span></button>`).join('')}<button type="button" class="collection-chip add-collection" id="add-collection" aria-label="新建分类" title="新建分类">${svg('plus')}<span>新建分类</span></button></div>`;
 }
 function overview(){
  const items=filtered(),favorites=state.items.filter(i=>i.favorite).length;
- return '<div class="collection-heading">'+heading('资料库',items.length+' 个文件')+'</div><div class="library-quick"><button class="quick-link" data-library-quick="favorites">'+svg('heart')+'<span>收藏</span><small>'+favorites+'</small></button><button class="quick-link" data-library-quick="recent">'+svg('clock')+'<span>最近打开</span></button></div>'+libraryContinue()+libraryCollections()+'<div class="library-toolbar">'+libraryFilters()+viewOptions()+'</div>'+fileCollection(items)+(items.length?'':empty('导入你的第一份文件','拖入文件，或点击导入。',true));
+ return `<div class="collection-heading">${heading('资料库',items.length+' 个文件')}</div>
+ <div class="library-actions">
+   <div class="library-quick">
+     <button type="button" class="quick-link" data-library-quick="favorites">${svg('heart')}<span>收藏</span><small>${favorites}</small></button>
+     <button type="button" class="quick-link" data-library-quick="recent">${svg('clock')}<span>最近打开</span></button>
+   </div>
+   ${libraryCollections()}
+ </div>
+ ${libraryContinue()}<div class="library-toolbar">${libraryFilters()}${viewOptions()}</div>
+ ${fileCollection(items)}${items.length?'':empty('导入你的第一份文件','拖入文件，或点击导入。',true)}`;
 }
 
 function cover(...args){return Kok.invoke('cover',this,args);}

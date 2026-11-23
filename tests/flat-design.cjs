@@ -48,6 +48,13 @@ const path=require('node:path');
     fs.writeFileSync(path.join(output,`rail-alignment-${theme}-${width}.json`),JSON.stringify(centers,null,2));
     const surfaces=await page.evaluate(()=>['body','.sidebar','.topbar'].map(s=>getComputedStyle(document.querySelector(s)).backgroundColor));
     assert.equal(new Set(surfaces).size,1,'Workspace chrome shares one background');
+    const importContrast=await page.locator('#import-top').evaluate(button=>{
+     const luminance=color=>color.match(/\d+/g).slice(0,3).map(Number).map(n=>n/255).map(n=>n<=.04045?n/12.92:((n+.055)/1.055)**2.4)
+      .reduce((sum,n,i)=>sum+n*[.2126,.7152,.0722][i],0);
+     const foreground=luminance(getComputedStyle(button).color),background=luminance(getComputedStyle(button.closest('.import-control')).backgroundColor);
+     return (Math.max(foreground,background)+.05)/(Math.min(foreground,background)+.05);
+    });
+    assert(importContrast>=4.5,'The primary import label has readable contrast in '+theme);
     await page.screenshot({path:path.join(output,`library-${theme}-${width}.png`),animations:'disabled'});
     if(width===1440){
      await page.evaluate(()=>showModeChooser(true));
