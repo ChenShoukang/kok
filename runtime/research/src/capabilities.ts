@@ -12,7 +12,7 @@ const guidance: Record<string, string> = {
   research: 'Use actual sources, follow continuation offsets when full reading is required, and separate facts, inference and unknowns.',
   document: 'Create an actual editable native document. Use hostReadBacks directly when they cover the current saved version.',
   presentation: 'Create/edit an actual PPTX. Preserve other slides and object identity; text-only outlines do not satisfy a requested deck.',
-  coding: 'Work only in the configured workspace. Preserve existing user changes. Use paged reads and exact SHA-256 guarded patches. Preserve existing changes. Run applicable checks and report actual exit codes. For verification declare changed source files in command job inputs; a successful check only proves those exact versions. Long commands may use approved command jobs; wait for their result before claiming success.',
+  coding: 'Work only in the configured workspace. Preserve existing user changes. Use paged reads and exact SHA-256 guarded patches. Run applicable checks and report actual exit codes. Pass an executable name or its discovered absolute path as command and each argument separately. Keep one separator between Windows path segments after JSON decoding. Declare changed source files in command job inputs; a successful check only proves those exact versions. Wait for approved jobs before claiming success.',
   image: 'Use an actual image executor when available. Describe unavailable generation/editing abilities honestly; do not substitute an editing plan for pixels.',
   video: 'A requested video needs an actual playable output; scripts and frame indexes are intermediate evidence, not a rendered video.',
   music: 'A requested audio/music deliverable needs playable sound from an available engine; lyrics, instructions and unrendered MIDI are intermediate work.',
@@ -27,6 +27,7 @@ export function selectNativeTools(tools: NativeTool[]): NativeTool[] {
 export function capabilityInstructions(tools: NativeTool[], spec?: TaskSpec): string {
   const active = new Set(spec?.capabilities ?? tools.map(t => toolCapability(t.function.name)).filter((id): id is string => !!id));
   const instructions = [...active].map(id => guidance[id] ? '[' + id + '] ' + guidance[id] : '').filter(Boolean);
+  if (active.has('document') || active.has('presentation')) instructions.push('[Source-based deliverables] Distinguish confirmed figures and constraints from completed actions. Write pending checks as actions or checkboxes. Mark proposed procedures or data fields as suggestions unless the source or user requires them.');
   if (spec?.excludedDeliverables?.length) instructions.push('[Explicitly excluded deliverables]\n' + spec.excludedDeliverables.join(', ') + '\nDo not reintroduce these artifacts through a requirement refinement. Follow a later accepted user change; conflicting proposals require individual confirmation.');
   if (spec?.purpose || spec?.audience) instructions.push('[Current content requirements; interpreted from USER instructions]\n' + JSON.stringify({ purpose: spec.purpose || '', audience: spec.audience || '' }) + '\nShape vocabulary, decision detail and suggested actions for this use and audience. Preserve unnamed requirements after later changes. Structural checks do not certify content suitability or editorial quality.');
   return instructions.join('\n');

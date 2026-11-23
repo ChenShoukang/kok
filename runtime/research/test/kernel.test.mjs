@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { AIMessage } from '@langchain/core/messages';
-import { ResearchKernel, monitoredFetch, redactError } from '../kernel.mjs';
+import { ResearchKernel, countLocalTokens, monitoredFetch, redactError } from '../kernel.mjs';
 
 class ScriptedModel extends BaseChatModel {
   constructor(script) { super({}); this.script = script; this.calls = 0; }
@@ -43,6 +43,12 @@ test('source/model key text is redacted from reported SDK errors', () => {
   assert.equal(redactError(new Error('bad sk-fixture-key-12345')), 'bad [redacted]');
 });
 
+test('the local SDK estimate handles long CJK spans and keeps a boundary emoji intact', async () => {
+  assert.equal(await countLocalTokens('中文 <|endoftext|>'), 8);
+  const longText = '甲'.repeat(255) + '🧪' + '甲'.repeat(7245) + '\n' + '乙'.repeat(7500);
+  assert.equal(await countLocalTokens([longText.slice(0, 700), { type: 'text', text: longText.slice(700) }]), 30004);
+});
+
 test('an SDK response without usage estimates tokens locally and contacts only the permitted model', async () => {
   const original = globalThis.fetch, origins = [], events = [];
   const endpoint = 'http://127.0.0.1:8151/v1';
@@ -59,6 +65,40 @@ test('an SDK response without usage estimates tokens locally and contacts only t
     assert.deepEqual(origins, [new URL(endpoint).origin]);
     assert.equal(events.find(event=>event.type==='model_finished').estimated, true);
   } finally { globalThis.fetch = original; }
+});
+
+test('repair after a malformed provider tool call keeps valid receipts and resumes from the checkpoint', async () => {
+  const original = globalThis.fetch, requests = [];
+  const endpoint = 'http://127.0.0.1:8151/v1';
+  globalThis.fetch = async (_url, options) => {
+    requests.push(JSON.parse(options.body));
+    const call = (id, args) => ({ index: 0, id, type: 'function', function: { name: 'read_items', arguments: args } });
+    const delta = [
+      { role: 'assistant', tool_calls: [call('valid-read', '{"ids":["S1"]}')] },
+      { role: 'assistant', content: '已尝试读取第二份。', tool_calls: [call('invalid-read', '{"ids":]}')] },
+      { role: 'assistant', content: '继续使用已读取的资料。' },
+    ][requests.length - 1];
+    const chunk = { id: 'recovery-' + requests.length, model: 'fixture', choices: [{ index: 0, delta, finish_reason: delta.tool_calls ? 'tool_calls' : 'stop' }] };
+    return new Response('data: ' + JSON.stringify(chunk) + '\n\ndata: [DONE]\n\n', { headers: { 'content-type': 'text/event-stream' } });
+  };
+  try {
+    const request = { ...input, endpoint, model: 'fixture' };
+    const kernel = new ResearchKernel();
+    const first = await kernel.step(request);
+    const stopped = await kernel.step({ ...request, messages: [], resume: { [first.calls[0].interruptId]: { status: 'done', text: 'real receipt' } } });
+    assert.equal(stopped.kind, 'final');
+    assert.deepEqual(stopped.calls, []);
+    const resumed = await new ResearchKernel({ snapshot: stopped.snapshot }).step({
+      ...request, messages: [{ role: 'user', content: '[Host delivery verification] Repair the missing result.' }],
+    });
+    assert.equal(resumed.kind, 'final');
+    const wire = requests[2].messages;
+    assert(wire.some(message => message.role === 'tool' && message.tool_call_id === 'valid-read' && message.content.includes('real receipt')));
+    assert(wire.some(message => message.role === 'assistant' && message.content?.includes('Malformed tool arguments')));
+    assert(!wire.some(message => message.tool_calls?.some(call => call.id === 'invalid-read')));
+  } finally {
+    globalThis.fetch = original;
+  }
 });
 
 test('HTTP attempts require host permission and refuse redirects before dispatch', async () => {

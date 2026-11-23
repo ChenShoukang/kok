@@ -35,6 +35,10 @@ test('tool selection preserves every granted capability group while excluding fo
   const tools=names.map(name=>({type:'function',function:{name,description:name,parameters:{type:'object',properties:{}}}}));
   assert.deepEqual(selectNativeTools(tools).map(t=>t.function.name),names.slice(0,4));
   const coding=capabilityInstructions(tools.filter(t=>t.function.name==='start_command_job'));assert.match(coding,/actual exit codes/);assert(!coding.includes('[music]'));
+  assert.doesNotMatch(coding, /Source-based deliverables/);
+  for (const nativeTool of tools.slice(0, 2)) {
+    assert.match(capabilityInstructions([nativeTool]), /Distinguish confirmed figures and constraints from completed actions/);
+  }
 });
 test('denied host permission prevents dispatch entirely',async()=>{
   let dispatched=0;

@@ -15,7 +15,8 @@ namespace kok {
         internal static void Prepare(AgentTaskState task,AgentCall call){
             if(call.tool!="propose_task_spec")return;
             var result=Validate(task,call,true);
-            if(!AgentTaskState.Get<bool>(result,"changed")||!AgentTaskState.Get<bool>(result,"requiresApproval"))throw new FormatException("No conflicting acceptance change needs approval. Use update_task_spec for a safe refinement, or keep the current requirements for a no-op.");
+            if(!AgentTaskState.Get<bool>(result,"changed"))throw new FormatException("The current requirements already match this proposal. Continue directly with the required native deliverable. Do not submit the same requirement change again.");
+            if(!AgentTaskState.Get<bool>(result,"requiresApproval"))throw new FormatException("No conflicting acceptance change needs approval. Use update_task_spec only for the user-stated fields still missing from current requirements.");
             call.args=AgentTaskState.Get<Dictionary<string,object>>(result,"proposal");
             if(task.calls.Any(c=>c.tool==call.tool&&c.status=="skipped"&&c.error=="user"&&c.steering==task.steerVersion&&Library.Json.Serialize(AgentTaskState.Get<Dictionary<string,object>>(c.args,"changes"))==Library.Json.Serialize(AgentTaskState.Get<Dictionary<string,object>>(call.args,"changes"))))throw new AgentFailure("policy","该需求变更已被拒绝，请保留当前要求，等待新的用户指令。");
             call.beforeText=Library.Json.Serialize(AgentTaskState.Get<AgentTaskContract>(result,"before"));call.afterText=Library.Json.Serialize(AgentTaskState.Get<AgentBusinessPlan>(result,"plan").contract);

@@ -31,7 +31,9 @@ export function isRequirementValidationError(error: unknown): boolean { return e
 export function validateRequirementUpdate(input: PlanningInput, revision: number, raw: unknown, current?: Contract, omitted: string[] = []): RequirementUpdate {
   if (input.requirementsVersion !== 1) throw new RequirementValidationError('Structured requirements are unavailable for this task version');
   const update = RequirementUpdateSchema.parse(raw), messages = [input.goal, ...input.adjustments];
-  if (update.baseRevision !== revision || update.userRevision !== messages.length - 1) throw new RequirementValidationError('Task requirements changed; use the current host revision and latest user message');
+  if (update.baseRevision !== revision || update.userRevision !== messages.length - 1) {
+    throw new RequirementValidationError('Use the exact current host values: baseRevision=' + revision + ', userRevision=' + (messages.length - 1) + '. A rejected request does not advance either value.');
+  }
   if (!messages[update.userRevision]?.includes(update.basis)) throw new RequirementValidationError('Requirement basis is not an exact quotation from the latest user message');
   const normalize = (text: string) => text.normalize('NFKC').replace(/\s+/gu, '').toLowerCase();
   const latest = normalize(messages[update.userRevision]), changes = update.changes;
