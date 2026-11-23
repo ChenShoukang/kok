@@ -21,11 +21,13 @@ lines.once('line', async line => {
         const { validateRequirementUpdate, isRequirementValidationError } = await import('./business/requirement-schema.ts');
         try {
           const input = message.input as { plan: PlanningInput; revision: number; proposal: unknown; allowReplacement?: boolean };
-          const proposal = validateRequirementUpdate(input.plan, input.revision, input.proposal), before = planTask(input.plan);
+          const before = planTask(input.plan);
+          const omittedFields: string[] = [];
+          const proposal = validateRequirementUpdate(input.plan, input.revision, input.proposal, before.contract, omittedFields);
           const plan = planTask({ ...input.plan, requirementUpdates: [...(input.plan.requirementUpdates || []), proposal] });
           const conflict = requirementConflict(before.contract, plan.contract);
           if (conflict && !input.allowReplacement) throw new RequirementValidationError(conflict + '. Use propose_task_spec for an individually confirmed change; do not weaken the current checks through update_task_spec.');
-          value = { valid: true, proposal, plan, before: before.contract, requiresApproval: !!conflict, changed: JSON.stringify(before.contract) !== JSON.stringify(plan.contract) };
+          value = { valid: true, proposal, plan, before: before.contract, omittedFields, requiresApproval: !!conflict, changed: JSON.stringify(before.contract) !== JSON.stringify(plan.contract) };
         } catch (error) { if (!isRequirementValidationError(error)) throw error; value = { valid: false, error: (error instanceof Error ? error.message : 'Invalid requirement update').slice(0, 1200) }; }
         break;
       }

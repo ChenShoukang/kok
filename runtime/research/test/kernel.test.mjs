@@ -43,6 +43,24 @@ test('source/model key text is redacted from reported SDK errors', () => {
   assert.equal(redactError(new Error('bad sk-fixture-key-12345')), 'bad [redacted]');
 });
 
+test('an SDK response without usage estimates tokens locally and contacts only the permitted model', async () => {
+  const original = globalThis.fetch, origins = [], events = [];
+  const endpoint = 'http://127.0.0.1:8151/v1';
+  globalThis.fetch = async url => {
+    const target = new URL(url instanceof Request ? url.url : url);
+    origins.push(target.origin);
+    assert.equal(target.origin, new URL(endpoint).origin);
+    const chunk = { id: 'fixture', model: 'fixture', choices: [{ index: 0, delta: { role: 'assistant', content: '已读取。' }, finish_reason: 'stop' }] };
+    return new Response('data: '+JSON.stringify(chunk)+'\n\ndata: [DONE]\n\n', { headers: { 'content-type': 'text/event-stream' } });
+  };
+  try {
+    const result = await new ResearchKernel({ emit: event => events.push(event) }).step({ ...input, endpoint, model: 'fixture', tools: [], messages: [{role:'user',content:'检查中文和 literal <|endoftext|>。'}] });
+    assert.equal(result.kind, 'final');
+    assert.deepEqual(origins, [new URL(endpoint).origin]);
+    assert.equal(events.find(event=>event.type==='model_finished').estimated, true);
+  } finally { globalThis.fetch = original; }
+});
+
 test('HTTP attempts require host permission and refuse redirects before dispatch', async () => {
   let requests = 0, grants = 0; const events = [], pending = [];
   const fetcher = monitoredFetch({ endpoint: 'https://api.deepseek.com/v1', pending, emit: e => events.push(e), permit: async () => { grants++; },

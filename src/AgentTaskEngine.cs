@@ -178,7 +178,7 @@ namespace kok {
                         // still propagate so real bugs are never hidden.
                         try{var proposed=prepare(State,action,turnId,providerId);proposed.requirementRevision=State.RequirementRevision;proposals.Add(proposed);}
                         catch(FormatException error){proposals.Add(RejectedProposal(action,turnId,providerId,"validation",error.Message));}
-                        catch(AgentFailure failure)when(failure.kind=="policy"){proposals.Add(RejectedProposal(action,turnId,providerId,"policy",failure.Message));}
+                        catch(AgentFailure failure)when(failure.kind=="policy"||failure.kind=="validation"){proposals.Add(RejectedProposal(action,turnId,providerId,failure.kind,failure.Message));}
                     }
                     Emit("assistant.reply",new{text=turn.reply.reply,turnId=turnId,done=turn.reply.done,sources=sources,steering=steering});
                     foreach(var call in proposals){

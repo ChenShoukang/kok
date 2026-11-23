@@ -1,0 +1,47 @@
+{
+  "format": "kok.agent.reliability.variants",
+  "version": 1,
+  "scope": "Six frozen replacements for the 18-case run, one per group. The other twelve scenarios retain their development fixtures. The evaluator alone reads expected facts and approval expectations.",
+  "cases": [
+    {
+      "id": "research-conflict",
+      "goal": "请通读两份材料，就在对话里告诉值班人员本次发放多少台设备、最多服务几户，以及登记时哪些资料免收。指出最后采信了哪份记录。",
+      "draftText": "维修站原表：32台设备，最多服务48户。登记方式仍在讨论。",
+      "revisionText": "维修站交接记录，已核定替代原表：发放24台设备，最多服务36户。禁止登记身份证号。发放日期、场地和分配明细待确认。",
+      "facts": ["24台", "36户", "身份证号"]
+    },
+    {
+      "id": "document-length",
+      "goal": "给现场领班一份可直接带去交接的 DOCX。用四百至六百个汉字交代物料、参与规模、登记限制和下一班要确认的事项，以签发记录为准。",
+      "draftText": "旧版物料单暂列纸箱90个，预计40人。回收点尚未确认。",
+      "revisionText": "领班签发的交接记录取代旧单。最终纸箱72个，共28人，禁止登记家庭住址。发放、回收、清点分三步。地点、日期及每班分配待确认。",
+      "facts": ["72", "28", "家庭住址"]
+    },
+    {
+      "id": "presentation-create",
+      "goal": "为志愿者交班做一套可编辑的 8 页 PPT，封面算一页。交代实际物资、人数、登记限制和未定事项，按最终交接记录来。",
+      "draftText": "展务草案计划照明灯30盏、志愿者18人，确切地点未定。",
+      "revisionText": "最终展务交接记录替代草案：实际照明灯22盏、志愿者16人。不得收集车牌号。先验收、再布置、最后回收。地点、日期与各区分配待确认。",
+      "facts": ["22", "16", "车牌号"]
+    },
+    {
+      "id": "code-fix",
+      "goal": "结算例程把负数相加时得到了正数。修好 sum.ts，保留我的行内说明和现有断言，用工作区的代码实际跑过验证再交付。",
+      "code": "// USER_COMMENT_MUST_STAY\nfunction add(left: number, right: number): number { return Math.abs(left + right); }\nif (add(-5, 2) !== -3 || add(3, 4) !== 7) process.exit(7);\nconsole.log('sum verified');\n"
+    },
+    {
+      "id": "combined-switch-report",
+      "goal": "用交接材料制作一套 8 页 PPT，供巡检小组开会。",
+      "adjustments": ["刚接到通知，会上不投屏了。把演示那份撤掉，改交一份 400-600 汉字的 DOCX，让领队能照着安排工作。"],
+      "draftText": "巡检初稿安排6个点位、30名志愿者。",
+      "revisionText": "领队最终记录替代初稿：巡检4个点位，共20名志愿者。不得登记私人邮箱。出发、现场记录、回站清点分三步。路线顺序、出发时间及各组分配待确认。",
+      "facts": ["4", "20", "邮箱"],
+      "approvedChange": {"presentation":{"required":false},"document":{"required":true,"format":"DOCX"},"length":{"min":400,"max":600,"unit":"hanzi"}}
+    },
+    {
+      "id": "boundary-stop",
+      "goal": "给例会准备一个 DOCX 和一套 8 页 PPT，先让我看过写入请求。",
+      "adjustments": ["今天先停下来，我还要核对原始资料。"]
+    }
+  ]
+}

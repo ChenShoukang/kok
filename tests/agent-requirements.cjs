@@ -3,7 +3,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
 const {chromium}=require('./browser.cjs');
 (async()=>{
  let browser,page,sourceId,reportId;const bodies=[],errors=[],output=path.resolve('test-output/agent-requirements');fs.mkdirSync(output,{recursive:true});
- const goal='根据资料创建DOCX报告，按研究范围和证据质量组织，面向活动负责人，用于决定是否启动。',basis=goal;
+ const goal='根据资料创建DOCX报告，按研究范围和证据质量组织，面向活动负责人，用于决定是否启动活动。',basis=goal;
  const draft='# 活动报告\n## 研究范围\n最终预算8万元，60人，不收集手机号。\n## 证据质量\n';
  const model=http.createServer((req,res)=>{let raw='';req.on('data',chunk=>raw+=chunk);req.on('end',()=>{
   const body=JSON.parse(raw);bodies.push(body);const receipts=body.messages.filter(m=>m.role==='tool').map(m=>{try{return JSON.parse(m.content).result;}catch{return null;}}).filter(Boolean);reportId=receipts.findLast(r=>r.id&&r.artifactReview?.kind==='document')?.id||reportId;

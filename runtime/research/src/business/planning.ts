@@ -65,6 +65,27 @@ function specificationOnly(clause: string): boolean {
     && !/正文|内容|段落|标题|排版|字体|布局|\b(?:body|paragraph|layout|font)\b/i.test(clause);
 }
 
+function deckPageCount(text: string, typed: boolean): number {
+  if (!typed) {
+    const last = [...text.matchAll(/([0-9]{1,3}|[一二三四五六七八九十两]{1,3})\s*(?:页|张|片|slides?)/gi)].at(-1);
+    return last ? number(last[1]) : 0;
+  }
+  const counts: number[] = [], totals: number[] = [];
+  const deckAfterCount = new RegExp('^\\s*(?:的\\s*)?(?:可编辑的?\\s*)?(?:' + pres.source + ')', 'i');
+  for (const match of text.matchAll(/(?<![0-9一二三四五六七八九十两])([0-9]{1,3}|[一二三四五六七八九十两]{1,3})\s*(?:页|张|片|-?slides?\b)/gi)) {
+    const prefix = text.slice(0, match.index).split(/[，,。；;：:\n（(]/).at(-1)!.trim();
+    const suffix = text.slice(match.index + match[0].length);
+    if (/(?:第|占|算|各|每页)\s*$/.test(prefix) || /^\s*(?:各|每|each\b|per\b)/i.test(suffix)) continue;
+    const count = number(match[1]);
+    if (count < 1 || count > 100) continue;
+    counts.push(count);
+    if (deckAfterCount.test(suffix) || /(?:共|总计|合计|总数|页数(?:改为|改成|调整为|为|是)?|^(?:改为|改成|调整为)|\btotal(?:\s+of)?)\s*$/i.test(prefix)) totals.push(count);
+  }
+  // A local allocation or page reference cannot override the size of the whole deck.
+  // Leave competing unqualified counts open for the typed requirement tool.
+  return totals.at(-1) ?? (new Set(counts).size === 1 ? counts[0] : 0);
+}
+
 export function deriveContract(input: PlanningInput): Contract {
   let result = empty(input.allowed), fullRead: boolean | undefined;
   const forbid = (kind: string) => { if (input.requirementsVersion === 1 && !result.ForbiddenArtifacts.includes(kind)) result.ForbiddenArtifacts.push(kind); };
@@ -75,8 +96,7 @@ export function deriveContract(input: PlanningInput): Contract {
     const positive = actions(raw).replace(/(?:已经|刚刚|刚才|上次|之前|此前|已)(?:生成|创建|制作|保存|导出|写好|写完)|\b(?:already|previously)\s+(?:created|generated|saved|exported|written)\b/gi, reference => ' '.repeat(reference.length));
     const clauses = positive.split(/[，,。；;\n]|并|同时|以及|另外|\band\b|\balso\b/i);
     const positiveDoc = clauses.some(clause => create.test(clause) && doc.test(clause) && !pres.test(clause)) || /(?:保存|创建|生成|写|导出|create|write|save|export)[^。\n]{0,40}\b(?:DOCX|Markdown|MD|TXT)\b/i.test(positive);
-    const pages = [...positive.matchAll(/([0-9]{1,3}|[一二三四五六七八九十两]{1,3})\s*(?:页|张|片|slides?)/gi)].at(-1);
-    const requestedPages = pages ? number(pages[1]) : 0;
+    const requestedPages = deckPageCount(positive, input.requirementsVersion === 1);
     const bodyAction = positive.split(/[，,。；;、\n]/).some(part => { const action = part.replace(/最终修订|最新修订|修订版/g, '资料版本'); return !specificationOnly(action) && edit.test(action) && (!metadata.test(action) || body.test(action)) && (/这份|该份|上述|刚才|已有|现有|原文|文档|报告|幻灯片|第\s*\d+\s*(?:页|段|章)|existing|current|this|selected/i.test(action) || body.test(action)); });
     const readingReference = /读取|阅读|读完|回读|检查|核对|分析|解读|\b(?:read|inspect|check|review|analy[sz]e)\b/i.test(positive);
     const makePresentation = clauses.some(clause => pres.test(clause) && (create.test(clause) || /做\s*(?:一[份套个]|[0-9一二三四五六七八九十两]+\s*页)?\s*(?:PPT|幻灯片|演示文稿)|^\s*(?:请|帮我|给我)?\s*(?:要|来)[^。；;\n]{0,20}(?:PPT|幻灯片|演示文稿)/i.test(clause)));

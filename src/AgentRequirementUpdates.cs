@@ -54,6 +54,8 @@ namespace kok {
             var proposal=AgentTaskState.Get<Dictionary<string,object>>(validation,"proposal");
             if(allowReplacement&&(call.beforeText!=Library.Json.Serialize(AgentTaskState.Get<AgentTaskContract>(validation,"before"))||call.afterText!=Library.Json.Serialize(plan.contract)))throw new AgentFailure("conflict","要求变更预览已失效，请重新生成后再确认。");
             var result=new Dictionary<string,object>{{"text",changed?"已按当前用户原话更新交付要求；保留已有成果，继续核对并完成实际交付。":"当前交付要求已包含这些内容，无需重复更新。"},{"revision",task.SpecRevision+(changed?1:0)},{"requirements",plan.contract},{"basis",ModuleContext.Text(proposal,"basis")},{"interpretation",allowReplacement?"user_confirmed":"model_proposed"},{"changed",changed}};
+            var omitted=AgentTaskState.Get<List<string>>(validation,"omittedFields");
+            if(omitted!=null&&omitted.Count>0)result["omittedUnstatedFields"]=omitted;
             if(changed){
                 Emit("task.requirements_updated",new{callId=call.id,proposal=proposal,result=result});
                 // A sibling write was prepared against the old requirements; it has not run or been approved.

@@ -51,7 +51,7 @@ static class AgentRequirementReplacementTests {
         var injected=Proposal(new{document=new{required=true}});injected.args["approved"]=true;
         check(Fails(()=>AgentRequirementUpdates.Prepare(state,injected),"validation"),"requirements: the shared strict schema rejects model-supplied approval claims");
         bool noOp=false,safe=false;try{AgentRequirementUpdates.Prepare(state,Proposal(new{presentation=new{pages=8}}));}catch(FormatException){noOp=true;}
-        try{AgentRequirementUpdates.Prepare(state,Proposal(new{purpose="支持本轮决策"}));}catch(FormatException){safe=true;}
+        try{AgentRequirementUpdates.Prepare(state,Proposal(new{purpose="用于展示"}));}catch(FormatException){safe=true;}
         check(noOp,"requirements: a no-op does not generate an approval proposal");check(safe,"requirements: a safe refinement uses the existing automatic path instead of requesting redundant approval");
         int started=state.events.First(e=>e.kind=="tool.started"&&AgentTaskState.Get<string>(e.data,"callId")==accepted.id).sequence;
         int applied=state.events.Single(e=>e.kind=="task.requirements_updated"&&AgentTaskState.Get<string>(e.data,"callId")==accepted.id).sequence;
