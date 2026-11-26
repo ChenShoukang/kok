@@ -208,7 +208,7 @@ return new{id=t.id,sessionId=t.options.sessionId,projectId=t.options.projectId??
                 normalLibrary.RequireAiMode();if(taskEngine!=null&&taskEngine.IsRunning)throw new InvalidOperationException("Agent 正在处理，请等待或停止当前任务。");
                 var o=Library.Json.Deserialize<AgentTaskOptions>(Library.Json.Serialize(a));
                 o.vision=translations.VisionEnabled;o.searchEndpoint=translations.SearchEndpoint;
-                o.kernelVersion=3;o.workspaceVersion=0;o.artifactReviewVersion=2;o.businessVersion=0;o.businessEnvironment=null;
+                o.kernelVersion=3;o.workspaceVersion=0;o.artifactReviewVersion=3;o.businessVersion=0;o.businessEnvironment=null;
                 o.requirementsVersion=0;o.requirementUpdates=new List<Dictionary<string,object>>();
                 if(String.IsNullOrEmpty(o.runtime)||o.runtime=="auto")o.runtime=Environment.GetEnvironmentVariable("KOK_AGENT_RUNTIME")=="native"||o.protocol=="json"?"native":"research";
                 if(!new[]{"native","research","deepagents"}.Contains(o.runtime))throw new InvalidDataException("任务运行时无效。");

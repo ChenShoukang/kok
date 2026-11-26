@@ -9,7 +9,8 @@ const {chromium}=require('./browser.cjs'),assert=require('node:assert/strict'),f
   await page.evaluate(async()=>{await native('importSamples');await refresh();await setting({theme:'light',uiLanguage:'zh',view:'grid',fontFamily:'system'});applyTheme();await applyFont();navigate('overview');});
   assert.equal(await page.locator('.study-launch,.collection-heading .agent-launch').count(),0);
   assert.equal(await page.locator('[data-library-tools]').count(),1);
-  assert.equal(await page.locator('[data-filter]').count(),6);
+  assert.deepEqual(await page.locator('[data-library-filters] [data-filter]').evaluateAll(filters=>filters.map(filter=>filter.dataset.filter)),
+   ['all','video','photo','music','document','book','collections']);
   assert.equal(await page.locator('svg[data-lucide="more"]').first().locator('circle').count(),3,'Real Lucide ellipsis keeps visible circle geometry');
   // Right-click is the very first file-menu action in a fresh window.
   await page.locator('.file-card').first().click({button:'right'});

@@ -27,6 +27,13 @@ class PresentationRulesTests {
   var denseRows=new[]{new{title="过长正文",layout="process",bullets=new[]{new string('字',200),new string('字',200),new string('字',200),new string('字',200)}}};
   var dense=new Dictionary<string,object>{{"title","密集页面"},{"slides",denseRows}};
   check(Blocked(()=>AgentRules.ValidateAction(new AgentAction{tool="create_presentation",args=dense},id=>false)),"over-dense slide copy is rejected for model repair instead of silently cropping text");
+  var milestones=new[]{"调研","访谈","样稿","审批","试行","复盘","调整","发布"};
+  var timeline=new Dictionary<string,object>{{"title","项目进度"},{"slides",new[]{new{title="项目里程碑",layout="timeline",bullets=milestones}}}};
+  AgentRules.ValidateAction(new AgentAction{tool="create_presentation",args=timeline},id=>false);
+  using(var input=new MemoryStream(AgentSlides.Build(timeline))){
+   var slide=PresentationFiles.Read(input).slides.Single();
+   check(milestones.All(milestone=>slide.shapes.Any(shape=>shape.text==milestone)),"timeline exports all eight milestones as editable PowerPoint text");
+  }
   var rows=new[]{new{title="项目回顾",layout="cover",bullets=new[]{"保留可编辑的文字与版式"},notes="开场说明与来源"},new{title="当前进展",layout="two_columns",bullets=new[]{"左侧事实","右侧结论"},notes="原来的备注"},new{title="下一步",layout="content",bullets=new[]{"保留这一页"},notes=""}};
   foreach(string theme in new[]{"paper","midnight","violet"}){var args=new Dictionary<string,object>{{"title","设计演示"},{"theme",theme},{"slides",rows}};AgentRules.ValidateAction(new AgentAction{tool="create_presentation",args=args},id=>false);using(var input=new MemoryStream(AgentSlides.Build(args))){var deck=PresentationFiles.Read(input);check(deck.slides.Count==3&&deck.slides[0].notes=="开场说明与来源"&&deck.slides[1].shapes.Count(s=>s.text=="左侧事实"||s.text=="右侧结论")==2,"native PPTX contains editable cover, two columns and speaker notes: "+theme);check(deck.slides[0].background==(theme=="paper"?"FFFFFF":theme=="midnight"?"111218":"F7F5FF"),"PPT theme roundtrips through the built-in reader: "+theme);}}
   var entry=library.CreatePresentation("逐页编辑","",AgentSlides.Build(new Dictionary<string,object>{{"title","逐页编辑"},{"slides",rows}}));

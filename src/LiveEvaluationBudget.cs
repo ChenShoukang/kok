@@ -6,7 +6,7 @@ namespace kok {
  // Activated only by an explicitly configured, silent desktop test process.
  internal static class LiveEvaluationBudget {
   static string path;static int maximum;static Mutex mutex;
-  internal const int MaxRequests=360;
+  internal const int MaxRequests=660;
   internal static void Initialize(string[] args){
    if(!Array.Exists(args,a=>a=="--debug")||!Array.Exists(args,a=>a=="--test-silent")||Environment.GetEnvironmentVariable("KOK_LIVE_AI")!="1")return;
    string file=Environment.GetEnvironmentVariable("KOK_LIVE_LEDGER");int limit;

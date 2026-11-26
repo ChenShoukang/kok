@@ -43,5 +43,15 @@ static class AgentQualityV162Tests {
         edit.sequence=state.calls.Count+1;library.WriteAgentTool(state,edit,CancellationToken.None);
         var repaired=AgentArtifactReview.Document(new Library(root),artifact.id,requirement.requiredSections,requirement);
         check(repaired.errors==0&&library.DocumentSource(artifact.id).text.Contains("## 目标\n依照最终修订执行。"),"v162: exact section repair survives library reopen and preserves unrelated report text");
+        var roster=library.CreateDocument("轮班交接","md","","# 最终排班\n预计读者75人。\n");
+        var report=library.CreateDocument("到馆交接","docx","","# 到馆交接\n实际到场读者75人。\n");
+        options.artifactReviewVersion=3;options.allowed.Add(roster.id);options.allowed.Add(report.id);state.createdArtifactIds.Add(report.id);
+        var rosterRead=new AgentCall{id=Id(),tool="read_document",status="done",args=D(new{id=roster.id})};
+        rosterRead.result=await library.ReadAgentTool(state,rosterRead,CancellationToken.None);state.calls.Add(rosterRead);
+        var finding=AgentArtifactReview.Document(library,report.id,task:state).findings.Single(item=>item.code=="unconfirmed_attendance");
+        check(finding.line>0&&finding.severity=="error"&&ModuleContext.Text(finding.source,"sourceId")==roster.id&&AgentTaskState.Get<List<string>>(finding.source,"readCallIds").Contains(rosterRead.id),"v163: saved DOCX attendance claims retain the original source version and exact read receipt");
+        var originalReport=library.DocumentSource(report.id);
+        library.SaveDocument(report.id,originalReport.text.Replace("实际到场","预计到馆"),originalReport.signature,null);
+        check(AgentArtifactReview.Document(library,report.id,task:state).errors==0,"v163: repairing the factual qualifier clears the error on the new saved file");
     }
 }

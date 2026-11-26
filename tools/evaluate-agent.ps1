@@ -1,9 +1,9 @@
-param([switch]$Live,[string]$ApiKeyFile,[string]$Model='deepseek-flash',[string]$Round='round-1',[string[]]$Cases=@(),[ValidateSet('reliability','quality','requirements')][string]$Suite='reliability',[switch]$Holdout,[ValidateSet('a','b')][string]$Variant='a',[int]$MaxRequests=150,[string]$OutputDirectory,[string]$AppDirectory)
+param([switch]$Live,[string]$ApiKeyFile,[string]$Model='deepseek-flash',[string]$Round='round-1',[string[]]$Cases=@(),[ValidateSet('reliability','quality','requirements')][string]$Suite='reliability',[switch]$Holdout,[ValidateSet('a','b','c')][string]$Variant='a',[int]$MaxRequests=150,[string]$OutputDirectory,[string]$AppDirectory)
 $ErrorActionPreference='Stop'
 $projectRoot=Split-Path $PSScriptRoot -Parent
 if(-not $Live){throw 'This evaluator makes paid DeepSeek requests. Pass -Live with an authorized local API key file.'}
 if(-not $ApiKeyFile -or -not(Test-Path -LiteralPath $ApiKeyFile -PathType Leaf)){throw 'A readable local DeepSeek API key file is required.'}
-if($Round -notmatch '^[a-zA-Z0-9][a-zA-Z0-9-]{0,60}$' -or $Model -notmatch '^[a-zA-Z0-9][a-zA-Z0-9._-]{0,80}$' -or $MaxRequests -lt 1 -or $MaxRequests -gt 360){throw 'Invalid evaluation settings.'}
+if($Round -notmatch '^[a-zA-Z0-9][a-zA-Z0-9-]{0,60}$' -or $Model -notmatch '^[a-zA-Z0-9][a-zA-Z0-9._-]{0,80}$' -or $MaxRequests -lt 1 -or $MaxRequests -gt 660){throw 'Invalid evaluation settings.'}
 if($Cases | Where-Object {$_ -notmatch '^[a-z][a-z0-9-]{0,60}$'}){throw 'Invalid case selector.'}
 if($Holdout -and $Suite -ne 'reliability'){throw 'The frozen variants belong to the 18-case reliability suite.'}
 $evaluationVersion=(Get-Content -LiteralPath (Join-Path $projectRoot 'package.json') -Raw|ConvertFrom-Json).version.Replace('.','')
@@ -32,7 +32,7 @@ try{
     [IO.File]::WriteAllText((Join-Path $roundRoot 'fingerprint.json'),($fingerprint -join "`n"),(New-Object Text.UTF8Encoding($false)))
     $samples=if($Suite -eq 'requirements'){'tests\fixtures\requirements-v0163.json'}elseif($Suite -eq 'quality'){'tests\fixtures\quality-v0162.json'}else{'tests\fixtures\reliability-v0161.json'}
     $caseSelector=if($Cases.Count){$Cases -join ','}else{'all'}
-    $variantFile=if(!$Holdout){'standard'}elseif($Variant -eq 'b'){Join-Path $projectRoot 'tests\fixtures\reliability-holdout-b-v0163.json'}else{Join-Path $projectRoot 'tests\fixtures\reliability-holdout-v0163.json'}
+    $variantFile=if(!$Holdout){'standard'}elseif($Variant -eq 'a'){Join-Path $projectRoot 'tests\fixtures\reliability-holdout-v0163.json'}else{Join-Path $projectRoot ('tests\fixtures\reliability-holdout-'+$Variant+'-v0163.json')}
     & $target $roundRoot $app (Join-Path $projectRoot $samples) ([IO.Path]::GetFullPath($ApiKeyFile)) $Model $caseSelector $variantFile
     if($LASTEXITCODE -ne 0){throw 'Some evaluation cases did not meet their checks. All attempts and requests remain in the evidence and cumulative ledger.'}
 }finally{foreach($name in $previous.Keys){[Environment]::SetEnvironmentVariable($name,$previous[$name],'Process')}}

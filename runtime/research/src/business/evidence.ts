@@ -1,13 +1,19 @@
 export interface EvidenceClaim { claim: string; sourceId: string; quote: string; sourceVersion?: string; offset?: number; relationship: 'supports' | 'contradicts' | 'inference' | 'unverified' }
 export interface EvidenceSource { id: string; name: string; domain: string; version: string; text: string; available: boolean; role?: 'input' | 'artifact'; reads: { start: number; end: number; version: string; callId: string }[] }
 
+export function rangeCovered(start: number, end: number, orderedReads: EvidenceSource['reads']) {
+  let cursor = start;
+  for (const row of orderedReads) {
+    if (row.end <= cursor) continue;
+    if (row.start > cursor) break;
+    cursor = row.end;
+    if (cursor >= end) return true;
+  }
+  return false;
+}
+
 // Exact quotation/coverage checks only. Semantic relationships are proposals by the caller.
 export function reviewEvidence(input: { claims: EvidenceClaim[]; sources: EvidenceSource[]; artifact?: { id: string; version: string; text: string; available: boolean } }) {
-  const covered = (start: number, end: number, rows: EvidenceSource['reads']) => {
-    let cursor = start;
-    for (const row of [...rows].sort((a, b) => a.start - b.start)) { if (row.end <= cursor) continue; if (row.start > cursor) break; cursor = Math.max(cursor, row.end); if (cursor >= end) return true; }
-    return false;
-  };
   const results = input.claims.map((claim, index) => {
     const source = input.sources.find(row => row.id === claim.sourceId);
     const result = { claimIndex: index + 1, claim: claim.claim, sourceId: claim.sourceId, sourceName: source?.name || '', quote: claim.quote,
@@ -27,7 +33,7 @@ export function reviewEvidence(input: { claims: EvidenceClaim[]; sources: Eviden
     result.startLine = source.text.slice(0, start).split('\n').length;
     result.endLine = source.text.slice(0, Math.max(start, result.endOffset - 1)).split('\n').length;
     const current = source.reads.filter(row => row.version === source.version);
-    result.readingVerified = covered(start, result.endOffset, current);
+    result.readingVerified = rangeCovered(start, result.endOffset, [...current].sort((a, b) => a.start - b.start));
     result.status = result.readingVerified ? 'anchored' : source.reads.length && !current.length ? 'stale_reading' : 'unread';
     result.readCallIds = current.filter(row => row.start < result.endOffset && row.end > start).map(row => row.callId).filter((id, i, ids) => ids.indexOf(id) === i);
     // A narrow warning, not a semantic verdict: exact numeric tokens differ even though the quote exists.

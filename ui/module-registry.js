@@ -22,7 +22,7 @@ const Kok=(()=>{
  function nav(){
   const focused=document.activeElement?.closest('#main-nav .nav-item'),focusKey=focused?.dataset.route?`[data-route="${CSS.escape(focused.dataset.route)}"]`:null;
   const primaryOrder=isSmartMode()&&enabled('agent')?['agent','works','overview']:['works','overview'],compactPrimary=new Set(primaryOrder);
-  const libraryRoutes=['overview','video','photo','music','document','book','favorites','recent','collection','queries','review','organize','downloads'],worksRoutes=['works','spaces','clips','recipes'];
+  const libraryRoutes=['overview','video','photo','music','document','book','favorites','recent','collection','collections','queries','review','organize','downloads'],worksRoutes=['works','spaces','clips','recipes'];
   const brand=$('.sidebar .brand'),home=isSmartMode()&&enabled('agent')?'agent':'overview';if(brand){brand.dataset.route=home;brand.href='#'+home;}
   const group=d=>d.spaceId||['spaces','clips','queries','review','recipes'].includes(d.id)?'organize':['overview','video','photo','music','document','book'].includes(d.id)?'library':['today','agent'].includes(d.id)?'work':['favorites','recent'].includes(d.id)?'quick':'tools';
   const groups=[['work','工作台','Workspace'],['library','资料库','Library'],['organize','组织','Organize'],['quick','快捷访问','Quick access'],['tools','更多工具','More tools']];

@@ -26,7 +26,57 @@ const ShellUi=(()=>{
   event.preventDefault();event.stopImmediatePropagation();if(!selected().includes(card.dataset.id))select([card.dataset.id]);
   const anchor=card.querySelector('.card-menu');anchor.focus({preventScroll:true});Kok.invoke('fileMenu',null,[card.dataset.id,anchor,{x:event.clientX,y:event.clientY}]);
  },true);
+ function openCommandPalette(){
+  if(viewer.open||$('#small-dialog').open)return;
+  const smart=isSmartMode()&&!state.isPrivate;
+  const actions=[
+   ...(smart&&Kok.enabled('agent')?[
+    {kind:'action',badge:tr('任务','Task'),label:tr('新建 Agent 任务','New Agent task'),desc:tr('开启空白对话','Start a fresh Agent session'),run:()=>AgentUi.newSession().then(()=>navigate('agent'))},
+    {kind:'action',badge:'PPT',label:tr('用 Agent 制作 PPT','Create presentation with Agent'),desc:tr('选择主题与页数生成商用 PPTX','Generate an editable PPTX deck'),run:()=>DocumentUi.open({format:'pptx'})},
+    {kind:'action',badge:'DOCX',label:tr('新建工作汇报','New executive report'),desc:tr('带结论框与表格的 Word / Markdown 模板','Create a structured report document'),run:()=>DocumentUi.open({format:'docx',template:'report'})},
+    {kind:'action',badge:'AI',label:tr('配置 AI 服务与模型','Configure AI provider & model'),desc:tr('切换模型或修改 API 地址','Switch model or edit API settings'),run:()=>typeof showProviderSettings==='function'?showProviderSettings():$('#settings-button')?.click()}
+   ]:[]),
+   ...(Kok.enabled('documents')?[{kind:'action',badge:tr('新建','New'),label:tr('新建文档','New document'),desc:'Markdown / Word / TXT',run:()=>DocumentUi.open()}]:[]),
+   ...(smart&&Kok.enabled('agent')?[{kind:'action',badge:tr('导航','Go'),label:'Agent',desc:tr('前往 Agent 工作台','Go to Agent workspace'),run:()=>navigate('agent')}]:[]),
+   {kind:'action',badge:tr('导航','Go'),label:tr('我的作品','My works'),desc:tr('项目与草稿工作室','Creative projects and drafts'),run:()=>navigate('works')},
+   {kind:'action',badge:tr('导航','Go'),label:tr('资料库','Library'),desc:tr('全部本地资料','Browse all local files'),run:()=>navigate('overview')},
+   {kind:'action',badge:tr('外观','Theme'),label:state.settings.theme==='dark'?tr('切换到浅色模式','Switch to light theme'):tr('切换到深色模式','Switch to dark theme'),desc:tr('即时切换界面明暗','Toggle light / dark appearance'),run:async()=>{await setting({theme:state.settings.theme==='dark'?'light':'dark'});applyTheme();}}
+  ];
+  showSmall(`<div class="cmd-palette"><div class="cmd-palette-head">${svg('search')}<input id="cmd-palette-input" type="search" autocomplete="off" placeholder="${esc(tr('搜索命令、会话或本地资料…','Search commands, sessions or files…'))}" aria-label="${esc(tr('快速命令面板','Command palette'))}"><kbd>Esc</kbd></div><div id="cmd-palette-list" class="cmd-palette-list" role="listbox"></div><footer class="cmd-palette-foot"><span>↑↓ ${tr('选择','Select')}</span><span>Enter ${tr('打开','Open')}</span>${smart&&Kok.enabled('agent')?`<span>Shift Enter ${tr('交给 Agent','Attach to Agent')}</span>`:''}</footer></div>`);
+  const input=$('#cmd-palette-input'),list=$('#cmd-palette-list');
+  let rows=[],index=0;
+  const build=query=>{
+   const q=String(query||'').trim().toLocaleLowerCase(),out=[];
+   for(const a of actions)if(!q||a.label.toLocaleLowerCase().includes(q)||a.desc.toLocaleLowerCase().includes(q)||a.badge.toLocaleLowerCase().includes(q))out.push(a);
+   if(smart&&globalThis.AgentUi?.state?.sessions){
+    for(const s of AgentUi.state.sessions.slice(0,8))if(s?.title&&(!q||s.title.toLocaleLowerCase().includes(q)))out.push({kind:'session',badge:tr('会话','Chat'),label:s.title,desc:new Date(s.updated).toLocaleDateString(),run:()=>AgentUi.newSession(s.id).then(()=>navigate('agent'))});
+   }
+   const files=state.items.filter(i=>!q||String(i.name||'').toLocaleLowerCase().includes(q)||String(i.ext||'').toLocaleLowerCase().includes(q)||String(i.collection||'').toLocaleLowerCase().includes(q)).slice(0,q?10:6);
+   for(const f of files)out.push({kind:'file',id:f.id,badge:String(f.ext||f.kind||'FILE').toUpperCase(),label:f.name,desc:f.collection||I18n.text(labels[f.kind]||f.kind||''),run:()=>openItem(f.id,{play:false})});
+   return out.slice(0,16);
+  };
+  const paint=()=>{
+   list.innerHTML=rows.length?rows.map((r,i)=>`<button type="button" class="cmd-palette-item" role="option" aria-selected="${i===index}" data-cmd-index="${i}"><span class="cmd-palette-badge">${esc(r.badge)}</span><span class="cmd-palette-main"><b data-user-content>${esc(r.label)}</b><small data-user-content>${esc(r.desc||'')}</small></span></button>`).join(''):`<p class="cmd-palette-empty">${tr('没有匹配的结果','No matching results')}</p>`;
+   list.querySelector('[aria-selected="true"]')?.scrollIntoView({block:'nearest'});
+  };
+  const runAt=async(i,toAgent=false)=>{
+   const r=rows[i];if(!r)return;
+   await closeSmall();
+   if(toAgent&&r.kind==='file'&&smart&&Kok.enabled('agent'))AgentUi.open({ids:[r.id]});
+   else await r.run();
+  };
+  rows=build('');paint();input.focus();
+  input.oninput=()=>{rows=build(input.value);index=0;paint();};
+  list.onclick=e=>{const b=e.target.closest('[data-cmd-index]');if(b)runAt(Number(b.dataset.cmdIndex)||0,e.shiftKey).catch(fail);};
+  input.onkeydown=e=>{
+   if(e.isComposing||e.keyCode===229)return;
+   if(e.key==='ArrowDown'&&rows.length){e.preventDefault();index=(index+1)%rows.length;paint();}
+   else if(e.key==='ArrowUp'&&rows.length){e.preventDefault();index=(index-1+rows.length)%rows.length;paint();}
+   else if(e.key==='Enter'&&rows.length){e.preventDefault();runAt(index,e.shiftKey).catch(fail);}
+  };
+ }
  window.addEventListener('keydown',event=>{
+  if((event.ctrlKey||event.metaKey)&&!event.altKey&&event.key.toLowerCase()==='k'){event.preventDefault();event.stopImmediatePropagation();openCommandPalette();return;}
   if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='f'&&!viewer.open&&!$('#small-dialog').open){event.preventDefault();event.stopImmediatePropagation();$('#search').focus();return;}
   const button=event.target.closest?.('.file-grid .file-open,.file-list .file-open');if(!button||viewer.open||$('#small-dialog').open||GlassMenu.isOpen)return;
   const card=button.closest('.file-card'),cards=[...card.parentElement.querySelectorAll(':scope>.file-card')],at=cards.indexOf(card);

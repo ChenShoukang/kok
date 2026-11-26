@@ -37,8 +37,13 @@
    if(typeof window.chrome?.webview?.postMessageWithAdditionalObjects!=='function'){toast('当前运行环境不支持拖入，请更新 WebView2，或点击导入文件。',true);return;}
    dropping=true;
    try{
+     const onAgent=state.route==='agent'&&!viewer.open&&!$('#small-dialog').open&&globalThis.AgentUi?.available?.();
+     const beforeIds=onAgent?new Set(state.items.map(i=>i.id)):null;
      const result=await importItems('importDropped',files);
-     if(result?.added&&!viewer.open&&!$('#small-dialog').open)navigate('overview');
+     if(onAgent&&result?.added){
+       const addedIds=state.items.filter(i=>!beforeIds.has(i.id)).map(i=>i.id);
+       if(addedIds.length&&typeof AgentUi.attachItems==='function'){AgentUi.attachItems(addedIds);toast(I18n.text('已导入并添加到当前对话'));}
+     }else if(result?.added&&!viewer.open&&!$('#small-dialog').open)navigate('overview');
    }catch(error){fail(error);}finally{dropping=false;}
  },true);
  window.addEventListener('blur',hide);

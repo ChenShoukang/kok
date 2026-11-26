@@ -1,23 +1,47 @@
 import {AgentPlatformUi} from './agent-platform.mjs';
 import {AgentOperations} from './agent-operations.mjs';
-import {AgentArtifacts,piEditorKeyDown} from './pi-agent-view.mjs';
+import {AgentArtifacts,piEditorKeyDown,piSplitStyle} from './pi-agent-view.mjs';
 // Migrated intact from agent-ui.js
 'use strict';
 // Interaction patterns: assistant-ui tool groups/sources/reviewable diffs, OpenHands event grouping,
 // and Cline discussion/action separation. Original DOM implementation for kok; no framework runtime.
 const agentGroupOpen=new Map();
-function agentRichText(value){
- const inline=text=>esc(text).replace(/`([^`\n]+)`/g,'<code>$1</code>').replace(/\*\*([^*\n]+)\*\*/g,'<strong>$1</strong>');
- let result='',code=null,list=false;
- const closeList=()=>{if(list){result+='</ul>';list=false;}};
- for(const line of String(value||'').split('\n')){
-  if(/^\s*```/.test(line)){closeList();if(code===null)code=[];else{result+='<pre><code>'+esc(code.join('\n'))+'</code></pre>';code=null;}continue;}
+function agentRichText(value,{document:isDoc=false}={}){
+ const inline=text=>esc(text).replace(/`([^`\n]+)`/g,'<code>$1</code>').replace(/\*\*([^*\n]+)\*\*/g,'<strong>$1</strong>').replace(/\*([^*\n]+)\*/g,'<em>$1</em>');
+ const splitRow=line=>{let s=line.trim();if(s.startsWith('|'))s=s.slice(1);if(s.endsWith('|'))s=s.slice(0,-1);return s.split('|').map(c=>c.trim());};
+ const isTableSep=line=>/^\s*\|?(?:\s*:?-{2,}:?\s*\|)+\s*:?-{2,}:?\s*\|?\s*$/.test(line||'');
+ const lines=String(value||'').replace(/\r\n?/g,'\n').split('\n');
+ let result='',code=null,list='',quote=[];
+ const closeList=()=>{if(list){result+=`</${list}>`;list='';}};
+ const closeQuote=()=>{if(quote.length){result+='<blockquote>'+quote.map(q=>'<p>'+inline(q)+'</p>').join('')+'</blockquote>';quote=[];}};
+ for(let i=0;i<lines.length;i++){
+  const line=lines[i];
+  if(/^\s*```/.test(line)){closeList();closeQuote();if(code===null)code=[];else{result+='<pre><code>'+esc(code.join('\n'))+'</code></pre>';code=null;}continue;}
   if(code!==null){code.push(line);continue;}
-  const bullet=/^\s*[-*]\s+(.+)$/.exec(line),heading=/^#{1,6}\s+(.+)$/.exec(line);
-  if(bullet){if(!list){result+='<ul>';list=true;}result+='<li>'+inline(bullet[1])+'</li>';continue;}
-  closeList();result+=heading?'<h3>'+inline(heading[1])+'</h3>':line.trim()?'<p>'+inline(line)+'</p>':'<div class="agent-paragraph-gap"></div>';
+  if(/^\s*([-*_])\1{2,}\s*$/.test(line)){closeList();closeQuote();result+='<hr>';continue;}
+  if(/^\s*>/.test(line)){closeList();quote.push(line.replace(/^\s*>\s?/,''));continue;}
+  closeQuote();
+  if(line.includes('|')&&i+1<lines.length&&isTableSep(lines[i+1])){
+   closeList();
+   const headers=splitRow(line),seps=splitRow(lines[i+1]);
+   const aligns=headers.map((_,idx)=>{const c=(seps[idx]||'').trim();return c.startsWith(':')&&c.endsWith(':')?'center':c.endsWith(':')?'right':'left';});
+   i+=2;
+   const rows=[];
+   while(i<lines.length&&lines[i].includes('|')&&lines[i].trim()){rows.push(splitRow(lines[i]));i++;}
+   i--;
+   result+='<div class="agent-table-wrap"><table><thead><tr>'+headers.map((h,idx)=>`<th style="text-align:${aligns[idx]}">${inline(h)}</th>`).join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+headers.map((_,idx)=>`<td style="text-align:${aligns[idx]}">${inline(r[idx]||'')}</td>`).join('')+'</tr>').join('')+'</tbody></table></div>';
+   continue;
+  }
+  const ordered=/^\s*\d+\.\s+(.+)$/.exec(line);
+  if(ordered){if(list!=='ol'){closeList();result+='<ol>';list='ol';}result+='<li>'+inline(ordered[1])+'</li>';continue;}
+  const bullet=/^\s*[-*+]\s+(.+)$/.exec(line);
+  if(bullet){if(list!=='ul'){closeList();result+='<ul>';list='ul';}const task=/^\[( |x|X)\]\s+(.+)$/.exec(bullet[1]);result+=task?`<li class="agent-task-item" data-checked="${task[1]!==' '}">${task[1]!==' '?'☑ ':'☐ '}${inline(task[2])}</li>`:'<li>'+inline(bullet[1])+'</li>';continue;}
+  closeList();
+  const heading=/^(#{1,4})\s+(.+)$/.exec(line);
+  if(heading){const level=heading[1].length;result+=isDoc?`<h${level}>${inline(heading[2])}</h${level}>`:`<h3 class="md-h${level}">${inline(heading[2])}</h3>`;continue;}
+  result+=line.trim()?'<p>'+inline(line)+'</p>':'<div class="agent-paragraph-gap"></div>';
  }
- closeList();if(code!==null)result+='<pre><code>'+esc(code.join('\n'))+'</code></pre>';return result;
+ closeList();closeQuote();if(code!==null)result+='<pre><code>'+esc(code.join('\n'))+'</code></pre>';return result;
 }
 function agentSourceButtons(ids){return [...new Set(ids||[])].filter(id=>/^[a-f0-9]{32}$/.test(id)&&byId(id)).slice(0,24).map(id=>`<button type="button" class="agent-source" data-agent-open-item="${id}" title="${esc(agentItemName(id))}" data-user-content>${svg(byId(id).kind)}<span>${esc(agentItemName(id))}</span></button>`).join('');}
 // Fork is a message-level operation: only a real user/assistant transcript row backed by a native
@@ -42,7 +66,7 @@ function agentEntries(){
 }
 function agentBatch(){
  const pending=agent.messages.filter(m=>m.status==='pending');if(!pending.length)return '';
- if(pending.length===1){const m=pending[0],tool=AGENT_TOOLS[m.tool]||{label:m.tool};return `<div class="agent-batch agent-single-review" role="status"><button type="button" class="agent-review-target text-button" data-agent-review-target="${m.id}">${svg('info')}<span>${I18n.text('等待确认')} · ${esc(I18n.text(tool.label))}</span>${svg('chevron')}</button></div>`;}
+ if(pending.length===1){const m=pending[0],tool=AGENT_TOOLS[m.tool]||{label:m.tool};return `<div class="agent-batch agent-single-review" role="status"><button type="button" class="agent-review-target text-button" data-agent-review-target="${m.id}">${svg('info')}<span>${I18n.text('等待确认')} · ${esc(I18n.text(tool.label))}</span>${svg('chevron')}</button><div class="agent-dock-actions"><button type="button" class="button secondary" data-agent-dock-skip="${m.id}">${I18n.text('跳过')}</button><button type="button" class="button primary" data-agent-dock-run="${m.id}">${svg('check')}${I18n.text('执行')}</button></div></div>`;}
  const rows=pending.filter(m=>!['mcp_call','delegate_task','run_code','start_command_job','open_browser','browser_action','render_presentation'].includes(m.tool)),chosen=rows.filter(m=>m.selected!==false),selected=chosen.length,external=pending.length-rows.length;
  // Summarize exactly what the batch will change before the user confirms it.
  const groups=new Map();for(const m of chosen){const label=I18n.text((AGENT_TOOLS[m.tool]||{label:m.tool}).label);groups.set(label,(groups.get(label)||0)+1);}
@@ -385,7 +409,7 @@ function agentRestore(id){
 }
 async function agentNew(id){
  if(agent.job||agent.inputFlight)return;agentSessionText();if(id)agentRestore(id);else{agent.sessionId=uid();agent.messages=[];agent.history=[];agent.draft='';agent.titleOverride='';agent.context=[];agent.scope='all';agent.usage=null;agent.lastScope='';agent.phase='';agent.queue=[];agent.watch='';agent.recovery=null;agent.handoff=null;}
- agent.historyOpen=false;agent.historyQuery='';agent.queueOpen=!!agent.queue.length;
+ agent.historyOpen=false;agent.historyQuery='';agent.queueOpen=!!agent.queue.length;agentHideSuggest();
  AgentArtifacts.reset();
  if(!id)agent.sessionArtifacts=[];
  agentPaint();const input=$('#agent-input');if(input){input.value=agent.draft;input.focus();}
@@ -564,7 +588,12 @@ function agentInScope(id,scope){const item=byId(id);return item&&(scope.mode==='
 function agentSetPhase(value){agent.phase=value;const el=$('#agent-progress');if(el){el.textContent=I18n.text(value);el.dataset.busy=String(!!agent.job);}}
 async function agentApply(changes){await native('agentPatch',{changes});for(const c of changes){const item=byId(c.id);if(item)Object.assign(item,c.after);}}
 function agentItemName(id){return byId(id)?.name||I18n.text('已移除的资料');}
-function agentContextChips(){return agent.context.map(id=>`<span class="agent-chip" data-user-content>${svg(byId(id)?.kind||'document')}<b>${esc(agentItemName(id))}</b><button type="button" data-agent-unpin="${esc(id)}" aria-label="移除">${svg('close')}</button></span>`).join('');}
+function agentContextChips(){
+ const modeChip=agent.intent==='discuss'?`<span class="agent-chip agent-mode-chip"><b>${I18n.text('仅讨论')}</b><button type="button" data-agent-clear-mode aria-label="${esc(I18n.text('移除'))}">${svg('close')}</button></span>`:'';
+ const skillObj=agent.skill&&agent.skill!=='auto'?([...AgentModel.presets,...AgentSkills.custom(),...agent.nativeSkills].find(s=>s.name===agent.skill)||{name:agent.skill}):null;
+ const skillChip=skillObj?`<span class="agent-chip agent-mode-chip" data-user-content><b>${I18n.text('技能')} · ${esc(I18n.text(skillObj.title||skillObj.name))}</b><button type="button" data-agent-clear-skill aria-label="${esc(I18n.text('移除'))}">${svg('close')}</button></span>`:'';
+ return modeChip+skillChip+agent.context.map(id=>`<span class="agent-chip" data-user-content>${svg(byId(id)?.kind||'document')}<b>${esc(agentItemName(id))}</b><button type="button" data-agent-unpin="${esc(id)}" aria-label="移除">${svg('close')}</button></span>`).join('');
+}
 function agentSummary(tool,args){
  const names=ids=>(ids||[]).slice(0,3).map(agentItemName).join('、')+((ids||[]).length>3?I18n.text(' 等 ')+ids.length+I18n.text(' 份'):'');
  switch(tool){
@@ -584,12 +613,55 @@ function agentSummary(tool,args){
   case 'finish_task':return I18n.text(({review_required:'核对已失效',completed:'已完成',partial:'部分完成',needs_input:'需要补充信息'})[args.status]||'任务核对');
  }return '';
 }
+function agentWordDiffPair(before,after){
+ let p=0,maxP=Math.min(before.length,after.length);
+ while(p<maxP&&before[p]===after[p])p++;
+ let s=0,maxS=Math.min(before.length-p,after.length-p);
+ while(s<maxS&&before[before.length-1-s]===after[after.length-1-s])s++;
+ const pre=before.slice(0,p),suf=s?before.slice(before.length-s):'';
+ const midB=before.slice(p,before.length-s),midA=after.slice(p,after.length-s);
+ return {
+  beforeHtml:esc(pre)+(midB?`<del class="diff-del">${esc(midB)}</del>`:'')+esc(suf),
+  afterHtml:esc(pre)+(midA?`<ins class="diff-ins">${esc(midA)}</ins>`:'')+esc(suf)
+ };
+}
+function agentInlineDiff(beforeText,afterText){
+ const a=String(beforeText||'').replace(/\r\n?/g,'\n').split('\n');
+ const b=String(afterText||'').replace(/\r\n?/g,'\n').split('\n');
+ let start=0;while(start<a.length&&start<b.length&&a[start]===b[start])start++;
+ let endA=a.length,endB=b.length;while(endA>start&&endB>start&&a[endA-1]===b[endB-1]){endA--;endB--;}
+ const midA=a.slice(start,endA),midB=b.slice(start,endB);
+ let added=0,removed=0;
+ const rows=[];
+ if(start>0)rows.push(...a.slice(Math.max(0,start-1),start).map(t=>({type:'same',html:esc(t)})));
+ if(midA.length===1&&midB.length===1){
+  const pair=agentWordDiffPair(midA[0],midB[0]);
+  rows.push({type:'del',html:pair.beforeHtml},{type:'add',html:pair.afterHtml});
+  removed=1;added=1;
+ }else{
+  const pairCount=Math.min(midA.length,midB.length);
+  for(let i=0;i<midA.length;i++){
+   if(i<pairCount&&midA[i]&&midB[i]){const pair=agentWordDiffPair(midA[i],midB[i]);rows.push({type:'del',html:pair.beforeHtml});}
+   else rows.push({type:'del',html:`<del class="diff-del">${esc(midA[i])}</del>`});
+   removed++;
+  }
+  for(let i=0;i<midB.length;i++){
+   if(i<pairCount&&midA[i]&&midB[i]){const pair=agentWordDiffPair(midA[i],midB[i]);rows.push({type:'add',html:pair.afterHtml});}
+   else rows.push({type:'add',html:`<ins class="diff-ins">${esc(midB[i])}</ins>`});
+   added++;
+  }
+ }
+ if(endA<a.length)rows.push(...a.slice(endA,Math.min(a.length,endA+1)).map(t=>({type:'same',html:esc(t)})));
+ const summary=`+${added} / -${removed}`;
+ const body=rows.slice(0,40).map(r=>`<div class="agent-diff-line is-${r.type}"><span class="agent-diff-sign">${r.type==='add'?'+':r.type==='del'?'−':' '}</span><span data-user-content>${r.html||' '}</span></div>`).join('');
+ return `<details class="agent-diff"><summary><span>${I18n.text('查看修改前后')}</span><small class="agent-diff-stat">${summary}</small></summary><div class="agent-diff-unified">${body}</div></details>`;
+}
 function agentPreview(m){
  const platform=AgentPlatformUi.preview(m);if(platform)return platform;
  if(m.tool==='edit_presentation')return m.status==='pending'?`<button type="button" class="text-button agent-slide-preview-action" data-agent-preview-slides="${m.id}">${svg('slide')}${I18n.text('预览幻灯片')} · ${m.args.edits.length} ${I18n.text('项修改')}</button>`:'';
- const a=m.args;if(m.tool==='mcp_call')return `<div class="agent-external-warning">${I18n.text('外部工具可访问当前账户的文件和网络，不受资料库范围沙箱限制，且不能自动撤销。')}</div><dl class="agent-external-target"><dt>${I18n.text('服务 ID')}</dt><dd data-user-content>${esc(a.serverId)}</dd><dt>${I18n.text('工具')}</dt><dd data-user-content>${esc(a.tool)}</dd></dl><pre class="agent-preview" data-user-content>${esc(JSON.stringify(a.arguments,null,2))}</pre>`;if(m.changes?.length)return agentMetadataDiff(m);if(['write_note','replace_document_text'].includes(m.tool))return `<details class="agent-diff"><summary>${I18n.text('查看修改前后')}</summary><div><section><b>${I18n.text('修改前')}</b><pre data-user-content>${esc(m.beforeText??byId(a.id)?.notes??'')}</pre></section><section><b>${I18n.text('修改后')}</b><pre data-user-content>${esc(m.afterText??a.text)}</pre></section></div></details>`;
+ const a=m.args;if(m.tool==='mcp_call')return `<div class="agent-external-warning">${I18n.text('外部工具可访问当前账户的文件和网络，不受资料库范围沙箱限制，且不能自动撤销。')}</div><dl class="agent-external-target"><dt>${I18n.text('服务 ID')}</dt><dd data-user-content>${esc(a.serverId)}</dd><dt>${I18n.text('工具')}</dt><dd data-user-content>${esc(a.tool)}</dd></dl><pre class="agent-preview" data-user-content>${esc(JSON.stringify(a.arguments,null,2))}</pre>`;if(m.changes?.length)return agentMetadataDiff(m);if(['write_note','replace_document_text'].includes(m.tool)){const before=String(m.beforeText??byId(a.id)?.notes??''),after=String(m.afterText??a.text??'');return agentInlineDiff(before,after);}
  if(['create_document','create_presentation'].includes(m.tool)){
-  const preview=m.tool==='create_document'?`<div class="agent-preview agent-rich-text" data-user-content>${agentRichText(a.text.slice(0,1200)+(a.text.length>1200?'…':''))}</div>`:`<ol class="agent-preview agent-slides" data-user-content>${a.slides.map(s=>`<li><b>${esc(s.title)}</b>${(s.bullets||[]).length?`<span>${esc(s.bullets.join(' / '))}</span>`:''}</li>`).join('')}</ol>${m.status==='pending'?`<button type="button" class="text-button agent-slide-preview-action" data-agent-preview-slides="${m.id}">${svg('slide')}${I18n.text('预览幻灯片')}</button>`:''}`;
+  const preview=m.tool==='create_document'?`<div class="agent-preview agent-rich-text" data-user-content>${agentRichText(a.text.slice(0,1200)+(a.text.length>1200?'…':''))}</div>${m.status==='pending'?`<button type="button" class="text-button agent-slide-preview-action" data-agent-preview-doc="${m.id}">${svg('panel')}${I18n.text('预览排版')}</button>`:''}`:`<ol class="agent-preview agent-slides" data-user-content>${a.slides.map(s=>`<li><b>${esc(s.title)}</b>${(s.bullets||[]).length?`<span>${esc(s.bullets.join(' / '))}</span>`:''}</li>`).join('')}</ol>${m.status==='pending'?`<button type="button" class="text-button agent-slide-preview-action" data-agent-preview-slides="${m.id}">${svg('slide')}${I18n.text('预览幻灯片')}</button>`:''}`;
   return m.status==='done'?`<details class="agent-completed-preview"><summary>${I18n.text('查看内容')}</summary>${preview}</details>`:preview;
  }
  return '';
@@ -647,18 +719,91 @@ function agentMessage(m){
  if(m.role==='result')return m.kind==='local'?agentLocalCard(m):agentResultCard(m);
  const tool=AGENT_TOOLS[m.tool]||{icon:'info',label:m.tool},read=AGENT_READ.includes(m.tool);
  const controls=m.status==='pending'?`${m.grantEligible?`<label class="agent-grant"><input type="checkbox" data-agent-grant="${m.id}">${I18n.text('本任务内允许同类修改（这些资料，后续最多四次）')}</label>`:''}<div class="agent-card-actions"><button class="button primary" data-agent-run="${m.id}">${svg('check')}${I18n.text('执行')}</button><button class="button secondary" data-agent-skip="${m.id}">${I18n.text('跳过')}</button></div>`
-  :m.status==='done'?`<div class="agent-card-actions"><span class="agent-status ok">${svg('check')}${I18n.text('已完成')}</span>${m.undo?`<button class="text-button" data-agent-undo="${m.id}">${svg('undo')}${I18n.text('撤销')}</button>`:''}${m.result?.id&&byId(m.result.id)?`<button class="text-button" data-agent-open-item="${esc(m.result.id)}">${svg('external')}${I18n.text('打开')}</button>`:''}</div>`
+  :m.status==='done'?`<div class="agent-card-actions"><span class="agent-status ok">${svg('check')}${I18n.text('已完成')}</span>${m.result?.id&&byId(m.result.id)?.ownedDocument&&['MD','TXT','DOCX','PPTX'].includes(byId(m.result.id).ext)?`<button type="button" class="text-button" data-pi-artifact="${esc(m.result.id)}">${svg('panel')}${I18n.text('预览')}</button>`:''}${m.undo?`<button class="text-button" data-agent-undo="${m.id}">${svg('undo')}${I18n.text('撤销')}</button>`:''}${m.result?.id&&byId(m.result.id)?`<button class="text-button" data-agent-open-item="${esc(m.result.id)}">${svg('external')}${I18n.text('打开')}</button>`:''}</div>`
   :m.status==='skipped'?`<div class="agent-card-actions"><span class="agent-status">${I18n.text('已跳过')}</span></div>`
   :m.status==='undone'?`<div class="agent-card-actions"><span class="agent-status">${I18n.text('已撤销')}</span></div>`
   :m.status==='failed'?`<div class="agent-card-actions"><span class="agent-status bad">${esc(m.error||I18n.text('执行失败'))}</span></div>`
   :m.status==='running'?`<div class="agent-card-actions"><span class="agent-status"><span class="spinner"></span>${I18n.text('执行中')}</span></div>`:'';
  return `<article class="agent-card ${read?'agent-card-read':''} agent-${m.status}" data-agent-card="${m.id}"><header>${m.status==='pending'&&!['mcp_call','delegate_task','run_code','start_command_job','open_browser','browser_action','render_presentation'].includes(m.tool)?`<input type="checkbox" data-agent-select="${m.id}" ${m.selected!==false?'checked':''} aria-label="${I18n.text('选择此修改')}">`:''}${svg(tool.icon)}<b>${I18n.text(tool.label)}</b><span data-user-content>${esc(agentSummary(m.tool,m.args))}</span></header>${m.why?`<p data-user-content>${esc(m.why)}</p>`:''}${read?'':agentPreview(m)}${m.tool==='mcp_call'&&m.readPreview?`<details class="agent-external-result"><summary>${I18n.text('外部返回')}</summary><pre data-user-content>${esc(m.readPreview)}</pre>${m.resultEventId?`<button type="button" class="text-button" data-agent-full-result="${m.id}">${I18n.text('完整外部结果')}</button>`:''}</details>`:''}${read?(m.status==='done'?`<small>${I18n.text('已自动读取，未修改任何内容')}</small><div class="agent-sources">${agentSourceButtons(m.sourceIds)}</div>${m.readPreview?`<details class="agent-read-preview"><summary>${I18n.text('查看读取节选')}</summary><pre data-user-content>${esc(m.readPreview)}</pre>${m.resultEventId?`<button type="button" class="text-button" data-agent-full-result="${m.id}">${I18n.text('完整读取结果')}</button>`:''}</details>`:''}`:m.status==='failed'?`<small class="agent-read-error">${esc(m.error)}</small>`:''):controls}${AgentPlatformUi.result(m)}</article>`;
 }
+// Bespoke editorial flat studio icons for Agent starters & branch tree.
+const AGENT_STUDIO_ICONS={
+ example:'<svg class="ui-icon studio-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5.5 3.5h8.5l4.5 4.5v12.5h-13V3.5Z" fill="currentColor" fill-opacity=".1" stroke="currentColor" stroke-width="1.65" stroke-linejoin="round"/><path d="M14 3.5V8h4.5M9 12.5h6M9 16h4" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/><circle cx="9.5" cy="8.5" r="1.3" fill="currentColor"/></svg>',
+ edit:'<svg class="ui-icon studio-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3.5" y="4" width="6.5" height="6" rx="1.8" fill="currentColor" fill-opacity=".12" stroke="currentColor" stroke-width="1.65"/><rect x="14" y="4" width="6.5" height="6" rx="1.8" fill="currentColor" fill-opacity=".12" stroke="currentColor" stroke-width="1.65"/><rect x="8.75" y="14" width="6.5" height="6" rx="1.8" fill="currentColor" fill-opacity=".16" stroke="currentColor" stroke-width="1.65"/><path d="M10 7h4M6.75 10v2h10.5v-2M12 12v2" stroke="currentColor" stroke-width="1.6"/></svg>',
+ list:'<svg class="ui-icon studio-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3.5" y="4" width="5" height="5" rx="1.4" fill="currentColor" fill-opacity=".16" stroke="currentColor" stroke-width="1.65"/><rect x="3.5" y="11" width="5" height="5" rx="1.4" fill="currentColor" fill-opacity=".16" stroke="currentColor" stroke-width="1.65"/><path d="M11.5 6.5h9M11.5 13.5h9M6 19.5h14.5" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/><circle cx="6" cy="19.5" r="1.4" fill="currentColor"/></svg>',
+ slide:'<svg class="ui-icon studio-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="2.5" y="4" width="19" height="13" rx="2.2" fill="currentColor" fill-opacity=".1" stroke="currentColor" stroke-width="1.65"/><rect x="5.5" y="7" width="6" height="5" rx="1" fill="currentColor" fill-opacity=".22"/><path d="M14 8.2h4.5M14 11.2h3.5M12 17v3.5M8.5 20.5h7" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/></svg>',
+ branch:'<svg class="ui-icon studio-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="6.5" cy="6" r="2.3" fill="currentColor" fill-opacity=".16" stroke="currentColor" stroke-width="1.65"/><circle cx="6.5" cy="18" r="2.3" fill="currentColor" fill-opacity=".16" stroke="currentColor" stroke-width="1.65"/><circle cx="17.5" cy="10" r="2.3" fill="currentColor" fill-opacity=".16" stroke="currentColor" stroke-width="1.65"/><path d="M6.5 8.3v7.4M8.8 18h4.2a4.5 4.5 0 0 0 4.5-4.5v-1.2" stroke="currentColor" stroke-width="1.65"/></svg>'
+};
+function agentStarterIcon(icon){return AGENT_STUDIO_ICONS[icon]||glyph(icon);}
+function agentStarterTone(icon){return ({example:'teal',edit:'indigo',list:'amber',slide:'rose',document:'sky',check:'teal',layers:'indigo',video:'rose',photo:'amber'})[icon]||'indigo';}
 function agentStarters(empty){
  if(!empty)return '<div class="agent-starters" hidden></div>';
  const suggestions=agentSuggestions();
- const example=globalThis.DocumentUi?.exampleAvailable()?`<button type="button" data-example-work>${glyph('document')}<span>${I18n.text('用示例试一次')}</span></button>`:'';
- return `<div class="agent-starters">${example}${suggestions.map(([text,icon,label])=>`<button type="button" data-agent-starter="${esc(I18n.text(text))}">${glyph(icon)}<span>${I18n.text(label||text)}</span></button>`).join('')}</div>`;
+ const example=globalThis.DocumentUi?.exampleAvailable()?`<button type="button" data-example-work data-tone="teal"><span class="starter-badge">${AGENT_STUDIO_ICONS.example}</span><span>${I18n.text('用示例试一次')}</span></button>`:'';
+ return `<div class="agent-starters">${example}${suggestions.map(([text,icon,label])=>`<button type="button" data-agent-starter="${esc(I18n.text(text))}" data-tone="${agentStarterTone(icon)}"><span class="starter-badge">${agentStarterIcon(icon)}</span><span>${I18n.text(label||text)}</span></button>`).join('')}</div>`;
+}
+let agentModelState={model:'',endpoint:'',loaded:false};
+const agentAutoPreviewed=new Set();
+async function agentRefreshModel(){
+ try{
+  const cfg=await native('aiConfig');
+  const nextModel=String(cfg?.model||'').trim(),nextEndpoint=String(cfg?.endpoint||'').trim();
+  const changed=nextModel!==agentModelState.model||nextEndpoint!==agentModelState.endpoint;
+  agentModelState={model:nextModel,endpoint:nextEndpoint,loaded:true};
+  if(changed&&state.route==='agent')agentPaint({scroll:false});
+ }catch{}
+}
+Kok.on('libraryChanged',()=>{if(state.route==='agent')agentRefreshModel();});
+document.addEventListener('kok-ai-config-changed',event=>{
+ const cfg=event.detail;
+ agentModelState={model:String(cfg?.model||'').trim(),endpoint:String(cfg?.endpoint||'').trim(),loaded:true};
+ if(state.route==='agent')agentPaint({scroll:false});
+});
+async function agentQuickSwitchModel(modelName){
+ if(!modelName||agent.job)return;
+ try{
+  const cfg=await native('aiConfig');
+  const next=await native('saveAiConfig',{endpoint:cfg.endpoint||'',model:modelName,apiKey:'',language:cfg.language||'zh',automatic:!!cfg.automatic,clearKey:false,tokenParameter:cfg.tokenParameter||'auto',vision:!!cfg.vision,searchEndpoint:cfg.searchEndpoint||'',promptCache:!!cfg.promptCache});
+  if(typeof aiConfig!=='undefined')aiConfig=next;
+  agentModelState={model:String(next?.model||modelName).trim(),endpoint:String(next?.endpoint||'').trim(),loaded:true};
+  try{const key='kok.recentModels',prev=JSON.parse(localStorage.getItem(key)||'[]'),list=[modelName,...prev.filter(m=>m!==modelName)].slice(0,6);localStorage.setItem(key,JSON.stringify(list));}catch{}
+  agentPaint({scroll:false});
+  toast(I18n.text('已切换模型：')+modelName);
+ }catch(error){fail(error);}
+}
+function agentModelMenu(anchor){
+ if(!agentModelState.model&&typeof showProviderSettings==='function'){showProviderSettings();return;}
+ let recent=[];
+ try{recent=JSON.parse(localStorage.getItem('kok.recentModels')||'[]').filter(m=>typeof m==='string'&&m.trim());}catch{}
+ const items=[];
+ for(const m of recent.slice(0,5))items.push({key:'m:'+m,label:m,icon:m===agentModelState.model?'check':'spark',disabled:!!agent.job||m===agentModelState.model,action:()=>agentQuickSwitchModel(m)});
+ items.push({key:'settings',label:I18n.text('配置 AI 服务与模型…'),icon:'settings',separatorBefore:items.length>0,action:()=>{if(typeof showProviderSettings==='function')showProviderSettings();else $('#settings-button')?.click();}});
+ GlassMenu.open(anchor,items,{label:I18n.text('切换模型'),focus:true});
+}
+function agentQuickRenameSession(){
+ if(agent.job||!agentAvailable()||!agent.messages.length)return;
+ const currentTitle=String(agent.titleOverride||agent.messages.find(m=>m.role==='user')?.text||'').trim();
+ showSmall(`<h2>${I18n.text('重命名会话')}</h2><form id="agent-quick-rename"><label class="form-label">${I18n.text('会话名称')}<input id="agent-quick-rename-input" maxlength="64" required value="${esc(currentTitle)}"></label><div class="document-form-actions"><button type="button" class="text-button" data-close-small>${I18n.text('取消')}</button><button type="submit" class="button primary">${I18n.text('保存')}</button></div></form>`);
+ I18n.localize($('#small-dialog'));
+ const input=$('#agent-quick-rename-input');input?.focus();input?.select();
+ $('#agent-quick-rename').onsubmit=async event=>{
+  event.preventDefault();
+  const title=input.value.trim();if(!title||title.length>64)return;
+  try{
+   await native('agentSessionRename',{sessionId:agent.sessionId,title});
+   agent.titleOverride=title;
+   await closeSmall();
+   agentPaint({scroll:false});
+   await agentSave();
+   toast(I18n.text('已重命名会话'));
+  }catch(error){fail(error);}
+ };
+}
+function agentAttachItems(ids){
+ if(!Array.isArray(ids)||!ids.length||agent.job)return;
+ let added=0;
+ for(const id of ids){if(byId(id)&&!agent.context.includes(id)&&agent.context.length<24){agent.context.push(id);added++;}}
+ if(added){agent.scope='selected';agentSaveSoon();agentPaint({scroll:false});$('#agent-input')?.focus();}
 }
 function agentMore(anchor){
  GlassMenu.open(anchor,[
@@ -678,7 +823,7 @@ function agentContextUsageView(){
  const percent=Number.isFinite(Number(usage.percent))?Number(usage.percent):window?Math.round(1000*tokens/window)/10:0;
  const source=usage.source==='usage'?'usage':'estimate';
  const last=usage.lastCompaction&&typeof usage.lastCompaction==='object'?usage.lastCompaction:null;
- return `<div class="agent-context-usage" data-source="${source}"><span class="agent-context-meter" title="${esc(I18n.text('上下文用量'))}">${I18n.text('上下文')} ${tokens}/${window} · ${percent}%</span><span class="agent-context-source" data-source="${source}" title="${esc(I18n.text(source==='usage'?'来自服务商的实际用量':'未获得实际用量，按结构估算'))}">${I18n.text(source==='usage'?'实测':'估算')}</span>${agent.job&&!['research','deepagents'].includes(agent.recovery?.options?.runtime)?`<button type="button" class="text-button" data-agent-compact title="${esc(I18n.text('压缩上下文'))}" aria-label="${esc(I18n.text('压缩上下文'))}">${I18n.text('压缩上下文')}</button>`:''}${last?`<details class="agent-context-summary"><summary>${I18n.text('上下文摘要 · ')}${esc(agentCompactReason(last.reason))}${last.current===false?' · '+I18n.text('已失效'):''}</summary><p class="agent-context-untrusted">${I18n.text('以下为不可信摘要，仅供参考，不代表当前授权；以宿主回执为准。')}</p><pre data-user-content>${esc(String(last.summary||''))}</pre></details>`:''}</div>`;
+ return `<div class="agent-context-usage" data-source="${source}"><span class="agent-context-bar" aria-hidden="true"><i style="width:${Math.min(100,Math.max(0,percent))}%"></i></span><span class="agent-context-meter" title="${esc(I18n.text('上下文用量'))}">${I18n.text('上下文')} ${tokens}/${window} · ${percent}%</span><span class="agent-context-source" data-source="${source}" title="${esc(I18n.text(source==='usage'?'来自服务商的实际用量':'未获得实际用量，按结构估算'))}">${I18n.text(source==='usage'?'实测':'估算')}</span>${agent.job&&!['research','deepagents'].includes(agent.recovery?.options?.runtime)?`<button type="button" class="text-button" data-agent-compact title="${esc(I18n.text('压缩上下文'))}" aria-label="${esc(I18n.text('压缩上下文'))}">${I18n.text('压缩上下文')}</button>`:''}${last?`<details class="agent-context-summary"><summary>${I18n.text('上下文摘要 · ')}${esc(agentCompactReason(last.reason))}${last.current===false?' · '+I18n.text('已失效'):''}</summary><p class="agent-context-untrusted">${I18n.text('以下为不可信摘要，仅供参考，不代表当前授权；以宿主回执为准。')}</p><pre data-user-content>${esc(String(last.summary||''))}</pre></details>`:''}</div>`;
 }
 // M2: cache-hit share for the usage footnote. Hidden when the provider reported no cached input
 // tokens (or an unknown input total); never estimate a percentage from zero/unknown data.
@@ -705,29 +850,29 @@ function agentView(){
   <div class="agent-advanced-row"><label class="agent-advanced-field"><span>${I18n.text('用量')}</span><select id="agent-budget" aria-label="${I18n.text('用量')}" ${busy?'disabled':''}>${[[6000,'省用量'],[14000,'均衡'],[24000,'更多上下文'],[48000,'长任务'],[64000,'超长任务']].map(([v,l])=>`<option value="${v}" ${agent.budget===v?'selected':''}>${I18n.text(l)}</option>`).join('')}</select></label><button type="button" class="text-button" data-agent-limits aria-expanded="${agent.options}" ${busy?'disabled':''}>${I18n.text('用量设置')}</button></div>
   <div class="agent-limits" ${agent.options?'':'hidden'}><label>${I18n.text('调用协议')}<select id="agent-protocol" ${busy?'disabled':''}>${[['auto','自动'],['tools','原生工具调用'],['json','兼容 JSON']].map(([v,l])=>`<option value="${v}" ${agent.protocol===v?'selected':''}>${I18n.text(l)}</option>`).join('')}</select></label>${[['requestLimit','请求上限',1,24,1],['inputRate','每百万输入 token 单价',0,10000,'any'],['outputRate','每百万输出 token 单价',0,10000,'any'],['costLimit','本次费用上限',0,10000,'any']].map(([k,l,min,max,step])=>`<label>${I18n.text(l)}<input data-agent-limit="${k}" type="number" min="${min}" max="${max}" step="${step}" value="${agent[k]}" ${busy?'disabled':''}></label>`).join('')}<small>${I18n.text('单价与额度使用同一货币，0 表示关闭费用限制；按保守额度拦截下一轮，实际费用以服务商为准。')}</small></div>
  ${Kok.enabled('mcp')?`<div class="agent-tools-row"><button type="button" class="text-button" data-mcp-settings>${I18n.text('外部工具 MCP')}</button></div>`:''}</div></details>`;
- return `<section class="agent-page${empty?' is-empty':''}${agent.historyOpen?' has-history':''}${AgentArtifacts.active?' has-artifacts':''}">${agentHistoryView()}<div class="agent-main">
+ return `<section class="agent-page${empty?' is-empty':''}${agent.historyOpen?' has-history':''}${AgentArtifacts.active?' has-artifacts':''}" style="${piSplitStyle()}">${agentHistoryView()}<div class="agent-main">
  <div class="agent-toolbar">
   <button type="button" class="icon-button" data-agent-sessions aria-label="${I18n.text('会话')}" title="${I18n.text('会话')}" aria-controls="agent-history" aria-expanded="${!!agent.historyOpen}">${svg('panel')}</button>
-  <div class="agent-heading">${glyph('agent')}<strong data-agent-title data-user-content>${esc(agent.messages.find(m=>m.role==='user')?.text||agent.job?.goal||'Agent')}</strong></div>
+  <div class="agent-heading" title="${esc(I18n.text('双击重命名会话'))}">${glyph('agent')}<strong data-agent-title data-user-content>${esc(agent.titleOverride||agent.messages.find(m=>m.role==='user')?.text||agent.job?.goal||'Agent')}</strong></div>
   <span class="agent-progress" id="agent-progress" role="status" data-busy="${busy}">${I18n.text(agent.phase||'就绪')}</span>
   <div class="agent-toolbar-actions">
-   <button type="button" class="text-button agent-tree-button" data-agent-tree aria-label="${I18n.text('分支树')}" title="${I18n.text('分支树')}" ${busy?'disabled':''}>${I18n.text('分支树')}</button>
+   <button type="button" class="text-button agent-model-pill${agentModelState.model?' is-ready':''}" data-agent-model aria-label="${esc(I18n.text('切换模型'))}" title="${esc(agentModelState.model||I18n.text('配置模型'))}" aria-haspopup="menu" aria-expanded="false"><i class="agent-model-dot" aria-hidden="true"></i><span data-user-content>${esc(agentModelState.model||I18n.text('配置模型'))}</span></button>
+   <button type="button" class="text-button agent-tree-button" data-agent-tree aria-label="${I18n.text('分支树')}" title="${I18n.text('分支树')}" ${busy?'disabled':''}>${AGENT_STUDIO_ICONS.branch}<span>${I18n.text('分支树')}</span></button>
    <button type="button" class="icon-button" data-agent-new aria-label="${I18n.text('新任务')}" title="${I18n.text('新任务')}" ${busy?'disabled':''}>${svg('plus')}</button>
    ${AgentPlatformUi.button()}
    <button type="button" class="icon-button" data-agent-artifacts aria-label="${I18n.text('任务成果')}" title="${I18n.text('任务成果')}" aria-expanded="${AgentArtifacts.active}" ${AgentArtifacts.count?'':'hidden'}>${svg('document')}</button>
    <button type="button" class="icon-button" data-agent-more aria-label="${I18n.text('更多')}" title="${I18n.text('更多')}" aria-haspopup="menu" aria-expanded="false">${svg('more')}</button>
   </div>
  </div>
- ${agentContextUsageView()}
- <div class="agent-recovery">${agentRecoveryBar()}</div>${AgentOperations.view(agent.recovery&&(!agent.job||agent.job.id===agent.recovery.id)?agent.recovery:null)}
+ <div class="agent-meta-strip"><div class="agent-meta-row">${agentContextUsageView()}<div class="agent-recovery">${agentRecoveryBar()}</div></div>${AgentOperations.view(agent.recovery&&(!agent.job||agent.job.id===agent.recovery.id)?agent.recovery:null)}</div>
  <h1 class="agent-start-heading"${empty?'':' hidden'}>${I18n.text('有什么想法？')}</h1>
  <div class="agent-stream" id="agent-stream" aria-live="polite" aria-busy="${busy}">${empty?'':agentEntries()}</div><div class="agent-review">${agentBatch()}</div>
- <button type="button" class="agent-latest text-button" data-agent-latest hidden>${I18n.text('回到最新')}${svg('arrow')}</button><form class="agent-composer" id="agent-form">${agentProjectBar()}<div class="agent-context">${agentContextChips()}</div>
+ <button type="button" class="agent-latest text-button" data-agent-latest hidden>${I18n.text('回到最新')}${svg('arrow')}</button><form class="agent-composer" id="agent-form"><div class="agent-command-menu" id="agent-command-menu" role="listbox" hidden></div>${agentProjectBar()}<div class="agent-context">${agentContextChips()}</div>
  <textarea id="agent-input" rows="2" maxlength="2000" placeholder="${esc(I18n.text('告诉我，你想完成什么…'))}" aria-label="${esc(I18n.text('给 Agent 的要求'))}">${esc(agent.draft)}</textarea>
  <div class="agent-compose-options"><button type="button" class="agent-chip agent-add" data-agent-pick aria-label="${I18n.text('添加资料')}" title="${I18n.text('添加资料')}" ${busy?'disabled':''}>${svg('paperclip')}<b>${I18n.text('添加资料')}</b></button>${advanced}<button type="button" class="agent-chip agent-scope-chip" data-agent-scope-summary title="${esc(I18n.text('资料范围'))}">${svg('folder')}<b>${esc(agentScopeLabel())}</b></button></div>
  ${agentComposerControls()}
  ${agentQueuedTasks()}<div class="agent-footnote" ${usage||cacheUsage?'':'hidden'}><small id="agent-usage" data-user-content>${esc(usageLine)}</small></div></form>
- ${agentStarters(empty)}</div>${AgentArtifacts.view()}</section>`;
+ ${agentStarters(empty)}</div><div class="pi-splitter" data-pi-splitter role="separator" aria-orientation="vertical" aria-label="${esc(I18n.text('调整分栏宽度'))}"></div>${AgentArtifacts.view()}</section>`;
 }
 function agentPaint({scroll=true}={}){
  agentSaveSoon();if(state.route!=='agent'||state.isPrivate)return;
@@ -789,6 +934,10 @@ function agentApplySnapshot(snap){
  // snapshot. Restore the unconsumed queue when the pending stop reaches its terminal snapshot.
  else if(agent.pendingRestoreFor&&snap.id===agent.pendingRestoreFor&&!snap.running){agent.pendingRestoreFor='';agentRestoreUnconsumed(snap);}
  agentPaint({scroll:!!job});
+ if(innerWidth>=800&&!AgentArtifacts.active){
+  const pptPending=agent.messages.find(m=>m.status==='pending'&&['create_presentation','edit_presentation'].includes(m.tool)&&!agentAutoPreviewed.has(m.id));
+  if(pptPending){agentAutoPreviewed.add(pptPending.id);AgentArtifacts.preview(pptPending.id).catch(()=>{});}
+ }
 }
 async function agentPull(taskId){
  if(!taskId)return;if(agent.pulling===taskId){agent.pullAgain=true;return;}
@@ -1042,8 +1191,77 @@ function agentPickItems(){
  $('#agent-pick-done').onclick=()=>{agent.scope=selected.size?'selected':'all';agent.context=[...selected];closeSmall();agentPaint({scroll:false});};
 }
 
+// Composer "/" (skills, prompts, /tree) & "@" (library files) live command popover.
+const agentSuggest={mode:'',start:0,end:0,index:0,items:[]};
+function agentHideSuggest(){
+ agentSuggest.mode='';agentSuggest.items=[];agentSuggest.index=0;
+ const menu=$('#agent-command-menu');if(menu){menu.hidden=true;menu.innerHTML='';}
+}
+function agentBuildSuggest(input){
+ if(!input||agent.job||!agentAvailable())return null;
+ const caret=typeof input.selectionStart==='number'?input.selectionStart:input.value.length;
+ const before=input.value.slice(0,caret);
+ const slash=/^\/([a-z0-9:_-]*)$/i.exec(before);
+ if(slash&&caret===before.length){
+  const q=slash[1].toLowerCase();
+  const rows=[];
+  rows.push({kind:'tree',badge:'/tree',name:'/tree',desc:I18n.text('打开会话分支树')});
+  for(const s of agent.nativeSkills)rows.push({kind:'native-skill',badge:'/skill',name:'/skill:'+s.name,value:'/skill:'+s.name+' ',desc:s.description||s.name});
+  for(const p of agent.prompts)rows.push({kind:'prompt',badge:'/prompt',name:'/prompt:'+p.name,value:'/prompt:'+p.name+' ',desc:p.description||p.plugin||p.name});
+  for(const s of [...AgentModel.presets,...AgentSkills.custom()])rows.push({kind:'local-skill',badge:'skill',name:I18n.text(s.title||s.name),skillId:s.name,desc:I18n.text(s.description||'')});
+  const matched=rows.filter(r=>!q||r.name.toLowerCase().includes(q)||String(r.desc||'').toLowerCase().includes(q)).slice(0,8);
+  return {mode:'slash',start:0,end:caret,items:matched};
+ }
+ const mention=/(?:^|\s)@([^\s@]{0,40})$/.exec(before);
+ if(mention){
+  const q=mention[1].toLowerCase(),atPos=before.lastIndexOf('@'),pinned=new Set(agent.context);
+  const items=state.items.filter(item=>!pinned.has(item.id)&&(!q||String(item.name||'').toLowerCase().includes(q))).sort((a,b)=>String(b.modified||b.added||'').localeCompare(String(a.modified||a.added||''))).slice(0,8)
+   .map(item=>({kind:'file',id:item.id,badge:String(item.ext||item.kind||'FILE').toUpperCase(),name:item.name,desc:item.collection||I18n.text(labels[item.kind]||item.kind||'')}));
+  return {mode:'mention',start:atPos,end:caret,items};
+ }
+ return null;
+}
+function agentRenderSuggest(){
+ const menu=$('#agent-command-menu');if(!menu)return;
+ if(!agentSuggest.mode){menu.hidden=true;menu.innerHTML='';return;}
+ const heading=agentSuggest.mode==='slash'?I18n.text('技能与命令'):I18n.text('引用本地资料');
+ const body=agentSuggest.items.length?agentSuggest.items.map((item,i)=>`<button type="button" class="agent-command-item" role="option" aria-selected="${i===agentSuggest.index}" data-agent-suggest-index="${i}"><span class="agent-command-badge">${esc(item.badge)}</span><span class="agent-command-main"><b data-user-content>${esc(item.name)}</b>${item.desc?`<small data-user-content>${esc(item.desc)}</small>`:''}</span></button>`).join(''):`<div class="agent-command-empty">${I18n.text('无匹配项')}</div>`;
+ menu.innerHTML=`<div class="agent-command-head"><span>${heading}</span><span>↑↓ · Enter · Esc</span></div>${body}`;
+ menu.hidden=false;
+}
+function agentSyncSuggest(){
+ const input=$('#agent-input');
+ const next=agentBuildSuggest(input);
+ if(!next){agentHideSuggest();return;}
+ agentSuggest.mode=next.mode;agentSuggest.start=next.start;agentSuggest.end=next.end;agentSuggest.items=next.items;
+ agentSuggest.index=Math.min(agentSuggest.index,Math.max(0,next.items.length-1));
+ agentRenderSuggest();
+}
+function agentApplySuggest(index){
+ const item=agentSuggest.items[index],input=$('#agent-input');if(!item||!input)return;
+ const before=input.value.slice(0,agentSuggest.start),after=input.value.slice(agentSuggest.end);
+ agentHideSuggest();
+ if(item.kind==='tree'){input.value='';agent.draft='';agentSyncInput();agentOpenTree().catch(fail);return;}
+ if(item.kind==='local-skill'){agent.skill=item.skillId;input.value=after.trimStart();agent.draft=input.value;agentPaint({scroll:false});input.focus();return;}
+ if(item.kind==='file'){
+  if(!agent.context.includes(item.id)&&agent.context.length<24){agent.context.push(item.id);agent.scope='selected';}
+  const joined=(before+after).replace(/\s{2,}/g,' ');
+  input.value=joined;agent.draft=joined;agentSaveSoon();agentPaint({scroll:false});input.focus();return;
+ }
+ const inserted=item.value||'';
+ input.value=before+inserted+after;agent.draft=input.value;
+ const pos=(before+inserted).length;input.focus();input.setSelectionRange(pos,pos);agentSaveSoon();agentSyncInput();
+}
+
+document.addEventListener('mousedown',event=>{
+ const item=event.target.closest('[data-agent-suggest-index]');
+ if(!item)return;
+ event.preventDefault();agentApplySuggest(Number(item.dataset.agentSuggestIndex)||0);
+},true);
+
 document.addEventListener('click',event=>{
  const t=event.target;
+ if(!t.closest('.agent-composer'))agentHideSuggest();
  if(t.closest('[data-agent-fork]')){agentForkMessage(t.closest('[data-agent-fork]').dataset.agentFork).catch(fail);return;}
  if(t.closest('[data-agent-compact]')){agentCompactRequest().catch(fail);return;}
  if(t.closest('[data-agent-skills-refresh]')){agentReloadSkills().catch(fail);return;}
@@ -1051,17 +1269,22 @@ document.addEventListener('click',event=>{
  if(t.closest('[data-agent-tree]')){agentOpenTree().catch(fail);return;}
  if(t.closest('[data-agent-launch]')){event.preventDefault();openAgent({ids:typeof libraryDrag!=='undefined'?[...libraryDrag.selected]:[]});return;}
  if(t.closest('[data-agent-starter]')){const input=$('#agent-input');input.value=t.closest('[data-agent-starter]').dataset.agentStarter;agent.draft=input.value;agentSaveSoon();agentSyncInput();input.focus();return;}
+ if(t.closest('[data-agent-model]')){agentModelMenu(t.closest('[data-agent-model]'));return;}
  if(t.closest('[data-agent-more]')){agentMore(t.closest('[data-agent-more]'));return;}
  if(t.closest('[data-agent-scope-summary]')){agent.advancedOpen=true;agentPaint({scroll:false});const select=$('#agent-scope');if(select){select.focus({preventScroll:true});select.scrollIntoView({block:'nearest'});}return;}
  if(t.closest('#agent-advanced>summary')){agent.advancedOpen=!t.closest('#agent-advanced').open;return;}
  if(t.closest('[data-agent-result-continue]')){agentContinueResult(agent.messages.find(m=>m.id===t.closest('[data-agent-result-continue]').dataset.agentResultContinue));return;}
  if(t.closest('[data-agent-local-followup]')){agentFillLocalFollowup(t.closest('[data-agent-local-followup]'));return;}
  if(t.closest('[data-agent-unpin]')){if(agent.job)return;agent.context=agent.context.filter(id=>id!==t.closest('[data-agent-unpin]').dataset.agentUnpin);agentPaint({scroll:false});return;}
+ if(t.closest('[data-agent-clear-mode]')){if(agent.job)return;agent.intent='assist';agentPaint({scroll:false});return;}
+ if(t.closest('[data-agent-clear-skill]')){if(agent.job)return;agent.skill='';agentPaint({scroll:false});return;}
  if(t.closest('[data-agent-pick]')){if(!agent.job)agentPickItems();return;}
  if(t.closest('[data-agent-project-clear]')){agent.project=null;agentPaint({scroll:false});toast(I18n.text('已清除项目'));return;}
  if(t.closest('[data-agent-settings]')){$('#settings-button').click();return;}
  if(t.closest('[data-agent-run]')){const id=t.closest('[data-agent-run]').dataset.agentRun,grant=document.querySelector(`[data-agent-grant="${id}"]`)?.checked||false;return agentDecide(id,true,false,grant);}
+ if(t.closest('[data-agent-dock-run]')){const id=t.closest('[data-agent-dock-run]').dataset.agentDockRun,grant=document.querySelector(`[data-agent-grant="${id}"]`)?.checked||false;return agentDecide(id,true,false,grant);}
  if(t.closest('[data-agent-skip]'))return agentDecide(t.closest('[data-agent-skip]').dataset.agentSkip,false);
+ if(t.closest('[data-agent-dock-skip]'))return agentDecide(t.closest('[data-agent-dock-skip]').dataset.agentDockSkip,false);
  if(t.closest('[data-agent-undo]'))return agentUndo(t.closest('[data-agent-undo]').dataset.agentUndo);
  if(t.closest('[data-agent-stop]'))return stopAgent();
  if(t.closest('[data-agent-continue]')){agentContinue(t.closest('[data-agent-continue]').dataset.agentContinue).catch(fail);return;}
@@ -1080,16 +1303,32 @@ document.addEventListener('click',event=>{
  if(t.closest('[data-agent-sessions]')){agentSessionPicker();return;}
 },true);
 document.addEventListener('click',event=>{const open=event.target.closest('[data-agent-open-item]');if(open){event.preventDefault();event.stopImmediatePropagation();openItem(open.dataset.agentOpenItem,{play:false}).catch(fail);}},true);
-document.addEventListener('submit',event=>{if(event.target.id!=='agent-form')return;event.preventDefault();const input=$('#agent-input');try{Promise.resolve(agentAddInput(input.value)).catch(fail);}catch(e){fail(e);}},true);
+document.addEventListener('submit',event=>{if(event.target.id!=='agent-form')return;event.preventDefault();agentHideSuggest();const input=$('#agent-input');try{Promise.resolve(agentAddInput(input.value)).catch(fail);}catch(e){fail(e);}},true);
 document.addEventListener('keydown',event=>{
  if(event.isComposing||event.keyCode===229)return;
+ if(event.target.id==='agent-input'&&agentSuggest.mode){
+  if(event.key==='Escape'){event.preventDefault();agentHideSuggest();return;}
+  if(agentSuggest.items.length){
+   if(event.key==='ArrowDown'){event.preventDefault();agentSuggest.index=(agentSuggest.index+1)%agentSuggest.items.length;agentRenderSuggest();return;}
+   if(event.key==='ArrowUp'){event.preventDefault();agentSuggest.index=(agentSuggest.index-1+agentSuggest.items.length)%agentSuggest.items.length;agentRenderSuggest();return;}
+   if(event.key==='Enter'||event.key==='Tab'){event.preventDefault();agentApplySuggest(agentSuggest.index);return;}
+  }
+ }
+ if(event.target.id==='agent-input'&&event.key==='ArrowUp'&&!agentSuggest.mode&&!event.target.value&&!agent.job){
+  const prev=[...agent.messages].reverse().find(m=>m.role==='user'&&String(m.text||'').trim());
+  if(prev){event.preventDefault();event.target.value=prev.text;agent.draft=prev.text;agentSyncInput();event.target.setSelectionRange(prev.text.length,prev.text.length);return;}
+ }
+ if((event.ctrlKey||event.metaKey)&&event.key==='Enter'&&state.route==='agent'&&event.target.id!=='agent-input'&&!$('#small-dialog')?.open){
+  const pending=agent.messages.filter(m=>m.status==='pending');
+  if(pending.length===1){event.preventDefault();agentDecide(pending[0].id,true,false,false);return;}
+ }
  if(event.key==='Escape'&&AgentArtifacts.active&&AgentArtifacts.overlay&&!$('#small-dialog')?.open&&!$('.glass-menu:popover-open')){event.preventDefault();AgentArtifacts.hide();$('[data-agent-artifacts]')?.focus({preventScroll:true});return;}
  if(event.key==='Escape'&&agent.historyOpen&&state.route==='agent'&&!$('#small-dialog')?.open&&!$('.glass-menu:popover-open')){event.preventDefault();agentToggleHistory(false);return;}
  // Pi pairs Enter with Alt+Enter; keep the same split here (steer on Enter, follow-up on Alt+Enter).
  if(event.target.id==='agent-input'&&event.altKey&&event.key==='Enter'&&agent.job){event.preventDefault();agentAddInput(event.target.value,true).catch(fail);return;}
  if(event.target.id==='agent-input')piEditorKeyDown(event,{busy:!!agent.job,send:()=>$('#agent-form').requestSubmit(),stop:()=>stopAgent().catch(fail)});
 });
-document.addEventListener('input',event=>{if(event.target.id==='agent-input'){agent.draft=event.target.value;agentSaveSoon();agentSyncInput();}if(event.target.id==='agent-history-search'){agent.historyQuery=event.target.value;$('.agent-history-list').innerHTML=agentHistoryRows();}});
+document.addEventListener('input',event=>{if(event.target.id==='agent-input'){agent.draft=event.target.value;agentSaveSoon();agentSyncInput();agentSyncSuggest();}if(event.target.id==='agent-history-search'){agent.historyQuery=event.target.value;$('.agent-history-list').innerHTML=agentHistoryRows();}});
 document.addEventListener('toggle',event=>{if(!event.target?.isConnected)return;if(event.target.id==='agent-advanced')agent.advancedOpen=!!event.target.open;if(event.target.matches('.agent-queued'))agent.queueOpen=!!event.target.open;},true);
 window.addEventListener('resize',()=>{if(state.route==='agent')agentSyncInput();});
 document.addEventListener('change',event=>{
@@ -1187,6 +1426,9 @@ async function agentFullResult(id){
  const e=await native('agentTaskEvents',{taskId:m.taskId,eventId:m.resultEventId});
  showSmall(`<h2>${I18n.text(m.tool==='mcp_call'?'完整外部结果':'完整读取结果')}</h2><pre class="agent-full-result" data-user-content>${esc(e?.data?.result?.text||'')}</pre>`);I18n.localize($('#small-dialog'));
 }
+document.addEventListener('dblclick',event=>{
+ if(event.target.closest('[data-agent-title]'))agentQuickRenameSession();
+});
 document.addEventListener('click',event=>{
  const t=event.target;
  if(t.closest('[data-agent-task-records]'))agentTaskRecords().catch(fail);
@@ -1199,10 +1441,10 @@ document.addEventListener('click',event=>{
 // The Agent owns its session state and view helpers. Other modules use this
 // explicit UI contract instead of depending on top-level function declarations.
 async function startAgentUi({startup}){
- if(!state.isPrivate){for(const tool of Kok.catalog().tools){if(!tool.write&&!AGENT_READ.includes(tool.name))AGENT_READ.push(tool.name);AGENT_TOOLS[tool.name]||={icon:'info',label:tool.title||tool.name};}if(agent.loaded)await agentAttach();else await agentLoad();if(!agent.nativeSkillsLoaded)await agentLoadNativeSkills();if(!agent.pluginsLoaded)await agentLoadNativePlugins();}
+ if(!state.isPrivate){for(const tool of Kok.catalog().tools){if(!tool.write&&!AGENT_READ.includes(tool.name))AGENT_READ.push(tool.name);AGENT_TOOLS[tool.name]||={icon:'info',label:tool.title||tool.name};}if(agent.loaded)await agentAttach();else await agentLoad();if(!agent.nativeSkillsLoaded)await agentLoadNativeSkills();if(!agent.pluginsLoaded)await agentLoadNativePlugins();if(!agentModelState.loaded)agentRefreshModel();}
  if(startup&&!location.search.includes('preview=')&&agentAvailable()&&state.route==='overview'&&(state.settings.startPage||'agent')==='agent'){state.route='agent';render();}
 }
-export const AgentUi=Object.freeze({state:agent,presence:agentPresence,available:agentAvailable,open:openAgent,openProject,submit:agentAddInput,render:agentPaint,stop:stopAgent,save:agentSave,newSession:agentNew,scope:agentScope,updateScroll:agentUpdateScroll,tasks:agentTaskRecords,settings:agentSetupSettings,start:startAgentUi});
+export const AgentUi=Object.freeze({state:agent,presence:agentPresence,available:agentAvailable,open:openAgent,openProject,attachItems:agentAttachItems,submit:agentAddInput,render:agentPaint,stop:stopAgent,save:agentSave,newSession:agentNew,scope:agentScope,updateScroll:agentUpdateScroll,tasks:agentTaskRecords,settings:agentSetupSettings,start:startAgentUi});
 // The legacy shell still needs one named adapter. Implementation helpers remain
 // module-private; there are no global agent/agentPaint/runAgent declarations.
 globalThis.AgentUi=AgentUi;

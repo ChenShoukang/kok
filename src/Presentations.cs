@@ -11,8 +11,8 @@ using System.Threading.Tasks;
 
 namespace kok {
  public class PresentationShape {
-  public string id,kind="text",text="",fontFamily="Microsoft YaHei",color="222222",fill="",line="",image="",align="left";
-  public double x,y,w=5,h=1,fontSize=24,rotation;
+  public string id,kind="text",text="",fontFamily="Microsoft YaHei",color="222222",fill="",line="",image="",align="left",valign="top";
+  public double x,y,w=5,h=1,fontSize=24,rotation,padX,padY;
   public bool bold,italic;
  }
  public class PresentationSlide {public string id,title="",notes="",background="FFFFFF";public List<PresentationShape> shapes=new List<PresentationShape>();}
@@ -46,7 +46,7 @@ namespace kok {
        shape.kind="image";var blip=element.Descendants(A+"blip").FirstOrDefault();string target;if(!links.TryGetValue((string)(blip==null?null:blip.Attribute(R+"embed"))??"",out target)){deck.unsupported++;continue;}var entry=zip.GetEntry(target);string type=Path.GetExtension(target).ToLowerInvariant(),mime=type==".png"?"image/png":type==".jpg"||type==".jpeg"?"image/jpeg":type==".gif"?"image/gif":type==".bmp"?"image/bmp":"";if(entry==null||entry.Length>8*1024*1024||mime==""){deck.unsupported++;continue;}
        if(images){imageBytes+=entry.Length;if(imageBytes>20*1024*1024)throw new InvalidDataException("PPTX 图片超过轻量预览限制。");using(var data=entry.Open())using(var buffer=new MemoryStream()){data.CopyTo(buffer);shape.image="data:"+mime+";base64,"+Convert.ToBase64String(buffer.ToArray());}}
       }else{
-       shape.text=Text(element);textCharacters+=shape.text.Length;if(shape.text.Length>50000||textCharacters>2000000)throw new InvalidDataException("幻灯片文字过长。");var run=element.Descendants().FirstOrDefault(e=>e.Name==A+"rPr"||e.Name==A+"defRPr");shape.fontSize=Math.Max(6,Math.Min(160,Number(run,"sz",title?3200:2400)/100));shape.bold=Attr(run,"b")=="1";shape.italic=Attr(run,"i")=="1";shape.color=Hex(run,colors,"222222");var face=run==null?null:run.Element(A+"ea")??run.Element(A+"latin");shape.fontFamily=Attr(face,"typeface","Microsoft YaHei");if(shape.fontFamily.StartsWith("+"))shape.fontFamily="Microsoft YaHei";string alignment=Attr(element.Descendants(A+"pPr").FirstOrDefault(),"algn");shape.align=alignment=="ctr"?"center":alignment=="r"?"right":"left";if(title)slide.title=shape.text;
+       shape.text=Text(element);textCharacters+=shape.text.Length;if(shape.text.Length>50000||textCharacters>2000000)throw new InvalidDataException("幻灯片文字过长。");var run=element.Descendants().FirstOrDefault(e=>e.Name==A+"rPr"||e.Name==A+"defRPr");shape.fontSize=Math.Max(6,Math.Min(160,Number(run,"sz",title?3200:2400)/100));shape.bold=Attr(run,"b")=="1";shape.italic=Attr(run,"i")=="1";shape.color=Hex(run,colors,"222222");var face=run==null?null:run.Element(A+"ea")??run.Element(A+"latin");shape.fontFamily=Attr(face,"typeface","Microsoft YaHei");if(shape.fontFamily.StartsWith("+"))shape.fontFamily="Microsoft YaHei";string alignment=Attr(element.Descendants(A+"pPr").FirstOrDefault(),"algn");shape.align=alignment=="ctr"?"center":alignment=="r"?"right":"left";var bodyPr=element.Descendants(A+"bodyPr").FirstOrDefault();string anchor=Attr(bodyPr,"anchor");shape.valign=anchor=="ctr"?"middle":anchor=="b"?"bottom":"top";shape.padX=Math.Max(0,Number(bodyPr,"lIns",0)/914400);shape.padY=Math.Max(0,Number(bodyPr,"tIns",0)/914400);if(title)slide.title=shape.text;
       }slide.shapes.Add(shape);
      }
      foreach(string notesPart in links.Values.Where(v=>v.StartsWith("ppt/notesSlides/",StringComparison.Ordinal)&&v.EndsWith(".xml",StringComparison.OrdinalIgnoreCase))){var notes=Xml(zip,notesPart);if(notes!=null)slide.notes=String.Join("\n",notes.Descendants(P+"sp").Where(sp=>sp.Descendants(P+"ph").Any(ph=>Attr(ph,"type")=="body")).Select(Text));}

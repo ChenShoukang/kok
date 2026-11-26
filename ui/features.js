@@ -190,7 +190,7 @@ document.addEventListener('mousedown',e=>{if(e.target.closest('.selection-tools'
 document.addEventListener('click',async e=>{
  const el=e.target.closest('button,[data-mark]');if(!el)return;
  try{
-  if(el.dataset.collection){state.collection=el.dataset.collection;navigate('collection');return;}
+  if(el.dataset.collection){LibraryCategories.open(el);return;}
   if(el.dataset.classify){newCollection(el.dataset.classify);return;}
   if(el.hasAttribute('data-save-collection')){const name=$('#collection-name').value.trim()||$('#collection-existing')?.value||'';const id=el.dataset.saveCollection;if(id==='new'){await native('addCollection',{name});}else await patch(byId(id),{collection:name});await closeSmall();await refresh();toast('分类已保存。');return;}
   if(el.dataset.musicMode){state.musicMode=el.dataset.musicMode;render();return;}

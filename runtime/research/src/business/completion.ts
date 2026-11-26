@@ -62,7 +62,7 @@ export function deliveryProblem(input: DeliveryEvidence): string {
     if (r.requiredFormat && doc.format.toUpperCase() !== r.requiredFormat.toUpperCase()) return '最终文档格式为 ' + doc.format + '，目标要求 ' + r.requiredFormat + '；请交付正确格式的实际文件。';
     if (!within(doc.length)) return '最终文档长度实测 ' + doc.length + '，要求 ' + r.minChars + '–' + (r.maxChars || '不限') + '；请只调整该成果后重新核对。';
     if (!doc.readBack) return '文档成果在创建或修改后还没有充分的当前版本回读，请继续读取正文：' + doc.id + '。' + doc.detail;
-    if (doc.qualityErrors.length) return '实际文档仍有必需章节或保存问题，请检查已保存正文并只修复缺项，保留其他内容：' + doc.qualityErrors.slice(0, 3).join('；');
+    if (doc.qualityErrors.length) return '实际文档仍有必需章节、保存或来源口径问题，请检查已保存正文并只修复对应部分：' + doc.qualityErrors.slice(0, 3).join('；');
   }
   if (!r.chatOnly && r.requiresPresentationArtifact) {
     const deck = input.presentation;
@@ -70,13 +70,13 @@ export function deliveryProblem(input: DeliveryEvidence): string {
     if (!deck.exists || !deck.owned || !deck.readable) return '最终演示文稿已移除或无法重新打开，请修复实际 PPTX 文件：' + deck.id;
     if (r.requestedPages && deck.pages !== r.requestedPages) return '演示文稿实际 ' + deck.pages + ' 页，要求 ' + r.requestedPages + ' 页（含封面）；请只调整页数不符部分后核对全部页面。';
     if (!deck.readBack) return '演示文稿在创建或修改后还没有覆盖全部页面的当前回读：' + deck.id + '。' + deck.detail;
-    if (deck.qualityErrors.length) return '实际 PPTX 仍有结构问题，请使用 inspect_presentation 定位并只修复受影响的对象或页面：' + deck.qualityErrors.slice(0, 3).join('；');
+    if (deck.qualityErrors.length) return '实际 PPTX 仍有结构问题或来源口径问题，请使用 inspect_presentation 定位并只修复受影响的对象或页面：' + deck.qualityErrors.slice(0, 3).join('；');
     if (input.renderingRequired && !input.renderingComplete) return '任务要求实际渲染，但当前 PPTX 版本尚未覆盖全部渲染页面。请使用 render_presentation 分批渲染；无法渲染时如实说明剩余限制。';
   }
   if (!r.chatOnly && r.requiresTargetedEdit && input.workspaceVersion !== 1) {
     if (!input.edit) return '这是定点改稿任务，但当前任务没有成功且有效的原文件修改记录。请读取目标、批准精确修改，再核对改后文件。';
     if (!input.edit.readBack) return '改稿已完成，但修改后还没有当前有效的回读，请核对改后文件：' + input.edit.id;
-    if (!input.edit.readable || input.edit.qualityErrors.length) return '改后文件仍有未解决的结构问题，请检查实际文件并只修复受影响部分：' + input.edit.id + '。' + input.edit.qualityErrors.slice(0, 3).join('；');
+    if (!input.edit.readable || input.edit.qualityErrors.length) return '改后文件仍有结构问题或来源口径问题，请检查实际文件并只修复受影响部分：' + input.edit.id + '。' + input.edit.qualityErrors.slice(0, 3).join('；');
   }
   if (r.chatOnly && !within(input.chatLength)) return '聊天正文长度实测 ' + input.chatLength + '，要求 ' + r.minChars + '–' + (r.maxChars || '不限') + '；请补足或精简后完成。';
   if (r.requiresFullSourceCoverage && r.requiredSourceIds.length && !input.sourcesFull) return '任务要求读完全部来源，但仍有未覆盖内容：' + input.sourceDetail + ' 请继续真实读取，保留已完成工作。';
