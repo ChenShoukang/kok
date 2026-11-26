@@ -1,9 +1,11 @@
 # kok changelog
 
-## v0.16.3 · Preview
+## v0.16.3 · In development, unpublished
+
+- Publication is on hold at the user's request. The main branch disables publishing while the [v0.16 completion checklist](docs/V016_COMPLETION_CHECKLIST.md) is implemented and verified.
 
 - OS01 first batch reuses existing LangChain tools and one Zod schema for optional typed refinements grounded in the latest user message, with independent revisions and no mandatory extra planner round.
-- The host validates quotation/revision/scope/bounds. Model updates cannot relax active delivery, length, section, reading or verification obligations, or change permissions, tools, scope or budgets. Explicit user steering is applied first.
+- Canceling or replacing an active deliverable requires individual confirmation of the host's before-and-after preview. A paused task restores the same proposal. Later refinements respect previously canceled files.
 - Requirements invalidate stale reviews and unstarted proposals while retaining work. A crash between the durable event and tool receipt resumes idempotently. Old tasks keep their feature version; additive event storage is now version 4.
 - Public SDK middleware hides scratch file writes for new tasks; deliverables use native kok writes/read-back. The UI shows the user quotation and current requirements.
 - See [implementation, validation and limits](docs/VALIDATION_0.16.3.md).

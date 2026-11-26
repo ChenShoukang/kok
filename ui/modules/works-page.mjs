@@ -47,14 +47,38 @@ function continueItems(){
  const items=state.items.filter(item=>item.ownedDocument||isDraft(item));
  return items.sort((a,b)=>String(b.modified||b.added||'').localeCompare(String(a.modified||a.added||'')));
 }
+// Bespoke flat geometric studio artwork & editorial icons for Works Studio.
+const WORKS_HERO_ART='<svg class="works-hero-art" viewBox="0 0 64 56" fill="none" aria-hidden="true"><rect x="4" y="10" width="38" height="40" rx="5" class="wha-back"/><rect x="14" y="6" width="38" height="40" rx="5" class="wha-mid"/><rect x="22" y="12" width="38" height="40" rx="5" class="wha-front"/><rect x="28" y="20" width="22" height="4.5" rx="1.5" class="wha-ink"/><rect x="28" y="29" width="26" height="3" rx="1.5" class="wha-muted"/><rect x="28" y="36" width="18" height="3" rx="1.5" class="wha-muted"/><circle cx="52" cy="18" r="4" class="wha-dot"/></svg>';
+const WORK_PREVIEW_DOC='<svg class="work-preview-art" viewBox="0 0 240 84" fill="none" aria-hidden="true"><rect x="20" y="12" width="132" height="72" rx="5" class="wpa-sheet"/><rect x="20" y="12" width="132" height="8" rx="2.5" class="wpa-accent"/><rect x="32" y="29" width="66" height="6" rx="2" class="wpa-ink"/><rect x="32" y="42" width="102" height="4" rx="2" class="wpa-muted"/><rect x="32" y="52" width="88" height="4" rx="2" class="wpa-muted"/><rect x="32" y="62" width="64" height="4" rx="2" class="wpa-muted"/><rect x="164" y="22" width="56" height="62" rx="5" class="wpa-card"/><circle cx="192" cy="46" r="12" class="wpa-accent-soft"/><rect x="176" y="64" width="32" height="4" rx="2" class="wpa-muted"/></svg>';
+const WORK_PREVIEW_SLIDE='<svg class="work-preview-art" viewBox="0 0 240 84" fill="none" aria-hidden="true"><rect x="18" y="12" width="144" height="64" rx="5" class="wpa-sheet"/><rect x="28" y="22" width="56" height="44" rx="3" class="wpa-accent-soft"/><rect x="36" y="32" width="26" height="22" rx="2" class="wpa-accent"/><rect x="94" y="26" width="52" height="6" rx="2" class="wpa-ink"/><rect x="94" y="39" width="44" height="4" rx="2" class="wpa-muted"/><rect x="94" y="49" width="36" height="4" rx="2" class="wpa-muted"/><rect x="172" y="12" width="50" height="28" rx="4" class="wpa-card"/><rect x="172" y="46" width="50" height="28" rx="4" class="wpa-card"/></svg>';
+const WORKS_ICONS={
+ project:'<svg class="ui-icon studio-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 8L12 3.5 21 8l-9 4.5L3 8Z" fill="currentColor" fill-opacity=".14" stroke="currentColor" stroke-width="1.65" stroke-linejoin="round"/><path d="M3 12.8l9 4.5 9-4.5M3 17l9 4.5 9-4.5" stroke="currentColor" stroke-width="1.65" stroke-linejoin="round"/></svg>',
+ spaces:'<svg class="ui-icon studio-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3.5" y="3.5" width="7.5" height="7.5" rx="2" fill="currentColor" fill-opacity=".14" stroke="currentColor" stroke-width="1.65"/><rect x="13" y="3.5" width="7.5" height="5.5" rx="2" stroke="currentColor" stroke-width="1.65"/><rect x="13" y="11" width="7.5" height="9.5" rx="2" fill="currentColor" fill-opacity=".1" stroke="currentColor" stroke-width="1.65"/><rect x="3.5" y="13" width="7.5" height="7.5" rx="2" stroke="currentColor" stroke-width="1.65"/></svg>',
+ clips:'<svg class="ui-icon studio-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5.5 4h13v16l-6.5-3.8L5.5 20V4Z" fill="currentColor" fill-opacity=".12" stroke="currentColor" stroke-width="1.65" stroke-linejoin="round"/><path d="M9 8.5h6M9 12h4" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/></svg>',
+ recipes:'<svg class="ui-icon studio-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3.5" y="4.5" width="6" height="6" rx="1.8" fill="currentColor" fill-opacity=".14" stroke="currentColor" stroke-width="1.65"/><rect x="14.5" y="4.5" width="6" height="6" rx="1.8" fill="currentColor" fill-opacity=".14" stroke="currentColor" stroke-width="1.65"/><rect x="9" y="14" width="6" height="6" rx="1.8" fill="currentColor" fill-opacity=".18" stroke="currentColor" stroke-width="1.65"/><path d="M9.5 7.5h5M12 10.5V14" stroke="currentColor" stroke-width="1.65"/></svg>',
+ video:'<svg class="ui-icon studio-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5" fill="currentColor" fill-opacity=".1" stroke="currentColor" stroke-width="1.65"/><path d="M10 9.2l5 2.8-5 2.8V9.2Z" fill="currentColor"/></svg>',
+ music:'<svg class="ui-icon studio-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4.5 14.5v-5M8.2 17.5v-11M12 19V5M15.8 16.5v-9M19.5 14v-4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>',
+ pdf:'<svg class="ui-icon studio-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="3.5" width="12" height="14.5" rx="2" fill="currentColor" fill-opacity=".12" stroke="currentColor" stroke-width="1.65"/><path d="M8 18v2.5h11a1.5 1.5 0 0 0 1.5-1.5V7.5H16" stroke="currentColor" stroke-width="1.65" stroke-linejoin="round"/><path d="M7.5 8.5h5M7.5 12h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>',
+ document:'<svg class="ui-icon studio-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5.5 3.5h8.5l4.5 4.5v12.5h-13V3.5Z" fill="currentColor" fill-opacity=".1" stroke="currentColor" stroke-width="1.65" stroke-linejoin="round"/><path d="M14 3.5V8h4.5M8.5 12h7M8.5 15.5h5" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/></svg>',
+ slide:'<svg class="ui-icon studio-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="4.5" width="18" height="12.5" rx="2" fill="currentColor" fill-opacity=".1" stroke="currentColor" stroke-width="1.65"/><rect x="6" y="7.5" width="5.5" height="5" rx="1" fill="currentColor" fill-opacity=".24"/><path d="M14 8.5h4M14 11.5h3M12 17v3.5M8.5 20.5h7" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/></svg>'
+};
+function workTone(item){
+ const ext=String(item?.ext||'').toUpperCase();
+ if(ext==='PPTX')return 'rose';
+ if(ext==='DOCX')return 'sky';
+ if(ext==='PDF')return 'amber';
+ return 'indigo';
+}
 function projectCard(project){
- const counts=projectCounts(project),goal=projectGoalText(project);
- return `<article class="work-card" data-project-card="${esc(project.id)}" style="flex-wrap:wrap"><span class="work-card-icon" aria-hidden="true">${glyph('layers')}</span><span class="work-card-main"><b data-user-content>${esc(project.name||t('未命名项目'))}</b><small data-user-content>${esc(goal||t('还没有目标'))}</small><small>${t('资料')} ${counts.materials} · ${t('成果')} ${counts.artifacts}${projectUpdated(project)?` · ${esc(projectUpdated(project))}`:''}</small></span><span class="work-card-status">${esc(projectStatusLabel(project.status))}</span><span class="works-project-actions" style="display:flex;flex-basis:100%;gap:8px;justify-content:flex-end"><button type="button" class="text-button" data-project-open="${esc(project.id)}">${t('打开项目')}</button><button type="button" class="text-button" data-project-continue="${esc(project.id)}">${t('继续创作')}</button></span></article>`;
+ const counts=projectCounts(project),goal=projectGoalText(project),updated=projectUpdated(project);
+ const statusClass=project.status==='done'?' is-done':project.status==='active'?' is-active':'';
+ return `<article class="work-card work-project-card" data-project-card="${esc(project.id)}"><div class="work-project-head"><span class="work-card-icon" data-tone="indigo" aria-hidden="true">${WORKS_ICONS.project}</span><b class="work-project-title" data-user-content>${esc(project.name||t('未命名项目'))}</b><span class="work-card-status${statusClass}">${esc(projectStatusLabel(project.status))}</span></div><p class="work-project-goal" data-user-content>${esc(goal||t('还没有目标'))}</p><footer class="work-project-foot"><small class="work-project-meta">${t('资料')} ${counts.materials} · ${t('成果')} ${counts.artifacts}${updated?` · ${esc(updated)}`:''}</small><span class="works-project-actions"><button type="button" class="text-button" data-project-open="${esc(project.id)}">${t('打开项目')}</button><button type="button" class="text-button work-project-primary" data-project-continue="${esc(project.id)}">${t('继续创作')}</button></span></footer></article>`;
 }
 function projectSection(){
  if(state.isPrivate)return '';
  const rows=projectRows(),cards=rows.slice(0,WORK_LIMIT).map(projectCard).join('');
- return `<section class="works-continue works-projects"><h2>${t('创作项目')}</h2><div class="works-projects-actions" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><small>${esc(rows.length?t(rows.length+' 个创作项目'):t('还没有创作项目'))}</small><button type="button" class="button secondary works-new-button" data-project-new>${svg('plus')}<span>${t('新建创作项目')}</span></button>${rows.length?`<button type="button" class="text-button" data-project-directory>${t('全部项目')}</button>`:''}</div>${cards?`<div class="works-grid">${cards}</div>`:`<p class="works-project-hint">${t('把资料、要求和成果放进同一个创作项目，之后可以从这里继续。')}</p>`}</section>`;
+ if(!rows.length)return `<section class="works-continue works-projects is-empty-projects"><div class="works-projects-banner"><div class="works-projects-lead">${WORKS_HERO_ART}<div class="works-projects-copy"><h2>${t('创作项目')}</h2><p class="works-project-hint">${t('把资料、要求和成果放进同一个创作项目，之后可以从这里继续。')}</p></div></div><button type="button" class="button secondary works-new-button" data-project-new>${svg('plus')}<span>${t('新建创作项目')}</span></button></div></section>`;
+ return `<section class="works-continue works-projects"><div class="works-projects-head"><h2>${t('创作项目')}</h2><div class="works-projects-actions"><small>${esc(t(rows.length+' 个创作项目'))}</small><button type="button" class="button secondary works-new-button" data-project-new>${svg('plus')}<span>${t('新建创作项目')}</span></button><button type="button" class="text-button" data-project-directory>${t('全部项目')}</button></div></div><div class="works-grid works-project-grid">${cards}</div></section>`;
 }
 function openProjectDirectory(){
  showSmall(`<h2>${t('全部项目')}</h2><input id="project-directory-search" class="works-source-search" type="search" autocomplete="off" aria-label="${esc(t('搜索项目'))}" placeholder="${esc(t('搜索项目'))}"><div id="project-directory-list" class="works-source-list"></div><div class="document-form-actions"><button type="button" class="text-button" data-close-small>${t('关闭')}</button><button type="button" class="button secondary" id="project-directory-more">${t('显示更多')}</button></div>`);
@@ -170,29 +194,34 @@ async function openProjectDialog(existing=null){
  };
 }
 function kindIcon(kind){return glyph(labels[kind]?kind:'document');}
-function newButton(attribute,secondary=false){return `<button type="button" class="button ${secondary?'secondary':'primary'} works-new-button" ${attribute}>${svg('plus')}<span>${t('新建作品')}</span></button>`;}
+function newButton(){return `<button type="button" class="button primary works-new-button" data-works-new>${svg('plus')}<span>${t('新建作品')}</span></button>`;}
 function headingRow(count){
- const subtitle=count?t(count+' 个可以继续的草稿'):t('还没有作品');
- return `<div class="collection-heading works-heading">${heading(t('我的作品'),subtitle)}${canCreate()?newButton('data-works-new'):''}</div>`;
+ const subtitle=count?t(count+' 个可以继续的草稿'):'';
+ return `<div class="collection-heading works-heading">${heading(t('我的作品'),subtitle)}${count&&canCreate()?newButton():''}</div>`;
+}
+function workUpdated(item){
+ const raw=String(item?.modified||item?.added||'');if(!raw)return '';
+ const d=new Date(raw);return Number.isNaN(d.getTime())?'':d.toLocaleDateString();
 }
 function workCard(item){
- const draft=isDraft(item);
- return `<button type="button" class="work-card" data-work-open="${esc(item.id)}"><span class="work-card-icon" aria-hidden="true">${kindIcon(item.kind)}</span><span class="work-card-main"><b data-user-content>${esc(item.name)}</b><small>${workLabel(item)} · ${esc(item.ext)}</small></span><span class="work-card-status${draft?' is-draft':''}">${t(draft?'草稿':'已创建')}</span></button>`;
+ const draft=isDraft(item),date=workUpdated(item),tone=workTone(item),isSlide=String(item?.ext||'').toUpperCase()==='PPTX';
+ const handoff=AgentUi.available()?`<button type="button" class="icon-button work-card-agent" data-work-agent="${esc(item.id)}" aria-label="${esc(t('交给 Agent'))}" title="${esc(t('交给 Agent'))}">${svg('agent')}</button>`:'';
+ return `<div class="work-card-wrap" data-tone="${tone}"><button type="button" class="work-card work-editorial-card" data-work-open="${esc(item.id)}"><span class="work-card-preview" data-tone="${tone}" aria-hidden="true">${isSlide?WORK_PREVIEW_SLIDE:WORK_PREVIEW_DOC}<span class="work-preview-ext">${esc(item.ext||'DOC')}</span></span><span class="work-card-body"><span class="work-card-main"><b data-user-content>${esc(item.name)}</b><small>${workLabel(item)} · ${esc(item.ext)}${date?` · ${esc(date)}`:''}</small></span><span class="work-card-status${draft?' is-draft':''}">${t(draft?'草稿':'已创建')}</span></span></button>${handoff}</div>`;
 }
 function continueSection(items){
  return `<section class="works-continue"><h2>${t('继续创作')}</h2><div class="works-grid">${items.map(workCard).join('')}</div></section>`;
 }
 function emptyState(){
- const example=globalThis.DocumentUi?.exampleAvailable()?`<button type="button" class="button secondary" data-example-work>${glyph('document')}${t('用示例试一次')}</button>`:'';
- return `<section class="works-empty"><span class="works-empty-icon" aria-hidden="true">${glyph('layers')}</span><h2>${t('从第一件作品开始')}</h2><p>${t('新建作品，或从已有文件开始编辑。')}</p><div class="works-example-actions">${example}${canCreate()?newButton('data-works-new-empty',true):''}</div>${Kok.enabled('editing')?`<small>${t('已有视频、音频、PDF 和文档也可以从下方工具开始编辑。')}</small>`:''}</section>`;
+ const example=globalThis.DocumentUi?.exampleAvailable()?`<button type="button" class="button secondary" data-example-work>${WORKS_ICONS.document}${t('用示例试一次')}</button>`:'';
+ return `<section class="works-empty"><span class="works-empty-icon" aria-hidden="true">${WORKS_ICONS.project}</span><h2>${t('从第一件作品开始')}</h2><p>${t('新建作品，或从已有文件开始编辑。')}</p><div class="works-example-actions">${canCreate()?newButton():''}${example}</div></section>`;
 }
 function toolsSection(){
  const workspace=Kok.enabled('workspace'),editing=Kok.enabled('editing');
  if(!workspace&&!editing)return '';
  const data=globalThis.Warehouse?.data||{spaces:[],clips:[],queries:[],recipes:[]};
- const tools=workspace?[['spaces','项目空间','folder',data.spaces.length],['clips','素材摘录','edit',data.clips.length],['recipes','创作配方','layers',data.recipes.length]].map(([id,label,icon,count])=>`<button type="button" class="works-tool" data-works-tool="${id}">${glyph(icon)}<span>${t(label)}</span><small>${count}</small></button>`).join(''):'';
- const media=editing?[['video','剪辑已有视频','video'],['music','剪辑已有音频','music'],['pdf','整理 PDF 页面','document'],['document','编辑已有文档','document']].map(([id,label,icon])=>`<button type="button" class="works-tool" data-works-media="${id}">${glyph(icon)}<span>${t(label)}</span></button>`).join(''):'';
- return `<section class="works-tools"><h2>${t('工具')}</h2><div class="works-tool-grid">${tools}${media}</div></section>`;
+ const tools=workspace?[['spaces','项目空间','spaces','sky',data.spaces.length],['clips','素材摘录','clips','amber',data.clips.length],['recipes','创作配方','recipes','indigo',data.recipes.length]].map(([id,label,icon,tone,count])=>`<button type="button" class="works-tool" data-works-tool="${id}" data-tone="${tone}"><span class="works-tool-badge">${WORKS_ICONS[icon]}</span><span>${t(label)}</span><small>${count}</small></button>`).join(''):'';
+ const media=editing?[['video','剪辑已有视频','video','rose'],['music','剪辑已有音频','music','teal'],['pdf','整理 PDF 页面','pdf','amber'],['document','编辑已有文档','document','sky']].map(([id,label,icon,tone])=>`<button type="button" class="works-tool" data-works-media="${id}" data-tone="${tone}"><span class="works-tool-badge">${WORKS_ICONS[icon]}</span><span>${t(label)}</span></button>`).join(''):'';
+ return `<section class="works-tools"><h2>${t('工具')}</h2><div class="works-tool-groups">${tools?`<div class="works-tool-group is-spaces"><h3>${t('创作空间')}</h3><div class="works-tool-grid is-cols-3">${tools}</div></div>`:''}${media?`<div class="works-tool-group is-media"><h3>${t('媒体与文档编辑')}</h3><div class="works-tool-grid is-cols-4">${media}</div></div>`:''}</div></section>`;
 }
 function mediaItems(kind){
  const config=MEDIA_SOURCES[kind];if(!config)return [];
@@ -225,9 +254,10 @@ function installWorksClicks(){
  if(worksClicksInstalled)return;worksClicksInstalled=true;
  document.addEventListener('click',async event=>{
   try{
-   const button=event.target.closest('[data-works-new],[data-works-new-empty],[data-work-open],[data-works-tool],[data-works-media],[data-works-source],[data-project-new],[data-project-open],[data-project-continue],[data-project-resume],[data-project-edit],[data-project-item],[data-project-artifact],[data-project-directory],[data-project-add-artifact],[data-project-reveal]');
+   const button=event.target.closest('[data-works-new],[data-work-open],[data-work-agent],[data-works-tool],[data-works-media],[data-works-source],[data-project-new],[data-project-open],[data-project-continue],[data-project-resume],[data-project-edit],[data-project-item],[data-project-artifact],[data-project-directory],[data-project-add-artifact],[data-project-reveal]');
    if(!button)return;
-   if(button.hasAttribute('data-works-new')||button.hasAttribute('data-works-new-empty')){if(canCreate())await DocumentUi.open();return;}
+   if(button.hasAttribute('data-works-new')){if(canCreate())await DocumentUi.open();return;}
+   if(button.dataset.workAgent){if(AgentUi.available())AgentUi.open({ids:[button.dataset.workAgent]});return;}
    if(button.dataset.workOpen)return await openCreativeEditor(button.dataset.workOpen);
    if(button.dataset.worksTool){if(Kok.enabled('workspace'))navigate(button.dataset.worksTool);return;}
    if(button.dataset.worksMedia)return await openSourcePicker(button.dataset.worksMedia);

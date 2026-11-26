@@ -1,86 +1,73 @@
-import { randomUUID } from 'node:crypto';
+import { Tiktoken } from 'js-tiktoken/lite';
+import cl100k from 'js-tiktoken/ranks/cl100k_base';
 import { createDeepAgent, registerHarnessProfile } from 'deepagents';
-import { ChatOpenAI } from '@langchain/openai';
+import { ChatOpenAI, ChatOpenAICompletions } from '@langchain/openai';
 import { Command, interrupt } from '@langchain/langgraph';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import { AIMessage, type BaseMessage } from '@langchain/core/messages';
 import { tool } from '@langchain/core/tools';
 import { Validator, type JSONSchema } from '@langchain/core/utils/json_schema';
 import { createMiddleware } from 'langchain';
-import { RequirementUpdateSchema } from './business/requirement-schema.ts';
+import { RequirementUpdateSchema, RequirementProposalSchema } from './business/requirement-schema.ts';
 import { PortableSaver } from './checkpoints.ts';
 import { StepSchema, PROTOCOL_VERSION, isRecord, type Emit, type Permit, type Snapshot, type StepInput, type StepResult, type NativeInterrupt } from './contracts.ts';
 import { capabilityInstructions, selectNativeTools } from './capabilities.ts';
-import { projectRepeatedReceipts, orderToolResults } from './receipts.ts';
+import { monitoredFetch } from './model-transport.ts';
+export { monitoredFetch, redactError } from './model-transport.ts';
 
 const BLOCKED_TOOLS = new Set(['task', 'execute']);
 registerHarnessProfile('openai', { generalPurposeSubagent: { enabled: false }, excludedTools: ['task', 'execute'] });
+let localEncoding: Tiktoken | undefined;
+export async function countLocalTokens(content: Parameters<ChatOpenAI['getNumTokens']>[0]): Promise<number> {
+  const text = typeof content === 'string' ? content : content.map(block => typeof block === 'string' ? block : contentText([block])).join('');
+  if (!text) return 0;
+  // The SDK uses this estimate for context management. Billed usage comes from the provider.
+  localEncoding ??= new Tiktoken(cl100k);
+  if (text.length <= 256) return localEncoding.encode(text, [], []).length;
+
+  // Bound BPE work on long uninterrupted spans such as Chinese source text.
+  // Chunk boundaries can slightly change the estimate. Unicode matching keeps surrogate pairs intact.
+  const chunkCounts = new Map<string, number>();
+  let total = 0;
+  for (const [chunk] of text.matchAll(/.{1,256}/gsu)) {
+    let count = chunkCounts.get(chunk);
+    if (count === undefined) {
+      count = localEncoding.encode(chunk, [], []).length;
+      chunkCounts.set(chunk, count);
+    }
+    total += count;
+  }
+  return total;
+}
+class LocalCountingCompletions extends ChatOpenAICompletions {
+  override getNumTokens = countLocalTokens;
+}
 class ContextAwareChatOpenAI extends ChatOpenAI {
   private contextLimits: { maxInputTokens: number; maxOutputTokens: number };
-  constructor(options: ConstructorParameters<typeof ChatOpenAI>[0], limits: { maxInputTokens: number; maxOutputTokens: number }) { super(options); this.contextLimits = limits; }
+  constructor(options: ConstructorParameters<typeof ChatOpenAI>[0], limits: { maxInputTokens: number; maxOutputTokens: number }) {
+    super({ ...options, completions: new LocalCountingCompletions(options) });
+    this.contextLimits = limits;
+  }
   get profile() { return { ...super.profile, ...this.contextLimits }; }
+  override getNumTokens = countLocalTokens;
 }
 function contentText(content: unknown): string {
   if (typeof content === 'string') return content;
   return Array.isArray(content) ? content.filter(isRecord).filter(x => x.type === 'text' && typeof x.text === 'string').map(x => x.text).join('') : '';
 }
-export function redactError(error: unknown, key = ''): string {
-  let text = error instanceof Error ? error.message : String(error || '研究内核请求失败。');
-  if (key) text = text.split(key).join('[redacted]');
-  return text.replace(/sk-[A-Za-z0-9_-]{12,}/g, '[redacted]').slice(0, 1000);
-}
-type FetchOptions = { emit: Emit; permit: Permit; endpoint: string; pending: Promise<void>[]; fetchImpl?: typeof fetch };
-type Usage = { prompt_tokens?: number; completion_tokens?: number; prompt_cache_hit_tokens?: number; prompt_tokens_details?: { cached_tokens?: number } };
-export function monitoredFetch({ emit, permit, endpoint, pending, fetchImpl = fetch }: FetchOptions): typeof fetch {
-  const expected = new URL(endpoint);
-  return async (url, init = {}) => {
-    const target = new URL(url instanceof Request ? url.url : String(url));
-    if (target.origin !== expected.origin || !target.pathname.startsWith(expected.pathname.replace(/\/$/, '') + '/')) throw new Error('模型请求超出了已配置的服务地址。');
-    let body: Record<string, unknown>;
-    try { const value: unknown = JSON.parse(String(init.body)); if (!isRecord(value)) throw new Error(); body = value; } catch { throw new Error('模型请求格式无效。'); }
-    const wireMessages = Array.isArray(body.messages) && body.messages.every(isRecord) ? body.messages : [];
-    const canRecall = Array.isArray(body.tools) && body.tools.some(tool => isRecord(tool) && isRecord(tool.function) && tool.function.name === 'recall_result');
-    const ordered = orderToolResults(wireMessages), projection = projectRepeatedReceipts(ordered, canRecall);
-    if (projection.duplicates || ordered.some((message,index) => message !== wireMessages[index])) { body = { ...body, messages: projection.messages }; init = { ...init, body: JSON.stringify(body) }; }
-    const requestId = randomUUID().replaceAll('-', ''), start = performance.now(), outputLimit = Number(body.max_tokens || body.max_completion_tokens || 4000);
-    await permit({ requestId, inputCharacters: JSON.stringify(body.messages || []).length + JSON.stringify(body.tools || []).length, outputLimit });
-    if (projection.duplicates) emit({ type: 'context_projected', savedCharacters: projection.savedCharacters, duplicates: projection.duplicates });
-    let response: Response;
-    try { response = await fetchImpl(url, { ...init, redirect: 'error' }); }
-    catch (error) { emit({ type: 'model_finished', requestId, outcome: 'failed', errorKind: 'network', durationMs: Math.round(performance.now() - start), inputTokens: 0, outputTokens: 0, cachedTokens: 0, estimated: true }); throw error; }
-    const track = (async () => {
-      let usage: Usage | null = null, firstTextMs = -1;
-      const absorb = (value: unknown) => {
-        if (!isRecord(value)) return;
-        if (isRecord(value.usage)) usage = value.usage as Usage;
-        const first = Array.isArray(value.choices) ? value.choices[0] : undefined;
-        const delta = isRecord(first) && isRecord(first.delta) ? first.delta.content : undefined;
-        if (typeof delta === 'string' && delta) { if (firstTextMs < 0) firstTextMs = Math.round(performance.now() - start); emit({ type: 'delta', requestId, text: delta }); }
-      };
-      try {
-        if (response.headers.get('content-type')?.includes('text/event-stream')) {
-          const reader = response.clone().body?.getReader(); if (!reader) throw new Error('模型返回了空事件流。');
-          const decoder = new TextDecoder(); let buffer = '';
-          for (;;) {
-            const { value, done } = await reader.read(); buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
-            let lineEnd: number;
-            while ((lineEnd = buffer.indexOf('\n')) >= 0) {
-              const line = buffer.slice(0, lineEnd).trim(); buffer = buffer.slice(lineEnd + 1);
-              if (!line.startsWith('data:')) continue;
-              const data = line.slice(5).trim(); if (!data || data === '[DONE]') continue;
-              try { absorb(JSON.parse(data)); } catch { /* Provider stream validation belongs to the SDK. */ }
-            }
-            if (buffer.length > 2_000_000) { await reader.cancel(); throw new Error('模型事件过大。'); }
-            if (done) break;
-          }
-        } else if (response.ok) absorb(await response.clone().json());
-      } finally {
-        const measured = usage as Usage | null;
-        emit({ type: 'model_finished', requestId, outcome: response.ok ? 'success' : 'failed', httpStatus: response.status, durationMs: Math.round(performance.now() - start), firstTextMs,
-          inputTokens: Number(measured?.prompt_tokens || 0), outputTokens: Number(measured?.completion_tokens || 0), cachedTokens: Number(measured?.prompt_cache_hit_tokens || measured?.prompt_tokens_details?.cached_tokens || 0), estimated: !measured });
-      }
-    })();
-    pending.push(track.catch(() => {})); return response;
-  };
+function withoutMalformedToolCalls(message: BaseMessage): BaseMessage {
+  if (!AIMessage.isInstance(message) || !message.invalid_tool_calls?.length) return message;
+
+  // LangChain can reserialize malformed provider calls as raw tool calls even though the
+  // graph never invoked them. Keep valid calls and original history, and tell the model
+  // that the malformed calls produced no native action.
+  const additionalKwargs = { ...message.additional_kwargs };
+  delete additionalKwargs.tool_calls;
+  const note = '[Host] Malformed tool arguments were not executed. Retry with valid JSON only if the action is still required.';
+  const content = typeof message.content === 'string'
+    ? [message.content, note].filter(Boolean).join('\n')
+    : [...message.content, { type: 'text' as const, text: note }];
+  return new AIMessage({ ...message, additional_kwargs: additionalKwargs, content, invalid_tool_calls: [] });
 }
 type KernelOptions = { snapshot?: Snapshot | null; emit?: Emit; permit?: Permit; modelFactory?: (input: StepInput) => BaseChatModel };
 export class ResearchKernel {
@@ -102,12 +89,15 @@ export class ResearchKernel {
     const nativeTools = [...selected, ...retired].map(spec => {
       const definition = spec.function, schema = definition.parameters as JSONSchema;
       new Validator(definition.parameters as ConstructorParameters<typeof Validator>[0]); // The two SDK schema types describe the same wire JSON with different optional members.
-      return tool(async (args: unknown) => JSON.stringify(interrupt({ kind: 'kok_tool', name: definition.name, args })), { name: definition.name, description: definition.description, schema: definition.name === 'update_task_spec' ? RequirementUpdateSchema : schema });
+      return tool(async (args: unknown) => JSON.stringify(interrupt({ kind: 'kok_tool', name: definition.name, args })), { name: definition.name, description: definition.description, schema: definition.name === 'update_task_spec' ? RequirementUpdateSchema : definition.name === 'propose_task_spec' ? RequirementProposalSchema : schema });
     });
     const blockedTools = new Set([...BLOCKED_TOOLS, ...(input.taskSpec?.requirementsVersion === 1 ? ['write_file', 'edit_file'] : [])]);
     const boundary = createMiddleware({
       name: 'KokNativeBoundary',
-      wrapModelCall: (request, handler) => handler({ ...request, tools: request.tools.filter(t => typeof t.name !== 'string' || !blockedTools.has(t.name) && !retiredNames.has(t.name)) }),
+      wrapModelCall: (request, handler) => handler({
+        ...request, messages: request.messages.map(withoutMalformedToolCalls),
+        tools: request.tools.filter(t => typeof t.name !== 'string' || !blockedTools.has(t.name) && !retiredNames.has(t.name)),
+      }),
       wrapToolCall: (request, handler) => { if (blockedTools.has(request.toolCall.name)) throw new Error('当前研究内核不执行此框架工具；请使用已注册的 kok 工具交付实际成果。'); return handler(request); },
     });
     const agent = await createDeepAgent({ model, tools: nativeTools, checkpointer: saver, backend: undefined, middleware: [boundary], subagents: [], name: 'kok-agent',

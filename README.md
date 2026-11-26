@@ -8,7 +8,7 @@
 
 [下载已发布版本](https://github.com/ChenShoukang/kok/releases) · [帮助中心](docs/help/index.md) · [使用指南](docs/GUIDE.md) · [English](README.en.md) · [格式支持](docs/FORMATS.md)
 
-**v0.16.3 Preview** 开始落实开源复用路线：使用现有 LangChain 工具调用与 Zod 校验补齐复杂交付要求，引用当前用户原话，保存独立版本并支持重启恢复。模型不能借此放宽现有验收、资料范围、权限或额度；简单任务无需固定增加规划回合。[本版实现与边界](docs/VALIDATION_0.16.3.md) · [开源复用路线](docs/OPEN_SOURCE_REUSE_PLAN.md) · [近期执行计划](docs/NEXT_PHASE_0.16_TO_0.18.md) · [版本记录](CHANGELOG.md)
+**v0.16 开发中，当前候选 0.16.3，暂不发布。** 最近公开版本为 v0.16.2。按[整体收尾清单](docs/V016_COMPLETION_CHECKLIST.md)继续完善完成率、效率和成品质量；当前已用现有 LangChain / Zod 接通结构化要求、用户原话、版本与恢复，简单任务不固定增加规划回合。[当前实现与边界](docs/VALIDATION_0.16.3.md) · [开源复用路线](docs/OPEN_SOURCE_REUSE_PLAN.md) · [近期执行计划](docs/NEXT_PHASE_0.16_TO_0.18.md) · [版本记录](CHANGELOG.md)
 
 ![kok 我的作品，使用内置原创示例](docs/screenshots/works-zh.png)
 
@@ -38,7 +38,7 @@
 
 ## 开始使用
 
-1. 从 [Releases](https://github.com/ChenShoukang/kok/releases) 下载 `kok-0.16.3-win-x64.zip` 和 SHA-256 校验文件。完整解压后运行 `kok.exe`。
+1. 下载 `kok-0.16.2-win-x64.zip` 和对应的 SHA-256 校验文件，完整解压后运行 `kok.exe`。[v0.16.2 公开下载](https://github.com/ChenShoukang/kok/releases/tag/v0.16.2)
 2. 首次选择**纯净模式**或**智能模式**；不配置 AI 也能使用本地基础功能。
 3. 从「我的作品」点「用示例试一次」写一份笔记，或在资料库导入自己的文件。
 

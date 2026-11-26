@@ -3,7 +3,7 @@ export interface Contract {
   RequiresDocument: boolean; RequiresPresentation: boolean; RequiredDocumentFormat: string;
   RequestedPages: number; MinLength: number; MaxLength: number; LengthUnit: number;
   RequiresTargetedEdit: boolean; EditVersionHint: string; RequiresFullSourceCoverage: boolean;
-  RequiredSourceIds: string[]; RequiredSections: string[]; ChatOnly: boolean; RequiredCount: number; CodeVerification: boolean | null;
+  RequiredSourceIds: string[]; RequiredSections: string[]; ForbiddenArtifacts: string[]; ChatOnly: boolean; RequiredCount: number; CodeVerification: boolean | null; Purpose: string; Audience: string;
 }
 export interface PlanningInput {
   goal: string; adjustments: string[]; allowed: string[]; intent: string; approvalPolicy: string;
@@ -31,7 +31,7 @@ const number = (value: string): number => {
   const digits: Record<string, number> = { 零: 0, 一: 1, 二: 2, 两: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9 };
   const parts = value.split('十'); return parts.length === 2 ? (parts[0] ? digits[parts[0]] || 0 : 1) * 10 + (digits[parts[1]] || 0) : digits[value] || 0;
 };
-const empty = (allowed: string[]): Contract => ({ RequiresDocument: false, RequiresPresentation: false, RequiredDocumentFormat: '', RequestedPages: 0, MinLength: 0, MaxLength: 0, LengthUnit: 0, RequiresTargetedEdit: false, EditVersionHint: '', RequiresFullSourceCoverage: false, RequiredSourceIds: [...allowed], RequiredSections: [], ChatOnly: false, RequiredCount: 1, CodeVerification: null });
+const empty = (allowed: string[]): Contract => ({ RequiresDocument: false, RequiresPresentation: false, RequiredDocumentFormat: '', RequestedPages: 0, MinLength: 0, MaxLength: 0, LengthUnit: 0, RequiresTargetedEdit: false, EditVersionHint: '', RequiresFullSourceCoverage: false, RequiredSourceIds: [...allowed], RequiredSections: [], ForbiddenArtifacts: [], ChatOnly: false, RequiredCount: 1, CodeVerification: null, Purpose: '', Audience: '' });
 
 // Only explicit section lists become acceptance criteria. Ordinary lists of facts are not headings.
 function sectionEvents(raw: string) {
@@ -65,33 +65,55 @@ function specificationOnly(clause: string): boolean {
     && !/正文|内容|段落|标题|排版|字体|布局|\b(?:body|paragraph|layout|font)\b/i.test(clause);
 }
 
+function deckPageCount(text: string, typed: boolean): number {
+  if (!typed) {
+    const last = [...text.matchAll(/([0-9]{1,3}|[一二三四五六七八九十两]{1,3})\s*(?:页|张|片|slides?)/gi)].at(-1);
+    return last ? number(last[1]) : 0;
+  }
+  const counts: number[] = [], totals: number[] = [];
+  const deckAfterCount = new RegExp('^\\s*(?:的\\s*)?(?:可编辑的?\\s*)?(?:' + pres.source + ')', 'i');
+  for (const match of text.matchAll(/(?<![0-9一二三四五六七八九十两])([0-9]{1,3}|[一二三四五六七八九十两]{1,3})\s*(?:页|张|片|-?slides?\b)/gi)) {
+    const prefix = text.slice(0, match.index).split(/[，,。；;：:\n（(]/).at(-1)!.trim();
+    const suffix = text.slice(match.index + match[0].length);
+    if (/(?:第|占|算|各|每页)\s*$/.test(prefix) || /^\s*(?:各|每|each\b|per\b)/i.test(suffix)) continue;
+    const count = number(match[1]);
+    if (count < 1 || count > 100) continue;
+    counts.push(count);
+    if (deckAfterCount.test(suffix) || /(?:共|总计|合计|总数|页数(?:改为|改成|调整为|为|是)?|^(?:改为|改成|调整为)|\btotal(?:\s+of)?)\s*$/i.test(prefix)) totals.push(count);
+  }
+  // A local allocation or page reference cannot override the size of the whole deck.
+  // Leave competing unqualified counts open for the typed requirement tool.
+  return totals.at(-1) ?? (new Set(counts).size === 1 ? counts[0] : 0);
+}
+
 export function deriveContract(input: PlanningInput): Contract {
   let result = empty(input.allowed), fullRead: boolean | undefined;
+  const forbid = (kind: string) => { if (input.requirementsVersion === 1 && !result.ForbiddenArtifacts.includes(kind)) result.ForbiddenArtifacts.push(kind); };
+  const allow = (kind: string) => { result.ForbiddenArtifacts = result.ForbiddenArtifacts.filter(value => value !== kind); };
   const messages = [input.goal, ...(input.adjustments || [])];
   for (const [messageIndex, raw] of messages.entries()) {
     if (!raw) continue;
     const positive = actions(raw).replace(/(?:已经|刚刚|刚才|上次|之前|此前|已)(?:生成|创建|制作|保存|导出|写好|写完)|\b(?:already|previously)\s+(?:created|generated|saved|exported|written)\b/gi, reference => ' '.repeat(reference.length));
     const clauses = positive.split(/[，,。；;\n]|并|同时|以及|另外|\band\b|\balso\b/i);
     const positiveDoc = clauses.some(clause => create.test(clause) && doc.test(clause) && !pres.test(clause)) || /(?:保存|创建|生成|写|导出|create|write|save|export)[^。\n]{0,40}\b(?:DOCX|Markdown|MD|TXT)\b/i.test(positive);
-    const pages = [...positive.matchAll(/([0-9]{1,3}|[一二三四五六七八九十两]{1,3})\s*(?:页|张|片|slides?)/gi)].at(-1);
-    const requestedPages = pages ? number(pages[1]) : 0;
+    const requestedPages = deckPageCount(positive, input.requirementsVersion === 1);
     const bodyAction = positive.split(/[，,。；;、\n]/).some(part => { const action = part.replace(/最终修订|最新修订|修订版/g, '资料版本'); return !specificationOnly(action) && edit.test(action) && (!metadata.test(action) || body.test(action)) && (/这份|该份|上述|刚才|已有|现有|原文|文档|报告|幻灯片|第\s*\d+\s*(?:页|段|章)|existing|current|this|selected/i.test(action) || body.test(action)); });
     const readingReference = /读取|阅读|读完|回读|检查|核对|分析|解读|\b(?:read|inspect|check|review|analy[sz]e)\b/i.test(positive);
     const makePresentation = clauses.some(clause => pres.test(clause) && (create.test(clause) || /做\s*(?:一[份套个]|[0-9一二三四五六七八九十两]+\s*页)?\s*(?:PPT|幻灯片|演示文稿)|^\s*(?:请|帮我|给我)?\s*(?:要|来)[^。；;\n]{0,20}(?:PPT|幻灯片|演示文稿)/i.test(clause)));
     const positivePres = pres.test(positive) && (makePresentation || requestedPages > 0 && !bodyAction && !readingReference);
     const replacePres = /改(?:成|为)[^。；;\n]{0,24}(?:PPT|幻灯片|演示文稿)|(?:instead|convert|turn)[^。\n]{0,35}(?:presentation|slides?|PPT)/i.test(positive);
     const replaceDoc = /改(?:成|为)[^。；;\n]{0,24}(?:写|创建|生成|保存|制作|做成|做一份)[^。\n]{0,20}(?:报告|文档|文章|DOCX|TXT|Markdown)|(?:instead|convert|turn)[^。\n]{0,35}(?:report|document|DOCX)/i.test(positive);
-    if (replacePres && !(result.RequiresPresentation && !result.RequiresDocument)) result = { ...empty(input.allowed), RequiresPresentation: true };
-    if (replaceDoc && !(result.RequiresDocument && !result.RequiresPresentation)) result = { ...empty(input.allowed), RequiresDocument: true };
-    if (positiveDoc || replaceDoc) { result.RequiresDocument = true; result.ChatOnly = false; }
-    if (positivePres || replacePres) { result.RequiresPresentation = true; result.ChatOnly = false; }
+    if (replacePres && !(result.RequiresPresentation && !result.RequiresDocument)) result = { ...empty(input.allowed), RequiresPresentation: true, ForbiddenArtifacts: input.requirementsVersion === 1 ? ['document'] : [], Purpose: result.Purpose, Audience: result.Audience, RequiredSourceIds: [...(input.requirementsVersion === 1 ? result.RequiredSourceIds : input.allowed)] };
+    if (replaceDoc && !(result.RequiresDocument && !result.RequiresPresentation)) result = { ...empty(input.allowed), RequiresDocument: true, ForbiddenArtifacts: input.requirementsVersion === 1 ? ['presentation'] : [], Purpose: result.Purpose, Audience: result.Audience, RequiredSourceIds: [...(input.requirementsVersion === 1 ? result.RequiredSourceIds : input.allowed)] };
+    if (positiveDoc || replaceDoc) { result.RequiresDocument = true; result.ChatOnly = false; allow('document'); }
+    if (positivePres || replacePres) { result.RequiresPresentation = true; result.ChatOnly = false; allow('presentation'); }
     if (positivePres && positiveDoc && !/并|同时|以及|另外|和|、|\band\b|\balso\b/i.test(positive) && !replaceDoc) result.RequiresDocument = false;
     const negatives = (raw.match(/(?:不要|无需|无须|不必|不用|不需要|别|勿|do\s+not|don['’]t|without)[^。；;，,\n]*/gi) || [])
       .filter(part => !(/重新|重复|再次|重做|\bagain\b/i.test(part) && /保留|已有|现有|原有|\b(?:existing|keep|retain)\b/i.test(raw)));
-    if (!positiveDoc && negatives.some(part => /创建|新建|生成|保存|输出|写|导出|做|create|save|write|export|produce/i.test(part) && /文档|报告|文件|文章|总结|摘要|document|report|file|article|summary/i.test(part))) result.RequiresDocument = false;
-    if (!positivePres && negatives.some(part => /做|创建|新建|生成|制作|写|输出|导出|make|create|build|generate/i.test(part) && pres.test(part))) result.RequiresPresentation = false;
-    if (!positiveDoc && (cancelledKind(raw, doc) || /(?:只|仅)保留[^。；;\n]{0,16}(?:PPT|幻灯片|演示文稿)/i.test(raw))) result.RequiresDocument = false;
-    if (!positivePres && (cancelledKind(raw, pres) || /(?:只|仅)保留[^。；;\n]{0,16}(?:报告|文档)/i.test(raw))) result.RequiresPresentation = false;
+    if (!positiveDoc && negatives.some(part => /创建|新建|生成|保存|输出|写|导出|做|create|save|write|export|produce/i.test(part) && /文档|报告|文件|文章|总结|摘要|document|report|file|article|summary/i.test(part))) { result.RequiresDocument = false; forbid('document'); }
+    if (!positivePres && negatives.some(part => /做|创建|新建|生成|制作|写|输出|导出|make|create|build|generate/i.test(part) && pres.test(part))) { result.RequiresPresentation = false; forbid('presentation'); }
+    if (!positiveDoc && (cancelledKind(raw, doc) || /(?:只|仅)保留[^。；;\n]{0,16}(?:PPT|幻灯片|演示文稿)/i.test(raw))) { result.RequiresDocument = false; forbid('document'); }
+    if (!positivePres && (cancelledKind(raw, pres) || /(?:只|仅)保留[^。；;\n]{0,16}(?:报告|文档)/i.test(raw))) { result.RequiresPresentation = false; forbid('presentation'); }
     if (requestedPages > 0 && requestedPages <= 100 && (positivePres || result.RequiresPresentation && !bodyAction && !readingReference)) result.RequestedPages = requestedPages;
     if (/取消.{0,6}页数|不限页数|不限制页数/.test(raw)) result.RequestedPages = 0;
     const lengthEvents: { index: number; min: number; max: number; unit: number }[] = [];
@@ -123,6 +145,7 @@ export function deriveContract(input: PlanningInput): Contract {
     else if (/先不要修改|暂不修改|不要修改|别修改|无需修改|只分析|仅分析|先分析|只阅读|只读不写|分析即可/.test(raw)) result.RequiresTargetedEdit = false;
     if ((chat.test(raw) || noFile.test(raw)) && !bodyAction && !positiveDoc && !positivePres) {
       result.ChatOnly = true; result.RequiresDocument = false; result.RequiresPresentation = false; result.RequiresTargetedEdit = false;
+      forbid('document'); forbid('presentation');
       if (!chat.test(raw) || !length) { result.MinLength = 0; result.MaxLength = 0; result.LengthUnit = 0; }
     }
     if (!result.RequiresPresentation) result.RequestedPages = 0;
@@ -136,7 +159,7 @@ export function deriveContract(input: PlanningInput): Contract {
   }
   result.RequiresFullSourceCoverage = fullRead ?? ((result.RequiresDocument || result.RequiresPresentation) && input.scope.mode === 'selected' && input.allowed.length > 0 && source.test(messages.join('\n')) && !sample.test(messages.join('\n')));
   if (!result.RequiresDocument) { result.RequiredDocumentFormat = ''; result.RequiredSections = []; } if (!result.RequiresTargetedEdit) result.EditVersionHint = '';
-  if (input.intent === 'discuss' || input.approvalPolicy === 'read_only') result = { ...empty(input.allowed), RequiresFullSourceCoverage: result.RequiresFullSourceCoverage, RequiredSourceIds: result.RequiredSourceIds };
+  if (input.intent === 'discuss' || input.approvalPolicy === 'read_only') result = { ...empty(input.allowed), RequiresFullSourceCoverage: result.RequiresFullSourceCoverage, RequiredSourceIds: result.RequiredSourceIds, Purpose: result.Purpose, Audience: result.Audience };
   return result;
 }
 

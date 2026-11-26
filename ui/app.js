@@ -48,7 +48,9 @@ const state={items:[],settings:{},route:'overview',filter:'all',query:'',limit:6
 function toast(message,error=false){
  const stack=$('#toasts');let el=[...stack.children].find(e=>e.dataset.message===message&&e.classList.contains('error')===error);
  if(el){clearTimeout(el.dismissTimer);}else{while(stack.children.length>=3)stack.firstElementChild.remove();el=document.createElement('div');el.className='toast'+(error?' error':'');el.dataset.message=message;el.textContent=message;stack.append(el);if(typeof CalmMotion!=='undefined')CalmMotion.play(el,[{opacity:0,transform:'translateY(5px)'},{opacity:1,transform:'none'}],{duration:170});}
- if(!stack.matches(':popover-open'))stack.showPopover();el.dismissTimer=setTimeout(async()=>{if(el.isConnected)await dismissElement(el);if(!stack.children.length&&stack.matches(':popover-open'))stack.hidePopover();},error?8000:3500);return el;
+ if(!stack.matches(':popover-open'))stack.showPopover();
+ if(stack.scrollHeight>stack.clientHeight)stack.scrollTop=stack.scrollHeight;
+ el.dismissTimer=setTimeout(async()=>{if(el.isConnected)await dismissElement(el);if(!stack.children.length&&stack.matches(':popover-open'))stack.hidePopover();},error?8000:3500);return el;
 }
 document.addEventListener('submit',event=>event.preventDefault(),true);
 
@@ -57,7 +59,7 @@ const size=n=>n>=1073741824?(n/1073741824).toFixed(1)+' GB':n>=1048576?(n/104857
 const time=s=>{s=Number.isFinite(s)?Math.floor(s):0;return (s>=3600?Math.floor(s/3600)+':':'')+String(Math.floor(s/60)%60).padStart(s>=3600?2:1,'0')+':'+String(s%60).padStart(2,'0');};
 const media=(item,type='file')=>`https://media.kok.local/${type}/${item.id}`;
 const byId=id=>state.items.find(i=>i.id===id);
-async function refresh(){const db=await native('library');state.items=db.items;state.navigation=db.navigation||null;state.settings=db.settings;state.collections=db.collections||[];state.fonts=db.fonts||[];state.isPrivate=!!db.isPrivate;renderPrivateState();applyAppMode();applyTheme();I18n.applyLanguage(state.settings.uiLanguage||'zh');if(typeof applyFont==='function')await applyFont();renderNav();render();if(typeof scheduleVideoCovers==='function')scheduleVideoCovers();if(typeof Kok!=='undefined')Kok.emit('libraryRefreshed');}
+async function refresh(){const db=await native('library');state.items=db.items;state.navigation=db.navigation||null;state.settings=db.settings;state.collections=db.collections||[];state.collectionLogos=new Map((db.collectionLogos||[]).map(logo=>[logo.name,logo]));state.fonts=db.fonts||[];state.isPrivate=!!db.isPrivate;renderPrivateState();applyAppMode();applyTheme();I18n.applyLanguage(state.settings.uiLanguage||'zh');if(typeof applyFont==='function')await applyFont();renderNav();render();if(typeof scheduleVideoCovers==='function')scheduleVideoCovers();if(typeof Kok!=='undefined')Kok.emit('libraryRefreshed');}
 async function patch(item,values){const sent=structuredClone(values),before=Object.fromEntries(Object.keys(values).map(key=>[key,{present:Object.hasOwn(item,key),value:structuredClone(item[key])}]));Object.assign(item,values);try{await native('update',{id:item.id,patch:values});}catch(error){for(const [key,old]of Object.entries(before))if(JSON.stringify(item[key])===JSON.stringify(sent[key])){if(old.present)item[key]=old.value;else delete item[key];}throw error;}}
 async function setting(values){const target=state.settings,sent=structuredClone(values),before=Object.fromEntries(Object.keys(values).map(key=>[key,{present:Object.hasOwn(target,key),value:structuredClone(target[key])}]));Object.assign(target,values);try{await native('settings',values);}catch(error){if(state.settings===target)for(const [key,old]of Object.entries(before))if(JSON.stringify(target[key])===JSON.stringify(sent[key])){if(old.present)target[key]=old.value;else delete target[key];}throw error;}}
 function applyTheme(...args){return Kok.invoke('applyTheme',this,args);}
@@ -79,7 +81,11 @@ window.addEventListener('resize',updateNavIndicator);
 function heading(title,subtitle=''){return `<div class="page-heading"><h1 ${state.route==='collection'&&!state.query?'data-user-content':''}>${esc(title)}</h1>${subtitle?`<span>${esc(subtitle)}</span>`:''}</div>`;}
 function viewOptions(...args){return Kok.invoke('viewOptions',this,args);}
 Kok.define('viewOptions',function(sort=state.settings.sort||'added'){
- return `<div class="view-options"><select class="sort-select" id="sort" aria-label="排序方式">${[['added','最近加入'],['opened','最近打开'],['name','名称'],['size','文件大小']].map(([key,label])=>`<option value="${key}" ${sort===key?'selected':''}>${label}</option>`).join('')}</select><div class="view-toggle" role="group" aria-label="${I18n.language==='en'?'View':'视图'}"><button class="${state.settings.view!=='list'?'active':''}" aria-pressed="${state.settings.view!=='list'}" data-view="grid" title="网格视图" aria-label="网格视图">${svg('grid')}</button><button class="${state.settings.view==='list'?'active':''}" aria-pressed="${state.settings.view==='list'}" data-view="list" title="列表视图" aria-label="列表视图">${svg('list')}</button></div><button class="icon-button library-tools-button" data-library-tools aria-haspopup="menu" aria-expanded="false" title="${I18n.language==='en'?'Library tools':'资料库工具'}" aria-label="${I18n.language==='en'?'Library tools':'资料库工具'}">${svg('more')}</button></div>`;
+ const options=[['added','最近加入'],['opened','最近打开'],['name','名称'],['size','文件大小']].map(([key,label])=>`<option value="${key}" ${sort===key?'selected':''}>${label}</option>`).join('');
+ return `<div class="view-options">
+ <div class="library-sort"><select class="sort-select" id="sort" aria-label="排序方式">${options}</select>${svg('chevron')}</div>
+ <div class="view-toggle" role="group" aria-label="${I18n.language==='en'?'View':'视图'}"><button class="${state.settings.view!=='list'?'active':''}" aria-pressed="${state.settings.view!=='list'}" data-view="grid" title="网格视图" aria-label="网格视图">${svg('grid')}</button><button class="${state.settings.view==='list'?'active':''}" aria-pressed="${state.settings.view==='list'}" data-view="list" title="列表视图" aria-label="列表视图">${svg('list')}</button></div>
+ <button class="icon-button library-tools-button" data-library-tools aria-haspopup="menu" aria-expanded="false" title="${I18n.language==='en'?'Library tools':'资料库工具'}" aria-label="${I18n.language==='en'?'Library tools':'资料库工具'}">${svg('more')}</button></div>`;
 });
 function fileCollection(items,includePrivate=false){
  const visible=items.slice(0,state.limit),more=items.length>state.limit?'<button class="button secondary load-more" data-action="loadMore">显示更多</button>':'';
@@ -88,7 +94,16 @@ function fileCollection(items,includePrivate=false){
  return shortcuts+(visible.length?'<div class="file-grid flat-library-grid">'+visible.map(card).join('')+'</div>':'')+more;
 }
 
-function libraryFilters(){const selected=state.filter!=='all'?state.filter:!state.isPrivate&&labels[state.route]?state.route:'all';return '<div class="filter-tabs" data-library-filters role="group" aria-label="'+(I18n.language==='en'?'File type':'文件类型')+'">'+[['all','全部'],...kinds.map(k=>[k[0],k[1]])].map(([key,label])=>'<button class="filter-tab '+(selected===key?'active':'')+'" data-filter="'+key+'" aria-pressed="'+(selected===key)+'" aria-label="'+I18n.text(label)+'" title="'+I18n.text(label)+'">'+glyph(key==='all'?'grid':key)+'<span class="filter-label">'+I18n.text(label)+'</span></button>').join('')+'</div>';}
+function libraryFilters(){
+ const inDirectory=!state.isPrivate&&(state.route==='collections'&&!state.query||LibraryCategories.hasReturn());
+ const selected=state.filter!=='all'?state.filter:inDirectory?'collections':!state.isPrivate&&labels[state.route]?state.route:'all';
+ const options=[['all','全部','grid'],...kinds.map(([key,label])=>[key,label,key])];
+ if(!state.isPrivate)options.push(['collections','我的分类','folder']);
+ return `<div class="filter-tabs" data-library-filters role="group" aria-label="${I18n.text('资料库浏览')}">${options.map(([key,label,icon])=>{
+  const translated=esc(I18n.text(label));
+  return `<button type="button" class="filter-tab${selected===key?' active':''}" data-filter="${key}" aria-pressed="${selected===key}" aria-label="${translated}" title="${translated}">${glyph(icon)}<span class="filter-label">${translated}</span></button>`;
+ }).join('')}</div>`;
+}
 function libraryContinue(){
  const rows=state.items.filter(i=>i.progress>0&&i.progress<.995&&i.opened&&['video','music','book','document'].includes(i.kind)).sort((a,b)=>String(b.opened||'').localeCompare(String(a.opened||''))).slice(0,6);
  if(!rows.length)return '';
@@ -97,11 +112,20 @@ function libraryContinue(){
 }
 function libraryCollections(){
  const names=state.navigation?.collections||state.collections||[],active=state.route==='collection'?state.collection:null;
- return `<div class="library-collections" role="group" aria-label="分类"><span class="library-collections-label">分类</span>${names.map(name=>`<button class="collection-chip ${active===name?'active':''}" data-collection="${esc(name)}" aria-label="${esc(name)}" data-user-content>${svg('folder')}<span>${esc(name)}</span></button>`).join('')}<button class="collection-chip add-collection" id="add-collection" aria-label="新建分类" title="新建分类">${svg('plus')}<span>新建分类</span></button></div>`;
+ return `<div class="library-collections" role="group" aria-label="分类"><span class="library-collections-label">分类</span>${names.map(name=>`<button type="button" class="collection-chip${active===name?' active':''}" data-collection="${esc(name)}" title="${esc(name)}"${active===name?' aria-current="page"':''} data-user-content>${LibraryCategories.logo(name,{compact:true})}<span>${esc(name)}</span></button>`).join('')}<button type="button" class="collection-chip add-collection" id="add-collection" aria-label="新建分类" title="新建分类">${svg('plus')}<span>新建分类</span></button></div>`;
 }
 function overview(){
  const items=filtered(),favorites=state.items.filter(i=>i.favorite).length;
- return '<div class="collection-heading">'+heading('资料库',items.length+' 个文件')+'</div><div class="library-quick"><button class="quick-link" data-library-quick="favorites">'+svg('heart')+'<span>收藏</span><small>'+favorites+'</small></button><button class="quick-link" data-library-quick="recent">'+svg('clock')+'<span>最近打开</span></button></div>'+libraryContinue()+libraryCollections()+'<div class="library-toolbar">'+libraryFilters()+viewOptions()+'</div>'+fileCollection(items)+(items.length?'':empty('导入你的第一份文件','拖入文件，或点击导入。',true));
+ return `<div class="collection-heading">${heading('资料库',items.length+' 个文件')}</div>
+ <div class="library-actions">
+   <div class="library-quick">
+     <button type="button" class="quick-link" data-library-quick="favorites">${svg('heart')}<span>收藏</span><small>${favorites}</small></button>
+     <button type="button" class="quick-link" data-library-quick="recent">${svg('clock')}<span>最近打开</span></button>
+   </div>
+   ${libraryCollections()}
+ </div>
+ ${libraryContinue()}<div class="library-toolbar">${libraryFilters()}${viewOptions()}</div>
+ ${fileCollection(items)}${items.length?'':empty('导入你的第一份文件','拖入文件，或点击导入。',true)}`;
 }
 
 function cover(...args){return Kok.invoke('cover',this,args);}
@@ -136,17 +160,21 @@ function collection(){
  const route=state.route,items=filtered();
  const title=state.query?`搜索结果`:labels[route]||({favorites:'收藏',recent:'最近打开',all:'全部文件',collection:state.collection})[route]||'资料库';
  const showTabs=route!=='recent';
- return `<div class="collection-heading with-back"><button class="text-button library-home-back" data-library-home>${svg('chevron')}<span>返回资料库</span></button>${heading(title,`${items.length} 个文件`)}</div>`+libraryCollections()+`<div class="library-toolbar">${showTabs?libraryFilters():''}${viewOptions(state.settings.sort||(route==='recent'?'opened':'added'))}</div>`+(items.length?fileCollection(items):empty(state.query?'没有找到相关文件':route==='favorites'?'还没有收藏':route==='recent'?'还没有打开记录':'这个分类导入你的第一份文件',state.query?'试试文件名、格式或笔记里的关键词。':route==='favorites'?'点击文件上的爱心即可收藏。':'导入文件，或在文件菜单中更改分类。'));
+ const custom=route==='collection'&&!state.query&&state.collections.includes(state.collection);
+ const fromDirectory=LibraryCategories.hasReturn();
+ const name=heading(title,`${items.length} 个文件`);
+ const titleMarkup=custom?`<div class="library-category-title">${LibraryCategories.logo(state.collection)}${name}<button type="button" class="text-button library-category-edit" data-collection-logo-edit>${svg('edit')}<span>设置图标</span></button></div>`:name;
+ return `<div class="collection-heading with-back"><button type="button" class="text-button library-home-back" ${fromDirectory?'data-category-back':'data-library-home'}>${svg('chevron')}<span>${fromDirectory?'返回我的分类':'返回资料库'}</span></button>${titleMarkup}</div>`+(fromDirectory?'':libraryCollections())+`<div class="library-toolbar">${showTabs?libraryFilters():''}${viewOptions(state.settings.sort||(route==='recent'?'opened':'added'))}</div>`+(items.length?fileCollection(items):empty(state.query?'没有找到相关文件':route==='favorites'?'还没有收藏':route==='recent'?'还没有打开记录':'这个分类导入你的第一份文件',state.query?'试试文件名、格式或笔记里的关键词。':route==='favorites'?'点击文件上的爱心即可收藏。':'导入文件，或在文件菜单中更改分类。'));
 }
 let pageAnimation=null,pageTransition=null,renderSequence=0;
 async function dismissElement(element){if(!element)return;element.style.pointerEvents='none';await animateOut(element);element.remove();}
 
 function render(...args){return Kok.invoke('render',this,args);}
 Kok.define('render',function(){
- const key=state.route+'|'+(state.musicAlbum||'')+'|'+(state.musicMode||'');
+ const key=state.route+'|'+(state.route==='collection'?state.collection||'':'')+'|'+(state.musicAlbum||'')+'|'+(state.musicMode||'');
  const changed=render.previousKey!==key&&!state.query;render.previousKey=key;
  renderNav();if(!state.isPrivate&&!state.query&&Kok.renderRoute(state.route)){if(changed&&!document.body.classList.contains('booting')&&typeof CalmMotion!=='undefined')CalmMotion.play($('#main'),[{opacity:.86},{opacity:1}],{duration:kokMotion.panel,channel:'route'});return;}
- const html=state.isPrivate?privateFolderView():state.route==='downloads'&&isSmartMode()?downloadWorkspace():state.route==='organize'&&!state.query&&typeof renderOrganizer==='function'?renderOrganizer():state.route==='overview'&&!state.query?overview():state.route==='music'&&!state.query&&typeof renderMusic==='function'?renderMusic():collection();
+ const html=state.isPrivate?privateFolderView():state.route==='downloads'&&isSmartMode()?downloadWorkspace():state.route==='organize'&&!state.query&&typeof renderOrganizer==='function'?renderOrganizer():state.route==='overview'&&!state.query?overview():state.route==='collections'&&!state.query?LibraryCategories.directory():state.route==='music'&&!state.query&&typeof renderMusic==='function'?renderMusic():collection();
  const sequence=++renderSequence;
  if(pageTransition){pageTransition.skipTransition();pageTransition=null;}
  const update=()=>{if(sequence!==renderSequence)return;const root=$('#main'),filters=root.querySelector('[data-library-filters]'),filterFocus=filters?.contains(document.activeElement)?document.activeElement:null,positions=!changed&&typeof CalmMotion!=='undefined'?CalmMotion.captureLayout(root):null;root.innerHTML=html;if(typeof CalmMotion!=='undefined'){CalmMotion.restoreFilters(root,filters);if(filterFocus?.isConnected)filterFocus.focus({preventScroll:true});CalmMotion.prepare(root);CalmMotion.layoutFrom(root,positions);}};
@@ -155,7 +183,7 @@ Kok.define('render',function(){
  update();
  if(changed&&!document.body.classList.contains('booting')&&!reducedMotion())pageAnimation=typeof CalmMotion!=='undefined'?CalmMotion.play($('#main'),[{opacity:.86},{opacity:1}],{duration:kokMotion.panel,channel:'route'}):animateIn($('#main'));
 });
-function navigate(route){const navigation=Kok.beforeNavigate(route);if(navigation.handled)return;route=navigation.route;if(state.isPrivate)return lockPrivateSpace().then(()=>navigate(route));if(route==='organize'&&!isSmartMode())route='overview';state.route=route;state.filter='all';state.limit=60;state.query='';state.musicAlbum=null;$('#search').value='';render();if(route==='organize')loadOrganizer().catch(fail);window.scrollTo(0,0);}
+function navigate(route){const navigation=Kok.beforeNavigate(route);if(navigation.handled)return;route=navigation.route;if(state.isPrivate)return lockPrivateSpace().then(()=>navigate(route));if(route==='organize'&&!isSmartMode())route='overview';if(route!=='collection')LibraryCategories.cancelReturn();state.route=route;state.filter='all';state.limit=60;state.query='';state.musicAlbum=null;$('#search').value='';render();if(route==='organize')loadOrganizer().catch(fail);window.scrollTo(0,0);}
 async function importItems(action,additionalObjects){
  const result=await native(action,{},additionalObjects);if(!result||result.cancelled)return;
  await refresh();toast(`已加入 ${result.added} 个文件${result.skipped?`，跳过 ${result.skipped} 个重复或不支持的文件`:''}。`);
@@ -290,7 +318,13 @@ document.addEventListener('click',async e=>{
   if(el.dataset.menu){fileMenu(el.dataset.menu,el);return;}
   if(el.dataset.native){await native(el.dataset.native,{id:el.dataset.id});return;}
   if(el.dataset.remove){const item=byId(el.dataset.remove);await native('remove',{id:item.id});if(state.track?.id===item.id)$('#close-player').click();state.items=state.items.filter(i=>i.id!==item.id);state.queue=state.queue.filter(i=>i.id!==item.id);await closeSmall();render();toast('已从资料库移除，原文件已保留。');return;}
-  if(el.dataset.filter){const key=el.dataset.filter;if(!state.isPrivate&&!state.query&&(state.route==='overview'||labels[state.route])){navigate(key==='all'?'overview':key);}else{if(labels[state.route])state.route='overview';state.filter=key;state.limit=60;render();}return;}
+  if(el.dataset.filter){
+   const key=el.dataset.filter;
+   if(key==='collections'){if(!state.isPrivate)navigate('collections');return;}
+   if(!state.isPrivate&&!state.query&&(state.route==='overview'||state.route==='collections'||labels[state.route]))navigate(key==='all'?'overview':key);
+   else{if(labels[state.route])state.route='overview';state.filter=key;state.limit=60;render();}
+   return;
+  }
   if(el.dataset.view){await setting({view:el.dataset.view});render();return;}
   if(el.dataset.photo){await photoAction(el.dataset.photo);return;}
   if(el.hasAttribute('data-chapter')){await changeChapter(Number(el.dataset.chapter));return;}

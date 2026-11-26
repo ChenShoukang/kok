@@ -18,10 +18,11 @@ namespace kok {
    };
   }
   static AgentToolSpec Control(string name,string signature,string description,Dictionary<string,object> properties,string[] required){return new AgentToolSpec{Name=name,Title=name=="update_plan"?"更新任务计划":"核对任务结果",Requires=Need.NormalLibrary,Signature=signature,Description=description,Properties=properties,Required=required,Validate=(a,exists)=>{try{CapabilitySchema.Check(CapabilitySchema.Obj(properties,required),a.args);}catch{throw new FormatException("Invalid task-control arguments");}}};}
-  internal static bool IsControl(string tool){return tool=="update_plan"||tool=="finish_task"||tool=="update_task_spec";}
+  internal static bool IsControl(string tool){return tool=="update_plan"||tool=="finish_task"||AgentRequirementUpdates.IsTool(tool);}
   internal static Dictionary<string,object> Run(AgentTaskEngine engine,AgentCall call,Func<AgentCall,bool> current){
    var s=engine.State;
    if(call.tool=="update_task_spec")return engine.UpdateTaskSpec(call);
+   if(call.tool=="propose_task_spec")return engine.ConfirmTaskSpec(call);
    if(call.steering!=s.steerVersion)throw new AgentFailure("superseded","任务要求已更新，请重新规划和核对。");
    Action<IEnumerable<string>,bool> evidence=(ids,requireCurrent)=>{foreach(var id in ids){var receipt=s.calls.FirstOrDefault(c=>c.id==id&&!IsControl(c.tool));if(!AgentJournal.ValidId(id)||receipt==null)throw new AgentFailure("verification","Unknown evidence ID "+id+". Use an actual kok_call_id from the HOST RECEIPT INDEX.");if(receipt.status!="done")throw new AgentFailure("verification","Evidence "+id+" has status "+receipt.status+". Rejected/failed calls cannot be successful evidence, including for partial outcomes. Describe rejection in summary; set that check evidence=[] and finish partial without another proposal.");if(!requireCurrent&&!engine.Executed(receipt))throw new AgentFailure("verification","Evidence "+id+" was undone outside this task and cannot prove a completed plan step.");if(requireCurrent&&!current(receipt))throw new AgentFailure("verification","Evidence "+id+" is stale. Replace it in content checks with the latest done/current read receipt from HOST RECEIPT INDEX; reread the original ids if none is current.");}};
    if(call.tool=="update_plan"){
@@ -56,10 +57,7 @@ namespace kok {
    var result=new AgentVerification{status=status,summary=summary,checks=checks,steering=s.steerVersion,level=checks.Any(c=>c.evidence.Count>0)?"evidence_checked":"model_only"};
    engine.Emit("task.verified",new{verification=result});return new Dictionary<string,object>{{"text","Task result recorded as "+status+". Evidence references were checked locally; semantic claims remain the model's assessment."}};
   }
-  // P1: a failed call counts as repaired only when C1 recorded a later successful call with the same
-  // tool+args for it and that resolver is still a valid execution receipt (done and not undone). Content
-  // "currentness" is intentionally not required here: the failure is about the operation eventually
-  // succeeding, while current content is enforced by the finish checks and delivery read-back rules.
+  // A recorded repair needs a real execution receipt. Finish checks independently require current evidence.
   static bool Repaired(AgentTaskEngine engine,AgentCall failed){
    var s=engine.State;
    if(failed==null||failed.status!="failed"||s.FailureResolved==null||!s.FailureResolved(failed))return false;
@@ -92,7 +90,7 @@ namespace kok {
    bool presentation=false;
    try{presentation=AgentTaskIntent.IsPresentation(AgentTaskIntent.Combined(task.options.goal??"",task.adjustments));}catch{}
    if(!presentation&&!task.calls.Any(c=>c.tool.EndsWith("_presentation",StringComparison.Ordinal)))return "";
-   return "PRESENTATION WORKFLOW: Build or revise one actual editable PPTX with create_presentation/read_presentation/edit_presentation. For creation, infer a sensible audience and brief outline from the request; ask only for essential missing facts, then propose the whole deck for visual preview and approval. Honor the requested total page count including any cover. Use short subject titles, one point per slide, varied cover/content/two_columns/section/quote layouts, and speaker notes for explanations and real source citations. Do not invent numbers, sources or image assets. Choose paper/midnight/violet to match the requested style. For revisions, read only the necessary page range, follow next_page when needed, use exact shape_id and original text for targeted text edits, replace_slide only for a requested redesign, and preserve all unrelated content. Never make a new deck merely to revise an existing one. Imported originals require an approved copy_presentation first. Edits are sequential; after insert/delete/move reread if subsequent page or shape identity is uncertain. A pending approval is not a saved artifact. Native receipts read back the saved package and support undo; do not claim unsupported animations, charts or image generation. ";
+   return "PRESENTATION WORKFLOW: Build or revise one actual editable PPTX with create_presentation/read_presentation/edit_presentation. For creation, infer audience and executive storyline; ask only for essential missing facts, then propose the whole deck for visual preview and approval. Honor the requested total page count including any cover. Use action-oriented titles, kicker tags, one-line subtitles, source footers, and varied commercial layouts (cover, agenda, section, content, two_columns/comparison with headers, process, timeline, metrics, cards, structured table, numeric bar/hbar chart with insights, quote, summary). Format card bullets as '小标题：具体说明' for crisp heading+body hierarchy and put detailed commentary/citations in speaker notes. Do not invent numbers, sources or image assets. Choose editorial/slate/ocean/paper/midnight/violet to match the requested style. For revisions, read only the necessary page range, follow next_page when needed, use exact shape_id and original text for targeted text edits, replace_slide only for a requested redesign, and preserve all unrelated content. Never make a new deck merely to revise an existing one. Imported originals require an approved copy_presentation first. Edits are sequential; after insert/delete/move reread if subsequent page or shape identity is uncertain. A pending approval is not a saved artifact. Native receipts read back the saved package and support undo; do not claim unsupported animations or external image generation. ";
   }
  }
 }

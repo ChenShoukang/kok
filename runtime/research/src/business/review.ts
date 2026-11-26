@@ -1,21 +1,26 @@
-export interface Finding { code: string; severity: string; message: string; page: number; shapeId: string }
+import { attendanceRows, reviewAttendance } from './attendance.ts';
+import type { EvidenceSource } from './evidence.ts';
+
+export interface Finding { code: string; severity: string; message: string; page: number; shapeId: string; line?: number; source?: object }
 export interface Shape { id: string; kind: string; text: string; x: number; y: number; w: number; h: number; fontSize: number; rotation: number }
 export interface SectionCheck { title: string; status: 'present' | 'missing' | 'empty'; line: number; bodyCharacters: number }
 export interface ReviewInput {
   id: string; kind: 'document' | 'presentation'; fileVersion: string; text?: string; recovery?: boolean; sections?: string[];
   format?: string; measurements?: { hanzi: number; characters: number; words: number };
-  requirement?: { minChars: number; maxChars: number; lengthUnit: number; requiredFormat: string } | null;
+  requirement?: { minChars: number; maxChars: number; lengthUnit: number; requiredFormat: string; purpose?: string; audience?: string } | null;
   deck?: { width: number; height: number; unsupported: number; slides: { shapes: Shape[] }[] };
+  sources?: EvidenceSource[]; userInstructions?: string[];
 }
 export function reviewArtifact(input: ReviewInput) {
   const report = { version: 1, id: input.id, kind: input.kind, fileVersion: input.fileVersion,
     method: input.kind === 'document' ? 'saved-document-source' : 'saved-pptx-ooxml',
     status: '', scope: '', rendered: false, visualReviewed: false, truncated: false,
     errors: 0, warnings: 0, pages: 0, characters: 0, words: 0, measurements: input.measurements || null,
+    contentRequirements: { purpose: input.requirement?.purpose || '', audience: input.requirement?.audience || '', assessment: 'not_assessed' },
     deliveryCheck: null as null | { unit: string; value: number; min: number; max: number; withinBounds: boolean; formatMatches: boolean }, headings: [] as string[], sectionChecks: [] as SectionCheck[], findings: [] as Finding[] };
-  const add = (code: string, message: string, severity = 'warning', page = 0, shapeId = '') => {
+  const add = (code: string, message: string, severity = 'warning', page = 0, shapeId = '', line?: number, source?: object) => {
     severity === 'error' ? report.errors++ : report.warnings++;
-    const finding = { code, severity, message, page, shapeId };
+    const finding = { code, severity, message, page, shapeId, line, source };
     if (report.findings.length < 100) report.findings.push(finding);
     else {
       report.truncated = true;
@@ -90,6 +95,11 @@ export function reviewArtifact(input: ReviewInput) {
       }
       if (textShapes.length > 200) add('overlap_check_limited', '本页文字对象较多，仅对前 200 个进行两两相交检查。', 'warning', page);
     });
+  }
+  if (input.sources?.length) {
+    const rows = input.deck ? attendanceRows(input.deck) : (input.text || '').split(/\r?\n/).map((text, index) => ({ text, line: index + 1 }));
+    for (const issue of reviewAttendance(rows, input.sources, input.userInstructions || []))
+      add('unconfirmed_attendance', (issue.line ? '正文第 ' + issue.line + ' 行。' : '') + issue.message, 'error', issue.page, issue.shapeId, issue.line, issue.basis);
   }
   report.status = report.errors ? 'issues_found' : report.warnings ? 'warnings' : 'checked'; return report;
 }

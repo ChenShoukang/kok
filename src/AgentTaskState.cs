@@ -52,7 +52,7 @@ namespace kok {
         // P0-1 effective task scope: artifacts created by this task (host receipts only, never model claims)
         // join the original user scope for reads, edits, search, verification and delegation.
         public List<string> createdArtifactIds=new List<string>();
-        // P1 repaired failures: failedCallId -> successfulCallId that later succeeded with the same tool+args.
+        // Repaired failures map the failed call to its successful retry.
         public Dictionary<string,string> resolvedBy=new Dictionary<string,string>();
         public static readonly string[] ArtifactTools={"create_document","create_presentation","copy_presentation"};
         // Writes that edit an existing artifact in place: their receipt id identifies the edited item and the
@@ -127,9 +127,18 @@ namespace kok {
             var failedIds=TargetIds(failed.args);if(failedIds.Count==0)return false;
             var doneIds=TargetIds(done.args);return doneIds.Any(id=>failedIds.Contains(id));
         }
-        // Called from replay for every successful tool call: record repair relationships for earlier failures
-        // with the same tool and identical JSON args, plus corrected read retries on the same target (#14),
-        // then remember host-created artifacts.
+        // An empty deck proposal is rejected before any write. A later valid proposal with
+        // the same title and requirements can repair it once the actual PPTX has been saved.
+        static bool CorrectedEmptyDeck(AgentCall failed,AgentCall done,string artifactId){
+            if(failed.tool!="create_presentation"||done.tool!=failed.tool||artifactId==null||
+                failed.errorKind!="validation"||failed.attempt!=0||failed.result!=null||
+                failed.steering!=done.steering||failed.requirementRevision!=done.requirementRevision)return false;
+            object intended, saved, slides;
+            return failed.args!=null&&done.args!=null&&failed.args.TryGetValue("title",out intended)&&intended is string title&&
+                !String.IsNullOrWhiteSpace(title)&&done.args.TryGetValue("title",out saved)&&String.Equals(title,saved as string,StringComparison.Ordinal)&&
+                failed.args.TryGetValue("slides",out slides)&&slides is System.Collections.IList rows&&rows.Count==0;
+        }
+        // Replay retains the rejected attempt and records which later successful call repaired it.
         void ApplyCompletion(AgentCall done){
             string artifactId=ArtifactId(done);if(artifactId!=null&&!createdArtifactIds.Contains(artifactId))createdArtifactIds.Add(artifactId);
             string args=Library.Json.Serialize(done.args??new Dictionary<string,object>());
@@ -138,7 +147,7 @@ namespace kok {
                 if(failed.tool==done.tool&&Library.Json.Serialize(failed.args??new Dictionary<string,object>())==args){resolvedBy[failed.id]=done.id;continue;}
                 // #14: an out-of-range read corrected to a valid offset must count as resolved, while an
                 // unrelated success (different target) and every uncertain outcome above stays unresolved.
-                if(CorrectedReadFailure(failed,done))resolvedBy[failed.id]=done.id;
+                if(CorrectedReadFailure(failed,done)||CorrectedEmptyDeck(failed,done,artifactId))resolvedBy[failed.id]=done.id;
             }
         }
         void ApplyUndone(AgentCall undone){

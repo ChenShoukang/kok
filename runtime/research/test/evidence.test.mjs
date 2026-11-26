@@ -31,6 +31,34 @@ test('evidence: actual artifact location and numeric heuristics never certify se
   const wrong = review(source(), claim({ claim: '预算为12万元。' }), { artifact }); assert.equal(wrong.artifactStatus, 'not_found'); assert.deepEqual(wrong.warnings, ['claim_numbers_need_review']); assert.equal(wrong.semanticVerified, false);
   const self = review(source({ role: 'artifact' })); assert(self.warnings.includes('artifact_used_as_source')); assert.equal(self.semanticVerified, false);
 });
+test('saved reports flag estimates promoted to actual attendance and keep exact source evidence', () => {
+  const original = '交班记录\n预计读者75人，实际书架12组。';
+  const read = source({ text: original, reads: [{ start: 0, end: original.length, version: 'v2', callId: 'actual-read' }] });
+  const document = (text, sources = [read]) => reviewArtifact({ id: 'report', kind: 'document', text, fileVersion: 'saved-v1', sources });
+  const finding = document('交班报告\n实际到场读者75人。').findings.find(item => item.code === 'unconfirmed_attendance');
+  assert.equal(finding?.severity, 'error');
+  assert.equal(finding?.line, 2);
+  assert.deepEqual(finding?.source, { sourceId: 'revision', sourceName: '最终修订', sourceVersion: 'v2', quote: '预计读者75人', line: 2, readCallIds: ['actual-read'] });
+  for (const valid of ['预计读者75人。', '核对实际到场读者75人。', '实际到场工作人员75人。'])
+    assert.equal(document(valid).errors, 0);
+  assert.equal(document('实际到场读者75人。', [{ ...read, version: 'modified' }]).errors, 0);
+  assert.equal(document('实际到场读者75人。', [{ ...read, role: 'artifact' }]).errors, 0);
+  const update = '签到单：实际到馆读者75人。';
+  const updateSource = source({ id: 'sign-in', text: update, reads: [{ start: 0, end: update.length, version: 'v2', callId: 'sign-in-read' }] });
+  assert.equal(document('实际到场读者75人。', [read, updateSource]).errors, 0);
+});
+test('editable slide metrics flag the caption, while the headcount by itself is supported', () => {
+  const original = '实际照明灯22盏、志愿者16人。';
+  const read = source({ text: original, reads: [{ start: 0, end: original.length, version: 'v2', callId: 'read-deck-source' }] });
+  const shape = (id, text, y) => ({ id, kind: 'text', text, x: 1, y, w: 6, h: .6, fontSize: 18, rotation: 0 });
+  const report = caption => reviewArtifact({ id: 'deck', kind: 'presentation', fileVersion: 'saved', sources: [read],
+    deck: { width: 13.33, height: 7.5, unsupported: 0, slides: [{ shapes: [shape('value', '16 人', 1), shape('caption', caption, 2)] }] } });
+  const finding = report('实际到场志愿者（草案计划 18 人）').findings.find(item => item.code === 'unconfirmed_attendance');
+  assert.equal(finding?.page, 1);
+  assert.equal(finding?.shapeId, 'caption');
+  assert.equal(finding?.source.quote, '志愿者16人');
+  assert.equal(report('志愿者人数（到场情况待核对）').errors, 0);
+});
 const input = (goal, adjustments = []) => ({ goal, adjustments, allowed: [], intent: 'assist', approvalPolicy: 'each', scope: { mode: 'all' } });
 test('sections: only explicit heading lists are acceptance requirements; newer lists and cancellation win', () => {
   assert.deepEqual(deriveContract(input('创建报告，报告应包含目标、流程、风险和待确认事项。')).RequiredSections, ['目标','流程','风险','待确认事项']);

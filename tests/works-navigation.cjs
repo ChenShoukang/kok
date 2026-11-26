@@ -39,7 +39,8 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
   assert.equal(await page.locator('.works-empty').count(),1,'The empty continue state is rendered');
   assert(await page.locator('.works-empty').isVisible());
   assert.equal(await page.locator('.works-continue [data-work-open]').count(),0);
-  assert(await page.locator('[data-works-new]').first().isVisible(),'The primary create action is visible');
+  assert.equal(await page.locator('[data-works-new]').count(),1,'The empty page provides one new-work action');
+  assert(await page.locator('.works-empty [data-works-new].primary').isVisible(),'The primary create action is visible in the empty state');
   await shot('works-empty');
   await page.locator('[data-works-new]').first().click();
   await page.waitForSelector('#small-dialog[open]');
@@ -171,6 +172,10 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
   const videoId=await page.evaluate(async()=>{const id=state.items.find(item=>item.kind==='video').id;await native('update',{id,patch:{progress:.42,opened:new Date().toISOString()}});await refresh();return id;});
   await page.waitForSelector('.library-continue [data-open="'+videoId+'"]');
   assert.match(await page.locator('.library-continue [data-open="'+videoId+'"]').innerText(),/42%/,'The continue row shows progress');
+  assert(await page.evaluate(()=>{
+   const actions=$('.library-actions'),recent=$('.library-continue');
+   return actions.contains($('.library-quick'))&&actions.contains($('.library-collections'))&&actions.getBoundingClientRect().bottom<=recent.getBoundingClientRect().top;
+  }),'Collections and shortcuts stay together above the resume area');
   await shot('library-home');
   await page.locator('[data-filter="music"]').click();
   await page.waitForFunction(()=>state.route==='music');

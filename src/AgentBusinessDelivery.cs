@@ -18,13 +18,13 @@ namespace kok {
                     readable=TryDeckPages(item,out pages);int total,covered;
                     readBack=AgentReading.DeckCoverage(normalLibrary,task,id,after,out total,out covered,out detail);
                     if(!readBack)readBack=AgentReading.ReadBackSufficient(normalLibrary,task,id,after,Int32.MaxValue,out detail);
-                    var review=AgentArtifactReview.Presentation(normalLibrary,id);
+                    var review=AgentArtifactReview.Presentation(normalLibrary,id,task);
                     errors=review.findings.Where(finding=>finding.severity=="error").Select(finding=>"第 "+finding.page+" 页 / "+finding.shapeId+"："+finding.message).ToList();
                 }else{
                     var source=normalLibrary.DocumentSource(id);readable=!source.recovery;
                     length=AgentDeliveryRules.MeasuredLength(source.text,requirement.lengthUnit);
                     readBack=AgentReading.ReadBackSufficient(normalLibrary,task,id,after,8000,out detail);
-                    if(task.options.artifactReviewVersion>=2){var review=AgentArtifactReview.Document(normalLibrary,id,requirement.requiredSections,requirement);errors=review.findings.Where(finding=>finding.severity=="error").Select(finding=>finding.message).ToList();}
+                    if(task.options.artifactReviewVersion>=2){var review=AgentArtifactReview.Document(normalLibrary,id,requirement.requiredSections,requirement,task);errors=review.findings.Where(finding=>finding.severity=="error").Select(finding=>finding.message).ToList();}
                 }
             }catch(Exception error){readable=false;detail=AgentWorkspaceTools.Redact(error.Message);}
             return new{id=id,name=item==null?id:item.name,exists=exists,owned=owned,format=item==null?"":item.ext,length=length,pages=pages,readable=readable,readBack=readBack,detail=detail,qualityErrors=errors};

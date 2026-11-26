@@ -8,6 +8,7 @@
 
 | 想做什么 | 从这里开始 |
 | --- | --- |
+| v0.16 什么时候算做完、为什么暂不发布 | [整体完成清单与发行条件](V016_COMPLETION_CHECKLIST.md) |
 | v0.16.3 结构化需求补齐、用户原话与重启恢复 | [实现、验证与边界](VALIDATION_0.16.3.md) |
 | 开源项目怎么复用、哪些自写代码需要替换 | [开源复用优先路线](OPEN_SOURCE_REUSE_PLAN.md) |
 | v0.16.2 原文依据定位、必需章节与真实任务评测 | [实现、验证与边界](VALIDATION_0.16.2.md) |
@@ -19,6 +20,7 @@
 | 看一份资料、写笔记，或从资料做出报告和 PPT | [第一篇笔记](help/getting-started/first-work.md) · [第一个创作项目](help/getting-started/first-agent-project.md) |
 | v0.13.0 研究内核、资源取舍与语言迁移 | [内核说明](RESEARCH_KERNEL_0.13.0.md) · [本版验证](VALIDATION_0.13.0.md) |
 | 通用 Agent 规划：研究、文档、PPT、表格、照片、视频、音乐、代码与电脑操作 | [总规划 3.0](PROJECT_PLAN_0.14_TO_1.0.md) |
+| 资料库分类 Logo、动效、视频频道、文档专题和音乐专辑 | [资料库可视化规划](LIBRARY_VISUALIZATION_PLAN.md) |
 | v0.16 之后先做什么、每项怎样实现和验收、什么时候换桌面壳 | [v0.16.x–v0.18 详细执行计划](NEXT_PHASE_0.16_TO_0.18.md) |
 | v0.12.2 当前要求更新与最终交付物验收 | [版本与更新](help/reference/versions.md) · [本版验证](VALIDATION_0.12.2.md) |
 | v0.12.1 中途调整、读取覆盖与评测口径修复 | [版本与更新](help/reference/versions.md) · [本版验证](VALIDATION_0.12.1.md) |

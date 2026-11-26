@@ -90,6 +90,7 @@ namespace kok {
             await decisions.WaitAsync();try{validate();Cancellation.Token.ThrowIfCancellationRequested();var call=State.calls.FirstOrDefault(c=>c.id==callId);if(!IsRunning||call==null||call.status!="pending")throw new InvalidOperationException("请先继续任务并重新确认操作。");
                 if(State.options.approvalPolicy=="read_only")throw new AgentFailure("approval","只读任务不允许执行修改。");
                 if(!approve){RevokeGrants("rejected");Emit("tool.skipped",new{callId=call.id,reason="user"});Signal();return;}
+                if(call.tool=="propose_task_spec"&&(batch||grant||automatic))throw new AgentFailure("approval","需求变更需要单独确认。");
                 if(new[]{"mcp_call","delegate_task","delegate_parallel","run_code","start_command_job","open_browser","browser_action","render_presentation"}.Contains(call.tool)&&batch)throw new AgentFailure("approval","外部工具需要逐项确认。");
                 if(grant&&(batch||automatic||!AgentApproval.Eligible(State,call)||automaticAllowed==null||!automaticAllowed()))throw new AgentFailure("approval","此操作不能授予本任务许可。");
                 if(automatic){var permit=AgentApproval.Find(State,call);if(permit==null||!CanAutoApprove(call))return;Emit("approval.used",new{grantId=permit.id,callId=call.id});}
@@ -98,7 +99,7 @@ namespace kok {
                 lock(gate){
                     RetireObsoleteRequirementProposals();
                     if(call.status!="pending")throw new InvalidOperationException("交付要求已更新，请继续任务并重新确认操作。");
-                    journal.CheckCapacity(State.id,600000);Emit("tool.started",new{callId=call.id});
+                    journal.CheckCapacity(State.id,600000);if(call.tool=="propose_task_spec")Emit("tool.started",new{callId=call.id,approval="individual_requirements"});else Emit("tool.started",new{callId=call.id});
                 }
                 bool applied=false;try{var receipt=await write(State,call,Cancellation.Token);var result=Patched(call,receipt.result);Emit("tool.completed",new{callId=call.id,result,stamp=receipt.stamp});applied=true;}
                 catch(OperationCanceledException){throw;}catch(Exception error){RevokeGrants("failed");var f=AgentFailure.Classify(error);var toolFailure=error as AgentToolFailure;Emit("tool.failed",new{callId=call.id,kind=f.kind,message=f.Message,retryable=false,result=toolFailure==null?null:toolFailure.result});}
@@ -139,11 +140,11 @@ namespace kok {
                 validate();Emit("task.running",new{});
                 lock(gate)RetireObsoleteRequirementProposals();
                 // A restarted write may have committed before its receipt reached the journal. Never replay it.
-                if(State.calls.Any(c=>c.status=="running"&&!AgentRules.ReadTools.Contains(c.tool)))throw new AgentFailure("uncertain_write","上次写入结果尚未核对，不能自动重放。请核对改动后重新规划。");
+                if(State.calls.Any(c=>c.status=="running"&&!AgentRules.ReadTools.Contains(c.tool)&&!AgentRequirementUpdates.IndividuallyApproved(State,c)))throw new AgentFailure("uncertain_write","上次写入结果尚未核对，不能自动重放。请核对改动后重新规划。");
                 foreach(var c in State.calls.Where(c=>c.status=="running"||c.status=="failed"&&c.retryable).ToList())Emit("tool.retry",new{callId=c.id});
                 while(true){
                     validate();Cancellation.Token.ThrowIfCancellationRequested();
-                    var queued=State.calls.Where(c=>c.status=="queued").ToList();if(queued.Count>0){Emit("task.phase",new{phase="阅读资料"});foreach(var c in queued.Where(c=>c.tool=="update_task_spec"))await ReadCall(c);foreach(var c in queued.Where(c=>c.tool=="update_plan"))await ReadCall(c);var reads=queued.Where(c=>!AgentCognition.IsControl(c.tool)).ToList();foreach(var c in reads.Where(SerialRead))await ReadCall(c);await Task.WhenAll(reads.Where(c=>!SerialRead(c)).Select(ReadCall));foreach(var c in queued.Where(c=>c.tool=="finish_task"))await ReadCall(c);}
+                    var queued=State.calls.Where(c=>c.status=="queued").ToList();if(queued.Count>0){Emit("task.phase",new{phase="阅读资料"});foreach(var c in queued.Where(c=>AgentRequirementUpdates.IsTool(c.tool)))await ReadCall(c);foreach(var c in queued.Where(c=>c.tool=="update_plan"))await ReadCall(c);var reads=queued.Where(c=>!AgentCognition.IsControl(c.tool)).ToList();foreach(var c in reads.Where(SerialRead))await ReadCall(c);await Task.WhenAll(reads.Where(c=>!SerialRead(c)).Select(ReadCall));foreach(var c in queued.Where(c=>c.tool=="finish_task"))await ReadCall(c);}
                     if(State.calls.Any(c=>c.status=="failed"&&c.errorKind=="uncertain_external"))throw new AgentFailure("uncertain_external","外部工具结果尚未确认，不能自动重放。请先检查外部服务。");
                     // Only retryable infrastructure failures stop the task; other tool errors are reported back to the model.
                     var failed=State.calls.FirstOrDefault(c=>c.status=="failed"&&c.retryable);if(failed!=null)throw new AgentFailure(failed.errorKind,failed.error,true);
@@ -177,7 +178,7 @@ namespace kok {
                         // still propagate so real bugs are never hidden.
                         try{var proposed=prepare(State,action,turnId,providerId);proposed.requirementRevision=State.RequirementRevision;proposals.Add(proposed);}
                         catch(FormatException error){proposals.Add(RejectedProposal(action,turnId,providerId,"validation",error.Message));}
-                        catch(AgentFailure failure)when(failure.kind=="policy"){proposals.Add(RejectedProposal(action,turnId,providerId,"policy",failure.Message));}
+                        catch(AgentFailure failure)when(failure.kind=="policy"||failure.kind=="validation"){proposals.Add(RejectedProposal(action,turnId,providerId,failure.kind,failure.Message));}
                     }
                     Emit("assistant.reply",new{text=turn.reply.reply,turnId=turnId,done=turn.reply.done,sources=sources,steering=steering});
                     foreach(var call in proposals){

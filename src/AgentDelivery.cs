@@ -19,6 +19,8 @@ namespace kok {
         public bool requiresTargetedEdit;           // "把 X 改成 Y" goals (cancelable)
         public List<string> requiredSourceIds=new List<string>();
         public List<string> requiredSections=new List<string>();
+        public List<string> excludedDeliverables=new List<string>();
+        public string purpose="",audience="";
         public bool requiresDocumentArtifact;
         public bool requiresPresentationArtifact;
         public bool chatOnly;
@@ -46,6 +48,8 @@ namespace kok {
                 AgentTaskContract contract=AgentTaskIntent.Current(o,adjustmentList);
                 requirement.requiredSourceIds=contract.RequiredSourceIds.ToList();
                 requirement.requiredSections=o.artifactReviewVersion>=2?contract.RequiredSections.ToList():new List<string>();
+                requirement.excludedDeliverables=contract.ForbiddenArtifacts.ToList();
+                requirement.purpose=contract.Purpose??"";requirement.audience=contract.Audience??"";
                 requirement.requiresDocumentArtifact=contract.RequiresDocument;
                 requirement.requiresPresentationArtifact=contract.RequiresPresentation;
                 requirement.requiresArtifact=contract.RequiresDocument||contract.RequiresPresentation;

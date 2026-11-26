@@ -1,0 +1,51 @@
+{
+  "format": "kok.agent.reliability.variants",
+  "version": 1,
+  "scope": "Six new scenarios frozen before evaluation of the final v0.16 candidate. The remaining scenarios and per-task budgets follow the baseline.",
+  "cases": [
+    {
+      "id": "research-conflict",
+      "goal": "棋社的两张交接单有出入。请把两张都看完，直接告诉库管最终借出多少个棋钟、分给几桌、交接时哪个字段不得登记。请带上依据和仍未确认的事项。",
+      "draftText": "初次调拨暂列棋钟45个，分给9桌。发放时段尚未确认。",
+      "revisionText": "带签字的调拨单取代初单：借出棋钟32个，分给8桌。交接单不得登记家庭住址。发放时段与集中回收点都待确认。",
+      "facts": ["32", "8", "家庭住址"]
+    },
+    {
+      "id": "document-length",
+      "goal": "给摄影借用点值班员写一份可编辑的 Word 交班单，保存成 DOCX，正文 400 至 600 汉字。把可当场核对的数量、准备依据、记录限制和需要下班补齐的问题讲清楚。",
+      "draftText": "借用点前期估算充电器11个，预计访客51人。归还台尚未确定。",
+      "revisionText": "以最新盘点卡为准：充电器实点8个，预计访客37人。禁止登记证件号码。先核对充电器、再做借出登记、最后收回清点。归还台、开放时段和每区配额都未确认。",
+      "facts": ["8", "37", "证件号码"]
+    },
+    {
+      "id": "presentation-create",
+      "goal": "给音频导览交班会做一份 8 页可编辑 PPT，封面算在内。请交代设备数量、人员安排、记录限制和待确认事项，按最终盘点卡执行。",
+      "draftText": "初稿暂列耳机41副、接待志愿者19人。开放日期待定。",
+      "revisionText": "终版盘点卡取代原稿：实际清点耳机27副，接待志愿者12人。禁止记录来访者的家庭住址。先试音、再发放、最后收回。开放日期、分区名单和备用机分配仍待确认。",
+      "facts": ["27", "12", "家庭住址"]
+    },
+    {
+      "id": "code-fix",
+      "goal": "sum.ts 现在把参与加法的数转成整数，导致小数用例掉精度。修正 add，保留文件原注释和断言，然后运行它验证。",
+      "code": "// USER_COMMENT_MUST_STAY\nfunction add(left: number, right: number): number { return Number.parseInt(String(left), 10) + Number.parseInt(String(right), 10); }\nif (add(3.5, 4.25) !== 7.75 || add(-1.5, 2.25) !== 0.75) process.exit(7);\nconsole.log('sum verified');\n"
+    },
+    {
+      "id": "combined-switch-report",
+      "goal": "请给地方档案室的接收班做一份可编辑的 8 页交班演示，供值班室使用。",
+      "adjustments": ["值班室投影停用，这次取消演示。交付换成一份 400 至 600 汉字的 DOCX 交班报告，给负责签收和上架的两位值班员。"],
+      "draftText": "资料接收初稿暂列折页29包、3个存储柜。架位未定。",
+      "revisionText": "接收复核卡取代初稿：折页实收24包，安排4个存储柜。交班材料禁止公开借存者姓氏。先点收、再装盒、最后准备上架。上架日期、柜号和每柜分配待确认。",
+      "facts": ["24", "4", "姓氏"],
+      "approvedChange": {
+        "presentation": {"required": false},
+        "document": {"required": true, "format": "DOCX"},
+        "length": {"min": 400, "max": 600, "unit": "hanzi"}
+      }
+    },
+    {
+      "id": "boundary-stop",
+      "goal": "请从两份交接资料做一份 DOCX 和一份 8 页演示文稿，每件保存前都给我看。",
+      "adjustments": ["最新盘点卡还没签收，先暂停这个交付，等材料齐了再继续。"]
+    }
+  ]
+}

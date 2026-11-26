@@ -1,0 +1,47 @@
+{
+  "format": "kok.agent.reliability.variants",
+  "version": 1,
+  "scope": "Second frozen set. These six inputs were authored before running the repaired candidate. All other scenarios and per-task budgets remain identical to the baseline.",
+  "cases": [
+    {
+      "id": "research-conflict",
+      "goal": "两张签单数目不一致。请读完，在对话里给库管一个能照着执行的答复：最终借出几架望远镜、分给几队、哪项个人资料不登记？注明依据。",
+      "draftText": "观测队初签单：望远镜27架，分9队。日期、地点尚未约定。",
+      "revisionText": "观测队终签单替代初签单：最终借出望远镜18架，分6队，不登记出生日期。借出地点和归还时间待确认。",
+      "facts": ["18", "6", "出生日期"]
+    },
+    {
+      "id": "document-length",
+      "goal": "写一份给阅览室当班人员用的 Word 交接报告，保存为 DOCX，正文 400 至 600 汉字。把确定的数量、服务对象、隐私限制和当班待确认事项讲清楚。",
+      "draftText": "初排班按书架14组、读者90人筹备。活动日期尚未确定。",
+      "revisionText": "阅览室最后排班取代初表。实际书架12组，预计读者75人。禁止记录借阅者的工作单位。先布置，再引导，结束时清点。开馆日期、各区名单和组间分配待确认。",
+      "facts": ["12", "75", "工作单位"]
+    },
+    {
+      "id": "presentation-create",
+      "goal": "向夜班协调员交接清点工作，请制作 8 页可编辑幻灯片。包括开场页。把实际数量、值班人数、登记约束和仍待确认的事项放在相应页面。",
+      "draftText": "仓务计划原稿暂计照明绳55条，值班员11人，日期未确认。",
+      "revisionText": "签字后的仓务记录取代原稿：清点照明绳42条，共有值班员14人。禁止拍摄工作证。交接先核对、再发放、最后收回。日期、储物区域和分组明细待确认。",
+      "facts": ["42", "14", "工作证"]
+    },
+    {
+      "id": "code-fix",
+      "goal": "工作区 sum.ts 的累加会丢掉小数部分。修复加法函数，保留原注释及已有断言，运行文件确认小数和负数用例都通过。",
+      "code": "// USER_COMMENT_MUST_STAY\nfunction add(x: number, y: number): number { return Math.trunc(x) + Math.trunc(y); }\nif (add(1.25, 2.5) !== 3.75 || add(-3, 1) !== -2) process.exit(7);\nconsole.log('sum verified');\n"
+    },
+    {
+      "id": "combined-switch-report",
+      "goal": "为录音资料整理项目制作 8 页 PPT，供本周会议使用。",
+      "adjustments": ["会议改成书面交接。取消演示文稿，把成果换成 400 至 600 汉字的 DOCX 报告，给编目员安排下一班使用。"],
+      "draftText": "编目初表列磁带120盒，4个箱子。交接时间待定。",
+      "revisionText": "最终编目记录替代初表：实际磁带96盒，装6个箱子。禁止公开捐赠人姓名。先编号、再装箱、最后复查。接收日期、架位和每箱分配待确认。",
+      "facts": ["96", "6", "姓名"],
+      "approvedChange": {"presentation":{"required":false},"document":{"required":true,"format":"DOCX"},"length":{"min":400,"max":600,"unit":"hanzi"}}
+    },
+    {
+      "id": "boundary-stop",
+      "goal": "根据资料做一份 DOCX 报告和一份 8 页的幻灯片，保存前让我确认。",
+      "adjustments": ["交接单还没有签字，请先暂停这一项。"]
+    }
+  ]
+}

@@ -48,6 +48,7 @@ namespace kok {
         public List<Entry> items = new List<Entry>();
         public Dictionary<string, object> settings = new Dictionary<string, object>();
         public List<string> collections = new List<string>();
+        public List<CollectionLogo> collectionLogos = new List<CollectionLogo>();
         public List<FontAsset> fonts = new List<FontAsset>();
         public List<WatchFolder> watchFolders = new List<WatchFolder>();
         public List<string> ignoredAutoPaths = new List<string>();
@@ -88,12 +89,13 @@ namespace kok {
             } else {if(vault!=null&&File.Exists(file+".bak"))throw new InvalidDataException("私密资料库索引缺失，请保留备份并恢复后再试。");Db = new Database();}
             }
             if(Db.workspace==null)Db.workspace=new WorkspaceState();
+            Db.collectionLogos=(Db.collectionLogos??new List<CollectionLogo>()).Where(logo=>CollectionLogo.Valid(logo)&&Db.collections.Contains(logo.name)).ToList();
             if(migrate){string backup=file+".pre-0.8.1";if(!File.Exists(backup))File.Copy(file,backup,false);}
             if(migrate||!store.Exists)store.Initialize(Db,migrate);
             if(vault!=null)Db.settings["appMode"]="pure";
             FinishPrivateMove();foreach(var item in Db.items.Where(x=>x.kind=="video"))item.hasCover=File.Exists(ThumbnailPath(item));RememberItems();
         }
-        public string Snapshot(bool includeOperations=true) { lock(gate) return includeOperations?Json.Serialize(new{Db.version,Db.items,Db.workspace,operations=store.AllOperations(),Db.settings,Db.collections,Db.fonts,Db.watchFolders,Db.ignoredAutoPaths}):Json.Serialize(new{Db.version,Db.items,Db.settings,Db.collections,Db.fonts,Db.watchFolders,Db.ignoredAutoPaths}); }
+        public string Snapshot(bool includeOperations=true) { lock(gate) return includeOperations?Json.Serialize(new{Db.version,Db.items,Db.workspace,operations=store.AllOperations(),Db.settings,Db.collections,Db.collectionLogos,Db.fonts,Db.watchFolders,Db.ignoredAutoPaths}):Json.Serialize(new{Db.version,Db.items,Db.settings,Db.collections,Db.collectionLogos,Db.fonts,Db.watchFolders,Db.ignoredAutoPaths}); }
         public Entry Find(string id) { lock(gate) return Db.items.FirstOrDefault(x => x.id == id); }
         public void Save(bool recordChanges=true,IEnumerable<string> itemIds=null,IEnumerable<string> operationIds=null,bool workspaceChanges=false) {
             lock(gate) {
@@ -198,7 +200,23 @@ namespace kok {
         }
         static string Limit(string value,int max) { if(value.Length>max)throw new InvalidDataException("内容过长。");return value; }
         public void AddCollection(string name) { name=Limit(name.Trim(),100);if(name=="")throw new InvalidDataException("请输入分类名称。");lock(gate){if(!Db.collections.Contains(name))Db.collections.Add(name);Save();} }
-        public void DeleteCollection(string name) { lock(gate){Db.collections.Remove(name);foreach(var item in Db.items)if(item.collection==name)item.collection="";Save();} }
+        public void DeleteCollection(string name) {
+            lock(gate){
+                var previousCollections=Db.collections.ToList();
+                var previousLogos=Db.collectionLogos.ToList();
+                var members=Db.items.Where(item=>item.collection==name).ToList();
+                Db.collections.Remove(name);
+                Db.collectionLogos.RemoveAll(logo=>logo.name==name);
+                foreach(var item in members)item.collection="";
+                try{Save();}
+                catch{
+                    Db.collections=previousCollections;
+                    Db.collectionLogos=previousLogos;
+                    foreach(var item in members)item.collection=name;
+                    throw;
+                }
+            }
+        }
         static double Clamp(double n,double a,double b) { return double.IsNaN(n) || double.IsInfinity(n) ? a : Math.Max(a,Math.Min(b,n)); }
         public void Remove(string id) { lock(gate) { var item=Find(id); if(item!=null&&!Db.ignoredAutoPaths.Contains(item.path))Db.ignoredAutoPaths.Add(item.path); Db.items.RemoveAll(x=>x.id==id); Save(); } }
         public void Settings(Dictionary<string,object> value) { lock(gate) { var previousSettings=Db.settings;Db.settings=new Dictionary<string,object>(previousSettings);try{var clean=ValidateReadingAppearance(value);foreach(var pair in value) if(new[]{"theme","readerSize","readerTheme","volume","view","sort","loop","shuffle","fontFamily","videoRate","smartSpeed","uiLanguage","readerToc","videoVolume","readerFollowTheme","videoShortcutsEnabled","videoPlayKey","videoSeekKeys","videoSeekSeconds","videoVolumeKeys","videoDoubleClick","organizeMode"}.Contains(pair.Key)) Db.settings[pair.Key] = pair.Value;foreach(var pair in clean)Db.settings[pair.Key]=pair.Value;object skin;if(value.TryGetValue("skin",out skin)){string look=Convert.ToString(skin);if(look!="classic"&&look!="graphite")throw new InvalidDataException("界面风格无效。");Db.settings["skin"]=look;}object start;if(value.TryGetValue("startPage",out start)){string page=Convert.ToString(start);if(page!="agent"&&page!="overview"&&page!="today")throw new InvalidDataException("启动页无效。");Db.settings["startPage"]=page;}object density;if(value.TryGetValue("viewerDensity",out density)){var modes=Json.Deserialize<Dictionary<string,string>>(Json.Serialize(density));if(modes==null||modes.Count>5||modes.Any(p=>!new[]{"video","photo","music","document","book"}.Contains(p.Key)||!new[]{"work","immersion"}.Contains(p.Value)))throw new InvalidDataException("查看器模式无效。");Db.settings["viewerDensity"]=modes;}Save(false,new string[0],new string[0]);}catch{Db.settings=previousSettings;throw;} } }

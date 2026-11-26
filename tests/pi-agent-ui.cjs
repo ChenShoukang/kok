@@ -23,7 +23,12 @@ const {chromium}=require('./browser.cjs'),F=require('./agent-fixture.cjs');
    await native('saveAiConfig',{endpoint,model:'pi-ui-fixture',clearKey:true,automatic:false});await setting({theme:'dark',fontFamily:'system'});applyTheme();await applyFont();
    await refresh();navigate('agent');await AgentUi.newSession();Object.assign(AgentUi.state,{skill:'',intent:'assist',scope:'all'});AgentUi.render();
   },`http://127.0.0.1:${model.address().port}/v1`);
-  assert(await page.locator('#agent-input').evaluate(input=>input.getBoundingClientRect().top>innerHeight/2),'Pi input stays at the bottom on an empty task');
+  assert(await page.evaluate(()=>{
+   const heading=$('.agent-start-heading').getBoundingClientRect();
+   const composer=$('.agent-composer').getBoundingClientRect();
+   const starters=$('.agent-starters').getBoundingClientRect();
+   return heading.bottom<=composer.top&&composer.bottom<=starters.top&&Math.abs((heading.top+starters.bottom)/2-innerHeight/2)<80;
+  }),'The empty Agent starts with a centered heading, composer and suggestions');
   assert.equal(await page.locator('[data-agent-pick] [data-lucide=paperclip]').count(),1);
   assert.equal(await page.locator('[data-agent-artifacts]').isVisible(),false,'empty sessions have no artifact control');
   await page.screenshot({path:path.join(output,'pi-empty-dark.png'),animations:'disabled'});
