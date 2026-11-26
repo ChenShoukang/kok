@@ -145,7 +145,8 @@ class AgentEvaluationRunner {
             }
             if(group=="presentation"){
                 if(label=="presentation-target"){
-                    var deck=PresentationFiles.Read(existingDeck.path,false);checks["sameDeckOnly"]=artifacts.Count==0&&deck.slides.Count==8;checks["targetChanged"]=String.Join("\n",deck.slides[2].shapes.Select(shape=>shape.text)).Contains("8万");
+                    var deck=PresentationFiles.Read(existingDeck.path,false);checks["sameDeckOnly"]=artifacts.Count==0&&deck.slides.Count==8;
+                    checks["targetChanged"]=Regex.IsMatch(String.Join("\n",deck.slides[2].shapes.Select(shape=>shape.text)),@"(?<![\d.])8(?:\.0+)?\s*万(?![\d.])");
                     checks["otherPagesPreserved"]=Enumerable.Range(1,8).Where(n=>n!=3).Select((n,index)=>Part(existingDeck.path,"ppt/slides/slide"+n+".xml").SequenceEqual(unchangedPages[index])).All(ok=>ok);
                 }else{checks["oneDeck"]=artifacts.Count==1&&artifacts[0].tool=="create_presentation";checks["actualPages"]=pages==(label=="presentation-pages"?6:8);checks["editableTextOnAllSlides"]=editableDeck;}
             }

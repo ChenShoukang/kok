@@ -154,6 +154,7 @@ namespace kok {
         static XElement BuildRule(){
             return new XElement(W+"p",
                 new XElement(W+"pPr",
+                    new XElement(W+"keepNext"),
                     new XElement(W+"pBdr",new XElement(W+"bottom",new XAttribute(W+"val","single"),new XAttribute(W+"sz","6"),new XAttribute(W+"space","4"),new XAttribute(W+"color","D8DEE6"))),
                     new XElement(W+"spacing",new XAttribute(W+"before","120"),new XAttribute(W+"after","160"))));
         }
@@ -204,7 +205,7 @@ namespace kok {
                         new XElement(W+"pPr",
                             new XElement(W+"pStyle",new XAttribute(W+"val","Normal")),
                             new XElement(W+"ind",new XAttribute(W+"left",left),new XAttribute(W+"hanging","280")),
-                            new XElement(W+"spacing",new XAttribute(W+"before","20"),new XAttribute(W+"after","90"),new XAttribute(W+"line","340"),new XAttribute(W+"lineRule","auto"))));
+                            new XElement(W+"spacing",new XAttribute(W+"before","20"),new XAttribute(W+"after","80"),new XAttribute(W+"line","320"),new XAttribute(W+"lineRule","auto"))));
                     p.Add(Run(ordered.Groups[2].Value+". ",true,false,false,"1D4ED8",21));
                     AppendInline(p,ordered.Groups[3].Value.Trim());
                     blocks.Add(p);i++;continue;
@@ -221,7 +222,7 @@ namespace kok {
                         new XElement(W+"pPr",
                             new XElement(W+"pStyle",new XAttribute(W+"val","Normal")),
                             new XElement(W+"ind",new XAttribute(W+"left",left),new XAttribute(W+"hanging","240")),
-                            new XElement(W+"spacing",new XAttribute(W+"before","20"),new XAttribute(W+"after","90"),new XAttribute(W+"line","340"),new XAttribute(W+"lineRule","auto"))));
+                            new XElement(W+"spacing",new XAttribute(W+"before","20"),new XAttribute(W+"after","80"),new XAttribute(W+"line","320"),new XAttribute(W+"lineRule","auto"))));
                     p.Add(Run(marker,false,false,false,"1D4ED8",20));
                     AppendInline(p,bodyText);
                     blocks.Add(p);i++;continue;
@@ -246,7 +247,9 @@ namespace kok {
 
             styles.Add(new XElement(W+"style",new XAttribute(W+"type","paragraph"),new XAttribute(W+"styleId","Normal"),new XAttribute(W+"default","1"),
                 new XElement(W+"name",new XAttribute(W+"val","Normal")),
-                new XElement(W+"pPr",new XElement(W+"spacing",new XAttribute(W+"before","0"),new XAttribute(W+"after","140"),new XAttribute(W+"line","350"),new XAttribute(W+"lineRule","auto")))));
+                new XElement(W+"pPr",
+                    new XElement(W+"widowControl"),
+                    new XElement(W+"spacing",new XAttribute(W+"before","0"),new XAttribute(W+"after","120"),new XAttribute(W+"line","320"),new XAttribute(W+"lineRule","auto")))));
 
             styles.Add(new XElement(W+"style",new XAttribute(W+"type","paragraph"),new XAttribute(W+"styleId","Heading1"),
                 new XElement(W+"name",new XAttribute(W+"val","heading 1")),
@@ -261,7 +264,7 @@ namespace kok {
                 new XElement(W+"pPr",
                     new XElement(W+"keepNext"),
                     new XElement(W+"pBdr",new XElement(W+"left",new XAttribute(W+"val","single"),new XAttribute(W+"sz","18"),new XAttribute(W+"space","8"),new XAttribute(W+"color","1D4ED8"))),
-                    new XElement(W+"spacing",new XAttribute(W+"before","300"),new XAttribute(W+"after","140"),new XAttribute(W+"line","280"),new XAttribute(W+"lineRule","auto"))),
+                    new XElement(W+"spacing",new XAttribute(W+"before","260"),new XAttribute(W+"after","120"),new XAttribute(W+"line","280"),new XAttribute(W+"lineRule","auto"))),
                 new XElement(W+"rPr",new XElement(W+"b"),new XElement(W+"color",new XAttribute(W+"val","0F172A")),new XElement(W+"sz",new XAttribute(W+"val",30)))));
 
             styles.Add(new XElement(W+"style",new XAttribute(W+"type","paragraph"),new XAttribute(W+"styleId","Heading3"),
